@@ -4,9 +4,11 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Shared.Application.Common.ResponseModel;
 using Shared.Infrastructure.Configs.Security;
+using Shared.Domain.Common.Exceptions;
+
 using System.ComponentModel.DataAnnotations;
 
-namespace Shared.Domain.Common.Exceptions.Handler
+namespace Shared.Presentation.Handler
 {
     public class CustomExceptionHandler(
         ILogger<CustomExceptionHandler> logger,
@@ -36,7 +38,6 @@ namespace Shared.Domain.Common.Exceptions.Handler
                     Metadata = metadata
                 };
             }
-
             // Map exception type to HTTP status code
             context.Response.StatusCode = exception switch
             {

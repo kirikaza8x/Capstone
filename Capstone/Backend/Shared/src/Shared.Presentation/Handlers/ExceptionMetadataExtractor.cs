@@ -1,6 +1,6 @@
 using System.Reflection;
 
-namespace Shared.Domain.Common.Exceptions.Handler
+namespace Shared.Presentation.Handler
 {
     public static class ExceptionMetadataExtractor
     {
