@@ -27,7 +27,7 @@ namespace Shared.Authentication;
 /// - Generated via <see cref="GenerateRefreshToken"/>  
 /// - Validated by direct comparison and expiry check — not decoded or parsed  
 ///
-/// ⚠️ <b>Note:</b> Do not use <see cref="ValidateToken"/> on refresh tokens, as they are not JWTs.
+///  <b>Note:</b> Do not use <see cref="ValidateToken"/> on refresh tokens, as they are not JWTs.
 /// </summary>
 public class JwtTokenService : IJwtTokenService
 {
