@@ -19,18 +19,34 @@ $SolutionPath  = Join-Path $BackendDir "$ProjectName.sln"
 $ApiDir        = Join-Path $SrcDir "Api"
 $Dockerfile    = Join-Path $ApiDir "Dockerfile"
 
-# Create folders
+# === SAFEGUARDS ===
+# Stop if csproj files already exist
+$existingProjects = Get-ChildItem -Path $SrcDir -Recurse -Filter *.csproj -ErrorAction SilentlyContinue
+if ($existingProjects) {
+    Write-Host "`n[X] Existing project files detected under $SrcDir. Aborting to avoid overwriting." -ForegroundColor Red
+    Write-Host "    Found:" -ForegroundColor Yellow
+    $existingProjects | ForEach-Object { Write-Host "    $_" -ForegroundColor DarkYellow }
+    exit 1
+}
+
+# Stop if Dockerfile already exists
+if (Test-Path $Dockerfile) {
+    Write-Host "`n[X] Dockerfile already exists at $Dockerfile. Aborting to avoid overwriting." -ForegroundColor Red
+    exit 1
+}
+
+# === Create folders ===
 New-Item -ItemType Directory -Force -Path "$SrcDir/Infrastructure","$SrcDir/Api","$SrcDir/Application","$SrcDir/Domain" | Out-Null
 New-Item -ItemType Directory -Force -Path "$TestDir/Infrastructure","$TestDir/Api","$TestDir/Application","$TestDir/Domain" | Out-Null
 
-# Create projects in src
+# === Create projects in src ===
 Write-Host "[>] Creating source projects..." -ForegroundColor Cyan
 dotnet new classlib -n "Infrastructure" -o "$SrcDir/Infrastructure"
 dotnet new classlib -n "Application"   -o "$SrcDir/Application"
 dotnet new classlib -n "Domain"        -o "$SrcDir/Domain"
 dotnet new webapi   -n "Api"           -o "$ApiDir"
 
-# Create test projects
+# === Create test projects ===
 Write-Host "[>] Creating test projects..." -ForegroundColor Cyan
 dotnet new xunit -n "Infrastructure.Tests" -o "$TestDir/Infrastructure"
 Write-Host "[OK] Infrastructure.Tests created" -ForegroundColor Green
@@ -41,26 +57,26 @@ Write-Host "[OK] Domain.Tests created" -ForegroundColor Green
 dotnet new xunit -n "Api.Tests"            -o "$TestDir/Api"
 Write-Host "[OK] Api.Tests created" -ForegroundColor Green
 
-# Add references between src projects
+# === Add references between src projects ===
 Write-Host "[>] Adding references between source projects..." -ForegroundColor Cyan
 dotnet add "$SrcDir/Infrastructure/Infrastructure.csproj" reference "$SrcDir/Application/Application.csproj"
 dotnet add "$SrcDir/Application/Application.csproj" reference "$SrcDir/Domain/Domain.csproj"
 dotnet add "$ApiDir/Api.csproj" reference "$SrcDir/Infrastructure/Infrastructure.csproj"
 
-# Add references from test projects to src projects
+# === Add references from test projects to src projects ===
 Write-Host "[>] Adding references from test projects..." -ForegroundColor Cyan
 dotnet add "$TestDir/Infrastructure/Infrastructure.Tests.csproj" reference "$SrcDir/Infrastructure/Infrastructure.csproj"
 dotnet add "$TestDir/Application/Application.Tests.csproj" reference "$SrcDir/Application/Application.csproj"
 dotnet add "$TestDir/Domain/Domain.Tests.csproj" reference "$SrcDir/Domain/Domain.csproj"
 dotnet add "$TestDir/Api/Api.Tests.csproj" reference "$ApiDir/Api.csproj"
 
-# Create shared solution if it doesn't exist
+# === Create shared solution if it doesn't exist ===
 if (-not (Test-Path $SolutionPath)) {
     Write-Host "[>] Creating solution $ProjectName.sln..." -ForegroundColor Cyan
     dotnet new sln -n "$ProjectName" -o $BackendDir
 }
 
-# Add all projects to shared solution
+# === Add all projects to shared solution ===
 Write-Host "[>] Adding projects to solution..." -ForegroundColor Cyan
 dotnet sln "$SolutionPath" add "$ApiDir/Api.csproj"
 dotnet sln "$SolutionPath" add "$SrcDir/Application/Application.csproj"
@@ -72,7 +88,7 @@ dotnet sln "$SolutionPath" add "$TestDir/Application/Application.Tests.csproj"
 dotnet sln "$SolutionPath" add "$TestDir/Domain/Domain.Tests.csproj"
 dotnet sln "$SolutionPath" add "$TestDir/Infrastructure/Infrastructure.Tests.csproj"
 
-# Create Dockerfile in Api layer (targeting .NET 9.0)
+# === Create Dockerfile in Api layer (targeting .NET 9.0) ===
 Write-Host "[>] Creating Dockerfile for Api project..." -ForegroundColor Cyan
 @"
 # Build stage
@@ -96,15 +112,9 @@ FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
 WORKDIR /app
 COPY --from=build /app/publish .
 ENTRYPOINT ["dotnet", "Api.dll"]
-"@ | Out-File -Encoding UTF8 $Dockerfile -Force
+"@ | Set-Content $Dockerfile
 
-Write-Host "[OK] Dockerfile created at $Dockerfile" -ForegroundColor Green
-
-# Final summary
-Write-Host "`n[OK] Microservice '$ServiceName' created under project '$ProjectName'." -ForegroundColor Green
-Write-Host "    [DIR]   $MicroRoot" -ForegroundColor Yellow
-Write-Host "    [SLN]   $SolutionPath" -ForegroundColor Yellow
-Write-Host "    [DOCKER] $Dockerfile" -ForegroundColor Yellow
-Write-Host "`n[>] To begin working, navigate to:" -ForegroundColor Magenta
-Write-Host "    cd $MicroRoot" -ForegroundColor White
-Write-Host "`nHappy Coding!" -ForegroundColor Green
+Write-Host "`n[OK] Clean Architecture scaffold created safely for service '$ServiceName'." -ForegroundColor Green
+Write-Host "    [DIR]     $MicroRoot" -ForegroundColor Yellow
+Write-Host "    [SLN]     $SolutionPath" -ForegroundColor Yellow
+Write-Host "`n[>] You can now start wiring services into each layer." -ForegroundColor Magenta
