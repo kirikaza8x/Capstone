@@ -17,17 +17,19 @@ using Shared.Infrastructure.Data.Interceptors;
 using Shared.Infrastructure.UnitOfWork;
 using Users.Infrastructure.Persistence.Contexts;
 using Microsoft.EntityFrameworkCore;
+using Shared.Infrastructure.Configs.Database;
 namespace Users.Infrastructure
 {
     public static class DependencyInjection
     {
         public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
-           
+
             var infrasAssembly = typeof(InfrastructureAssemblyReference).Assembly;
             // Configuration options
             services.ConfigureOptions<ErrorHandlingConfigSetup>();
             services.ConfigureOptions<JwtConfigSetup>();
+            services.ConfigureOptions<DatabaseConfigSetup>();
             // JWT Authentication
             services.AddAuthentication(options =>
             {
@@ -61,11 +63,27 @@ namespace Users.Infrastructure
                 });
 
             // EF Core + interceptors
-            services.AddScoped<ISaveChangesInterceptor, AuditableEntityInterceptor>();
-            services.AddScoped<ISaveChangesInterceptor, DispatchDomainEventInterceptor>();
+            services.Scan(scan => scan
+                .FromAssemblyOf<AuditableEntityInterceptor>() // or whichever assembly
+                .AddClasses(classes => classes.AssignableTo<ISaveChangesInterceptor>())
+                .AsImplementedInterfaces()
+                .WithScopedLifetime());
+
             services.AddDbContext<UserDbContext>((sp, options) =>
             {
-                options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"));
+                var dbConfig = sp.GetRequiredService<
+                IOptions<DatabaseConfig>>().Value;
+                options.UseNpgsql(dbConfig.ConnectionString, a =>
+                {
+                    if (dbConfig.MaxRetryCount > 0)
+                    {
+                        a.EnableRetryOnFailure(dbConfig.MaxRetryCount);
+                    }
+                    if (dbConfig.CommandTimeout > 0)
+                    {
+                        a.CommandTimeout(dbConfig.CommandTimeout);
+                    }
+                });
 
                 var interceptors = sp.GetServices<ISaveChangesInterceptor>().ToArray();
                 if (interceptors.Any())
@@ -74,7 +92,7 @@ namespace Users.Infrastructure
                 }
             });
 
-            // OPTION 1: Register all repositories by marker interface (RECOMMENDED)
+            // Register all repositories by marker interface (RECOMMENDED)
             // Requires: Create IRepository marker interface in Domain layer
             services.Scan(scan => scan
                 .FromAssemblies(infrasAssembly)
@@ -82,28 +100,6 @@ namespace Users.Infrastructure
                     .AssignableTo(typeof(IRepository<>))) // Generic repository interface
                 .AsImplementedInterfaces()
                 .WithScopedLifetime());
-
-            // OPTION 2: Register by naming convention
-            // services.Scan(scan => scan
-            //     .FromAssemblies(infrasAssembly)
-            //     .AddClasses(classes => classes
-            //         .Where(type => type.Name.EndsWith("Repository") && !type.IsAbstract))
-            //     .AsImplementedInterfaces()
-
-            // OPTION 3: Register by base class
-            // Requires: Create RepositoryBase<T> base class
-            // services.Scan(scan => scan
-            //     .FromAssemblies(infrasAssembly)
-            //     .AddClasses(classes => classes
-            //         .AssignableTo(typeof(RepositoryBase<>)))
-            //     .AsImplementedInterfaces()
-
-            // OPTION 4: Register by specific namespace pattern
-            // services.Scan(scan => scan
-            //     .FromAssemblies(infrasAssembly)
-            //     .AddClasses(classes => classes
-            //         .InNamespaces("ClothingStore.Infrastructure.Repositories"))
-            //     .AsImplementedInterfaces()
 
             // Scrutor: Auto-register all IDbContextUnitOfWork implementations
             services.Scan(scan => scan
@@ -114,30 +110,15 @@ namespace Users.Infrastructure
                 .AsImplementedInterfaces()
                 .WithScopedLifetime());
 
-            // Manually register CompositeUnitOfWork (avoid circular dependency)
+            // Manually register CompositeUnitOfWork 
             services.AddScoped<ICompositeUnitOfWork, CompositeUnitOfWork>();
-
-           
             //shared application 
             services.AddScoped<IJwtTokenService, JwtTokenService>();
             services.AddScoped<IPasswordHasher, PasswordHasher>();
             services.AddScoped<ICurrentUserService, CurrentUserService>();
-
-           
-
-            // Controllers + model binders
             services.AddHttpContextAccessor();
-            // services.AddControllers(options =>
-            // {
-            //     options.ModelBinderProviders.Insert(0, new CurrentUserModelBinderProvider());
-            // });
-
-            
-
-            // // Exception handling
-            // services.AddExceptionHandler<CustomExceptionHandler>();
             services.AddProblemDetails();
-            
+
             return services;
         }
     }
