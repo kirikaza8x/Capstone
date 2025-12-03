@@ -16,7 +16,7 @@ namespace Users.Domain.Entities
         public string? RefreshToken { get; private set; }
         public DateTime? RefreshTokenExpiry { get; private set; }
         public ICollection<Role> Roles { get; private set; } = new List<Role>();
-        
+
 
         // EF Core constructor
         private User() { }
@@ -34,7 +34,7 @@ namespace Users.Domain.Entities
         {
             var user = new User
             {
-                Id = Guid.NewGuid(), 
+                Id = Guid.NewGuid(),
                 Email = email,
                 UserName = userName,
                 PasswordHash = passwordHash,
@@ -44,9 +44,9 @@ namespace Users.Domain.Entities
                 PhoneNumber = phoneNumber,
                 Address = address,
                 IsDeleted = false,
-                Roles = new List<Role>() ,
+                Roles = new List<Role>(),
             };
-            if (role != null) user.Roles.Add(role);
+            if (role != null) user.AssignRole(role);
             return user;
         }
 
@@ -54,7 +54,7 @@ namespace Users.Domain.Entities
         // Domain behaviors
         public void ChangeEmail(string newEmail)
         {
-            
+
             Email = newEmail;
             // RaiseEvent(new UserEmailChangedEvent(Id, newEmail));
         }
@@ -83,16 +83,24 @@ namespace Users.Domain.Entities
 
         public void AssignRole(Role role)
         {
-            if (!Roles.Contains(role))
-                Roles.Add(role);
+            // Check by Id (preferred if Role is an entity)
+            if (Roles.Any(r => r.Id == role.Id))
+                return;
+
+            // Or check by Name if that's the unique identifier
+            if (Roles.Any(r => r.Name == role.Name))
+                return;
+
+            Roles.Add(role);
         }
+
 
         public void RemoveRole(Role role)
         {
             if (Roles.Contains(role))
                 Roles.Remove(role);
         }
-        
+
 
         public void SetRefreshToken(string token, DateTime expiry)
         {

@@ -69,7 +69,7 @@ namespace Users.Application.Features.Users.Commands.Login
                 refreshToken = _jwtTokenService.GenerateRefreshToken();
                 refreshExpiry = DateTime.UtcNow.AddDays(_jwtTokenService.RefreshTokenExpiryDays);
                 user.SetRefreshToken(refreshToken, refreshExpiry);
-                _userRepository.Update(user, cancellationToken);
+                await _userRepository.UpdateAsync(user, cancellationToken);
             }
 
             var response = new LoginResponseDto(

@@ -3,6 +3,7 @@ using Users.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Users.Infrastructure.Persistence.Contexts;
 using Shared.Infrastructure.Common;
+
 namespace Users.Infrastructure.Repositories
 {
     public class RoleRepository : GenericRepository<Role>, IRoleRepository
@@ -16,6 +17,9 @@ namespace Users.Infrastructure.Repositories
             _dbSet = context.Set<Role>();
         }
 
-        
+        public Task<Role?> GetByRoleNameAsync(string roleName)
+        {
+            return _dbSet.FirstOrDefaultAsync(r => r.Name.ToLower() == roleName.ToLower());
+        }
     }
 }

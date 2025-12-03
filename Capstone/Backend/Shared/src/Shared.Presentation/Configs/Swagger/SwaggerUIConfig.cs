@@ -11,6 +11,7 @@ public static class SwaggerUIConfig
 
         // Optional: customize UI
         c.DocumentTitle = " API";
-        c.RoutePrefix = string.Empty; 
+        c.RoutePrefix = "swagger"; 
+
     }
 }

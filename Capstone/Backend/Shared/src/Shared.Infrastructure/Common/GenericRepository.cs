@@ -29,7 +29,7 @@ namespace Shared.Infrastructure.Common
             }
         }
 
-        public virtual async Task AddRangeAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default)
+        public async Task AddRangeAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -41,12 +41,13 @@ namespace Shared.Infrastructure.Common
             }
         }
 
-        public void Update(T entity, CancellationToken cancellationToken = default)
+        public async Task UpdateAsync(T entity, CancellationToken cancellationToken = default)
         {
             try
             {
                 _dbSet.Attach(entity);
                 _dbContext.Entry(entity).State = EntityState.Modified;
+                await Task.CompletedTask;
             }
             catch (Exception ex)
             {
@@ -54,7 +55,7 @@ namespace Shared.Infrastructure.Common
             }
         }
 
-        public virtual void UpdateRange(IEnumerable<T> entities, CancellationToken cancellationToken = default)
+        public async Task UpdateRangeAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -63,6 +64,7 @@ namespace Shared.Infrastructure.Common
                 {
                     _dbContext.Entry(entity).State = EntityState.Modified;
                 }
+                await Task.CompletedTask;
             }
             catch (Exception ex)
             {
@@ -70,10 +72,10 @@ namespace Shared.Infrastructure.Common
             }
         }
 
-        public virtual async Task<int> UpdateRange(
-                Expression<Func<T, bool>> predicate,
-                Expression<Func<SetPropertyCalls<T>, SetPropertyCalls<T>>> setPropertyCalls,
-                CancellationToken cancellationToken = default)
+        public async Task<int> UpdateRange(
+            Expression<Func<T, bool>> predicate,
+            Expression<Func<SetPropertyCalls<T>, SetPropertyCalls<T>>> setPropertyCalls,
+            CancellationToken cancellationToken = default)
         {
             try
             {
@@ -88,8 +90,7 @@ namespace Shared.Infrastructure.Common
             }
         }
 
-
-        public void Delete(T entity, CancellationToken cancellationToken = default)
+        public async Task<bool> DeleteAsync(T entity, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -98,19 +99,25 @@ namespace Shared.Infrastructure.Common
                 {
                     _dbSet.Attach(entity);
                 }
+
                 _dbSet.Remove(entity);
+
+                return await Task.FromResult(true);
             }
             catch (Exception ex)
             {
+                // Log if needed, then rethrow or return false
                 throw new InvalidOperationException($"Error deleting entity of type {typeof(T).Name}", ex);
             }
         }
 
-        public virtual void DeleteRange(IEnumerable<T> entities, CancellationToken cancellationToken = default)
+
+        public async Task DeleteRangeAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default)
         {
             try
             {
                 _dbSet.RemoveRange(entities);
+                await Task.CompletedTask;
             }
             catch (Exception ex)
             {
@@ -118,7 +125,7 @@ namespace Shared.Infrastructure.Common
             }
         }
 
-        public virtual async Task<int> DeleteRange(
+        public async Task<int> DeleteRange(
             Expression<Func<T, bool>> predicate,
             CancellationToken cancellationToken = default)
         {
@@ -134,7 +141,6 @@ namespace Shared.Infrastructure.Common
                     $"Error deleting entities of type {typeof(T).Name} by predicate", ex);
             }
         }
-
 
         public async Task<bool> AnyAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default)
         {
@@ -270,7 +276,7 @@ namespace Shared.Infrastructure.Common
             }
         }
 
-        public IQueryable<T> GetQueryable(bool asNoTracking = true)
+        protected IQueryable<T> GetQueryable(bool asNoTracking = true)
         {
             try
             {

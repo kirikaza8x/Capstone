@@ -80,7 +80,6 @@ namespace Users.API.Controllers
         [HttpGet("me")]
         // [Authorize(Roles = "Admin,Guest,Customer")]
         public IActionResult GetCurrentUser(
-            [SwaggerIgnoreModel]
             [FromCurrentUser] CurrentUserDto user)
         {
             return Ok(user);
