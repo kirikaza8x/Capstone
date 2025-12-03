@@ -4,6 +4,11 @@ using System.ComponentModel;
 
 namespace Users.Application.Features.Roles.Dtos;
 
+public class AssignRoleRequestDto
+{
+    public Guid UserId { get; set; }
+    public Guid RoleId { get; set; }
+}
 public class RoleResponseDto : BaseDto<Guid>
 {
     public string Name { get; set; } = default!;

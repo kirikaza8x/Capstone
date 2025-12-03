@@ -34,19 +34,21 @@ namespace Users.Infrastructure.Repositories
         public async Task<User?> GetUserByMailOrUserName(string userNameOrEmail, CancellationToken cancellationToken = default)
         {
             return await _context.Users
+                .Include(u => u.Roles)
                 .Where(u => u.Email == userNameOrEmail || u.UserName == userNameOrEmail)
                 .FirstOrDefaultAsync(cancellationToken);
         }
 
         public async Task<User?> GetUserByMailOrUserName(
-    IEnumerable<string> userNamesOrEmails,
-    CancellationToken cancellationToken = default)
-{
-    return await _context.Users
-        .Where(u => userNamesOrEmails.Contains(u.Email ?? string.Empty)
-                 || userNamesOrEmails.Contains(u.UserName ?? string.Empty))
-        .FirstOrDefaultAsync(cancellationToken);
-}
+            IEnumerable<string> userNamesOrEmails,
+            CancellationToken cancellationToken = default)
+        {
+            return await _context.Users
+                .Include(u => u.Roles)
+                .Where(u => userNamesOrEmails.Contains(u.Email ?? string.Empty)
+                         || userNamesOrEmails.Contains(u.UserName ?? string.Empty))
+                .FirstOrDefaultAsync(cancellationToken);
+        }
 
 
     }

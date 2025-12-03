@@ -1,9 +1,7 @@
 using AutoMapper;
 using FluentValidation;
-using Shared.Application.Abstractions.Authentication;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Application.Common.ResponseModel;
-using Shared.Application.DTOs;
 using Users.Application.Features.Roles.Commands;
 using Users.Application.Features.Roles.Dtos;
 using Users.Domain.Entities;
@@ -41,7 +39,7 @@ namespace Users.Application.Features.Users.Commands.Login
         public async Task<Result<RoleResponseDto>> Handle(CreateRoleCommand command, CancellationToken cancellationToken)
         {
             
-            var existingRole = await _repo.GetByRoleNameAsync(command.CreateRoleRequest.Name);
+            var existingRole = await _repo.GetByRoleNameAsync(command.CreateRoleRequest.Name, cancellationToken);
             if (existingRole != null)
             {
                 return Result.Failure<RoleResponseDto>(new Error("RoleAlreadyExists", "A role with the same name already exists."));

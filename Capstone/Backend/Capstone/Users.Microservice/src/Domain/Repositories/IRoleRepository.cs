@@ -5,8 +5,7 @@ namespace Users.Domain.Repositories
 {
     public interface IRoleRepository : IRepository<Role>
     {
-        Task<Role?> GetByRoleNameAsync(string roleName);
-
+        Task<Role?> GetByRoleNameAsync(string roleName, CancellationToken cancellationToken = default);
     }
 }
 

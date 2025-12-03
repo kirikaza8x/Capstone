@@ -24,9 +24,8 @@ namespace Users.API.Controllers
             CancellationToken cancellationToken)
         {
             var result = await _mediator.Send(new RegisterUserCommand(request), cancellationToken);
-            if (result.IsFailure) return HandleResult(result);
-
             await _mediator.Send(new SaveChangesCommand(), cancellationToken);
+
             return HandleResult(result); 
         }
 
@@ -37,7 +36,6 @@ namespace Users.API.Controllers
             CancellationToken cancellationToken)
         {
             var result = await _mediator.Send(new LoginUserCommand(request), cancellationToken);
-            if (result.IsFailure) return HandleResult(result);
 
             await _mediator.Send(new SaveChangesCommand(), cancellationToken);
             return HandleResult(result); // Return the login result with tokens
@@ -50,14 +48,13 @@ namespace Users.API.Controllers
             CancellationToken cancellationToken)
         {
             var result = await _mediator.Send(new RefreshTokenCommand(request), cancellationToken);
-            if (result.IsFailure) return HandleResult(result);
 
             await _mediator.Send(new SaveChangesCommand(), cancellationToken);
             return HandleResult(result); // Return the refresh token result
         }
 
         [HttpGet("{id:guid}")]
-        [Authorize(Roles = "Admin,Guest,Customer")]
+        //[Authorize(Roles = "Admin,Guest,Customer")]
         public async Task<IActionResult> GetById(
             Guid id,
             [FromCurrentUser] CurrentUserDto user,

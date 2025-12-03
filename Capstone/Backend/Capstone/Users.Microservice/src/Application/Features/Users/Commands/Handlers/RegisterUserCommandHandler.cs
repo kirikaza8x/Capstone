@@ -29,7 +29,7 @@ namespace Users.Application.Features.Users.Commands.RegisterUser
             var request = command.RegisterRequest;
 
             var existingUser = await _userRepository.GetUserByMailOrUserName(
-                new[] { request.UserName, request.Email }, 
+                new[] { request.UserName, request.Email },
                 cancellationToken);
 
             if (existingUser != null)
@@ -43,8 +43,17 @@ namespace Users.Application.Features.Users.Commands.RegisterUser
                 return Result.Failure<UserResponseDto>(new Error("UserExists", error));
             }
 
-            var user = _mapper.Map<User>(request);
-            user.ChangePassword(_passwordHasher.HashPassword(request.Password));
+            var passwordHash = _passwordHasher.HashPassword(request.Password);
+
+            var user = User.Create(
+                email: request.Email,
+                userName: request.UserName,
+                passwordHash: passwordHash,
+                firstName: request.FirstName,
+                lastName: request.LastName,
+                phoneNumber: request.PhoneNumber,
+                address: request.Address
+            );
 
             await _userRepository.AddAsync(user, cancellationToken);
             var response = _mapper.Map<UserResponseDto>(user);

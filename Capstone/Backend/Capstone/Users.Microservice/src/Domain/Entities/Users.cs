@@ -1,5 +1,6 @@
 
 using Shared.Domain.Common.DDD;
+using Users.Domain.Events;
 namespace Users.Domain.Entities
 {
     public class User : AggregateRoot<Guid>
@@ -47,6 +48,7 @@ namespace Users.Domain.Entities
                 Roles = new List<Role>(),
             };
             if (role != null) user.AssignRole(role);
+                user.RaiseEvent(new UserCreatedEvent(user.Id, user.Email ?? string.Empty, user.UserName));
             return user;
         }
 

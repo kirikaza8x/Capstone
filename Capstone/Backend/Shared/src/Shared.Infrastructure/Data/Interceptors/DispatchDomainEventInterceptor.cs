@@ -7,28 +7,57 @@ namespace Shared.Infrastructure.Data.Interceptors;
 
 public class DispatchDomainEventInterceptor(IMediator mediator) : SaveChangesInterceptor
 {
-    public override InterceptionResult<int> SavingChanges(
-        DbContextEventData eventData, 
-        InterceptionResult<int> result)
+    //  OLD: Dispatching inside SavingChanges (before commit)
+    // public override InterceptionResult<int> SavingChanges(
+    //     DbContextEventData eventData, 
+    //     InterceptionResult<int> result)
+    // {
+    //     if (eventData.Context is not null)
+    //     {
+    //         Task.Run(() => DispatchDomainEvents(eventData.Context, CancellationToken.None))
+    //             .GetAwaiter().GetResult();
+    //     }
+    //     return base.SavingChanges(eventData, result);
+    // }
+
+    //  NEW: Dispatch after persistence succeeds (post-commit)
+    public override int SavedChanges(
+        SaveChangesCompletedEventData eventData,
+        int result)
     {
         if (eventData.Context is not null)
         {
-            Task.Run(() => DispatchDomainEvents(eventData.Context, CancellationToken.None))
+            // synchronous dispatch after commit
+            DispatchDomainEvents(eventData.Context, CancellationToken.None)
                 .GetAwaiter().GetResult();
         }
-        return base.SavingChanges(eventData, result);
+        return base.SavedChanges(eventData, result);
     }
 
-    public override async ValueTask<InterceptionResult<int>> SavingChangesAsync(
-        DbContextEventData eventData, 
-        InterceptionResult<int> result, 
+    // ❌ OLD: Dispatching inside SavingChangesAsync (before commit)
+    // public override async ValueTask<InterceptionResult<int>> SavingChangesAsync(
+    //     DbContextEventData eventData, 
+    //     InterceptionResult<int> result, 
+    //     CancellationToken cancellationToken = default)
+    // {
+    //     if (eventData.Context is not null)
+    //     {
+    //         await DispatchDomainEvents(eventData.Context, cancellationToken);
+    //     }
+    //     return await base.SavingChangesAsync(eventData, result, cancellationToken);
+    // }
+
+    //  NEW: Dispatch after persistence succeeds (post-commit, async)
+    public override async ValueTask<int> SavedChangesAsync(
+        SaveChangesCompletedEventData eventData,
+        int result,
         CancellationToken cancellationToken = default)
     {
         if (eventData.Context is not null)
         {
             await DispatchDomainEvents(eventData.Context, cancellationToken);
         }
-        return await base.SavingChangesAsync(eventData, result, cancellationToken);
+        return await base.SavedChangesAsync(eventData, result, cancellationToken);
     }
 
     private async Task DispatchDomainEvents(DbContext context, CancellationToken cancellationToken)
@@ -39,12 +68,17 @@ public class DispatchDomainEventInterceptor(IMediator mediator) : SaveChangesInt
             .Select(e => e.Entity)
             .ToList();
 
-        var domainEvents = aggregates
-            .SelectMany(a => a.DomainEvents)
-            .ToList();
+        // Collect all events from all aggregates
+        var domainEvents = new List<IDomainEvent>();
 
-        aggregates.ForEach(a => a.ClearDomainEvents());
+        foreach (var aggregate in aggregates)
+        {
+            // ClearDomainEvents returns the events and clears them
+            var events = aggregate.ClearDomainEvents();
+            domainEvents.AddRange(events);
+        }
 
+        // Publish all events
         foreach (var domainEvent in domainEvents)
         {
             await mediator.Publish(domainEvent, cancellationToken);

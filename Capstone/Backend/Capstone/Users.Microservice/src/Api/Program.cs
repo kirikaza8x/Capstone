@@ -1,4 +1,4 @@
-using Infrastructure;
+using Users.Application;
 using Shared.Presentation.Configs.Swagger;
 using Users.Api;
 using Users.Infrastructure;

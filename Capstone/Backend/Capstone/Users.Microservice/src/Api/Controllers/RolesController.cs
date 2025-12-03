@@ -8,7 +8,6 @@ using Users.Application.Features.Roles.Commands;
 using Users.Application.Features.Roles.Dtos;
 using Users.Application.Features.Roles.Queries;
 using MediatR;
-using Users.Domain.Entities;
 
 namespace Users.API.Controllers
 {
@@ -18,34 +17,28 @@ namespace Users.API.Controllers
         public RoleController(IMediator mediator) : base(mediator) { }
 
         [HttpPost("create")]
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create(
-            [FromCurrentUser] User role,
+            [FromCurrentUser]  CurrentUserDto role,
             [FromBody] RoleRequestDto request,
             CancellationToken cancellationToken)
         {
             var result = await _mediator.Send(new CreateRoleCommand(request), cancellationToken);
-            if (result.IsFailure) return HandleResult(result);
-
-            await _mediator.Send(new SaveChangesCommand(), cancellationToken);
             return HandleResult(result);
         }
 
         [HttpDelete("{id:guid}")]
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(
             Guid id,
             CancellationToken cancellationToken)
         {
             var result = await _mediator.Send(new DeleteRoleCommand(id), cancellationToken);
-            if (result.IsFailure) return HandleResult(result);
-
-            await _mediator.Send(new SaveChangesCommand(), cancellationToken);
             return HandleResult(result);
         }
 
         [HttpGet("{id:guid}")]
-        [Authorize(Roles = "Admin,Guest,Customer")]
+        //[Authorize(Roles = "Admin,Guest,Customer")]
         public async Task<IActionResult> GetById(
             Guid id,
             [FromCurrentUser] CurrentUserDto user,
@@ -55,7 +48,7 @@ namespace Users.API.Controllers
             return HandleResult(result);
         }
         [HttpPut("{id:guid}")]
-        [Authorize(Roles = "Admin,Guest,Customer")]
+        //[Authorize(Roles = "Admin,Guest,Customer")]
         public async Task<IActionResult> update(
             Guid id,
             [FromCurrentUser] CurrentUserDto user,
@@ -68,12 +61,23 @@ namespace Users.API.Controllers
 
 
         [HttpPost("list")]
-        [Authorize(Roles = "Admin,Guest,Customer")]
+        //[Authorize(Roles = "Admin,Guest,Customer")]
         public async Task<IActionResult> Search(
             [FromBody] RoleFilterDto filter,
             CancellationToken cancellationToken)
         {
             var result = await _mediator.Send(new GetRoleListQuery(filter), cancellationToken);
+            return HandleResult(result);
+        }
+
+        [HttpPost("assign")]
+        //[Authorize(Roles = "Admin")]
+        public async Task<IActionResult> AssignRole(
+            [FromBody] AssignRoleRequestDto requestDto,
+            CancellationToken cancellationToken)
+        {
+            var command = new AssignRoleCommand(requestDto.UserId, requestDto.RoleId);
+            var result = await _mediator.Send(command, cancellationToken);
             return HandleResult(result);
         }
 

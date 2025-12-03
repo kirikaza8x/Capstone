@@ -17,9 +17,9 @@ namespace Users.Infrastructure.Repositories
             _dbSet = context.Set<Role>();
         }
 
-        public Task<Role?> GetByRoleNameAsync(string roleName)
+        public Task<Role?> GetByRoleNameAsync(string roleName, CancellationToken cancellationToken = default)
         {
-            return _dbSet.FirstOrDefaultAsync(r => r.Name.ToLower() == roleName.ToLower());
+            return _dbSet.FirstOrDefaultAsync(r => r.Name.ToLower() == roleName.ToLower(), cancellationToken);
         }
     }
 }

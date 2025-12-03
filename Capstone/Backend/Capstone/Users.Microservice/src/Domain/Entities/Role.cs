@@ -2,7 +2,7 @@ using Shared.Domain.Common.DDD;
 
 namespace Users.Domain.Entities
 {
-    public class Role : Entity<Guid>
+    public class Role : AggregateRoot<Guid>
     {
         public string Name { get; private set; } = default!;
         public string? Description { get; private set; } = default!;
@@ -33,6 +33,11 @@ namespace Users.Domain.Entities
         public void ChangeDescription(string? description)
         {
             Description = description ?? string.Empty;
+        }
+
+        protected override void Apply(IDomainEvent @event)
+        {
+            // No-op since events are turned off
         }
     }
 }

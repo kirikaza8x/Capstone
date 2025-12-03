@@ -4,24 +4,27 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Shared.Application.Behaviors;
 using Shared.Application.Common.Commands;
-using Users.Application;
+using Users.Domain;
 
 
-namespace Infrastructure
+namespace Users.Application
 {
     public static class DependencyInjection
     {
-        public static IServiceCollection AddApplication(this IServiceCollection services , IConfiguration configuration)
+        public static IServiceCollection AddApplication(this IServiceCollection services, IConfiguration configuration)
         {
-            var assembly = typeof(DependencyInjection).Assembly;
             var appliAssembly = typeof(ApplicationAssemblyReference).Assembly;
+            var domainAssembly = typeof(DomainAssemblyReference).Assembly;
             var sharedLibraryAssembly = typeof(SaveChangesCommandHandler).Assembly;
             services.AddMediatR(configuration =>
             {
-                configuration.RegisterServicesFromAssembly(assembly);
+                configuration.RegisterServicesFromAssembly(domainAssembly);
+                configuration.RegisterServicesFromAssembly(appliAssembly);
                 configuration.RegisterServicesFromAssembly(sharedLibraryAssembly);
             });
-            services.AddValidatorsFromAssembly(assembly);
+            services.AddValidatorsFromAssembly(domainAssembly);
+            services.AddValidatorsFromAssembly(appliAssembly);
+            services.AddTransient(typeof(IPipelineBehavior<,>), typeof(UnitOfWorkBehavior<,>));
             services.AddScoped(typeof(IPipelineBehavior<,>), typeof(ValidationPipelineBehavior<,>));
             services.AddAutoMapper(appliAssembly);
             return services;
