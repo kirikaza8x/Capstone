@@ -1,7 +1,7 @@
 using Shared.Application.Abstractions.Messaging;
-using Users.Application.Features.User.Dtos;
+using Users.Application.Features.Users.Dtos;
 
-namespace Users.Application.Features.User.Commands.RegisterUser
+namespace Users.Application.Features.Users.Commands.RegisterUser
 {
     // public record RegisterUserCommand(
     //     string Email,

@@ -1,6 +1,7 @@
 
 
 using Shared.Presentation.Common.ModelBinder;
+using Shared.Presentation.Configs.Swagger;
 using Shared.Presentation.Handler;
 
 namespace Users.Api
@@ -9,6 +10,7 @@ namespace Users.Api
     {
         public static IServiceCollection AddPresentation(this IServiceCollection services, IConfiguration configuration)
         {
+            services.ConfigureOptions<SwaggerConfigSetup>();
             services.AddSwaggerGen();
             services.AddControllers(options =>
             {

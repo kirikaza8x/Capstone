@@ -11,7 +11,7 @@ public class ServersDocumentFilter : IDocumentFilter
         {
             new OpenApiServer
             {
-                Url = "http://localhost:5268",
+                Url = "http://localhost:5152",
                 Description = "Local ASP.NET Core server"
             },
             // new OpenApiServer

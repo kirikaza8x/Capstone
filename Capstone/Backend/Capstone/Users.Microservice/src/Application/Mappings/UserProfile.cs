@@ -1,8 +1,8 @@
 using AutoMapper;
-using Users.Application.Features.User.Dtos;
+using Users.Application.Features.Users.Dtos;
 using Users.Domain.Entities;
 
-namespace ClothingStore.Application.Mappings
+namespace Users.Application.Mappings
 {
     public class UserProfile : Profile
     {

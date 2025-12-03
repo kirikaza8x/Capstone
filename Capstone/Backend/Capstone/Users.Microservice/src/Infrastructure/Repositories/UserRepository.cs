@@ -37,5 +37,17 @@ namespace Users.Infrastructure.Repositories
                 .Where(u => u.Email == userNameOrEmail || u.UserName == userNameOrEmail)
                 .FirstOrDefaultAsync(cancellationToken);
         }
+
+        public async Task<User?> GetUserByMailOrUserName(
+    IEnumerable<string> userNamesOrEmails,
+    CancellationToken cancellationToken = default)
+{
+    return await _context.Users
+        .Where(u => userNamesOrEmails.Contains(u.Email ?? string.Empty)
+                 || userNamesOrEmails.Contains(u.UserName ?? string.Empty))
+        .FirstOrDefaultAsync(cancellationToken);
+}
+
+
     }
 }

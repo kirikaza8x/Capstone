@@ -4,11 +4,11 @@ using Shared.Application.Common.Commands;
 using Shared.Presentation.Common;
 using Microsoft.AspNetCore.Authorization;
 using Shared.Presentation.Common.Attributes;
-using Users.Application.Features.User.Dtos;
-using Users.Application.Features.User.Commands.RegisterUser;
 using Shared.Application.DTOs;
-using Users.Application.Features.User.Commands.Login;
-using Users.Application.Features.User.Queries;
+using Users.Application.Features.Users.Queries;
+using Users.Application.Features.Users.Dtos;
+using Users.Application.Features.Users.Commands.RegisterUser;
+using Users.Application.Features.Users.Commands.Login;
 
 namespace Users.API.Controllers
 {
@@ -17,30 +17,6 @@ namespace Users.API.Controllers
     {
         public UserController(IMediator mediator) : base(mediator) { }
 
-        // ============================================
-        // BEFORE: Manual handling (verbose)
-        // ============================================
-        // [HttpPost("register")]
-        // [AllowAnonymous]
-        // public async Task<IActionResult> Register_Old(
-        //     [FromBody] RegisterRequestDto request, 
-        //     CancellationToken cancellationToken)
-        // {
-        //     var result = await _mediator.Send(new RegisterUserCommand(request), cancellationToken);
-        //     if (result.IsFailure) return HandleFailure(result);
-        //
-        //     var commit = await _mediator.Send(new SaveChangesCommand(), cancellationToken);
-        //     if (commit.IsFailure) return HandleFailure(commit);
-        //
-        //     return Ok(result);
-        // }
-
-        // ============================================
-        // AFTER: Using HandleResult (cleaner)
-        // ============================================
-        // ============================================
-        // OPTION 1: Return command result (recommended)
-        // ============================================
         [HttpPost("register")]
         [AllowAnonymous]
         public async Task<IActionResult> Register(
@@ -51,7 +27,7 @@ namespace Users.API.Controllers
             if (result.IsFailure) return HandleResult(result);
 
             await _mediator.Send(new SaveChangesCommand(), cancellationToken);
-            return HandleResult(result); // Return the registration result, not commit
+            return HandleResult(result); 
         }
 
         [HttpPost("login")]
@@ -80,27 +56,6 @@ namespace Users.API.Controllers
             return HandleResult(result); // Return the refresh token result
         }
 
-        // ============================================
-        // OPTION 2: If you need to handle SaveChanges failures
-        // ============================================
-        // [HttpPost("register")]
-        // [AllowAnonymous]
-        // public async Task<IActionResult> Register_WithCommitHandling(
-        //     [FromBody] RegisterRequestDto request, 
-        //     CancellationToken cancellationToken)
-        // {
-        //     var result = await _mediator.Send(new RegisterUserCommand(request), cancellationToken);
-        //     if (result.IsFailure) return HandleResult(result);
-        //
-        //     var commit = await _mediator.Send(new SaveChangesCommand(), cancellationToken);
-        //     if (commit.IsFailure) return HandleResult(commit);
-        //
-        //     return HandleResult(result);
-        // }
-
-        // ============================================
-        // For queries, even simpler - single line!
-        // ============================================
         [HttpGet("{id:guid}")]
         [Authorize(Roles = "Admin,Guest,Customer")]
         public async Task<IActionResult> GetById(
@@ -123,7 +78,7 @@ namespace Users.API.Controllers
         }
 
         [HttpGet("me")]
-        [Authorize(Roles = "Admin,Guest,Customer")]
+        // [Authorize(Roles = "Admin,Guest,Customer")]
         public IActionResult GetCurrentUser(
             [SwaggerIgnoreModel]
             [FromCurrentUser] CurrentUserDto user)

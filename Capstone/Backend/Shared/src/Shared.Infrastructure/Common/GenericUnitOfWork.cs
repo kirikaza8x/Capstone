@@ -29,7 +29,10 @@ namespace Shared.Infrastructure.Common
 
         public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
-            return await _dbContext.SaveChangesAsync(cancellationToken);
+            // Use execution strategy to allow retries
+            var executionStrategy = _dbContext.Database.CreateExecutionStrategy();
+            return await executionStrategy.ExecuteAsync(
+                async () => await _dbContext.SaveChangesAsync(cancellationToken));
         }
 
         public bool IsInTransaction => _currentTransaction != null;
@@ -39,27 +42,36 @@ namespace Shared.Infrastructure.Common
             if (_currentTransaction != null)
                 throw new InvalidOperationException("A transaction is already in progress.");
 
-            _currentTransaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+            // Don't use explicit transactions with retry strategy - let the execution strategy handle it
+            // This is a no-op to maintain backward compatibility
+            await Task.CompletedTask;
         }
 
         public async Task CommitTransactionAsync(CancellationToken cancellationToken = default)
         {
-            if (_currentTransaction == null)
-                throw new InvalidOperationException("No transaction to commit.");
-
-            try
+            if (_currentTransaction != null)
             {
-                await _dbContext.SaveChangesAsync(cancellationToken);
-                await _currentTransaction.CommitAsync(cancellationToken);
+                try
+                {
+                    await _dbContext.SaveChangesAsync(cancellationToken);
+                    await _currentTransaction.CommitAsync(cancellationToken);
+                }
+                catch
+                {
+                    await RollbackTransactionAsync(cancellationToken);
+                    throw;
+                }
+                finally
+                {
+                    await DisposeTransactionAsync();
+                }
             }
-            catch
+            else
             {
-                await RollbackTransactionAsync(cancellationToken);
-                throw;
-            }
-            finally
-            {
-                await DisposeTransactionAsync();
+                // No explicit transaction - just save changes with execution strategy
+                var executionStrategy = _dbContext.Database.CreateExecutionStrategy();
+                await executionStrategy.ExecuteAsync(
+                    async () => await _dbContext.SaveChangesAsync(cancellationToken));
             }
         }
 

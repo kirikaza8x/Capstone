@@ -3,10 +3,10 @@ using Shared.Application.Abstractions.Authentication;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Application.Common.ResponseModel;
 using Shared.Application.DTOs;
-using Users.Application.Features.User.Commands.Login;
+using Users.Application.Features.Users.Commands.Login;
 using Users.Domain.Repositories;
 
-namespace ClothingStore.Application.Features.User.Commands.RegisterUser
+namespace ClothingStore.Application.Features.Users.Commands.RegisterUser
 {
 
     public class RefreshTokenCommandHandler : ICommandHandler<RefreshTokenCommand, LoginResponseDto>

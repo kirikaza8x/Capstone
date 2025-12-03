@@ -1,11 +1,11 @@
 using AutoMapper;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Application.Common.ResponseModel;
-using Users.Application.Features.User.Dtos;
-using Users.Application.Features.User.Queries;
+using Users.Application.Features.Users.Dtos;
+using Users.Application.Features.Users.Queries;
 using Users.Domain.Repositories;
 
-namespace ClothingStore.Application.Features.User.Queries
+namespace ClothingStore.Application.Features.Users.Queries
 {
     public class GetAllUsersQueryHandler 
         : IQueryHandler<GetAllUsersQuery, IEnumerable<UserResponseDto>>

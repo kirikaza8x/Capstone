@@ -9,6 +9,10 @@ namespace Users.Domain.Repositories
         Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default);
         Task<User?> LoginAsync(string userNameOrEmail, string password, CancellationToken cancellationToken = default);
         Task<User?> GetUserByMailOrUserName(string userNameOrEmail, CancellationToken cancellationToken = default);
+        Task<User?> GetUserByMailOrUserName(
+    IEnumerable<string> userNamesOrEmails,
+    CancellationToken cancellationToken = default);
+
 
     }
 }

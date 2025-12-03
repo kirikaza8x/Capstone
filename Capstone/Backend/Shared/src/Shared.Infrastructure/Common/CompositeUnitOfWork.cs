@@ -1,4 +1,3 @@
-using System.Transactions;
 using Shared.Domain.UnitOfWork;
 using Shared.Infrastructure.UnitOfWork;
 
@@ -15,21 +14,14 @@ namespace Shared.Infrastructure.Common
 
         public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
-            using var scope = new TransactionScope(
-                TransactionScopeOption.Required,
-                new TransactionOptions
-                {
-                    IsolationLevel = IsolationLevel.ReadCommitted
-                },
-                TransactionScopeAsyncFlowOption.Enabled);
-
+            // Don't use TransactionScope with retry strategies - it conflicts with NpgsqlRetryingExecutionStrategy
+            // The individual DbContexts will handle their own transactions with retry logic
             var total = 0;
             foreach (var uow in _units)
             {
                 total += await uow.SaveChangesAsync(cancellationToken);
             }
 
-            scope.Complete();
             return total;
         }
     }

@@ -1,7 +1,7 @@
 using Shared.Application.DTOs;
 using System.ComponentModel;
 
-namespace Users.Application.Features.User.Dtos;
+namespace Users.Application.Features.Users.Dtos;
 
 public class UserResponseDto : BaseDto<Guid>
 {
