@@ -24,7 +24,6 @@ namespace Users.API.Controllers
             CancellationToken cancellationToken)
         {
             var result = await _mediator.Send(new RegisterUserCommand(request), cancellationToken);
-            await _mediator.Send(new SaveChangesCommand(), cancellationToken);
 
             return HandleResult(result); 
         }
@@ -37,8 +36,8 @@ namespace Users.API.Controllers
         {
             var result = await _mediator.Send(new LoginUserCommand(request), cancellationToken);
 
-            await _mediator.Send(new SaveChangesCommand(), cancellationToken);
-            return HandleResult(result); // Return the login result with tokens
+            //await _mediator.Send(new SaveChangesCommand(), cancellationToken);
+            return HandleResult(result); 
         }
 
         [HttpPost("refresh-token")]
@@ -49,7 +48,6 @@ namespace Users.API.Controllers
         {
             var result = await _mediator.Send(new RefreshTokenCommand(request), cancellationToken);
 
-            await _mediator.Send(new SaveChangesCommand(), cancellationToken);
             return HandleResult(result); // Return the refresh token result
         }
 
@@ -75,7 +73,7 @@ namespace Users.API.Controllers
         }
 
         [HttpGet("me")]
-        // [Authorize(Roles = "Admin,Guest,Customer")]
+        [Authorize(Roles = "Admin,Guest,Customer")]
         public IActionResult GetCurrentUser(
             [FromCurrentUser] CurrentUserDto user)
         {

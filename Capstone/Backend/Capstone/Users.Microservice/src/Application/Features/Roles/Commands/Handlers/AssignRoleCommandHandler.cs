@@ -34,13 +34,10 @@ namespace Users.Application.Features.Roles.Commands
                 return Result.Failure<Result>(new Error("RoleNotFound", "Role does not exist."));
             }
 
-            // 3. Assign role (domain logic)
             user.AssignRole(role);
 
-            // 4. Persist changes
             await _userRepository.UpdateAsync(user, cancellationToken);
 
-            // 5. Map response
             return Result.Success();
         }
     }

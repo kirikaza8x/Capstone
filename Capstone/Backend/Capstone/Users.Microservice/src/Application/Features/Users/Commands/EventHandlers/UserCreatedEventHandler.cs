@@ -38,7 +38,7 @@ namespace Users.Application.Features.Users.EventHandlers
                     return;
                 }
 
-                var defaultRole = await _roleRepository.GetByRoleNameAsync("admin", cancellationToken);
+                var defaultRole = await _roleRepository.GetByRoleNameAsync("user", cancellationToken);
                 if (defaultRole == null)
                 {
                     _logger.LogWarning("Default admin role not found");
@@ -48,7 +48,6 @@ namespace Users.Application.Features.Users.EventHandlers
                 _logger.LogInformation("Assigning admin role to user {UserId}", notification.UserId);
                 user.AssignRole(defaultRole);
 
-                // Entity is tracked, just save
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
                 _logger.LogInformation("Successfully assigned admin role to user {UserId}", notification.UserId);

@@ -3,5 +3,5 @@ using Users.Application.Features.Roles.Dtos;
 
 namespace Users.Application.Features.Roles.Commands
 {
-    public record UpdateRoleCommand(Guid Id, RoleRequestDto UpdateRoleRequest) : ICommand<RoleResponseDto>;
+    public record UpdateRoleCommand(Guid Id, RoleRequestDto UpdateRoleRequest) : ICommand<RoleResponseDto>,ITransactionalCommand;
 }

@@ -9,6 +9,6 @@ namespace Users.Application.Features.Users.Commands.RegisterUser
     //     string Password
     // ) : IRequest<UserResponse>;
 
-    public record RegisterUserCommand(RegisterRequestDto RegisterRequest) : ICommand<UserResponseDto>;
+    public record RegisterUserCommand(RegisterRequestDto RegisterRequest) : ICommand<UserResponseDto>, ITransactionalCommand;
 
 }
