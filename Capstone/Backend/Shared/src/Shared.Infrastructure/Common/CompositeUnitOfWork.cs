@@ -14,8 +14,6 @@ namespace Shared.Infrastructure.Common
 
         public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
-            // Don't use TransactionScope with retry strategies - it conflicts with NpgsqlRetryingExecutionStrategy
-            // The individual DbContexts will handle their own transactions with retry logic
             var total = 0;
             foreach (var uow in _units)
             {

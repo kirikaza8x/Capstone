@@ -1,6 +1,5 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Shared.Application.Common.Commands;
 using Shared.Presentation.Common;
 using Microsoft.AspNetCore.Authorization;
 using Shared.Presentation.Common.Attributes;

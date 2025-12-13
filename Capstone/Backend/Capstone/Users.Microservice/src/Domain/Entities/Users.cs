@@ -48,7 +48,7 @@ namespace Users.Domain.Entities
                 Roles = new List<Role>(),
             };
             if (role != null) user.AssignRole(role);
-                user.RaiseEvent(new UserCreatedEvent(user.Id, user.Email ?? string.Empty, user.UserName));
+            user.RaiseEvent(new UserCreatedEvent(user.Id, user.Email ?? string.Empty, user.UserName));
             return user;
         }
 
@@ -113,7 +113,51 @@ namespace Users.Domain.Entities
 
         protected override void Apply(IDomainEvent @event)
         {
-            // No-op since events are turned off
+            switch (@event)
+            {
+                case UserCreatedEvent e:
+                    Id = e.UserId;
+                    Email = e.Email;
+                    UserName = e.UserName;
+                    IsDeleted = false;
+                    break;
+
+                    //         case UserEmailChangedEvent e:
+                    //             Email = e.NewEmail;
+                    //             break;
+
+                    //         case UserPasswordChangedEvent e:
+                    //             // You might not store the password hash in the event,
+                    //             // but if you do, apply it here.
+                    //             PasswordHash = e.NewPasswordHash;
+                    //             break;
+
+                    //         case UserProfileUpdatedEvent e:
+                    //             FirstName = e.FirstName;
+                    //             LastName = e.LastName;
+                    //             PhoneNumber = e.PhoneNumber;
+                    //             Address = e.Address;
+                    //             ProfileImageUrl = e.ProfileImageUrl;
+                    //             break;
+
+                    //         case UserDeactivatedEvent e:
+                    //             IsDeleted = true;
+                    //             break;
+
+                    //         case UserRoleAssignedEvent e:
+                    //             Roles.Add(new Role(e.RoleId, e.RoleName));
+                    //             break;
+
+                    //         case UserRoleRemovedEvent e:
+                    //             Roles.Remove(Roles.FirstOrDefault(r => r.Id == e.RoleId));
+                    //             break;
+
+                    //         case UserRefreshTokenSetEvent e:
+                    //             RefreshToken = e.Token;
+                    //             RefreshTokenExpiry = e.Expiry;
+                    //             break;
+            }
         }
+
     }
 }

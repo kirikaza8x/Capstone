@@ -19,9 +19,9 @@ public class SwaggerConfigSetup : IConfigureOptions<SwaggerGenOptions>
     {
         options.SwaggerDoc("v1", new OpenApiInfo
         {
-            Title = _config["Title"] ?? "SmartCalo API",
+            Title = _config["Title"] ?? "API",
             Version = _config["Version"] ?? "v1",
-            Description = _config["Description"] ?? "API documentation for SmartCalo"
+            Description = _config["Description"] ?? "API documentation for the service"
         });
 
         options.DocumentFilter<ServersDocumentFilter>();

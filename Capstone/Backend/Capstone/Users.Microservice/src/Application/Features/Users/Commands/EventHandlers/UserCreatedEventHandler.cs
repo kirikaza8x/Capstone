@@ -1,12 +1,12 @@
-using MediatR;
 using Microsoft.Extensions.Logging;
+using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.UnitOfWork;
 using Users.Domain.Events;
 using Users.Domain.Repositories;
 
 namespace Users.Application.Features.Users.EventHandlers
 {
-    public class UserCreatedEventHandler : INotificationHandler<UserCreatedEvent>
+    public class UserCreatedEventHandler : IEventHandler<UserCreatedEvent>
     {
         private readonly IUserRepository _userRepository;
         private readonly IRoleRepository _roleRepository;

@@ -10,8 +10,18 @@ namespace Users.Api
     {
         public static IServiceCollection AddPresentation(this IServiceCollection services, IConfiguration configuration)
         {
-            services.ConfigureOptions<SwaggerConfigSetup>();
+            // Register swagger gen with default v1 document
+                    // services.AddSwaggerGen(options =>
+                    // {
+                    //     options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+                    //     {
+                    //         Title = "User API",
+                    //         Version = "v1",
+                    //         Description = "API documentation for User Service"
+                    //     });
+                    // });
             services.AddSwaggerGen();
+            services.ConfigureOptions<SwaggerConfigSetup>();        
             services.AddControllers(options =>
             {
                 options.ModelBinderProviders.Insert(0, new CurrentUserModelBinderProvider());

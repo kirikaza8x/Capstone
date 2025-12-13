@@ -6,6 +6,7 @@ using System.Linq.Expressions;
 
 namespace Shared.Infrastructure.Common
 {
+    // The class implements both IRepository<T> 
     public class GenericRepository<T> : IRepository<T> where T : class, IEntity
     {
         private readonly DbContext _dbContext;
@@ -16,6 +17,8 @@ namespace Shared.Infrastructure.Common
             _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
             _dbSet = _dbContext.Set<T>();
         }
+
+        #region Standard Operations (IRepository<T>)
 
         public async Task AddAsync(T entity, CancellationToken cancellationToken = default)
         {
@@ -72,7 +75,45 @@ namespace Shared.Infrastructure.Common
             }
         }
 
-        public async Task<int> UpdateRange(
+        public async Task<bool> DeleteAsync(T entity, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var entry = _dbContext.Entry(entity);
+                if (entry.State == EntityState.Detached)
+                {
+                    _dbSet.Attach(entity);
+                }
+
+                _dbSet.Remove(entity);
+
+                return await Task.FromResult(true);
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Error deleting entity of type {typeof(T).Name}", ex);
+            }
+        }
+
+        public async Task DeleteRangeAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                _dbSet.RemoveRange(entities);
+                await Task.CompletedTask;
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Error deleting range of entities of type {typeof(T).Name}", ex);
+            }
+        }
+
+        #endregion
+
+        #region Batch Operations (EF Core 7+ / IBulkOperationRepository<T>)
+
+        // Renamed from UpdateRange to UpdateRangeAsync to match IBulkOperationRepository<T> method and async convention
+        public async Task<int> UpdateRangeAsync(
             Expression<Func<T, bool>> predicate,
             Expression<Func<SetPropertyCalls<T>, SetPropertyCalls<T>>> setPropertyCalls,
             CancellationToken cancellationToken = default)
@@ -90,42 +131,8 @@ namespace Shared.Infrastructure.Common
             }
         }
 
-        public async Task<bool> DeleteAsync(T entity, CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                var entry = _dbContext.Entry(entity);
-                if (entry.State == EntityState.Detached)
-                {
-                    _dbSet.Attach(entity);
-                }
-
-                _dbSet.Remove(entity);
-
-                return await Task.FromResult(true);
-            }
-            catch (Exception ex)
-            {
-                // Log if needed, then rethrow or return false
-                throw new InvalidOperationException($"Error deleting entity of type {typeof(T).Name}", ex);
-            }
-        }
-
-
-        public async Task DeleteRangeAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                _dbSet.RemoveRange(entities);
-                await Task.CompletedTask;
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException($"Error deleting range of entities of type {typeof(T).Name}", ex);
-            }
-        }
-
-        public async Task<int> DeleteRange(
+        // Renamed from DeleteRange to DeleteRangeAsync to match IBulkOperationRepository<T> method and async convention
+        public async Task<int> DeleteRangeAsync(
             Expression<Func<T, bool>> predicate,
             CancellationToken cancellationToken = default)
         {
@@ -141,6 +148,10 @@ namespace Shared.Infrastructure.Common
                     $"Error deleting entities of type {typeof(T).Name} by predicate", ex);
             }
         }
+
+        #endregion
+
+        #region Query Operations (IRepository<T>)
 
         public async Task<bool> AnyAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default)
         {
@@ -188,22 +199,28 @@ namespace Shared.Infrastructure.Common
             }
         }
 
-        public async Task<IEnumerable<T>> GetAllAsync(CancellationToken cancellationToken = default, params Expression<Func<T, object>>[] includes)
+        public async Task<IEnumerable<T>> GetAllAsync(
+    CancellationToken cancellationToken = default,
+    params Expression<Func<T, object>>[] includes)
         {
             try
             {
                 var query = GetQueryable();
+
                 if (includes != null && includes.Any())
                 {
                     query = includes.Aggregate(query, (current, include) => current.Include(include));
                 }
+
                 return await query.ToListAsync(cancellationToken);
             }
             catch (Exception ex)
             {
-                throw new InvalidOperationException($"Error retrieving all entities of type {typeof(T).Name}", ex);
+                throw new InvalidOperationException(
+                    $"Error retrieving all entities of type {typeof(T).Name}", ex);
             }
         }
+
 
         public async Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>>? predicate = null, CancellationToken cancellationToken = default, params Expression<Func<T, object>>[] includes)
         {
@@ -275,6 +292,8 @@ namespace Shared.Infrastructure.Common
                 throw new InvalidOperationException($"Error retrieving entity of type {typeof(T).Name} by Id", ex);
             }
         }
+
+        #endregion
 
         protected IQueryable<T> GetQueryable(bool asNoTracking = true)
         {

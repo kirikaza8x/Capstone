@@ -13,7 +13,6 @@ using Shared.Domain.UnitOfWork;
 using Shared.Infrastructure.Authentication;
 using Shared.Infrastructure.Common;
 using Shared.Infrastructure.Configs.Security;
-using Shared.Infrastructure.Data.Interceptors;
 using Shared.Infrastructure.UnitOfWork;
 using Users.Infrastructure.Persistence.Contexts;
 using Microsoft.EntityFrameworkCore;

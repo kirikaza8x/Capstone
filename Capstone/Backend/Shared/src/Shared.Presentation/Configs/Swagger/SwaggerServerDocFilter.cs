@@ -14,11 +14,11 @@ public class ServersDocumentFilter : IDocumentFilter
                 Url = "http://localhost:5152",
                 Description = "Local ASP.NET Core server"
             },
-            // new OpenApiServer
-            // {
-            //     Url = "http://127.0.0.1:8000",
-            //     Description = "FastAPI AI server"
-            // },
+            new OpenApiServer
+            {
+                Url = "http://localhost:5151",
+                Description = "Local ASP.NET Core server"
+            },
             
         };
     }

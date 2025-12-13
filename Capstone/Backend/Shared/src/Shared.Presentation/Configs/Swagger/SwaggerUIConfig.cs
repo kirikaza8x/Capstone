@@ -5,13 +5,16 @@ namespace Shared.Presentation.Configs.Swagger;
 
 public static class SwaggerUIConfig
 {
-    public static void ConfigureSwaggerUI(SwaggerUIOptions c)
+    public static void ConfigureSwaggerUI(
+    SwaggerUIOptions c,
+    string documentName = "v1",
+    string serviceName = "API",
+    string? routePrefix = null)
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", " API v1");
+        c.SwaggerEndpoint($"/swagger/{documentName}/swagger.json", $"{serviceName} {documentName}");
 
-        // Optional: customize UI
-        c.DocumentTitle = " API";
-        c.RoutePrefix = "swagger"; 
-
+        c.DocumentTitle = $"{serviceName} Documentation";
+        c.RoutePrefix = routePrefix ?? string.Empty;
     }
+
 }

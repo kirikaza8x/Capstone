@@ -16,7 +16,14 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.UseSwagger();
-    app.UseSwaggerUI(SwaggerUIConfig.ConfigureSwaggerUI);
+    app.UseSwaggerUI(c =>
+        SwaggerUIConfig.ConfigureSwaggerUI(
+            c,
+            documentName: "v1",        // match AddSwaggerGen doc name
+            serviceName: "User API",   // friendly label in UI
+            routePrefix: "user-doc"   // UI served at /user-docs
+        )
+    );
 }
 
 app.UseHttpsRedirection();
@@ -29,5 +36,3 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
-
-
