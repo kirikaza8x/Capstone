@@ -6,6 +6,7 @@ using ConfigsDB.Application.Features.ConfigSettings.Dtos;
 using MediatR;
 using Shared.Presentation.Common.Attributes;
 using Shared.Application.DTOs;
+using ConfigsDB.Application.Features.ConfigSettings.Queries.Records;
 
 namespace ConfigsDB.API.Controllers
 {
@@ -125,6 +126,27 @@ namespace ConfigsDB.API.Controllers
             var result = await _mediator.Send(new BulkDeleteConfigSettingsCommand(ids), cancellationToken);
             return HandleResult(result);
         }
+
+        [HttpGet("all")]
+        //[Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetAll(
+            CancellationToken cancellationToken)
+        {
+            var result = await _mediator.Send(new GetAllConfigSettingsQuery(), cancellationToken);
+            return HandleResult(result);
+        }
+
+        [HttpGet("{id:guid}")]
+        //[Authorize(Roles = "Admin,Guest,Customer")]
+        public async Task<IActionResult> GetById(
+            Guid id,
+            // [FromCurrentUser] CurrentUserDto user,
+            CancellationToken cancellationToken)
+        {
+            var result = await _mediator.Send(new GetConfigSettingByIdQuery(id), cancellationToken);
+            return HandleResult(result);
+        }
+
 
         [HttpGet("health")]
         [AllowAnonymous]
