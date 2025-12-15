@@ -17,6 +17,10 @@ using Shared.Infrastructure.UnitOfWork;
 using Users.Infrastructure.Persistence.Contexts;
 using Microsoft.EntityFrameworkCore;
 using Shared.Infrastructure.Configs.Database;
+using Shared.Application.Events;
+using Shared.Infrastructure.Events;
+using MassTransit;
+using System.ComponentModel.DataAnnotations;
 namespace Users.Infrastructure
 {
     public static class DependencyInjection
@@ -117,6 +121,67 @@ namespace Users.Infrastructure
             services.AddScoped<ICurrentUserService, CurrentUserService>();
             services.AddHttpContextAccessor();
             services.AddProblemDetails();
+
+            services.AddScoped<IServiceBusPublisher, MassTransitServiceBusPublisher>();
+        
+        // ⭐ NEW: Configure MassTransit with RabbitMQ
+        services.AddMassTransit(x =>
+        {
+            // Register all consumers in this assembly
+            x.AddConsumers(typeof(DependencyInjection).Assembly);
+            
+            // Optional: Register saga state machines
+            // x.AddSagaStateMachine<UserRegistrationStateMachine, UserRegistrationState>()
+            //     .InMemoryRepository();  // Use Redis/SQL in production
+            
+            x.UsingRabbitMq((context, cfg) =>
+            {
+                var serviceName = configuration["MassTransit:ServiceName"] ?? "UserService";
+                
+                // RabbitMQ connection
+                cfg.Host(configuration["RabbitMQ:Host"] ?? "localhost", "/", h =>
+                {
+                    h.Username(configuration["RabbitMQ:Username"] ?? "guest");
+                    h.Password(configuration["RabbitMQ:Password"] ?? "guest");
+                });
+
+                // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                //  RETRY POLICY - Handles transient failures gracefully
+                // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                cfg.UseMessageRetry(r => 
+                {
+                    r.Incremental(
+                        retryLimit: 5,                          // Retry up to 5 times
+                        initialInterval: TimeSpan.FromSeconds(1),
+                        intervalIncrement: TimeSpan.FromSeconds(2)  // 1s, 3s, 5s, 7s, 9s
+                    );
+                    
+                    // Don't retry on validation/business errors
+                    r.Ignore<ArgumentException>();
+                    r.Ignore<InvalidOperationException>();
+                    r.Ignore<ValidationException>();
+                });
+
+                // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                //  CIRCUIT BREAKER - Prevents cascading failures
+                // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                cfg.UseCircuitBreaker(cb =>
+                {
+                    cb.TrackingPeriod = TimeSpan.FromMinutes(1);
+                    cb.TripThreshold = 15;              // Open if 15% of calls fail
+                    cb.ActiveThreshold = 10;            // Minimum 10 attempts needed
+                    cb.ResetInterval = TimeSpan.FromMinutes(5);  // Try again after 5 min
+                });
+
+                // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                //  RATE LIMITING - Protects downstream services
+                // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                cfg.UseRateLimit(1000, TimeSpan.FromSeconds(1));
+
+                // Auto-configure endpoints from consumers
+                cfg.ConfigureEndpoints(context, new KebabCaseEndpointNameFormatter(serviceName, false));
+            });
+        });
 
             return services;
         }

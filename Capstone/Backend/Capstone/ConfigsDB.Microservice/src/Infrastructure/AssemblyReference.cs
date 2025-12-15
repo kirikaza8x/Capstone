@@ -16,6 +16,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
+using Shared.Application.Events;
+using Shared.Infrastructure.Events;
+using MassTransit;
+using System.Reflection;
 namespace ConfigsDB.Domain
 {
     public static class InfrastructureAssemblyReference { }
@@ -123,6 +127,46 @@ namespace ConfigsDB.Domain
             services.AddScoped<ICurrentUserService, CurrentUserService>();
             services.AddHttpContextAccessor();
             services.AddProblemDetails();
+
+
+            services.AddScoped<IServiceBusPublisher, MassTransitServiceBusPublisher>();
+
+            //  Configure MassTransit
+            services.AddMassTransit(x =>
+            {
+                x.AddConsumers(typeof(InfrastructureAssemblyReference).Assembly);
+
+                x.UsingRabbitMq((context, cfg) =>
+                {
+                    var serviceName = configuration["MassTransit:ServiceName"] ?? "ConfigDbService";
+
+                    cfg.Host(configuration["RabbitMQ:Host"] ?? "localhost", "/", h =>
+                    {
+                        h.Username(configuration["RabbitMQ:Username"] ?? "guest");
+                        h.Password(configuration["RabbitMQ:Password"] ?? "guest");
+                    });
+
+                    //  retry, circuit breaker, rate limit policies as UserService
+                    cfg.UseMessageRetry(r =>
+                    {
+                        r.Incremental(5, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(2));
+                        r.Ignore<ArgumentException>();
+                        r.Ignore<InvalidOperationException>();
+                    });
+
+                    cfg.UseCircuitBreaker(cb =>
+                    {
+                        cb.TrackingPeriod = TimeSpan.FromMinutes(1);
+                        cb.TripThreshold = 15;
+                        cb.ActiveThreshold = 10;
+                        cb.ResetInterval = TimeSpan.FromMinutes(5);
+                    });
+
+                    cfg.UseRateLimit(1000, TimeSpan.FromSeconds(1));
+
+                    cfg.ConfigureEndpoints(context, new KebabCaseEndpointNameFormatter(serviceName, false));
+                });
+            });
 
             return services;
         }
