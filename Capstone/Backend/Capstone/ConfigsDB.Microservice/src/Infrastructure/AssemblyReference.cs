@@ -142,8 +142,8 @@ namespace ConfigsDB.Domain
 
                     cfg.Host(configuration["RabbitMQ:Host"] ?? "localhost", "/", h =>
                     {
-                        h.Username(configuration["RabbitMQ:Username"] ?? "guest");
-                        h.Password(configuration["RabbitMQ:Password"] ?? "guest");
+                        h.Username(configuration["RabbitMQ:Username"] ?? "admin");
+                        h.Password(configuration["RabbitMQ:Password"] ?? "admin123");
                     });
 
                     //  retry, circuit breaker, rate limit policies as UserService

@@ -4,10 +4,10 @@ using Shared.Application.Abstractions.Messaging;
 using Shared.Application.Common.ResponseModel;
 using ConfigsDB.Application.Features.ConfigSettings.Dtos;
 using ConfigsDB.Domain.Repositories;
+using ConfigsDB.Application.Abstractions.Configs; 
 
 namespace ConfigsDB.Application.Features.ConfigSettings.Commands.Handlers
 {
-    // Validator
     public class UpdateConfigSettingCommandValidator : AbstractValidator<UpdateConfigSettingCommand>
     {
         public UpdateConfigSettingCommandValidator()
@@ -25,17 +25,21 @@ namespace ConfigsDB.Application.Features.ConfigSettings.Commands.Handlers
         }
     }
 
-    // Handler
     public class UpdateConfigSettingCommandHandler 
         : ICommandHandler<UpdateConfigSettingCommand, ConfigSettingResponseDto>
     {
         private readonly IConfigSettingRepository _repository;
         private readonly IMapper _mapper;
+        private readonly IConfigDistributor _distributor; 
 
-        public UpdateConfigSettingCommandHandler(IConfigSettingRepository repository, IMapper mapper)
+        public UpdateConfigSettingCommandHandler(
+            IConfigSettingRepository repository, 
+            IMapper mapper, 
+            IConfigDistributor distributor)
         {
             _repository = repository;
             _mapper = mapper;
+            _distributor = distributor;
         }
 
         public async Task<Result<ConfigSettingResponseDto>> Handle(
@@ -50,19 +54,21 @@ namespace ConfigsDB.Application.Features.ConfigSettings.Commands.Handlers
                     new Error("ConfigSettingNotFound", $"Configuration with ID '{command.Id}' not found."));
             }
 
-            // Update value (audit fields handled by interceptor)
             config.UpdateValue(command.Request.Value);
 
-            // Update description if provided
             if (command.Request.Description != null)
             {
                 config.UpdateDescription(command.Request.Description);
             }
 
-            // Update active status
             config.SetActive(command.Request.IsActive);
 
             await _repository.UpdateAsync(config, cancellationToken);
+
+            // 3. BROADCAST CHANGES (The "Map Way")
+            // The distributor will find the right Strategy (like JwtSyncStrategy) 
+            // and publish the integration event automatically.
+            await _distributor.DistributeAsync(config.Key, config.Environment, cancellationToken);
 
             var response = _mapper.Map<ConfigSettingResponseDto>(config);
             return Result.Success(response);

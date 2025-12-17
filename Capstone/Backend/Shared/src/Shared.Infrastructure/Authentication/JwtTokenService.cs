@@ -2,10 +2,10 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Shared.Application.Abstractions.Authentication;
-using Shared.Infrastructure.Configs.Security;
 
 namespace Shared.Authentication;
 
@@ -27,25 +27,93 @@ namespace Shared.Authentication;
 /// - Generated via <see cref="GenerateRefreshToken"/>  
 /// - Validated by direct comparison and expiry check — not decoded or parsed  
 ///
-///  <b>Note:</b> Do not use <see cref="ValidateToken"/> on refresh tokens, as they are not JWTs.
+/// <para><b>Hot-Reload Support:</b></para>
+/// - Configuration can be updated at runtime via <see cref="UpdateConfigurationAsync"/>
+/// - Listens to JwtConfigurationChangedEvent from ConfigDbService
+/// - No service restart required for config changes
+///
+/// <b>Note:</b> Do not use <see cref="ValidateToken"/> on refresh tokens, as they are not JWTs.
 /// </summary>
-public class JwtTokenService : IJwtTokenService
+public class JwtTokenService : IJwtTokenService, IConfigurableJwtService
 {
-    private readonly JwtConfigs _jwt;
-    public JwtTokenService(IOptions<JwtConfigs> options)
+    private readonly JwtConfigs _defaultConfig;
+    private readonly ILogger<JwtTokenService> _logger;
+    
+    //  In-memory cached values (updated via hot-reload)
+    private int _expiryMinutes;
+    private int _refreshTokenExpiryDays;
+    
+    // Immutable values (cannot be hot-reloaded for security reasons)
+    private readonly string _secret;
+    private readonly string _issuer;
+    private readonly string _audience;
+
+    public JwtTokenService(
+        IOptions<JwtConfigs> options,
+        ILogger<JwtTokenService> logger)
     {
-        _jwt = options.Value;
+        _defaultConfig = options.Value;
+        _logger = logger;
+        
+        //  Initialize from config
+        _expiryMinutes = _defaultConfig.ExpiryMinutes;
+        _refreshTokenExpiryDays = _defaultConfig.RefreshTokenExpiryDays;
+        
+        // Immutable security settings
+        _secret = _defaultConfig.Secret;
+        _issuer = _defaultConfig.Issuer;
+        _audience = _defaultConfig.Audience;
+        
+        _logger.LogInformation(
+            "JwtTokenService initialized: ExpiryMinutes={ExpiryMinutes}, RefreshTokenExpiryDays={RefreshDays}",
+            _expiryMinutes,
+            _refreshTokenExpiryDays);
     }
 
     /// <inheritdoc />
-    public int ExpiryMinutes => _jwt.ExpiryMinutes;
-    public int RefreshTokenExpiryDays => _jwt.RefreshTokenExpiryDays;
+    public int ExpiryMinutes => _expiryMinutes;  //  Now returns hot-reloadable value
+    
+    /// <inheritdoc />
+    public int RefreshTokenExpiryDays => _refreshTokenExpiryDays;  //  Now returns hot-reloadable value
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    //  NEW: Hot-Reload Configuration Support
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    
+    /// <summary>
+    /// Updates JWT configuration at runtime without service restart
+    /// Called by JwtConfigurationChangedConsumer when config changes
+    /// </summary>
+    /// <param name="expiryMinutes">New access token expiry in minutes</param>
+    /// <param name="refreshTokenExpiryDays">New refresh token expiry in days</param>
+    public Task UpdateConfigurationAsync(int expiryMinutes, int refreshTokenExpiryDays)
+    {
+        var oldExpiry = _expiryMinutes;
+        var oldRefreshDays = _refreshTokenExpiryDays;
+        
+        //  Update in-memory values (thread-safe for reading)
+        _expiryMinutes = expiryMinutes;
+        _refreshTokenExpiryDays = refreshTokenExpiryDays;
+        
+        _logger.LogInformation(
+            "JWT configuration updated: " +
+            "ExpiryMinutes {OldExpiry}→{NewExpiry}, " +
+            "RefreshTokenExpiryDays {OldRefreshDays}→{NewRefreshDays}",
+            oldExpiry, _expiryMinutes,
+            oldRefreshDays, _refreshTokenExpiryDays);
+        
+        return Task.CompletedTask;
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // Existing Methods (Use hot-reloadable values)
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     /// <inheritdoc />
     public string GenerateToken(Guid userId, string? email, string? name, IEnumerable<string> roles)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.ASCII.GetBytes(_jwt.Secret);
+        var key = Encoding.ASCII.GetBytes(_secret);
 
         var claims = new List<Claim>
         {
@@ -60,9 +128,9 @@ public class JwtTokenService : IJwtTokenService
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
-            Expires = DateTime.UtcNow.AddMinutes(_jwt.ExpiryMinutes),
-            Issuer = _jwt.Issuer,
-            Audience = _jwt.Audience,
+            Expires = DateTime.UtcNow.AddMinutes(_expiryMinutes),  //  Uses hot-reloadable value
+            Issuer = _issuer,
+            Audience = _audience,
             SigningCredentials = new SigningCredentials(
                 new SymmetricSecurityKey(key),
                 SecurityAlgorithms.HmacSha256Signature)
@@ -78,24 +146,25 @@ public class JwtTokenService : IJwtTokenService
         try
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_jwt.Secret);
+            var key = Encoding.ASCII.GetBytes(_secret);
 
             var validationParameters = new TokenValidationParameters
             {
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = new SymmetricSecurityKey(key),
                 ValidateIssuer = true,
-                ValidIssuer = _jwt.Issuer,
+                ValidIssuer = _issuer,
                 ValidateAudience = true,
-                ValidAudience = _jwt.Audience,
+                ValidAudience = _audience,
                 ValidateLifetime = !allowExpired,
                 ClockSkew = TimeSpan.Zero
             };
 
             return tokenHandler.ValidateToken(token, validationParameters, out _);
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogDebug(ex, "Token validation failed");
             return null;
         }
     }
@@ -118,8 +187,9 @@ public class JwtTokenService : IJwtTokenService
             var jsonToken = tokenHandler.ReadJwtToken(token);
             return jsonToken.ValidTo < DateTime.UtcNow;
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogDebug(ex, "Failed to check token expiry");
             return true;
         }
     }
@@ -138,9 +208,10 @@ public class JwtTokenService : IJwtTokenService
 
             return (int)remaining.TotalMinutes;
         }
-        catch
+        catch (Exception ex)
         {
             // If parsing fails, treat as expired
+            _logger.LogDebug(ex, "Failed to get token expiry time");
             return -1;
         }
     }
