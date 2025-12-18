@@ -1,39 +1,55 @@
-using ConfigsDB.Infrastructure.Persistence.Contexts;
-using Infrastructure.Data.Interceptors;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.Logging; // Added for logging
+
+using MassTransit;
+
+using Infrastructure.Data.Interceptors;
+
+using ConfigsDB.Infrastructure.Persistence.Contexts;
+using ConfigsDB.Application.Abstractions.Configs;
+using ConfigsDB.Application.Services;
+
 using Shared.Application.Abstractions.Authentication;
+using Shared.Application.Events;
 using Shared.Domain.Repositories;
 using Shared.Domain.UnitOfWork;
 using Shared.Infrastructure.Authentication;
 using Shared.Infrastructure.Common;
 using Shared.Infrastructure.Configs.Database;
 using Shared.Infrastructure.Configs.Security;
-using Shared.Infrastructure.UnitOfWork;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using System.Text;
-using Microsoft.IdentityModel.Tokens;
-using Shared.Application.Events;
+using Shared.Infrastructure.Configs.MessageBus; // Added reference to new config
 using Shared.Infrastructure.Events;
-using MassTransit;
-using System.Reflection;
+using Shared.Infrastructure.UnitOfWork;
+using System.ComponentModel.DataAnnotations;
+
 namespace ConfigsDB.Domain
 {
     public static class InfrastructureAssemblyReference { }
+
     public static class DependencyInjection
     {
         public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
             var infrasAssembly = typeof(InfrastructureAssemblyReference).Assembly;
-            // Configuration options
+
+            // ----------------------------------------------------------------
+            // Options configuration
+            // ----------------------------------------------------------------
             services.ConfigureOptions<ErrorHandlingConfigSetup>();
             services.ConfigureOptions<DatabaseConfigSetup>();
             services.ConfigureOptions<JwtConfigSetup>();
+            services.ConfigureOptions<RabbitMqConfigSetup>(); 
 
-            // EF Core + interceptors
+            // ----------------------------------------------------------------
+            // EF Core: interceptors + DbContext
+            // ----------------------------------------------------------------
             services.Scan(scan => scan
                 .FromAssemblyOf<AuditableEntityInterceptor>()
                 .AddClasses(classes => classes.AssignableTo<ISaveChangesInterceptor>())
@@ -42,47 +58,45 @@ namespace ConfigsDB.Domain
 
             services.AddDbContext<ConfigSettingDbContext>((sp, options) =>
             {
-                var dbConfig = sp.GetRequiredService<
-                IOptions<DatabaseConfig>>().Value;
-                options.UseNpgsql(dbConfig.ConnectionString, a =>
+                var dbConfig = sp.GetRequiredService<IOptions<DatabaseConfig>>().Value;
+
+                options.UseNpgsql(dbConfig.ConnectionString, npgsql =>
                 {
                     if (dbConfig.MaxRetryCount > 0)
-                    {
-                        a.EnableRetryOnFailure(dbConfig.MaxRetryCount);
-                    }
+                        npgsql.EnableRetryOnFailure(dbConfig.MaxRetryCount);
+
                     if (dbConfig.CommandTimeout > 0)
-                    {
-                        a.CommandTimeout(dbConfig.CommandTimeout);
-                    }
+                        npgsql.CommandTimeout(dbConfig.CommandTimeout);
                 });
 
                 var interceptors = sp.GetServices<ISaveChangesInterceptor>().ToArray();
                 if (interceptors.Any())
-                {
                     options.AddInterceptors(interceptors);
-                }
-            });
-            // JWT Authentication
-            services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-            .AddJwtBearer(options =>
-            {
-                options.RequireHttpsMetadata = false;
-                options.SaveToken = true;
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuerSigningKey = true,
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ClockSkew = TimeSpan.Zero
-                };
             });
 
-            // Configure JWT options after authentication is added
+            // ----------------------------------------------------------------
+            // Authentication (JWT)
+            // ----------------------------------------------------------------
+            services
+                .AddAuthentication(options =>
+                {
+                    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                })
+                .AddJwtBearer(options =>
+                {
+                    options.RequireHttpsMetadata = false;
+                    options.SaveToken = true;
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuerSigningKey = true,
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateLifetime = true,
+                        ClockSkew = TimeSpan.Zero
+                    };
+                });
+
             services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
                 .Configure<IOptions<JwtConfigs>>((options, jwtConfigs) =>
                 {
@@ -94,16 +108,15 @@ namespace ConfigsDB.Domain
                     options.TokenValidationParameters.ValidAudience = jwtSettings.Audience;
                 });
 
-            // Register all repositories by marker interface (RECOMMENDED)
-            // Requires: Create IRepository marker interface in Domain layer
+            // ----------------------------------------------------------------
+            // Repositories & Unit of Work
+            // ----------------------------------------------------------------
             services.Scan(scan => scan
                 .FromAssemblies(infrasAssembly)
-                .AddClasses(classes => classes
-                    .AssignableTo(typeof(IRepository<>))) // Generic repository interface
+                .AddClasses(classes => classes.AssignableTo(typeof(IRepository<>)))
                 .AsImplementedInterfaces()
                 .WithScopedLifetime());
 
-            // Scrutor: Auto-register all IDbContextUnitOfWork implementations
             services.Scan(scan => scan
                 .FromAssemblies(infrasAssembly)
                 .AddClasses(classes => classes
@@ -112,48 +125,81 @@ namespace ConfigsDB.Domain
                 .AsImplementedInterfaces()
                 .WithScopedLifetime());
 
-            // Scrutor: Auto-register all IBulkOperationRepository implementations
             services.Scan(scan => scan
                 .FromAssemblies(infrasAssembly)
                 .AddClasses(classes => classes.AssignableTo(typeof(IBulkOperationRepository<>)))
                 .AsImplementedInterfaces()
                 .WithScopedLifetime());
 
+            // ----------------------------------------------------------------
+            // Config sync strategies
+            // ----------------------------------------------------------------
+            services.Scan(scan => scan
+                .FromAssembliesOf(typeof(IConfigSyncStrategy))
+                .AddClasses(classes => classes.AssignableTo<IConfigSyncStrategy>())
+                .AsImplementedInterfaces()
+                .WithScopedLifetime());
 
-            // Manually register CompositeUnitOfWork 
+            services.AddScoped<IConfigDistributor, ConfigDistributor>();
+
+            // ----------------------------------------------------------------
+            // Shared services
+            // ----------------------------------------------------------------
             services.AddScoped<ICompositeUnitOfWork, CompositeUnitOfWork>();
-            //shared application 
-
             services.AddScoped<ICurrentUserService, CurrentUserService>();
             services.AddHttpContextAccessor();
             services.AddProblemDetails();
 
-
+            // ----------------------------------------------------------------
+            // Messaging (MassTransit + RabbitMQ)
+            // ----------------------------------------------------------------
             services.AddScoped<IServiceBusPublisher, MassTransitServiceBusPublisher>();
 
-            //  Configure MassTransit
             services.AddMassTransit(x =>
             {
+                // Register all consumers in this assembly
                 x.AddConsumers(typeof(InfrastructureAssemblyReference).Assembly);
 
                 x.UsingRabbitMq((context, cfg) =>
                 {
-                    var serviceName = configuration["MassTransit:ServiceName"] ?? "ConfigDbService";
+                    var logger = context.GetRequiredService<ILoggerFactory>().CreateLogger("RabbitMQSetup");
+                    var rabbitSettings = context.GetRequiredService<IOptions<RabbitMqConfigs>>().Value;
 
-                    cfg.Host(configuration["RabbitMQ:Host"] ?? "localhost", "/", h =>
+                    var host = rabbitSettings.Host;
+                    var serviceName = configuration["MassTransit:ServiceName"] ?? "ConfigService";
+
+                    logger.LogInformation("[RabbitMQ] Connecting to {Host}:{Port} as User: {User}",
+                        host, rabbitSettings.Port, rabbitSettings.Username);
+
+                    cfg.Host(host, rabbitSettings.Port, "/", h =>
                     {
-                        h.Username(configuration["RabbitMQ:Username"] ?? "admin");
-                        h.Password(configuration["RabbitMQ:Password"] ?? "admin123");
+                        h.Username(rabbitSettings.Username);
+                        h.Password(rabbitSettings.Password);
+
+                        h.Heartbeat(TimeSpan.FromSeconds(10));
+
+                        h.PublisherConfirmation = true;
                     });
 
-                    //  retry, circuit breaker, rate limit policies as UserService
+                    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                    // RETRY POLICY - Handles transient failures
+                    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                     cfg.UseMessageRetry(r =>
                     {
-                        r.Incremental(5, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(2));
+                        r.Incremental(
+                            retryLimit: 5,
+                            initialInterval: TimeSpan.FromSeconds(1),
+                            intervalIncrement: TimeSpan.FromSeconds(2)
+                        );
+
                         r.Ignore<ArgumentException>();
                         r.Ignore<InvalidOperationException>();
+                        r.Ignore<ValidationException>();
                     });
 
+                    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                    // CIRCUIT BREAKER - Prevents cascading failures
+                    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                     cfg.UseCircuitBreaker(cb =>
                     {
                         cb.TrackingPeriod = TimeSpan.FromMinutes(1);
@@ -162,6 +208,9 @@ namespace ConfigsDB.Domain
                         cb.ResetInterval = TimeSpan.FromMinutes(5);
                     });
 
+                    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                    // RATE LIMITING - Protects downstream services
+                    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                     cfg.UseRateLimit(1000, TimeSpan.FromSeconds(1));
 
                     cfg.ConfigureEndpoints(context, new KebabCaseEndpointNameFormatter(serviceName, false));
