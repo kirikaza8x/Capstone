@@ -393,3 +393,7 @@ appsettings*.json
 *.deps.json
 *.dll
 *.Up2Date
+
+# Docker files
+*.yml
+*.yaml
