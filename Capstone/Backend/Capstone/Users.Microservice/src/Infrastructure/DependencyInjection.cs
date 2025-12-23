@@ -18,7 +18,7 @@ using Shared.Infrastructure.Authentication;
 using Shared.Infrastructure.Common;
 using Shared.Infrastructure.Configs.Database;
 using Shared.Infrastructure.Configs.Security;
-using Shared.Infrastructure.Configs.MessageBus; // Added
+using Shared.Infrastructure.Configs.MessageBus; 
 using Shared.Infrastructure.Events;
 using Shared.Infrastructure.UnitOfWork;
 

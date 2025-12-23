@@ -15,6 +15,7 @@ public record JwtConfigurationChangedEvent : IntegrationEventBase
     public string ConfigKey { get; init; } = "JWT";
     public int ExpiryMinutes { get; init; }
     public int RefreshTokenExpiryDays { get; init; }
+    public string Environment { get; init; } = "Production";
     public DateTime ChangedAt { get; init; }
     public string ChangedBy { get; init; } = "System";
     

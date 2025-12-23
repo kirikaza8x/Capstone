@@ -47,9 +47,7 @@ public interface IJwtTokenService
     /// <returns>Minutes until expiry (negative if expired).</returns>
     int GetMinutesUntilExpiry(string token);
     
-    /// <summary>
-    /// Gets the configured expiry duration (in minutes) for access tokens.
-    /// </summary>
+    
     int ExpiryMinutes { get; }
 
     int RefreshTokenExpiryDays { get; }
