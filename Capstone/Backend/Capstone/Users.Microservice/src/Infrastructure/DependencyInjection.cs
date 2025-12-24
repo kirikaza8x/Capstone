@@ -18,13 +18,16 @@ using Shared.Infrastructure.Authentication;
 using Shared.Infrastructure.Common;
 using Shared.Infrastructure.Configs.Database;
 using Shared.Infrastructure.Configs.Security;
-using Shared.Infrastructure.Configs.MessageBus; 
+using Shared.Infrastructure.Configs.MessageBus;
 using Shared.Infrastructure.Events;
 using Shared.Infrastructure.UnitOfWork;
 
 using Users.Infrastructure.Persistence.Contexts;
 using Infrastructure.Data.Interceptors;
 using System.ComponentModel.DataAnnotations;
+using Shared.Infrastructure.Configs.Cache;
+using Microsoft.Extensions.Caching.StackExchangeRedis;
+using Users.Infrastructure.Startup;
 
 namespace Users.Infrastructure
 {
@@ -38,8 +41,10 @@ namespace Users.Infrastructure
             services.ConfigureOptions<ErrorHandlingConfigSetup>();
             services.ConfigureOptions<JwtConfigSetup>();
             services.ConfigureOptions<DatabaseConfigSetup>();
-            services.ConfigureOptions<RabbitMqConfigSetup>(); // Added
-
+            services.ConfigureOptions<RabbitMqConfigSetup>();
+            services.ConfigureOptions<RedisConfigSetup>();
+            // --- Background Workers ---
+            services.AddHostedService<JwtInitialSyncWorker>();
             // --- Authentication (JWT) ---
             services.AddAuthentication(options =>
             {
@@ -109,83 +114,100 @@ namespace Users.Infrastructure
 
             // --- Shared Services ---
             services.AddScoped<IJwtTokenService, JwtTokenService>();
+            services.AddSingleton<IConfigurableJwtService, JwtConfigurableService>();
+            // services.Scan(scan => scan
+            //  .FromAssembliesOf(typeof(JwtTokenService)) 
+            //  .AddClasses(classes => classes.AssignableTo<IJwtTokenService>())
+            //  .AsSelfWithInterfaces()
+            //  .WithSingletonLifetime());
             services.AddScoped<IPasswordHasher, PasswordHasher>();
             services.AddScoped<ICurrentUserService, CurrentUserService>();
             services.AddHttpContextAccessor();
             services.AddProblemDetails();
 
+            // --- Caching (Redis) ---
+            services.AddStackExchangeRedisCache(options => { });
+            services.AddOptions<RedisCacheOptions>()
+                    .Configure<IOptions<RedisConfigs>>((options, redisSettings) =>
+                    {
+                        options.Configuration = redisSettings.Value.ConnectionString;
+                        options.InstanceName = redisSettings.Value.InstanceName;
+                        // options.Configuration = "localhost:6379"; 
+                        // options.InstanceName = "AppConfigs_";
+                    });
+
             // --- Messaging (MassTransit + RabbitMQ) ---
             services.AddScoped<IServiceBusPublisher, MassTransitServiceBusPublisher>();
 
             services.AddMassTransit(x =>
-        {
-            // Register all consumers in this assembly
-            x.AddConsumers(typeof(DependencyInjection).Assembly);
-
-            x.UsingRabbitMq((context, cfg) =>
             {
-                var logger = context.GetRequiredService<ILoggerFactory>().CreateLogger("RabbitMQSetup");
+                // Register all consumers in this assembly
+                x.AddConsumers(typeof(DependencyInjection).Assembly);
 
-                // --- Added Diagnostic Logger ---
-                var rawConfig = context.GetRequiredService<IConfiguration>();
-                logger.LogWarning("DIAGNOSTIC - Raw Config: Host={RawHost}, User={RawUser}",
-                    rawConfig["RabbitMQ:Host"] ?? "NULL",
-                    rawConfig["RabbitMQ:Username"] ?? "NULL");
-                // -------------------------------
-
-                var rabbitSettings = context.GetRequiredService<IOptions<RabbitMqConfigs>>().Value;
-
-                var host = rabbitSettings.Host;
-                var serviceName = configuration["MassTransit:ServiceName"] ?? "UserService";
-
-                logger.LogInformation("[RabbitMQ] Connecting to {Host}:{Port} as User: {User}",
-                    host, rabbitSettings.Port, rabbitSettings.Username);
-
-                cfg.Host(host, rabbitSettings.Port, "/", h =>
+                x.UsingRabbitMq((context, cfg) =>
                 {
-                    h.Username(rabbitSettings.Username);
-                    h.Password(rabbitSettings.Password);
+                    var logger = context.GetRequiredService<ILoggerFactory>().CreateLogger("RabbitMQSetup");
 
-                    h.Heartbeat(TimeSpan.FromSeconds(10));
+                    // --- Added Diagnostic Logger ---
+                    var rawConfig = context.GetRequiredService<IConfiguration>();
+                    logger.LogWarning("DIAGNOSTIC - Raw Config: Host={RawHost}, User={RawUser}",
+                        rawConfig["RabbitMQ:Host"] ?? "NULL",
+                        rawConfig["RabbitMQ:Username"] ?? "NULL");
+                    // -------------------------------
 
-                    h.PublisherConfirmation = true;
+                    var rabbitSettings = context.GetRequiredService<IOptions<RabbitMqConfigs>>().Value;
+
+                    var host = rabbitSettings.Host;
+                    var serviceName = configuration["MassTransit:ServiceName"] ?? "UserService";
+
+                    logger.LogInformation("[RabbitMQ] Connecting to {Host}:{Port} as User: {User}",
+                        host, rabbitSettings.Port, rabbitSettings.Username);
+
+                    cfg.Host(host, rabbitSettings.Port, "/", h =>
+                    {
+                        h.Username(rabbitSettings.Username);
+                        h.Password(rabbitSettings.Password);
+
+                        h.Heartbeat(TimeSpan.FromSeconds(10));
+
+                        h.PublisherConfirmation = true;
+                    });
+
+                    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                    // RETRY POLICY - Handles transient failures
+                    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                    cfg.UseMessageRetry(r =>
+                    {
+                        r.Incremental(
+                            retryLimit: 5,
+                            initialInterval: TimeSpan.FromSeconds(1),
+                            intervalIncrement: TimeSpan.FromSeconds(2)
+                        );
+
+                        r.Ignore<ArgumentException>();
+                        r.Ignore<InvalidOperationException>();
+                        r.Ignore<ValidationException>();
+                    });
+
+                    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                    // CIRCUIT BREAKER - Prevents cascading failures
+                    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                    cfg.UseCircuitBreaker(cb =>
+                    {
+                        cb.TrackingPeriod = TimeSpan.FromMinutes(1);
+                        cb.TripThreshold = 15;
+                        cb.ActiveThreshold = 10;
+                        cb.ResetInterval = TimeSpan.FromMinutes(5);
+                    });
+
+                    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                    // RATE LIMITING - Protects downstream services
+                    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                    cfg.UseRateLimit(1000, TimeSpan.FromSeconds(1));
+
+                    cfg.ConfigureEndpoints(context, new KebabCaseEndpointNameFormatter(serviceName, false));
                 });
-
-                // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                // RETRY POLICY - Handles transient failures
-                // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                cfg.UseMessageRetry(r =>
-                {
-                    r.Incremental(
-                        retryLimit: 5,
-                        initialInterval: TimeSpan.FromSeconds(1),
-                        intervalIncrement: TimeSpan.FromSeconds(2)
-                    );
-
-                    r.Ignore<ArgumentException>();
-                    r.Ignore<InvalidOperationException>();
-                    r.Ignore<ValidationException>();
-                });
-
-                // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                // CIRCUIT BREAKER - Prevents cascading failures
-                // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                cfg.UseCircuitBreaker(cb =>
-                {
-                    cb.TrackingPeriod = TimeSpan.FromMinutes(1);
-                    cb.TripThreshold = 15;
-                    cb.ActiveThreshold = 10;
-                    cb.ResetInterval = TimeSpan.FromMinutes(5);
-                });
-
-                // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                // RATE LIMITING - Protects downstream services
-                // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                cfg.UseRateLimit(1000, TimeSpan.FromSeconds(1));
-
-                cfg.ConfigureEndpoints(context, new KebabCaseEndpointNameFormatter(serviceName, false));
             });
-        });
 
             return services;
         }

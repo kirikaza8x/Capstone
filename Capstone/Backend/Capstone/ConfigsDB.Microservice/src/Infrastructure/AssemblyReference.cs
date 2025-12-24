@@ -28,6 +28,9 @@ using Shared.Infrastructure.Configs.MessageBus; // Added reference to new config
 using Shared.Infrastructure.Events;
 using Shared.Infrastructure.UnitOfWork;
 using System.ComponentModel.DataAnnotations;
+using Shared.Authentication;
+using Microsoft.Extensions.Caching.StackExchangeRedis;
+using Shared.Infrastructure.Configs.Cache;
 
 namespace ConfigsDB.Domain
 {
@@ -142,6 +145,11 @@ namespace ConfigsDB.Domain
 
             services.AddScoped<IConfigDistributor, ConfigDistributor>();
 
+            // services.Scan(scan => scan
+            // .FromAssembliesOf(typeof(JwtTokenService)) // Use typeof() here
+            // .AddClasses(classes => classes.AssignableTo<IJwtTokenService>())
+            // .AsSelfWithInterfaces() 
+            // .WithSingletonLifetime());
             // ----------------------------------------------------------------
             // Shared services
             // ----------------------------------------------------------------
@@ -149,7 +157,13 @@ namespace ConfigsDB.Domain
             services.AddScoped<ICurrentUserService, CurrentUserService>();
             services.AddHttpContextAccessor();
             services.AddProblemDetails();
-
+            services.AddStackExchangeRedisCache(options => { });
+            services.AddOptions<RedisCacheOptions>()
+                    .Configure<IOptions<RedisConfigs>>((options, redisSettings) =>
+                    {
+                        options.Configuration = redisSettings.Value.ConnectionString;
+                        options.InstanceName = redisSettings.Value.InstanceName;
+                    });
             // ----------------------------------------------------------------
             // Messaging (MassTransit + RabbitMQ)
             // ----------------------------------------------------------------

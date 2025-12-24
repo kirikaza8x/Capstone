@@ -24,6 +24,7 @@ public class JwtSyncStrategy : IConfigSyncStrategy
 
     public async Task SyncAsync(string environment, CancellationToken ct)
     {
+        // 1. Fetch Full State from Repo
         var expiry = await _repository.GetByKeyAndEnvironmentAsync("Jwt.ExpiryMinutes", environment, ct);
         var refresh = await _repository.GetByKeyAndEnvironmentAsync("Jwt.RefreshDays", environment, ct);
 
@@ -33,9 +34,11 @@ public class JwtSyncStrategy : IConfigSyncStrategy
             Environment = environment
         };
 
+        // 2. Update Redis (The Drop Box)
         var cacheKey = $"config:jwt:{environment}";
         await _cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(syncEvent), ct);
 
+        // 3. Publish to RabbitMQ (The Megaphone)
         await _publisher.PublishAsync(syncEvent, ct);
     }
 }

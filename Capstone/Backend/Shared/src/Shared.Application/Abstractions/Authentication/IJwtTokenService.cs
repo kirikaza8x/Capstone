@@ -5,7 +5,7 @@ namespace Shared.Application.Abstractions.Authentication;
 /// <summary>
 /// Defines operations for generating and validating JWT access tokens and refresh tokens.
 /// </summary>
-public interface IJwtTokenService
+public interface IJwtTokenService 
 {
     /// <summary>
     /// Generates a signed JWT access token for the given user.
@@ -47,8 +47,13 @@ public interface IJwtTokenService
     /// <returns>Minutes until expiry (negative if expired).</returns>
     int GetMinutesUntilExpiry(string token);
     
-    
+    /// <summary>
+    /// Gets the number of minutes until the token expires.
+    /// <returns>Minutes until expiry (negative if expired).</returns>
     int ExpiryMinutes { get; }
 
+     /// <summary>
+    /// Gets the number of minutes until the token expires.
+    /// <returns>Minutes until expiry (negative if expired).</returns>
     int RefreshTokenExpiryDays { get; }
 }

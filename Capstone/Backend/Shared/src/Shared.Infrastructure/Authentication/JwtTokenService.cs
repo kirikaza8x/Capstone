@@ -9,16 +9,14 @@ using Shared.Application.Abstractions.Authentication;
 
 namespace Shared.Authentication;
 
-public class JwtTokenService : IJwtTokenService, IConfigurableJwtService
+public class JwtTokenService : IJwtTokenService
 {
-    private readonly ILogger<JwtTokenService> _logger;
-    private readonly JwtConfigs _defaultConfig;
-    private readonly ReaderWriterLockSlim _lock = new();
+    protected readonly ILogger<JwtTokenService> _logger;
+    protected readonly JwtConfigs _defaultConfig;
+    protected readonly ReaderWriterLockSlim _lock = new();
 
-    // Hot-reloadable values
-    private int _expiryMinutes;
-    private int _refreshTokenExpiryDays;
-
+    protected int _expiryMinutes;
+    protected int _refreshTokenExpiryDays;
     // Immutable security settings
     private readonly byte[] _key;
     private readonly string _issuer;
@@ -44,21 +42,21 @@ public class JwtTokenService : IJwtTokenService, IConfigurableJwtService
     public int ExpiryMinutes { get { _lock.EnterReadLock(); try { return _expiryMinutes; } finally { _lock.ExitReadLock(); } } }
     public int RefreshTokenExpiryDays { get { _lock.EnterReadLock(); try { return _refreshTokenExpiryDays; } finally { _lock.ExitReadLock(); } } }
 
-    public Task UpdateConfigurationAsync(int expiryMinutes, int refreshTokenExpiryDays)
-    {
-        _lock.EnterWriteLock();
-        try
-        {
-            _logger.LogInformation("Hot-reloading JWT Config: Expiry {Old} -> {New}", _expiryMinutes, expiryMinutes);
-            _expiryMinutes = expiryMinutes;
-            _refreshTokenExpiryDays = refreshTokenExpiryDays;
-        }
-        finally
-        {
-            _lock.ExitWriteLock();
-        }
-        return Task.CompletedTask;
-    }
+    // public Task UpdateConfigurationAsync(int expiryMinutes, int refreshTokenExpiryDays)
+    // {
+    //     _lock.EnterWriteLock();
+    //     try
+    //     {
+    //         _logger.LogInformation("Hot-reloading JWT Config: Expiry {Old} -> {New}", _expiryMinutes, expiryMinutes);
+    //         _expiryMinutes = expiryMinutes;
+    //         _refreshTokenExpiryDays = refreshTokenExpiryDays;
+    //     }
+    //     finally
+    //     {
+    //         _lock.ExitWriteLock();
+    //     }
+    //     return Task.CompletedTask;
+    // }
 
     public string GenerateToken(Guid userId, string? email, string? name, IEnumerable<string> roles)
     {
@@ -119,20 +117,20 @@ public class JwtTokenService : IJwtTokenService, IConfigurableJwtService
         }
     }
 
-    public void UseEmergencyDefaults()
-    {
-        _lock.EnterWriteLock();
-        try
-        {
-            _logger.LogCritical("Applying Emergency JWT Defaults");
-            _expiryMinutes = _defaultConfig.ExpiryMinutes > 0 ? _defaultConfig.ExpiryMinutes : 60;
-            _refreshTokenExpiryDays = _defaultConfig.RefreshTokenExpiryDays > 0 ? _defaultConfig.RefreshTokenExpiryDays : 7;
-        }
-        finally
-        {
-            _lock.ExitWriteLock();
-        }
-    }
+    // public void UseEmergencyDefaults()
+    // {
+    //     _lock.EnterWriteLock();
+    //     try
+    //     {
+    //         _logger.LogCritical("Applying Emergency JWT Defaults");
+    //         _expiryMinutes = _defaultConfig.ExpiryMinutes > 0 ? _defaultConfig.ExpiryMinutes : 60;
+    //         _refreshTokenExpiryDays = _defaultConfig.RefreshTokenExpiryDays > 0 ? _defaultConfig.RefreshTokenExpiryDays : 7;
+    //     }
+    //     finally
+    //     {
+    //         _lock.ExitWriteLock();
+    //     }
+    // }
 
     private TokenValidationParameters GetValidationParameters(bool allowExpired) => new()
     {
@@ -145,4 +143,39 @@ public class JwtTokenService : IJwtTokenService, IConfigurableJwtService
         ValidateLifetime = !allowExpired,
         ClockSkew = TimeSpan.Zero
     };
+}
+
+public class JwtConfigurableService : JwtTokenService, IConfigurableJwtService
+{
+    public JwtConfigurableService(IOptions<JwtConfigs> options, ILogger<JwtTokenService> logger)
+        : base(options, logger)
+    {
+    }
+
+    public Task UpdateConfigurationAsync(int expiryMinutes, int refreshTokenExpiryDays)
+    {
+        _lock.EnterWriteLock();
+        try
+        {
+            _logger.LogInformation("Hot-reloading JWT Config: Expiry {Old} -> {New}", _expiryMinutes, expiryMinutes);
+            _expiryMinutes = expiryMinutes;
+            _refreshTokenExpiryDays = refreshTokenExpiryDays;
+        }
+        finally
+        {
+            _lock.ExitWriteLock();
+        }
+        return Task.CompletedTask;
+    }
+
+    public void UseEmergencyDefaults()
+    {
+        _lock.EnterWriteLock();
+        try
+        {
+            _expiryMinutes = _defaultConfig.ExpiryMinutes > 0 ? _defaultConfig.ExpiryMinutes : 60;
+            _refreshTokenExpiryDays = _defaultConfig.RefreshTokenExpiryDays > 0 ? _defaultConfig.RefreshTokenExpiryDays : 7;
+        }
+        finally { _lock.ExitWriteLock(); }
+    }
 }
