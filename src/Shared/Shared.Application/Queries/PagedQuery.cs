@@ -1,0 +1,37 @@
+﻿
+namespace Shared.Application.Queries;
+
+public abstract record PagedQuery
+{
+    private const int DefaultPageNumber = 1;
+    private const int DefaultPageSize = 10;
+    private const int MaxPageSize = 100;
+
+    private int _pageNumber = DefaultPageNumber;
+    private int _pageSize = DefaultPageSize;
+
+    public int PageNumber
+    {
+        get => _pageNumber;
+        init => _pageNumber = value < 1 ? DefaultPageNumber : value;
+    }
+
+    public int PageSize
+    {
+        get => _pageSize;
+        init => _pageSize = value switch
+        {
+            < 1 => DefaultPageSize,
+            > MaxPageSize => MaxPageSize,
+            _ => value
+        };
+    }
+
+    public string? SearchTerm { get; init; }
+
+    public string? SortColumn { get; init; }
+
+    public string? SortOrder { get; init; }
+
+    public int Skip => (PageNumber - 1) * PageSize;
+}
