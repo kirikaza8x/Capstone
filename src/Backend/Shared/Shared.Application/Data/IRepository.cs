@@ -1,4 +1,6 @@
-﻿using Shared.Domain.DDD;
+﻿using Shared.Application.Queries;
+using Shared.Domain.DDD;
+using Shared.Domain.Pagination;
 using System.Linq.Expressions;
 
 namespace Shared.Application.Data;
@@ -24,6 +26,23 @@ public interface IRepository<TEntity, TId>
     /// </summary>
     Task<IReadOnlyList<TEntity>> FindAsync(
         Expression<Func<TEntity, bool>> predicate,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get paged list of entities with optional filter, sorting
+    /// </summary>
+    Task<PagedList<TEntity>> GetPagedAsync(
+        PagedQuery pagedQuery,
+        Expression<Func<TEntity, bool>>? predicate = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get paged list with custom projection (DTO)
+    /// </summary>
+    Task<PagedList<TResult>> GetPagedAsync<TResult>(
+        PagedQuery pagedQuery,
+        Expression<Func<TEntity, TResult>> selector,
+        Expression<Func<TEntity, bool>>? predicate = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>

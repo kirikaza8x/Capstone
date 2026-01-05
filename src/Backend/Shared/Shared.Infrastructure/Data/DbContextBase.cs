@@ -17,7 +17,7 @@ public abstract class DbContextBase : DbContext, IUnitOfWork
     {
         if (currentTransaction is not null)
         {
-            return; // Already in transaction
+            return; 
         }
 
         currentTransaction = await Database.BeginTransactionAsync(cancellationToken);
