@@ -7,6 +7,7 @@ public abstract class AggregateRoot<TId> : Entity<TId>, IAggregateRoot<TId>
 
     protected void RaiseDomainEvent(IDomainEvent domainEvent)
     {
+        Apply(domainEvent);
         _domainEvents.Add(domainEvent);
     }
 
@@ -16,4 +17,12 @@ public abstract class AggregateRoot<TId> : Entity<TId>, IAggregateRoot<TId>
         _domainEvents.Clear();
         return dequeueEvents;
     }
+
+    public void ReplayEvent(IDomainEvent @event)
+    {
+        Apply(@event);
+    }
+
+    protected abstract void Apply(IDomainEvent @event);
+
 }

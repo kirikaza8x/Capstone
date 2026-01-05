@@ -8,4 +8,5 @@ public interface IAggregateRoot : IEntity
 {
     IReadOnlyList<IDomainEvent> DomainEvents { get; }
     IDomainEvent[] ClearDomainEvents();
+    void ReplayEvent(IDomainEvent @event);
 }
