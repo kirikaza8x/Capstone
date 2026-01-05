@@ -10,7 +10,7 @@ namespace Shared.Application.Abstractions.Authentication
     IEnumerable<string> Roles { get; }
     string? Jti { get; }
 
-    CurrentUserDto GetCurrentUser();
+    CurrentUserDto? GetCurrentUser();
 }
 
 }
