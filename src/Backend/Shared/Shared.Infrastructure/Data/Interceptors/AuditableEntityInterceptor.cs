@@ -27,7 +27,7 @@ namespace Infrastructure.Data.Interceptors
                 {
                     entry.Entity.CreatedBy = name;
                     entry.Entity.CreatedAt = DateTime.UtcNow;
-                    entry.Entity.IsActive = false;
+                    entry.Entity.IsActive = true;
                 }
 
                 if (
