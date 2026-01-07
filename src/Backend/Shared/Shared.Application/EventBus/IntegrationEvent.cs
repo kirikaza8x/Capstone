@@ -1,10 +1,11 @@
 ﻿namespace Shared.Application.EventBus;
 
-public class IntegrationEvent : IIntegrationEvent
+public abstract class IntegrationEvent : IIntegrationEvent
 {
     public Guid Id { get; }
     public DateTime OccurredOnUtc { get; }
-
+    public abstract string EventType { get; }
+    public Dictionary<string, string>? Metadata { get; init; }
     protected IntegrationEvent(Guid id, DateTime occurredOnUtc)
     {
         Id = id;
