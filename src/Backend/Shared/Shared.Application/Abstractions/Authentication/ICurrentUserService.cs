@@ -1,8 +1,8 @@
 using Shared.Application.DTOs;
 
-namespace Shared.Application.Abstractions.Authentication
-{
-    public interface ICurrentUserService
+namespace Shared.Application.Abstractions.Authentication;
+
+public interface ICurrentUserService
 {
     Guid UserId { get; }
     string? Email { get; }
@@ -11,6 +11,4 @@ namespace Shared.Application.Abstractions.Authentication
     string? Jti { get; }
 
     CurrentUserDto? GetCurrentUser();
-}
-
 }
