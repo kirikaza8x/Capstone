@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Npgsql;
 using Quartz;
 using Shared.Application.Caching;
 using Shared.Application.Data;
@@ -25,26 +24,26 @@ public static class DependencyInjection
      string redisConnectionString)
     {
         // PostgreSQL
-        NpgsqlDataSource npgsqlDataSource = new NpgsqlDataSourceBuilder(databaseConnectionString).Build();
-        services.TryAddSingleton(npgsqlDataSource);
-        services.TryAddScoped<IDbConnectionFactory, DbConnectionFactory>();
+        //NpgsqlDataSource npgsqlDataSource = new NpgsqlDataSourceBuilder(databaseConnectionString).Build();
+        //services.TryAddSingleton(npgsqlDataSource);
+        //services.TryAddScoped<IDbConnectionFactory, DbConnectionFactory>();
 
-        // Redis 
-        try
-        {
-            IConnectionMultiplexer connectionMultiplexer = ConnectionMultiplexer.Connect(redisConnectionString);
-            services.AddSingleton(connectionMultiplexer);
-            services.AddStackExchangeRedisCache(options =>
-                options.ConnectionMultiplexerFactory = () => Task.FromResult(connectionMultiplexer));
-            services.TryAddSingleton<ICacheService, CacheService>();
-        }
-        catch
-        {
-            services.AddDistributedMemoryCache();
-        }
+        //// Redis 
+        //try
+        //{
+        //    IConnectionMultiplexer connectionMultiplexer = ConnectionMultiplexer.Connect(redisConnectionString);
+        //    services.AddSingleton(connectionMultiplexer);
+        //    services.AddStackExchangeRedisCache(options =>
+        //        options.ConnectionMultiplexerFactory = () => Task.FromResult(connectionMultiplexer));
+        //    services.TryAddSingleton<ICacheService, CacheService>();
+        //}
+        //catch
+        //{
+        //    services.AddDistributedMemoryCache();
+        //}
 
-        services.TryAddSingleton<ICacheService, CacheService>();
-        // Outbox/Inbox
+        //services.TryAddSingleton<ICacheService, CacheService>();
+        //// Outbox/Inbox
         services.Configure<OutboxOptions>(configuration.GetSection(OutboxOptions.SectionName));
         services.Configure<InboxOptions>(configuration.GetSection(InboxOptions.SectionName));
         services.TryAddSingleton<InsertOutboxMessagesInterceptor>();
