@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.Logging;
 using Shared.Application.Caching;
 using System.Buffers;
 using System.Text.Json;

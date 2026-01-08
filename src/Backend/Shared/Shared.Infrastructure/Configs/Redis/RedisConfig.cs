@@ -12,3 +12,4 @@ public class RedisConfig
         ? $"{Host}:{Port},password={Password}"
         : $"{Host}:{Port}";
 }
+ 

@@ -1,0 +1,37 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:17-alpine
+    container_name: AIPromo-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: AIPromo123
+      POSTGRES_DB: AIPromo
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - aipromo-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: AIPromo-redis
+    restart: unless-stopped
+    command: redis-server --requirepass AIPromo123 --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - aipromo-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  aipromo-network:
+    driver: bridge
