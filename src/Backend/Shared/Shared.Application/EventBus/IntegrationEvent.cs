@@ -6,6 +6,7 @@ public abstract class IntegrationEvent : IIntegrationEvent
     public DateTime OccurredOnUtc { get; }
     public abstract string EventType { get; }
     public Dictionary<string, string>? Metadata { get; init; }
+
     protected IntegrationEvent(Guid id, DateTime occurredOnUtc)
     {
         Id = id;

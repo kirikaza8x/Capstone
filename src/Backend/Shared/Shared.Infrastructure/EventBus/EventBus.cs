@@ -3,10 +3,20 @@ using Shared.Application.EventBus;
 
 namespace Shared.Infrastructure.EventBus;
 
-public class EventBus(IBus bus) : IEventBus
+internal sealed class EventBus : IEventBus
 {
-    public async Task PublishAsync<T>(T integrationEvent, CancellationToken cancellationToken = default) where T : IIntegrationEvent
+    private readonly IPublishEndpoint _publishEndpoint;
+
+    public EventBus(IPublishEndpoint publishEndpoint)
     {
-        await bus.Publish(integrationEvent, cancellationToken);
+        _publishEndpoint = publishEndpoint;
+    }
+
+    public async Task PublishAsync<T>(
+        T integrationEvent,
+        CancellationToken cancellationToken = default)
+        where T : IIntegrationEvent
+    {
+        await _publishEndpoint.Publish(integrationEvent, cancellationToken);
     }
 }
