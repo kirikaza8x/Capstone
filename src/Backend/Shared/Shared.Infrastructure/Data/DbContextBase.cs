@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
-using Shared.Application.Data;
+using Shared.Domain.Data;
 
 namespace Shared.Infrastructure.Data;
 

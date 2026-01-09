@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Shared.Application.Data;
-using Shared.Application.Queries;
+using Shared.Domain.Data;
+using Shared.Domain.Queries;
 using Shared.Domain.DDD;
 using Shared.Domain.Pagination;
 using System.Linq.Expressions;

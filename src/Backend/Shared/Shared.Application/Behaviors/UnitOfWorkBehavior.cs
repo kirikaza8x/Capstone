@@ -1,6 +1,6 @@
 ﻿using MediatR;
 using Microsoft.Extensions.Logging;
-using Shared.Application.Data;
+using Shared.Domain.Data;
 using Shared.Application.Messaging;
 using Shared.Domain.Abstractions;
 
