@@ -44,4 +44,5 @@ public class CurrentUserDto
     public string? Name { get; set; }
     public List<string> Roles { get; set; } = new();
     public string? Jti { get; set; }
+    public string? IpAddress { get; set; }
 }

@@ -1,5 +1,5 @@
 ﻿
-namespace Shared.Application.Queries;
+namespace Shared.Domain.Queries;
 
 public abstract record PagedQuery
 {

@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Shared.Application.Queries;
+using Shared.Domain.Queries;
 using Shared.Domain.Pagination;
 using System.Linq.Expressions;
 using System.Reflection;

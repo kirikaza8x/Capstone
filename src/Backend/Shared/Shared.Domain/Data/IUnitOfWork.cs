@@ -1,4 +1,4 @@
-﻿namespace Shared.Application.Data;
+﻿namespace Shared.Domain.Data;
 
 public interface IUnitOfWork
 {
