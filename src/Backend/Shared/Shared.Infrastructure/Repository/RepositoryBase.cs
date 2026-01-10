@@ -42,7 +42,7 @@ public abstract class RepositoryBase<TEntity, TId> : IRepository<TEntity, TId>
             .ToListAsync(cancellationToken);
     }
 
-    public virtual async Task<PagedList<TEntity>> GetPagedAsync(
+    public virtual async Task<PagedResult<TEntity>> GetPagedAsync(
         PagedQuery pagedQuery,
         Expression<Func<TEntity, bool>>? predicate = null,
         CancellationToken cancellationToken = default)
@@ -61,10 +61,10 @@ public abstract class RepositoryBase<TEntity, TId> : IRepository<TEntity, TId>
             sortedQuery = sortedQuery.OrderByDescending(e => EF.Property<DateTime?>(e, "CreatedAt"));
         }
 
-        return await sortedQuery.ToPagedListAsync(pagedQuery, cancellationToken);
+        return await sortedQuery.ToPagedResultAsync(pagedQuery, cancellationToken);
     }
 
-    public virtual async Task<PagedList<TResult>> GetPagedAsync<TResult>(
+    public virtual async Task<PagedResult<TResult>> GetPagedAsync<TResult>(
     PagedQuery pagedQuery,
     Expression<Func<TEntity, TResult>> selector,
     Expression<Func<TEntity, bool>>? predicate = null,
@@ -87,7 +87,7 @@ public abstract class RepositoryBase<TEntity, TId> : IRepository<TEntity, TId>
             .Take(pagedQuery.PageSize)
             .ToListAsync(cancellationToken);
 
-        return PagedList<TResult>.Create(
+        return PagedResult<TResult>.Create(
             items,
             pagedQuery.PageNumber,
             pagedQuery.PageSize,

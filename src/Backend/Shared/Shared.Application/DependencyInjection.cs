@@ -1,6 +1,7 @@
 ﻿using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using Shared.Application.Behaviors;
+using Shared.Application.Extensions;
 using System.Reflection;
 
 namespace Shared.Application;
@@ -11,17 +12,7 @@ public static class ApplicationConfiguration
         this IServiceCollection services,
         Assembly[] moduleAssemblies)
     {
-        services.AddMediatR(config =>
-        {
-            config.RegisterServicesFromAssemblies(moduleAssemblies);
-
-            config.AddOpenBehavior(typeof(LoggingBehavior<,>));
-            config.AddOpenBehavior(typeof(ValidationBehavior<,>));
-            config.AddOpenBehavior(typeof(UnitOfWorkBehavior<,>));
-        });
-
-        services.AddValidatorsFromAssemblies(moduleAssemblies, includeInternalTypes: true);
-
+        services.AddMediatRWithBehaviors(moduleAssemblies);
         return services;
     }
 }

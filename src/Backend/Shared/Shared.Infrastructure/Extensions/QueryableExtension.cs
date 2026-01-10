@@ -9,10 +9,10 @@ namespace Shared.Infrastructure.Extensions;
 public static class QueryableExtension
 {
     /// <summary>
-    /// Convert IQueryable to PagedList with async execution
+    /// Convert IQueryable to PagedResult with async execution
     /// Executes Count() and ToList() on database
     /// </summary>
-    public static async Task<PagedList<T>> ToPagedListAsync<T>(
+    public static async Task<PagedResult<T>> ToPagedResultAsync<T>(
         this IQueryable<T> query,
         int pageNumber,
         int pageSize,
@@ -25,7 +25,7 @@ public static class QueryableExtension
             .Take(pageSize)
             .ToListAsync(cancellationToken);
 
-        return PagedList<T>.Create(
+        return PagedResult<T>.Create(
             items,
             pageNumber,
             pageSize,
@@ -33,14 +33,14 @@ public static class QueryableExtension
     }
 
     /// <summary>
-    /// Convert IQueryable to PagedList with PagedQuery parameters
+    /// Convert IQueryable to PagedResult with PagedQuery parameters
     /// </summary>
-    public static Task<PagedList<T>> ToPagedListAsync<T>(
+    public static Task<PagedResult<T>> ToPagedResultAsync<T>(
         this IQueryable<T> query,
         PagedQuery pagedQuery,
         CancellationToken cancellationToken = default)
     {
-        return query.ToPagedListAsync(
+        return query.ToPagedResultAsync(
             pagedQuery.PageNumber,
             pagedQuery.PageSize,
             cancellationToken);
