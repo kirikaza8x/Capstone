@@ -1,8 +1,6 @@
 // using Microsoft.Extensions.Logging;
-// using Shared.Application.Abstractions.Messaging;
-// using Shared.Application.Events;
-// using Shared.Contracts.Events.Users;
-// using Shared.Domain.UnitOfWork;
+// using Shared.Application.EventBus;
+// using Shared.Application.Messaging;
 // using Users.Domain.Events;
 // using Users.Domain.Repositories;
 
@@ -12,25 +10,22 @@
 // /// Handles internal domain logic after user creation
 // /// Then publishes integration event to notify other services
 // /// </summary>
-// public class UserCreatedEventHandler : IEventHandler<UserCreatedEvent>
+// public class UserCreatedEventHandler : IDomainEventHandler<UserCreatedEvent>
 // {
 //     private readonly IUserRepository _userRepository;
 //     private readonly IRoleRepository _roleRepository;
-//     private readonly ICompositeUnitOfWork _unitOfWork;
-//     private readonly IServiceBusPublisher _serviceBusPublisher;
+//     private readonly IEventBus _eventBus;
 //     private readonly ILogger<UserCreatedEventHandler> _logger;
 
 //     public UserCreatedEventHandler(
 //         IUserRepository userRepository,
 //         IRoleRepository roleRepository,
-//         ICompositeUnitOfWork unitOfWork,
-//         IServiceBusPublisher serviceBusPublisher,
+//         IEventBus eventBus,
 //         ILogger<UserCreatedEventHandler> logger)
 //     {
 //         _userRepository = userRepository;
 //         _roleRepository = roleRepository;
-//         _unitOfWork = unitOfWork;
-//         _serviceBusPublisher = serviceBusPublisher;
+//         _eventBus = eventBus;
 //         _logger = logger;
 //     }
 
