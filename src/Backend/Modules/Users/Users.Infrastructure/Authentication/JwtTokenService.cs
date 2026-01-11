@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Shared.Application.Abstractions.Authentication;
 
-namespace Shared.Authentication;
+namespace Users.Infrastructure.Authentication;
 
 public sealed class JwtTokenService : IJwtTokenService
 {

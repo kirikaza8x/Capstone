@@ -1,6 +1,6 @@
 
 using Shared.Application.Abstractions.Authentication;
-namespace Shared.Infrastructure.Authentication;
+namespace Users.Infrastructure.Authentication;
 
 public class PasswordHasher : IPasswordHasher
 {
