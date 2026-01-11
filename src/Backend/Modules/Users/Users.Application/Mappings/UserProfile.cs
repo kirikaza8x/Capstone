@@ -22,7 +22,7 @@ namespace Users.Application.Mappings
                     src.PhoneNumber,
                     src.Address,
                     null,                        // profileImageUrl
-                    null                            // role
+                    null                         // role
                 ))
                 .ForMember(dest => dest.PasswordHash, opt => opt.Ignore());
         }
