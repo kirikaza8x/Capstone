@@ -8,10 +8,6 @@ namespace Shared.Infrastructure.Extensions;
 
 public static class QueryableExtension
 {
-    /// <summary>
-    /// Convert IQueryable to PagedResult with async execution
-    /// Executes Count() and ToList() on database
-    /// </summary>
     public static async Task<PagedResult<T>> ToPagedResultAsync<T>(
         this IQueryable<T> query,
         int pageNumber,
@@ -32,9 +28,6 @@ public static class QueryableExtension
             totalCount);
     }
 
-    /// <summary>
-    /// Convert IQueryable to PagedResult with PagedQuery parameters
-    /// </summary>
     public static Task<PagedResult<T>> ToPagedResultAsync<T>(
         this IQueryable<T> query,
         PagedQuery pagedQuery,
@@ -46,9 +39,6 @@ public static class QueryableExtension
             cancellationToken);
     }
 
-    /// <summary>
-    /// Apply pagination without executing query
-    /// </summary>
     public static IQueryable<T> ApplyPagination<T>(
         this IQueryable<T> query,
         int pageNumber,
@@ -59,9 +49,6 @@ public static class QueryableExtension
             .Take(pageSize);
     }
 
-    /// <summary>
-    /// Apply pagination from PagedQuery
-    /// </summary>
     public static IQueryable<T> ApplyPagination<T>(
         this IQueryable<T> query,
         PagedQuery pagedQuery)
@@ -69,10 +56,6 @@ public static class QueryableExtension
         return query.ApplyPagination(pagedQuery.PageNumber, pagedQuery.PageSize);
     }
 
-    /// <summary>
-    /// Apply sorting dynamically by column name
-    /// Supports: "asc", "desc"
-    /// </summary>
     public static IQueryable<T> ApplySorting<T>(
         this IQueryable<T> query,
         string? sortColumn,
@@ -96,39 +79,21 @@ public static class QueryableExtension
         var propertyAccess = Expression.MakeMemberAccess(parameter, property);
         var orderByExpression = Expression.Lambda(propertyAccess, parameter);
 
-        var methodName = string.Equals(sortOrder, "desc", StringComparison.OrdinalIgnoreCase)
+        var methodName = sortOrder?.ToLower() == "desc"
             ? "OrderByDescending"
             : "OrderBy";
 
-        var resultExpression = Expression.Call(
-            typeof(Queryable),
-            methodName,
-            [typeof(T), property.PropertyType],
-            query.Expression,
-            Expression.Quote(orderByExpression));
+        var orderByMethod = typeof(Queryable).GetMethods()
+            .First(m => m.Name == methodName && m.GetParameters().Length == 2)
+            .MakeGenericMethod(typeof(T), property.PropertyType);
 
-        return query.Provider.CreateQuery<T>(resultExpression);
+        return (IQueryable<T>)orderByMethod.Invoke(null, new object[] { query, orderByExpression })!;
     }
 
-    /// <summary>
-    /// Apply sorting from PagedQuery
-    /// </summary>
     public static IQueryable<T> ApplySorting<T>(
         this IQueryable<T> query,
         PagedQuery pagedQuery)
     {
         return query.ApplySorting(pagedQuery.SortColumn, pagedQuery.SortOrder);
-    }
-
-    /// <summary>
-    /// Apply all PagedQuery filters (sorting + pagination)
-    /// </summary>
-    public static IQueryable<T> ApplyPagedQuery<T>(
-        this IQueryable<T> query,
-        PagedQuery pagedQuery)
-    {
-        return query
-            .ApplySorting(pagedQuery)
-            .ApplyPagination(pagedQuery);
     }
 }

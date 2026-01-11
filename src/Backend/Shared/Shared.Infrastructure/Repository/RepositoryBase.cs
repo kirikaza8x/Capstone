@@ -43,9 +43,9 @@ public abstract class RepositoryBase<TEntity, TId> : IRepository<TEntity, TId>
     }
 
     public virtual async Task<PagedResult<TEntity>> GetPagedAsync(
-        PagedQuery pagedQuery,
-        Expression<Func<TEntity, bool>>? predicate = null,
-        CancellationToken cancellationToken = default)
+            PagedQuery pagedQuery,
+            Expression<Func<TEntity, bool>>? predicate = null,
+            CancellationToken cancellationToken = default)
     {
         IQueryable<TEntity> query = DbSet.AsNoTracking();
 
@@ -53,6 +53,7 @@ public abstract class RepositoryBase<TEntity, TId> : IRepository<TEntity, TId>
         {
             query = query.Where(predicate);
         }
+
         var sortedQuery = query.ApplySorting(pagedQuery);
 
         if (string.IsNullOrWhiteSpace(pagedQuery.SortColumn) &&
@@ -65,10 +66,10 @@ public abstract class RepositoryBase<TEntity, TId> : IRepository<TEntity, TId>
     }
 
     public virtual async Task<PagedResult<TResult>> GetPagedAsync<TResult>(
-    PagedQuery pagedQuery,
-    Expression<Func<TEntity, TResult>> selector,
-    Expression<Func<TEntity, bool>>? predicate = null,
-    CancellationToken cancellationToken = default)
+        PagedQuery pagedQuery,
+        Expression<Func<TEntity, TResult>> selector,
+        Expression<Func<TEntity, bool>>? predicate = null,
+        CancellationToken cancellationToken = default)
     {
         IQueryable<TEntity> query = DbSet.AsNoTracking();
 
