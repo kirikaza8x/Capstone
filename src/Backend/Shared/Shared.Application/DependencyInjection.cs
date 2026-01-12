@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using FluentValidation;
+using Microsoft.Extensions.DependencyInjection;
 using Shared.Application.Extensions;
 using System.Reflection;
 
@@ -11,6 +12,8 @@ public static class ApplicationConfiguration
         Assembly[] moduleAssemblies)
     {
         services.AddMediatRWithBehaviors(moduleAssemblies);
+        services.AddAutoMapper(moduleAssemblies);
+        services.AddValidatorsFromAssemblies(moduleAssemblies);
         return services;
     }
 }

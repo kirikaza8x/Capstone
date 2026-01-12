@@ -1,4 +1,9 @@
-namespace Modules.Users.Api
+using System.Reflection;
+
+namespace Users.Api
 {
-    public static class ApiAssemblyReference { }
+    public static class UsersApiAssemblyReference
+    {
+        public static readonly Assembly Assembly = typeof(UsersApiAssemblyReference).Assembly;
+    }
 }

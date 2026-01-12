@@ -1,4 +1,10 @@
-namespace Modules.Users.Application
+using System.Reflection;
+
+namespace Users.Application
 {
-    public static class ApplicationAssemblyReference { }
+    public static class UsersApplicationAssemblyReference
+    {
+        public static readonly Assembly Assembly = typeof(UsersApplicationAssemblyReference).Assembly;
+
+    }
 }
