@@ -6,9 +6,6 @@ using Shared.Domain.Abstractions;
 
 namespace Shared.Application.Behaviors;
 
-/// <summary>
-/// Pipeline behavior for automatic transaction management
-/// </summary>
 internal sealed class UnitOfWorkBehavior<TRequest, TResponse>(
     IUnitOfWork unitOfWork,
     ILogger<UnitOfWorkBehavior<TRequest, TResponse>> logger)
@@ -21,14 +18,38 @@ internal sealed class UnitOfWorkBehavior<TRequest, TResponse>(
         RequestHandlerDelegate<TResponse> next,
         CancellationToken cancellationToken)
     {
-        if (request is not ITransactionalCommand)
+        if (request is not ICommand)
         {
             return await next();
         }
 
         var commandName = typeof(TRequest).Name;
 
-        logger.LogDebug("Beginning transaction for {CommandName}", commandName);
+        if (request is ITransactionalCommand)
+        {
+            return await HandleWithTransactionAsync(
+                request,
+                next,
+                commandName,
+                cancellationToken);
+        }
+
+        return await HandleWithSaveChangesAsync(
+            request,
+            next,
+            commandName,
+            cancellationToken);
+    }
+
+    private async Task<TResponse> HandleWithTransactionAsync(
+        TRequest request,
+        RequestHandlerDelegate<TResponse> next,
+        string commandName,
+        CancellationToken cancellationToken)
+    {
+        logger.LogDebug(
+            "[Transaction] Beginning explicit transaction for {CommandName}",
+            commandName);
 
         await unitOfWork.BeginTransactionAsync(cancellationToken);
 
@@ -38,17 +59,20 @@ internal sealed class UnitOfWorkBehavior<TRequest, TResponse>(
 
             if (result.IsSuccess)
             {
-                logger.LogDebug("Committing transaction for {CommandName}", commandName);
                 await unitOfWork.CommitTransactionAsync(cancellationToken);
+
+                logger.LogDebug(
+                    "[Transaction] Committed transaction for {CommandName}",
+                    commandName);
             }
             else
             {
+                await unitOfWork.RollbackTransactionAsync(cancellationToken);
+
                 logger.LogWarning(
-                    "Rolling back transaction for {CommandName} due to business failure: {ErrorCode}",
+                    "[Transaction] Rolled back transaction for {CommandName} due to: {ErrorCode}",
                     commandName,
                     result.Error.Code);
-
-                await unitOfWork.RollbackTransactionAsync(cancellationToken);
             }
 
             return result;
@@ -57,10 +81,45 @@ internal sealed class UnitOfWorkBehavior<TRequest, TResponse>(
         {
             logger.LogError(
                 ex,
-                "Rolling back transaction for {CommandName} due to exception",
+                "[Transaction] Rolling back transaction for {CommandName} due to exception",
                 commandName);
 
             await unitOfWork.RollbackTransactionAsync(cancellationToken);
+            throw;
+        }
+    }
+
+    private async Task<TResponse> HandleWithSaveChangesAsync(
+        TRequest request,
+        RequestHandlerDelegate<TResponse> next,
+        string commandName,
+        CancellationToken cancellationToken)
+    {
+        logger.LogDebug("[SaveChanges] Processing command {CommandName}",
+            commandName);
+
+        try
+        {
+            TResponse result = await next();
+
+            if (result.IsSuccess)
+            {
+                await unitOfWork.SaveChangesAsync(cancellationToken);
+                logger.LogDebug("[SaveChanges] Saved changes for {CommandName}", commandName);
+            }
+            else
+            {
+                logger.LogWarning("[SaveChanges] Skipped SaveChanges for {CommandName} due to: {ErrorCode}", commandName, result.Error.Code);
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(
+                ex,
+                "[SaveChanges] Error in {CommandName}, changes not saved",
+                commandName);
             throw;
         }
     }
