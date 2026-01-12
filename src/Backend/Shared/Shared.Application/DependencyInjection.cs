@@ -1,6 +1,4 @@
-﻿using FluentValidation;
-using Microsoft.Extensions.DependencyInjection;
-using Shared.Application.Behaviors;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Shared.Application.Extensions;
 using System.Reflection;
 

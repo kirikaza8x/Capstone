@@ -23,7 +23,7 @@ internal sealed class UnitOfWorkBehavior<TRequest, TResponse>(
             return await next();
         }
 
-        var commandName = typeof(TRequest).Name;
+        var commandName = typeof(TRequest).Name; 
 
         if (request is ITransactionalCommand)
         {

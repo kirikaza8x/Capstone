@@ -8,6 +8,7 @@ using Microsoft.Extensions.Options;
 using Products.Domain.Products;
 using Products.Infrastructure.Data;
 using Products.Infrastructure.Data.Repositories;
+using Shared.Domain.Data;
 using Shared.Infrastructure.Configs.Database;
 using Shared.Infrastructure.Data.Interceptors;
 using Shared.Infrastructure.Extensions;
@@ -38,8 +39,10 @@ public static class ProductModule
             })
             .UseSnakeCaseNamingConvention()
             .AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
-
         });
+
+        services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<ProductsDbContext>());
+
         return services;
     }
 
