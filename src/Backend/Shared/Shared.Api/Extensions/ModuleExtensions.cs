@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using System.Reflection;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Shared.Api.Modules;
@@ -27,5 +28,25 @@ public static class ModuleExtensions
             module.MapEndpoints(app);
         }
         return app;
+    }
+
+    public static IServiceCollection AddModulesFromAssemblies(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        params Assembly[] assemblies)
+    {
+        var moduleTypes = assemblies
+            .SelectMany(a => a.GetTypes())
+            .Where(t => typeof(IModule).IsAssignableFrom(t) && !t.IsAbstract);
+
+        foreach (var type in moduleTypes)
+        {
+            if (RegisteredModules.Any(m => m.GetType() == type)) continue; 
+            var module = (IModule)Activator.CreateInstance(type)!;
+            module.RegisterModule(services, configuration);
+            RegisteredModules.Add(module);
+        }
+
+        return services;
     }
 }
