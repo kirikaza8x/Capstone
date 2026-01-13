@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Shared.Infrastructure.Data;
+using Shared.Infrastructure.Outbox;
 using Users.Domain.Entities;
 
 namespace Users.Infrastructure.Persistence.Contexts
@@ -11,10 +12,10 @@ namespace Users.Infrastructure.Persistence.Contexts
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            base.OnModelCreating(modelBuilder);
-
-            // Apply all IEntityTypeConfiguration<T> in this assembly
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(UserModuleDbContext).Assembly);
+            modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration());
+            base.OnModelCreating(modelBuilder);
+            
         }
     }
 }

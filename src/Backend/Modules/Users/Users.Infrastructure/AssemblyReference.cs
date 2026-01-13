@@ -1,4 +1,10 @@
-namespace Modules.Users.Infrastructure
+using System.Reflection;
+
+namespace Users.Infrastructure
 {
-    public static class InfrastructureAssemblyReference { }
+    public class UsersInfrastructureAssemblyReference
+    {
+        public static readonly Assembly Assembly = typeof(UsersInfrastructureAssemblyReference).Assembly;
+
+    }
 }

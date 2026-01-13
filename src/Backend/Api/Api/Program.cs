@@ -1,40 +1,34 @@
-using Carter;
-using Products.Infrastructure;
-using Shared.Api.Extensions;
-using Shared.Application.Extensions;
-using Shared.Infrastructure.Extensions;
 
-namespace Api;
-
-public class Program
+namespace Api
 {
-    public static void Main(string[] args)
+    public class Program
     {
-        var builder = WebApplication.CreateBuilder(args);
+        public static void Main(string[] args)
+        {
+            var builder = WebApplication.CreateBuilder(args);
 
-        var productAssembly = typeof(ProductModule).Assembly;
+            // Add services to the container.
 
-        builder.Services
-            .AddCarterWithAssemblies(productAssembly);
+            builder.Services.AddControllers();
+            // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+            builder.Services.AddOpenApi();
 
-        builder.Services
-            .AddMediatRWithAssemblies(productAssembly);
+            var app = builder.Build();
 
-        builder.Services
-            .AddMassTransitWithAssemblies(builder.Configuration, productAssembly);
+            // Configure the HTTP request pipeline.
+            if (app.Environment.IsDevelopment())
+            {
+                app.MapOpenApi();
+            }
+
+            app.UseHttpsRedirection();
+
+            app.UseAuthorization();
 
 
-        builder.Services
-            .AddProductModule(builder.Configuration);
+            app.MapControllers();
 
-        var app = builder.Build();
-
-        app.UseAuthentication();
-        app.UseAuthorization();
-
-        app.MapCarter();
-        app.UseProductModule();
-
-        app.Run();
+            app.Run();
+        }
     }
 }
