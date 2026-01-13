@@ -1,3 +1,4 @@
+using Api.Extensions;
 using Carter;
 using Products.Infrastructure;
 using Shared.Api.Extensions;
@@ -32,7 +33,9 @@ public class Program
             builder.Configuration,
             productApiAssembly
         );
-
+        builder.Services.AddSwaggerDocumentation();
+        builder.Services.AddAuthentication();
+        builder.Services.AddAuthorization();
         // Add module
         builder.Services
                .AddProductModule(builder.Configuration);
@@ -46,8 +49,8 @@ public class Program
         if (app.Environment.IsDevelopment())
         {
             app.MapOpenApi();
+            app.UseSwaggerDocumentation();
         }
-
 
         app.UseHttpsRedirection();
         app.UseAuthentication();

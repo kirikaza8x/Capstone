@@ -9,4 +9,3 @@ public abstract class BaseDto<T>
     public string? ModifiedBy { get; set; }
     public bool IsActive { get; set; } = false;
 }
-
