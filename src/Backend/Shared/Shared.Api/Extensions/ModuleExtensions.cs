@@ -21,15 +21,6 @@ public static class ModuleExtensions
         return services;
     }
 
-    public static WebApplication MapModules(this WebApplication app)
-    {
-        foreach (var module in RegisteredModules)
-        {
-            module.MapEndpoints(app);
-        }
-        return app;
-    }
-
     public static IServiceCollection AddModulesFromAssemblies(
         this IServiceCollection services,
         IConfiguration configuration,

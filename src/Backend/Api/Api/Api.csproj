@@ -17,13 +17,19 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Modules\Users\Users.Api\Users.Api.csproj" />
-    <ProjectReference Include="..\..\Shared\Shared.Api\Shared.Api.csproj" />
+    <ProjectReference Include="..\..\Modules\Example\Products.Api\Products.Api.csproj" />
+    <ProjectReference Include="..\..\Modules\Example\Products.Application\Products.Application.csproj" />
+    <ProjectReference Include="..\..\Modules\Example\Products.Infrastructure\Products.Infrastructure.csproj" />
+	  <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.9">
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+	  </PackageReference>
+	<ProjectReference Include="..\..\Modules\Users\Users.Api\Users.Api.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Modules\Example\Products.Infrastructure\Products.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Shared\Shared.Api\Shared.Api.csproj" />
+    <ProjectReference Include="..\..\Shared\Shared.Application\Shared.Application.csproj" />
     <ProjectReference Include="..\..\Shared\Shared.Infrastructure\Shared.Infrastructure.csproj" />
   </ItemGroup>
 

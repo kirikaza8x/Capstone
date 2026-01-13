@@ -1,34 +1,63 @@
+using Carter;
+using Products.Infrastructure;
+using Shared.Api.Extensions;
+using Shared.Application;
+using Shared.Infrastructure.Extensions;
 
-namespace Api
+namespace Api;
+
+public class Program
 {
-    public class Program
+    public static void Main(string[] args)
     {
-        public static void Main(string[] args)
+        var builder = WebApplication.CreateBuilder(args);
+
+        // Assemblies
+        var productApplicationAssembly = Products.Application.AssemblyReference.Assembly;
+        var productApiAssembly = Products.Api.AssemblyReference.Assembly;
+
+        // Add Application Services
+        builder.Services.AddApplication(new[]
         {
-            var builder = WebApplication.CreateBuilder(args);
+            productApplicationAssembly
+        });
 
-            // Add services to the container.
+        // Carter services
+        builder.Services.AddCarterWithAssemblies(
+            productApiAssembly
+        );
 
-            builder.Services.AddControllers();
-            // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-            builder.Services.AddOpenApi();
+        // Masstransit services
+        builder.Services.AddMassTransitWithAssemblies(
+            builder.Configuration,
+            productApiAssembly
+        );
 
-            var app = builder.Build();
-
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
-            {
-                app.MapOpenApi();
-            }
-
-            app.UseHttpsRedirection();
-
-            app.UseAuthorization();
+        // Add module
+        builder.Services
+               .AddProductModule(builder.Configuration);
 
 
-            app.MapControllers();
+        builder.Services.AddOpenApi();
 
-            app.Run();
+        var app = builder.Build();
+
+        // Configure the HTTP request pipeline.
+        if (app.Environment.IsDevelopment())
+        {
+            app.MapOpenApi();
         }
+
+
+        app.UseHttpsRedirection();
+        app.UseAuthentication();
+        app.UseAuthorization();
+
+        app.MapCarter();
+
+        // Use module
+        app.UseProductModule();
+
+        app.Run();
     }
 }

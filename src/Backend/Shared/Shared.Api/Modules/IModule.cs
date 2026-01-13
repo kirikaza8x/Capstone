@@ -7,5 +7,5 @@ namespace Shared.Api.Modules;
 public interface IModule
 {
     IServiceCollection RegisterModule(IServiceCollection services, IConfiguration configuration);
-    IEndpointRouteBuilder MapEndpoints(IEndpointRouteBuilder endpoints);
+    //IEndpointRouteBuilder MapEndpoints(IEndpointRouteBuilder endpoints);
 }

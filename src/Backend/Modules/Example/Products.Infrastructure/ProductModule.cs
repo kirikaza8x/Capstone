@@ -8,7 +8,9 @@ using Microsoft.Extensions.Options;
 using Products.Domain.Products;
 using Products.Infrastructure.Data;
 using Products.Infrastructure.Data.Repositories;
+using Shared.Application.Abstractions.Authentication;
 using Shared.Domain.Data;
+using Shared.Infrastructure.Authentication;
 using Shared.Infrastructure.Configs.Database;
 using Shared.Infrastructure.Data.Interceptors;
 using Shared.Infrastructure.Extensions;
@@ -23,6 +25,8 @@ public static class ProductModule
         services.AddScoped<AuditableEntityInterceptor>();
         services.AddScoped<DispatchDomainEventInterceptor>();
         services.TryAddScoped<IProductRepository, ProductRepository>();
+        services.AddScoped<ICurrentUserService, CurrentUserService>();
+        services.AddHttpContextAccessor();
         services.AddDbContext<ProductsDbContext>((sp, options) =>
         {
             var dbConfig = sp.GetRequiredService<IOptions<DatabaseConfig>>().Value;

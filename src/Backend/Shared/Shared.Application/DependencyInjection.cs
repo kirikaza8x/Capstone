@@ -13,7 +13,9 @@ public static class ApplicationConfiguration
     {
         services.AddMediatRWithAssemblies(moduleAssemblies);
         services.AddAutoMapper(moduleAssemblies);
-        services.AddValidatorsFromAssemblies(moduleAssemblies);
+        services.AddValidatorsFromAssemblies(
+             moduleAssemblies,
+             includeInternalTypes: true);
         return services;
     }
 }

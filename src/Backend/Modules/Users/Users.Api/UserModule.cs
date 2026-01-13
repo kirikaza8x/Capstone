@@ -14,10 +14,4 @@ public class UserModule : IModule
         services.AddUserInfrastructure(configuration);
         return services; 
     }
-
-    public IEndpointRouteBuilder MapEndpoints(IEndpointRouteBuilder endpoints)
-    {
-        endpoints.MapGet("/health", () => "lmao");
-        return endpoints; 
-    }
 }
