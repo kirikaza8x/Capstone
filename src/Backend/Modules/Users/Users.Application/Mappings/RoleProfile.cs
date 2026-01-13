@@ -9,8 +9,6 @@ namespace Users.Application.Mappings
         public RoleProfile()
         {
             CreateMap<Role, RoleResponseDto>();
-
-
             CreateMap<RoleRequestDto, Role>()
                 .ConstructUsing(src => Role.Create(
                                             src.Name,

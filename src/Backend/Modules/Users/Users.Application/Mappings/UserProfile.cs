@@ -11,7 +11,6 @@ namespace Users.Application.Mappings
             CreateMap<User, UserResponseDto>()
                 .ForMember(dest => dest.Roles,
                         opt => opt.MapFrom(src => src.Roles.Select(r => r.ToString()).ToList()));
-
             CreateMap<RegisterRequestDto, User>()
                 .ConstructUsing(src => User.Create(
                     src.Email,
