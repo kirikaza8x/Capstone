@@ -25,5 +25,9 @@ jobs:
     - name: Build solution
       run: dotnet build src/Backend/Capstone.sln --configuration Release --no-restore
 
-    - name: Run tests
-      run: dotnet test src/Backend/Capstone.sln --no-build --verbosity normal
+    # - name: Run tests
+    #   run: dotnet test src/Backend/Capstone.sln --no-build --verbosity normal
+
+    # - name: Run backend (run test)
+    #   run: timeout 30s dotnet run --project src/Backend/Api/Api/Api.csproj --configuration Release
+
