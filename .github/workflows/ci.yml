@@ -20,10 +20,10 @@ jobs:
         dotnet-version: '9.0.x'   
 
     - name: Restore dependencies
-      run: dotnet restore Capstone.sln --warnaserror
+      run: dotnet restore src/Backend/Capstone.sln --warnaserror
 
     - name: Build solution
-      run: dotnet build Capstone.sln --configuration Release --no-restore
+      run: dotnet build src/Backend/Capstone.sln --configuration Release --no-restore
 
-    # - name: Run tests
-    #   run: dotnet test Capstone.sln --no-build --verbosity normal
+    - name: Run tests
+      run: dotnet test src/Backend/Capstone.sln --no-build --verbosity normal
