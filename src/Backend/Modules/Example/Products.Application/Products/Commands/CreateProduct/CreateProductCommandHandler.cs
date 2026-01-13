@@ -1,6 +1,4 @@
-﻿
-using FluentValidation;
-using MediatR;
+﻿using FluentValidation;
 using Products.Domain.Products;
 using Shared.Application.Messaging;
 using Shared.Domain.Abstractions;

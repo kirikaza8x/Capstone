@@ -27,14 +27,15 @@ services:
       - redis_data:/data
     networks:
       - aipromo-network
-
+  
+  # RabbitMQ
   rabbitmq:
     image: rabbitmq:3-management-alpine
     container_name: AIPromo-rabbitmq
     restart: unless-stopped
     environment:
-        RABBITMQ_DEFAULT_USER: guest
-        RABBITMQ_DEFAULT_PASS: guest
+        RABBITMQ_DEFAULT_USER: admin
+        RABBITMQ_DEFAULT_PASS: admin
     ports:
         - "5672:5672"
         - "15672:15672"

@@ -47,6 +47,14 @@ public class Product : AggregateRoot<Guid>
         return product;
     }
 
+    public void Update(string name, string description, decimal price, int stock)
+    {
+        Name = name;
+        Description = description;
+        Price = price;
+        Stock = stock;
+    }
+
     public void UpdateStock(int quantity)
     {
         Stock += quantity;
@@ -55,6 +63,11 @@ public class Product : AggregateRoot<Guid>
     public void UpdatePrice(decimal newPrice)
     {
         Price = newPrice;
+    }
+
+    public void Delete()
+    {
+        IsActive = false;
     }
 
     protected override void Apply(IDomainEvent @event)
