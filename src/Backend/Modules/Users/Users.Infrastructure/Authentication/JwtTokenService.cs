@@ -7,130 +7,135 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Shared.Application.Abstractions.Authentication;
 
-namespace Users.Infrastructure.Authentication;
-
-public sealed class JwtTokenService : IJwtTokenService
+namespace Users.Infrastructure.Authentication
 {
-    private readonly ILogger<JwtTokenService> _logger;
-    private readonly int _expiryMinutes;
-    private readonly int _refreshTokenExpiryDays;
-    private readonly byte[] _key;
-    private readonly string _issuer;
-    private readonly string _audience;
-
-    public JwtTokenService(
-        IOptions<JwtConfigs> options,
-        ILogger<JwtTokenService> logger)
+    public sealed class JwtTokenService : IJwtTokenService
     {
-        var config = options.Value;
+        private readonly ILogger<JwtTokenService> _logger;
+        private readonly int _expiryMinutes;
+        private readonly int _refreshTokenExpiryDays;
+        private readonly byte[] _key;
+        private readonly string _issuer;
+        private readonly string _audience;
 
-        _logger = logger;
-
-        _expiryMinutes = config.ExpiryMinutes;
-        _refreshTokenExpiryDays = config.RefreshTokenExpiryDays;
-        _key = Encoding.UTF8.GetBytes(config.Secret);
-        _issuer = config.Issuer;
-        _audience = config.Audience;
-
-        _logger.LogInformation(
-            "JwtTokenService initialized. Expiry: {Expiry}m, Refresh: {Refresh}d",
-            _expiryMinutes,
-            _refreshTokenExpiryDays);
-    }
-
-    public int ExpiryMinutes => _expiryMinutes;
-
-    public int RefreshTokenExpiryDays => _refreshTokenExpiryDays;
-
-    public string GenerateToken(
-        Guid userId,
-        string? email,
-        string? name,
-        IEnumerable<string> roles)
-    {
-        var claims = new List<Claim>
+        public JwtTokenService(
+            IOptions<JwtConfigs> options,
+            ILogger<JwtTokenService> logger)
         {
-            new(JwtRegisteredClaimNames.Sub, userId.ToString()),
-            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-        };
+            var config = options.Value;
 
-        if (!string.IsNullOrWhiteSpace(email))
-            claims.Add(new(JwtRegisteredClaimNames.Email, email));
+            _logger = logger;
 
-        if (!string.IsNullOrWhiteSpace(name))
-            claims.Add(new(JwtRegisteredClaimNames.Name, name));
+            _expiryMinutes = config.ExpiryMinutes;
+            _refreshTokenExpiryDays = config.RefreshTokenExpiryDays;
+            _key = Encoding.UTF8.GetBytes(config.Secret);
+            _issuer = config.Issuer;
+            _audience = config.Audience;
 
-        claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
+            _logger.LogInformation(
+                "JwtTokenService initialized. Expiry: {Expiry}m, Refresh: {Refresh}d",
+                _expiryMinutes,
+                _refreshTokenExpiryDays);
+        }
 
-        var tokenDescriptor = new SecurityTokenDescriptor
+        public int ExpiryMinutes => _expiryMinutes;
+
+        public int RefreshTokenExpiryDays => _refreshTokenExpiryDays;
+
+        public string GenerateToken(
+            Guid userId,
+            string? email,
+            string? name,
+            IEnumerable<string> roles,
+            string? deviceId = null)
         {
-            Subject = new ClaimsIdentity(claims),
-            Expires = DateTime.UtcNow.AddMinutes(_expiryMinutes),
-            Issuer = _issuer,
-            Audience = _audience,
-            SigningCredentials = new SigningCredentials(
-                new SymmetricSecurityKey(_key),
-                SecurityAlgorithms.HmacSha256Signature)
-        };
+            var claims = new List<Claim>
+            {
+                new(JwtRegisteredClaimNames.Sub, userId.ToString()),
+                new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            };
 
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var token = tokenHandler.CreateToken(tokenDescriptor);
+            if (!string.IsNullOrWhiteSpace(email))
+                claims.Add(new(JwtRegisteredClaimNames.Email, email));
 
-        return tokenHandler.WriteToken(token);
-    }
+            if (!string.IsNullOrWhiteSpace(name))
+                claims.Add(new(JwtRegisteredClaimNames.Name, name));
 
-    public ClaimsPrincipal? ValidateToken(string token, bool allowExpired = false)
-    {
-        try
-        {
+            if (!string.IsNullOrWhiteSpace(deviceId))
+                claims.Add(new("DeviceId", deviceId));
+
+            claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
+
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(claims),
+                Expires = DateTime.UtcNow.AddMinutes(_expiryMinutes),
+                Issuer = _issuer,
+                Audience = _audience,
+                SigningCredentials = new SigningCredentials(
+                    new SymmetricSecurityKey(_key),
+                    SecurityAlgorithms.HmacSha256Signature)
+            };
+
             var tokenHandler = new JwtSecurityTokenHandler();
-            var parameters = GetValidationParameters(allowExpired);
+            var token = tokenHandler.CreateToken(tokenDescriptor);
 
-            return tokenHandler.ValidateToken(token, parameters, out _);
+            return tokenHandler.WriteToken(token);
         }
-        catch (Exception ex)
+
+        public ClaimsPrincipal? ValidateToken(string token, bool allowExpired = false)
         {
-            _logger.LogDebug(ex, "JWT validation failed");
-            return null;
+            try
+            {
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var parameters = GetValidationParameters(allowExpired);
+
+                return tokenHandler.ValidateToken(token, parameters, out _);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "JWT validation failed");
+                return null;
+            }
         }
-    }
 
-    public string GenerateRefreshToken()
-    {
-        return Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
-    }
-
-    public bool IsTokenExpired(string token)
-        => GetMinutesUntilExpiry(token) <= 0;
-
-    public int GetMinutesUntilExpiry(string token)
-    {
-        try
+        public string GenerateRefreshToken()
         {
-            var jwt = new JwtSecurityTokenHandler().ReadJwtToken(token);
-            return (int)(jwt.ValidTo - DateTime.UtcNow).TotalMinutes;
+            return Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
         }
-        catch
+
+        public bool IsTokenExpired(string token)
+            => GetMinutesUntilExpiry(token) <= 0;
+
+        public int GetMinutesUntilExpiry(string token)
         {
-            return -1;
+            try
+            {
+                var jwt = new JwtSecurityTokenHandler().ReadJwtToken(token);
+                return (int)(jwt.ValidTo - DateTime.UtcNow).TotalMinutes;
+            }
+            catch
+            {
+                return -1;
+            }
         }
-    }
 
-    private TokenValidationParameters GetValidationParameters(bool allowExpired)
-    {
-        return new TokenValidationParameters
+        private TokenValidationParameters GetValidationParameters(bool allowExpired)
         {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(_key),
+            return new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(_key),
 
-            ValidateIssuer = true,
-            ValidIssuer = _issuer,
+                ValidateIssuer = true,
+                ValidIssuer = _issuer,
 
-            ValidateAudience = true,
-            ValidAudience = _audience,
+                ValidateAudience = true,
+                ValidAudience = _audience,
 
-            ValidateLifetime = !allowExpired,
-            ClockSkew = TimeSpan.Zero
-        };
+                ValidateLifetime = !allowExpired,
+                ClockSkew = TimeSpan.Zero
+            };
+        }
     }
 }

@@ -89,6 +89,8 @@ namespace Users.Infrastructure
             services.AddScoped<IJwtTokenService, JwtTokenService>();
             services.AddScoped<IPasswordHasher, PasswordHasher>();
             services.AddScoped<ICurrentUserService, CurrentUserService>();
+            services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+            services.AddScoped<IDeviceDetectionService, DeviceDetectionService>();
             services.AddHttpContextAccessor();
             return services;
         }

@@ -18,8 +18,15 @@ public class LoginRequestDto
 {
     [DefaultValue("admin")]
     public string EmailOrUserName { get; set; } = default!;
+
     [DefaultValue("123456789")]
     public string Password { get; set; } = default!;
+
+    // Device information metadata
+    public string? DeviceId { get; set; }
+    public string? DeviceName { get; set; }
+    public string? IpAddress { get; set; }
+    public string? UserAgent { get; set; }
 }
 
 public class RegisterRequestDto

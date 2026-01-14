@@ -1,4 +1,3 @@
-using System.Net;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Shared.Application.Abstractions.Authentication;
@@ -18,8 +17,6 @@ public class CurrentUserService : ICurrentUserService
     private HttpContext? Context => _httpContextAccessor.HttpContext;
     private ClaimsPrincipal? User => Context?.User;
 
-    public IPAddress? IpAddress => Context?.Connection?.RemoteIpAddress;
-
     public Guid UserId => GetGuidClaim(ClaimTypes.NameIdentifier);
 
     public string? Email => GetClaimValue(ClaimTypes.Email);
@@ -35,6 +32,12 @@ public class CurrentUserService : ICurrentUserService
 
     public string? Jti => GetClaimValue("jti");
 
+    public string? IpAddress => Context?.Connection?.RemoteIpAddress?.ToString();
+
+    public string? UserAgent => Context?.Request?.Headers["User-Agent"].ToString();
+
+    public string? DeviceId => GetClaimValue("DeviceId") ?? GetDeviceIdFromHeader();
+
     public CurrentUserDto GetCurrentUser() => new()
     {
         UserId = UserId,
@@ -42,7 +45,8 @@ public class CurrentUserService : ICurrentUserService
         Name = Name,
         Roles = Roles.ToList(),
         Jti = Jti,
-        IpAddress = IpAddress?.ToString()
+        IpAddress = IpAddress,
+        DeviceId = DeviceId
     };
 
     private string? GetClaimValue(string claimType)
@@ -54,5 +58,11 @@ public class CurrentUserService : ICurrentUserService
     {
         var value = GetClaimValue(claimType);
         return Guid.TryParse(value, out var guid) ? guid : Guid.Empty;
+    }
+
+    private string? GetDeviceIdFromHeader()
+    {
+        // Allow client to send device ID via custom header
+        return Context?.Request?.Headers["X-Device-ID"].ToString();
     }
 }

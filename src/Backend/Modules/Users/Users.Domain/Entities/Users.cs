@@ -1,4 +1,3 @@
-
 using Shared.Domain.DDD;
 using Users.Domain.Events;
 namespace Users.Domain.Entities
@@ -14,9 +13,10 @@ namespace Users.Domain.Entities
         public string? PhoneNumber { get; private set; }
         public string? Address { get; private set; }
         public string? ProfileImageUrl { get; private set; }
-        public string? RefreshToken { get; private set; }
-        public DateTime? RefreshTokenExpiry { get; private set; }
+
+        // Navigation properties
         public ICollection<Role> Roles { get; private set; } = new List<Role>();
+        public ICollection<RefreshToken> RefreshTokens { get; private set; } = new List<RefreshToken>();
 
 
         // EF Core constructor
@@ -46,6 +46,7 @@ namespace Users.Domain.Entities
                 Address = address,
                 IsActive = true,
                 Roles = new List<Role>(),
+                RefreshTokens = new List<RefreshToken>()
             };
             if (role != null) user.AssignRole(role);
             user.RaiseDomainEvent(new UserCreatedEvent(user.Id, user.Email ?? string.Empty, user.UserName));
@@ -56,7 +57,6 @@ namespace Users.Domain.Entities
         // Domain behaviors
         public void ChangeEmail(string newEmail)
         {
-
             Email = newEmail;
             // RaiseEvent(new UserEmailChangedEvent(Id, newEmail));
         }
@@ -75,7 +75,6 @@ namespace Users.Domain.Entities
             Address = address ?? Address;
             ProfileImageUrl = profileImageUrl ?? ProfileImageUrl;
         }
-
 
         public void DeactivateUser()
         {
@@ -96,20 +95,85 @@ namespace Users.Domain.Entities
             Roles.Add(role);
         }
 
-
         public void RemoveRole(Role role)
         {
             if (Roles.Contains(role))
                 Roles.Remove(role);
         }
 
-
-        public void SetRefreshToken(string token, DateTime expiry)
+        // Refresh token management
+        public RefreshToken AddRefreshToken(string token, DateTime expiry)
         {
-            RefreshToken = token;
-            RefreshTokenExpiry = expiry;
+            var refreshToken = new RefreshToken(token, expiry, Id);
+            RefreshTokens.Add(refreshToken);
+            return refreshToken;
         }
 
+        public void RevokeRefreshToken(string token)
+        {
+            var refreshToken = RefreshTokens.FirstOrDefault(rt => rt.Token == token);
+            refreshToken?.Revoke();
+        }
+
+        public void RevokeAllRefreshTokens()
+        {
+            foreach (var token in RefreshTokens.Where(rt => !rt.IsRevoked))
+            {
+                token.Revoke();
+            }
+        }
+
+        public RefreshToken? GetValidRefreshToken(string token)
+        {
+            return RefreshTokens.FirstOrDefault(rt =>
+                rt.Token == token &&
+                !rt.IsRevoked &&
+                rt.ExpiryDate > DateTime.UtcNow);
+        }
+
+
+        public RefreshToken AddRefreshToken(
+    string token,
+    DateTime expiry,
+    string? deviceId = null,
+    string? deviceName = null,
+    string? ipAddress = null,
+    string? userAgent = null)
+        {
+            var refreshToken = new RefreshToken(token, expiry, Id, deviceId, deviceName, ipAddress, userAgent);
+            RefreshTokens.Add(refreshToken);
+            return refreshToken;
+        }
+
+        public void RevokeRefreshTokensByDevice(string deviceId)
+        {
+            foreach (var token in RefreshTokens.Where(rt => rt.DeviceId == deviceId && !rt.IsRevoked))
+            {
+                token.Revoke();
+            }
+        }
+
+        public RefreshToken? GetValidRefreshToken(string token, string? deviceId = null)
+        {
+            var query = RefreshTokens.Where(rt =>
+                rt.Token == token &&
+                !rt.IsRevoked &&
+                rt.ExpiryDate > DateTime.UtcNow);
+
+            if (!string.IsNullOrEmpty(deviceId))
+            {
+                query = query.Where(rt => rt.DeviceId == deviceId);
+            }
+
+            return query.FirstOrDefault();
+        }
+
+        public IEnumerable<RefreshToken> GetActiveDevices()
+        {
+            return RefreshTokens
+                .Where(rt => !rt.IsRevoked && rt.ExpiryDate > DateTime.UtcNow)
+                .OrderByDescending(rt => rt.CreatedAt);
+        }
 
         protected override void Apply(IDomainEvent @event)
         {
@@ -121,43 +185,7 @@ namespace Users.Domain.Entities
                     UserName = e.UserName;
                     IsActive = true;
                     break;
-
-                    //         case UserEmailChangedEvent e:
-                    //             Email = e.NewEmail;
-                    //             break;
-
-                    //         case UserPasswordChangedEvent e:
-                    //             // You might not store the password hash in the event,
-                    //             // but if you do, apply it here.
-                    //             PasswordHash = e.NewPasswordHash;
-                    //             break;
-
-                    //         case UserProfileUpdatedEvent e:
-                    //             FirstName = e.FirstName;
-                    //             LastName = e.LastName;
-                    //             PhoneNumber = e.PhoneNumber;
-                    //             Address = e.Address;
-                    //             ProfileImageUrl = e.ProfileImageUrl;
-                    //             break;
-
-                    //         case UserDeactivatedEvent e:
-                    //             IsDeleted = true;
-                    //             break;
-
-                    //         case UserRoleAssignedEvent e:
-                    //             Roles.Add(new Role(e.RoleId, e.RoleName));
-                    //             break;
-
-                    //         case UserRoleRemovedEvent e:
-                    //             Roles.Remove(Roles.FirstOrDefault(r => r.Id == e.RoleId));
-                    //             break;
-
-                    //         case UserRefreshTokenSetEvent e:
-                    //             RefreshToken = e.Token;
-                    //             RefreshTokenExpiry = e.Expiry;
-                    //             break;
             }
         }
-
     }
 }

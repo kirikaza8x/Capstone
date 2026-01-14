@@ -13,5 +13,9 @@ namespace Users.Domain.Repositories
             IEnumerable<string> userNamesOrEmails,
             CancellationToken cancellationToken = default);
 
+        // Task<RefreshToken?> GetRefreshTokenAsync(string token, CancellationToken cancellationToken = default);
+        // Task<IEnumerable<RefreshToken>> GetActiveRefreshTokensByUserAsync(Guid userId, CancellationToken cancellationToken = default);
+        // Task AddRefreshTokenAsync(Guid userId, RefreshToken refreshToken, CancellationToken cancellationToken = default);
+        // Task RevokeRefreshTokenAsync(Guid tokenId, CancellationToken cancellationToken = default);
     }
 }

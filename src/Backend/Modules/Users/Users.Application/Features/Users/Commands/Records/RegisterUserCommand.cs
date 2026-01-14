@@ -9,4 +9,11 @@ namespace Users.Application.Features.Users.Commands.Records;
 //     string Password
 // ) : IRequest<UserResponse>;
 
-public record RegisterUserCommand(RegisterRequestDto RegisterRequest) : ICommand<UserResponseDto>, ITransactionalCommand;
+public record RegisterUserCommand( 
+    string Email, 
+    string UserName, 
+    string Password, 
+    string FirstName, 
+    string LastName, 
+    string PhoneNumber, 
+    string Address ) : ICommand<UserResponseDto>;

@@ -1,67 +1,146 @@
 using System.Security.Claims;
+using FluentValidation;
 using Shared.Application.Abstractions.Authentication;
-using Shared.Application.DTOs;
 using Shared.Application.Messaging;
 using Shared.Domain.Abstractions;
 using Users.Application.Features.Users.Commands.Records;
+using Users.Application.Features.Users.Dtos;
 using Users.Domain.Repositories;
 
-namespace Users.Application.Features.Users.Handlers.RefreshTokenCommandHandler;
-
-public class RefreshTokenCommandHandler : ICommandHandler<RefreshTokenCommand, LoginResponseDto>
+namespace Users.Application.Features.Users.Handlers.RefreshTokenCommandHandler
 {
-    private readonly IUserRepository _userRepository;
-    private readonly IJwtTokenService _jwtTokenService;
-
-    public RefreshTokenCommandHandler(IUserRepository userRepository, IJwtTokenService jwtTokenService)
+    public class RefreshTokenCommandValidator : AbstractValidator<RefreshTokenCommand>
     {
-        _userRepository = userRepository;
-        _jwtTokenService = jwtTokenService;
+        public RefreshTokenCommandValidator()
+        {
+            RuleFor(x => x.AccessToken)
+                .NotEmpty()
+                .WithMessage("Access token is required.");
+
+            RuleFor(x => x.RefreshToken)
+                .NotEmpty()
+                .WithMessage("Refresh token is required.");
+
+            RuleFor(x => x.DeviceId)
+                .MaximumLength(128)
+                .When(x => !string.IsNullOrWhiteSpace(x.DeviceId))
+                .WithMessage("DeviceId must not exceed 128 characters.");
+
+            RuleFor(x => x.DeviceName)
+                .MaximumLength(128)
+                .When(x => !string.IsNullOrWhiteSpace(x.DeviceName))
+                .WithMessage("DeviceName must not exceed 128 characters.");
+
+            RuleFor(x => x.IpAddress)
+                .MaximumLength(64)
+                .When(x => !string.IsNullOrWhiteSpace(x.IpAddress))
+                .WithMessage("IpAddress must not exceed 64 characters.");
+
+            RuleFor(x => x.UserAgent)
+                .MaximumLength(512)
+                .When(x => !string.IsNullOrWhiteSpace(x.UserAgent))
+                .WithMessage("UserAgent must not exceed 512 characters.");
+        }
     }
-
-    public async Task<Result<LoginResponseDto>> Handle(RefreshTokenCommand command, CancellationToken cancellationToken)
+    public class RefreshTokenCommandHandler : ICommandHandler<RefreshTokenCommand, LoginResponseDto>
     {
-        var request = command.Request;
+        private readonly IUserRepository _userRepository;
+        private readonly IJwtTokenService _jwtTokenService;
+        private readonly IRefreshTokenService _refreshTokenService;
+        private readonly ICurrentUserService _currentUserService;
+        private readonly IDeviceDetectionService _deviceDetectionService;
+        private readonly IValidator<RefreshTokenCommand> _validator;
 
-        var principal = _jwtTokenService.ValidateToken(request.AccessToken, allowExpired: true);
-        if (principal == null)
+        public RefreshTokenCommandHandler(
+            IUserRepository userRepository,
+            IJwtTokenService jwtTokenService,
+            IRefreshTokenService refreshTokenService,
+            ICurrentUserService currentUserService,
+            IDeviceDetectionService deviceDetectionService,
+            IValidator<RefreshTokenCommand> validator)
         {
-            return Result.Failure<LoginResponseDto>(
-                Error.Unauthorized("Token.InvalidAccess", "Access token is invalid.")
-            );
+            _userRepository = userRepository;
+            _jwtTokenService = jwtTokenService;
+            _refreshTokenService = refreshTokenService;
+            _currentUserService = currentUserService;
+            _deviceDetectionService = deviceDetectionService;
+            _validator = validator;
         }
 
-        var userId = Guid.Parse(principal.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-        var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
-        if (user == null)
+        public async Task<Result<LoginResponseDto>> Handle(RefreshTokenCommand command, CancellationToken cancellationToken)
         {
-            return Result.Failure<LoginResponseDto>(
-                Error.NotFound("User.NotFound", "User not found.")
+            var validationResult = await _validator.ValidateAsync(command, cancellationToken);
+            if (!validationResult.IsValid)
+            {
+                var firstError = validationResult.Errors.First();
+                return Result.Failure<LoginResponseDto>(
+                    Error.Validation("RefreshToken.Validation", firstError.ErrorMessage)
+                );
+            }
+
+            var principal = _jwtTokenService.ValidateToken(command.AccessToken, allowExpired: true);
+            if (principal == null)
+            {
+                return Result.Failure<LoginResponseDto>(
+                    Error.Unauthorized("Token.InvalidAccess", "Access token is invalid.")
+                );
+            }
+
+            var userId = Guid.Parse(principal.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
+            if (user == null)
+            {
+                return Result.Failure<LoginResponseDto>(
+                    Error.NotFound("User.NotFound", "User not found.")
+                );
+            }
+            var storedToken = user.RefreshTokens
+                .FirstOrDefault(rt => rt.Token == command.RefreshToken);
+
+            if (storedToken == null || !_refreshTokenService.ValidateToken(storedToken))
+            {
+                return Result.Failure<LoginResponseDto>(
+                    Error.Unauthorized("Token.RefreshExpired", "Refresh token is invalid or expired.")
+                );
+            }
+
+            _refreshTokenService.RevokeToken(storedToken);
+            var newRefreshToken = _refreshTokenService.GenerateToken(user.Id);
+
+            var userAgent = _currentUserService.UserAgent ?? command.UserAgent;
+            var ipAddress = _currentUserService.IpAddress ?? command.IpAddress;
+            var deviceInfo = _deviceDetectionService.GetDeviceInfo(userAgent, ipAddress, command.DeviceId);
+
+            user.AddRefreshToken(
+                newRefreshToken.Token,
+                newRefreshToken.ExpiryDate,
+                deviceInfo.DeviceId,
+                command.DeviceName ?? deviceInfo.DeviceName,
+                ipAddress,
+                userAgent
             );
-        }
 
-        if (user.RefreshToken != request.RefreshToken || user.RefreshTokenExpiry <= DateTime.UtcNow)
-        {
-            return Result.Failure<LoginResponseDto>(
-                Error.Unauthorized("Token.RefreshExpired", "Refresh token is invalid or expired.")
+            var roles = user.Roles.Select(r => r.Name).ToList();
+            var newAccessToken = _jwtTokenService.GenerateToken(
+                user.Id,
+                user.Email,
+                user.UserName,
+                roles,
+                deviceInfo.DeviceId
             );
+
+            _userRepository.Update(user);
+
+            var response = new LoginResponseDto(
+                AccessToken: newAccessToken,
+                RefreshToken: newRefreshToken.Token,
+                ExpiresAt: DateTime.UtcNow.AddMinutes(_jwtTokenService.ExpiryMinutes),
+                User: new UserInfoDto(user.Id, user.FirstName ?? "", user.UserName, user.Email, roles),
+                DeviceId: deviceInfo.DeviceId,
+                DeviceName: command.DeviceName ?? deviceInfo.DeviceName
+            );
+
+            return Result.Success(response);
         }
-
-        var roles = user.Roles.Select(r => r.Name).ToList();
-        var newAccessToken = _jwtTokenService.GenerateToken(user.Id, user.Email, user.UserName, roles);
-        var newRefreshToken = _jwtTokenService.GenerateRefreshToken();
-        var newExpiry = DateTime.UtcNow.AddDays(_jwtTokenService.RefreshTokenExpiryDays);
-
-        user.SetRefreshToken(newRefreshToken, newExpiry);
-        _userRepository.Update(user);
-
-        var response = new LoginResponseDto(
-            AccessToken: newAccessToken,
-            RefreshToken: newRefreshToken,
-            ExpiresAt: DateTime.UtcNow.AddMinutes(_jwtTokenService.ExpiryMinutes),
-            User: new UserInfoDto(user.Id, user.FirstName ?? "", user.UserName, user.Email, roles)
-        );
-
-        return Result.Success(response);
     }
 }
