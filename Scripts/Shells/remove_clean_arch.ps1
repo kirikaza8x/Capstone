@@ -3,7 +3,7 @@ param(
     [string]$ModuleName
 )
 
-# Prompt if params are missing (launcher stays param-agnostic)
+# Prompt if params are missing
 if (-not $ProjectName) { $ProjectName = Read-Host "Enter ProjectName (e.g., Capstone)" }
 if (-not $ModuleName) { $ModuleName = Read-Host "Enter ModuleName (e.g., Example)" }
 
@@ -26,9 +26,7 @@ if (Test-Path $BackendDirCandidateA) {
 
 # Paths
 $ModuleRoot   = Join-Path $BackendDir "Modules\$ModuleName"
-#$ApiDir       = Join-Path $ModuleRoot "$ModuleName.Api"
 $SolutionPath = Join-Path $BackendDir "$ProjectName.sln"
-#$HostDir      = Join-Path $BackendDir "Api\Api"
 
 Write-Host "`n[!] Removing scaffold for module '$ModuleName'..." -ForegroundColor Cyan
 
@@ -50,15 +48,29 @@ if (Test-Path $SolutionPath) {
 if (Test-Path $ModuleRoot) {
     $confirm = Read-Host "Are you sure you want to delete module directory $ModuleRoot? (y/n)"
     if ($confirm -eq 'y') {
+        # Preserve Dockerfile if present
+        $dockerFile = Join-Path $ModuleRoot "Dockerfile"
+        if (Test-Path $dockerFile) {
+            $tempDocker = Join-Path $BackendDir "Dockerfile.$ModuleName.bak"
+            Copy-Item $dockerFile $tempDocker -Force
+            Write-Host "[+] Preserved Dockerfile as $tempDocker" -ForegroundColor Green
+        }
+
         Remove-Item -Recurse -Force $ModuleRoot
         Write-Host "[+] Deleted module directory $ModuleRoot" -ForegroundColor Green
+
+        # Restore Dockerfile if it was preserved
+        if (Test-Path $tempDocker) {
+            $restorePath = Join-Path $BackendDir "Modules\$ModuleName\Dockerfile"
+            New-Item -ItemType Directory -Force -Path (Split-Path $restorePath -Parent) | Out-Null
+            Move-Item $tempDocker $restorePath
+            Write-Host "[+] Restored Dockerfile to $restorePath" -ForegroundColor Green
+        }
     } else {
         Write-Host "[!] Skipped deleting module directory." -ForegroundColor Yellow
     }
 } else {
     Write-Host "[!] Module directory not found at $ModuleRoot" -ForegroundColor Yellow
 }
-
-# === Preserve Dockerfile ===
 
 Write-Host "`n[OK] Removal complete for module '$ModuleName' (Dockerfile preserved)." -ForegroundColor Green
