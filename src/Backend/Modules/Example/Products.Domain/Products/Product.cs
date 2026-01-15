@@ -72,6 +72,5 @@ public class Product : AggregateRoot<Guid>
 
     protected override void Apply(IDomainEvent @event)
     {
-        throw new NotImplementedException();
     }
 }

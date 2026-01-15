@@ -18,12 +18,12 @@ internal sealed class UnitOfWorkBehavior<TRequest, TResponse>(
         RequestHandlerDelegate<TResponse> next,
         CancellationToken cancellationToken)
     {
-        if (request is not ICommand)
+        if (!IsCommand(request))
         {
             return await next();
         }
 
-        var commandName = typeof(TRequest).Name; 
+        var commandName = typeof(TRequest).Name;
 
         if (request is ITransactionalCommand)
         {
@@ -39,6 +39,14 @@ internal sealed class UnitOfWorkBehavior<TRequest, TResponse>(
             next,
             commandName,
             cancellationToken);
+    }
+
+    private static bool IsCommand(TRequest request)
+    {
+        return request is ICommand ||
+               typeof(TRequest).GetInterfaces()
+                   .Any(i => i.IsGenericType &&
+                             i.GetGenericTypeDefinition() == typeof(ICommand<>));
     }
 
     private async Task<TResponse> HandleWithTransactionAsync(

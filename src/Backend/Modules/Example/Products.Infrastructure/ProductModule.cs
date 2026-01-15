@@ -22,11 +22,14 @@ public static class ProductModule
     public static IServiceCollection AddProductModule(this IServiceCollection services, IConfiguration configuration)
     {
         services.ConfigureOptions<DatabaseConfigSetup>();
-        services.AddScoped<AuditableEntityInterceptor>();
-        services.AddScoped<DispatchDomainEventInterceptor>();
-        services.TryAddScoped<IProductRepository, ProductRepository>();
+
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddHttpContextAccessor();
+
+        services.AddScoped<ISaveChangesInterceptor, AuditableEntityInterceptor>();
+        services.AddScoped<ISaveChangesInterceptor, DispatchDomainEventInterceptor>();
+
+        services.TryAddScoped<IProductRepository, ProductRepository>();
         services.AddDbContext<ProductsDbContext>((sp, options) =>
         {
             var dbConfig = sp.GetRequiredService<IOptions<DatabaseConfig>>().Value;

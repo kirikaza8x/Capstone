@@ -36,23 +36,35 @@ public class Program
         builder.Services.AddSwaggerDocumentation();
         builder.Services.AddAuthentication();
         builder.Services.AddAuthorization();
+
+        // Add CORS
+        builder.Services.AddCors(options =>
+        {
+            options.AddDefaultPolicy(policy =>
+            {
+                policy.AllowAnyOrigin()
+                      .AllowAnyMethod()
+                      .AllowAnyHeader();
+            });
+        });
+
         // Add module
         builder.Services
                .AddProductModule(builder.Configuration);
 
-
-        builder.Services.AddOpenApi();
+        builder.Services.AddSwaggerGen();
 
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
         {
-            app.MapOpenApi();
+            app.UseSwagger();
             app.UseSwaggerDocumentation();
         }
 
         app.UseHttpsRedirection();
+        app.UseCors();
         app.UseAuthentication();
         app.UseAuthorization();
 
