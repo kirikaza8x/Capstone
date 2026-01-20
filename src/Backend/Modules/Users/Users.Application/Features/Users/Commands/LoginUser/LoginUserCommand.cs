@@ -10,6 +10,6 @@ namespace Users.Application.Features.Users.Commands.Records
     string? DeviceName,
     string? IpAddress,
     string? UserAgent
-) : ICommand<LoginResponseDto>, ITransactionalCommand;
+) : ICommand<LoginResponseDto>;
 
 }
