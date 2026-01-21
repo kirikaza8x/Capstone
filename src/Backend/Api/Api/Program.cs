@@ -73,7 +73,7 @@ public class Program
         app.MapCarter();
 
         // Use module
-        app.UseProductModule();
+        //app.UseProductModule();
 
         app.Run();
     }

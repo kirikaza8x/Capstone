@@ -1,6 +1,9 @@
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Shared.Infrastructure.Extensions;
 using Users.Infrastructure;
+using Users.Infrastructure.Persistence.Contexts;
 
 public static class UserModule 
 {
@@ -8,5 +11,11 @@ public static class UserModule
         //services.UsersAddApplication();
         services.AddUserInfrastructure(configuration);
         return services; 
+    }
+
+    public static IApplicationBuilder UseUserModule(this IApplicationBuilder app)
+    {
+        app.UseMigration<UserModuleDbContext>();
+        return app;
     }
 }
