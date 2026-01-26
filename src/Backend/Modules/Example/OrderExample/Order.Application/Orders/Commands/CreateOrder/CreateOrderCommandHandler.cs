@@ -69,7 +69,7 @@ internal sealed class CreateOrderCommandHandler : ICommandHandler<CreateOrderCom
                 return Result.Failure<Guid>(OrderErrors.InsufficientStock(item.ProductId));
         }
 
-        var order = Order.Domain.Orders.Order.Create(
+        var order = Domain.Orders.Order.Create(
             command.CustomerId,
             command.CustomerName,
             command.ShippingAddress);
