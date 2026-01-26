@@ -7,11 +7,11 @@ from app.api.v1.health import router as health
 from app.api.v1.ai_assistant import router as ai_assistant
 from app.database import engine, Base
 
-# @asynccontextmanager
-# async def lifespan(app: FastAPI):
-#     async with engine.begin() as conn:
-#         await conn.run_sync(Base.metadata.create_all)
-#     yield
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    yield
 
 app = FastAPI(
     title="Event AI Recommendation Backend",
