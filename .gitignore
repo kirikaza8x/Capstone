@@ -417,6 +417,6 @@ FodyWeavers.xsd
 *.msm
 *.msp
 # Ignore secrets only
-appsettings.*.json
-!appsettings.json
-!appsettings.Development.json
+**/appsettings.json
+**/appsettings.Development.json
+**/appsettings.Production.json
