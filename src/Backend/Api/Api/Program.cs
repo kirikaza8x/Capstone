@@ -1,4 +1,5 @@
 using Api.Extensions;
+using Api.Middleware;
 using Carter;
 using Products.Infrastructure;
 using Shared.Api.Extensions;
@@ -52,6 +53,9 @@ public class Program
         builder.Services
                .AddProductModule(builder.Configuration);
 
+        builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+        builder.Services.AddProblemDetails();
+
         builder.Services.AddSwaggerGen();
 
         var app = builder.Build();
@@ -67,7 +71,7 @@ public class Program
         app.UseCors();
         app.UseAuthentication();
         app.UseAuthorization();
-
+        app.UseExceptionHandler();
         app.MapCarter();
 
         // Use module

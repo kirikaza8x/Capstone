@@ -8,6 +8,8 @@ using Microsoft.Extensions.Options;
 using Products.Domain.Products;
 using Products.Infrastructure.Data;
 using Products.Infrastructure.Data.Repositories;
+using Products.Infrastructure.PublicApi;
+using Products.PublicApi;
 using Shared.Application.Abstractions.Authentication;
 using Shared.Domain.Data;
 using Shared.Infrastructure.Authentication;
@@ -30,6 +32,10 @@ public static class ProductModule
         services.AddScoped<ISaveChangesInterceptor, DispatchDomainEventInterceptor>();
 
         services.TryAddScoped<IProductRepository, ProductRepository>();
+
+        // Register Public API
+        services.AddScoped<IProductsApi, ProductsApi>();
+
         services.AddDbContext<ProductsDbContext>((sp, options) =>
         {
             var dbConfig = sp.GetRequiredService<IOptions<DatabaseConfig>>().Value;
