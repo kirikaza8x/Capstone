@@ -14,7 +14,7 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(
-    title="Event AI – Recommendation Backend",
+    title="Event AI Recommendation Backend",
     lifespan=lifespan
 )
 
