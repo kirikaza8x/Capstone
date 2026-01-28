@@ -1,10 +1,8 @@
-import json
 from google import genai
 from google.genai import types
-from app.config import GEMINI_API_KEY
-
+from app.config import settings
 # Initialize Gemini client with your API key
-client = genai.Client(api_key=GEMINI_API_KEY)
+client = genai.Client(api_key=settings.GEMINI_API_KEY)
 
 async def generate_json(
     prompt: str,
