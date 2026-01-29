@@ -98,18 +98,9 @@ namespace Users.Infrastructure.Persistence.Configs
                            j.HasKey("user_id", "role_id");
                            j.ToTable("user_roles");
                        });
-
-            // IMPORTANT: Tell EF Core to access the Roles collection via the backing field
-            // because the property has a private setter.
             builder.Navigation(u => u.Roles)
                    .UsePropertyAccessMode(PropertyAccessMode.Field);
-
-            // 2. Refresh Tokens (One-to-Many)
            
-            builder.HasMany(u => u.RefreshTokens)
-                   .WithOne()
-                   .HasForeignKey("UserId"); // Explicitly linking to the Shadow Property or Property in RefreshToken
-
             builder.Navigation(u => u.RefreshTokens)
                    .UsePropertyAccessMode(PropertyAccessMode.Field);
         }

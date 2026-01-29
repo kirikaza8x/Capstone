@@ -133,12 +133,12 @@ namespace Users.Domain.Entities
 
 
         public RefreshToken AddRefreshToken(
-    string token,
-    DateTime expiry,
-    string? deviceId = null,
-    string? deviceName = null,
-    string? ipAddress = null,
-    string? userAgent = null)
+        string token,
+        DateTime expiry,
+        string? deviceId = null,
+        string? deviceName = null,
+        string? ipAddress = null,
+        string? userAgent = null)
         {
             var refreshToken = new RefreshToken(token, expiry, Id, deviceId, deviceName, ipAddress, userAgent);
             RefreshTokens.Add(refreshToken);
