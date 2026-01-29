@@ -6,18 +6,15 @@ using Shared.Infrastructure.Outbox;
 
 namespace Order.Infrastructure.Data;
 
-public sealed class OrdersDbContext(DbContextOptions<OrdersDbContext> options) : DbContextBase(options)
+public sealed class OrdersDbContext(DbContextOptions<OrdersDbContext> options) : DbContext(options)
 {
-    public DbSet<Order.Domain.Orders.Order> Orders => Set<Order.Domain.Orders.Order>();
-    public DbSet<OrderItem> OrderItems => Set<OrderItem>();
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.HasDefaultSchema("orders");
-
+        modelBuilder.HasDefaultSchema(Constants.SchemaName);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(OrdersDbContext).Assembly);
-        modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration());
-
         base.OnModelCreating(modelBuilder);
     }
+
+    public DbSet<Order.Domain.Orders.Order> Orders => Set<Order.Domain.Orders.Order>();
+    public DbSet<OrderItem> OrderItems => Set<OrderItem>();
 }

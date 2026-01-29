@@ -9,11 +9,13 @@ using Order.Domain.Orders;
 using Order.Infrastructure.Data;
 using Order.Infrastructure.Data.Repositories;
 using Shared.Application.Abstractions.Authentication;
+using Shared.Application.EventBus;
 using Shared.Domain.Data;
 using Shared.Infrastructure.Authentication;
 using Shared.Infrastructure.Configs.Database;
 using Shared.Infrastructure.Data.Interceptors;
 using Shared.Infrastructure.Extensions;
+using Shared.Infrastructure.EventBus;
 
 namespace Order.Infrastructure;
 
@@ -28,6 +30,7 @@ public static class OrderModule
         services.AddScoped<ISaveChangesInterceptor, DispatchDomainEventInterceptor>();
 
         services.TryAddScoped<IOrderRepository, OrderRepository>();
+        services.TryAddScoped<IOrderUnitOfWork, OrderUnitOfWork>();
 
         services.AddDbContext<OrdersDbContext>((sp, options) =>
         {
@@ -47,8 +50,7 @@ public static class OrderModule
             .AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
         });
 
-        services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<OrdersDbContext>());
-
+        services.AddScoped<IEventBus, EventBus>();
         return services;
     }
 

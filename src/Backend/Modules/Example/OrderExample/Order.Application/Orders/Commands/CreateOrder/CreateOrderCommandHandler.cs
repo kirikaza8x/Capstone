@@ -1,6 +1,8 @@
 ﻿using FluentValidation;
 using Order.Domain.Orders;
+using Order.IntegrationEvents;
 using Products.PublicApi;
+using Shared.Application.EventBus;
 using Shared.Application.Messaging;
 using Shared.Domain.Abstractions;
 
@@ -36,13 +38,16 @@ internal sealed class CreateOrderCommandHandler : ICommandHandler<CreateOrderCom
 {
     private readonly IOrderRepository _orderRepository;
     private readonly IProductsApi _productsApi;
+    private readonly IEventBus _eventBus;
 
     public CreateOrderCommandHandler(
         IOrderRepository orderRepository,
-        IProductsApi productsApi)
+        IProductsApi productsApi,
+        IEventBus eventBus)
     {
         _orderRepository = orderRepository;
         _productsApi = productsApi;
+        _eventBus = eventBus;
     }
 
     public async Task<Result<Guid>> Handle(CreateOrderCommand command, CancellationToken cancellationToken)
@@ -81,6 +86,16 @@ internal sealed class CreateOrderCommandHandler : ICommandHandler<CreateOrderCom
         }
 
         _orderRepository.Add(order);
+
+        var integrationEvent = new OrderCreatedIntegrationEvent(
+            order.Id,
+            command.Items.Select(i => new OrderItemDto
+            {
+                ProductId = i.ProductId,
+                Quantity = i.Quantity
+            }).ToList()
+        );
+        await _eventBus.PublishAsync(integrationEvent, cancellationToken);
 
         return Result.Success(order.Id);
     }

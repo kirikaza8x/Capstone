@@ -2,7 +2,7 @@ using Users.Domain.Entities;
 using Users.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Users.Infrastructure.Persistence.Contexts;
-using Shared.Infrastructure.Repository;
+using Shared.Infrastructure.Data;
 namespace Users.Infrastructure.Repositories
 {
     public class UserRepository : RepositoryBase<User,Guid>, IUserRepository

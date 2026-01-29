@@ -79,46 +79,6 @@ namespace Products.Infrastructure.Data.Migrations
 
                     b.ToTable("products", "products");
                 });
-
-            modelBuilder.Entity("Shared.Infrastructure.Outbox.OutboxMessage", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasColumnType("jsonb")
-                        .HasColumnName("content");
-
-                    b.Property<string>("Error")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)")
-                        .HasColumnName("error");
-
-                    b.Property<DateTime>("OccurredOnUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("occurred_on_utc");
-
-                    b.Property<DateTime?>("ProcessedOnUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("processed_on_utc");
-
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("type");
-
-                    b.HasKey("Id")
-                        .HasName("pk_outbox_messages");
-
-                    b.HasIndex("ProcessedOnUtc")
-                        .HasDatabaseName("ix_outbox_messages_processed_on_utc");
-
-                    b.ToTable("outbox_messages", "products");
-                });
 #pragma warning restore 612, 618
         }
     }

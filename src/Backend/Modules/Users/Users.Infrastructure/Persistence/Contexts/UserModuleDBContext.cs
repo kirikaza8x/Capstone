@@ -5,7 +5,7 @@ using Users.Domain.Entities;
 
 namespace Users.Infrastructure.Persistence.Contexts
 {
-    public class UserModuleDbContext : DbContextBase
+    public class UserModuleDbContext : DbContext
     {
         public DbSet<User> Users { get; set; } = default!;
         public UserModuleDbContext(DbContextOptions<UserModuleDbContext> options) : base(options) { }
@@ -13,7 +13,6 @@ namespace Users.Infrastructure.Persistence.Contexts
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(UserModuleDbContext).Assembly);
-            modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration());
             base.OnModelCreating(modelBuilder);
             
         }

@@ -6,15 +6,15 @@ using Shared.Domain.Pagination;
 using System.Linq.Expressions;
 using Shared.Infrastructure.Extensions;
 
-namespace Shared.Infrastructure.Repository;
+namespace Shared.Infrastructure.Data;
 
-public abstract class RepositoryBase<TEntity, TId> : IRepository<TEntity, TId>
+public class RepositoryBase<TEntity, TId> : IRepository<TEntity, TId>
     where TEntity : Entity<TId>
 {
-    protected readonly DbContext Context;
-    protected readonly DbSet<TEntity> DbSet;
+    private readonly DbContext Context;
+    private readonly DbSet<TEntity> DbSet;
 
-    protected RepositoryBase(DbContext context)
+    public RepositoryBase(DbContext context)
     {
         Context = context;
         DbSet = context.Set<TEntity>();

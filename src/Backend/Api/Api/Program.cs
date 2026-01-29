@@ -29,6 +29,7 @@ public class Program
 
             // user
             UsersApiAssemblyReference.Assembly,
+
         };
 
         // Add Application Services
@@ -88,8 +89,8 @@ public class Program
 
         // Use module
         app
-            .UseProductModule()
             .UseOrderModule()
+            .UseProductModule()
             ;
 
         app.Run();

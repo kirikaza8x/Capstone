@@ -17,7 +17,6 @@ public static class MediatRExtensions
 
             config.AddOpenBehavior(typeof(LoggingBehavior<,>));
             config.AddOpenBehavior(typeof(ValidationBehavior<,>));
-            config.AddOpenBehavior(typeof(UnitOfWorkBehavior<,>));
         });
 
         services.AddValidatorsFromAssemblies(assemblies, includeInternalTypes: true);

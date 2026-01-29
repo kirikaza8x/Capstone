@@ -15,23 +15,6 @@ namespace Products.Infrastructure.Data.Migrations
                 name: "products");
 
             migrationBuilder.CreateTable(
-                name: "outbox_messages",
-                schema: "products",
-                columns: table => new
-                {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    type = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
-                    content = table.Column<string>(type: "jsonb", nullable: false),
-                    occurred_on_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    processed_on_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    error = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_outbox_messages", x => x.id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "products",
                 schema: "products",
                 columns: table => new
@@ -53,12 +36,6 @@ namespace Products.Infrastructure.Data.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "ix_outbox_messages_processed_on_utc",
-                schema: "products",
-                table: "outbox_messages",
-                column: "processed_on_utc");
-
-            migrationBuilder.CreateIndex(
                 name: "ix_products_name",
                 schema: "products",
                 table: "products",
@@ -69,10 +46,6 @@ namespace Products.Infrastructure.Data.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "outbox_messages",
-                schema: "products");
-
             migrationBuilder.DropTable(
                 name: "products",
                 schema: "products");

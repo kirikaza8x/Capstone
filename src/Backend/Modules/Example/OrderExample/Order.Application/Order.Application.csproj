@@ -10,6 +10,12 @@
     <ProjectReference Include="..\..\..\..\Shared\Shared.Application\Shared.Application.csproj" />
     <ProjectReference Include="..\..\Products.PublicApi\Products.PublicApi.csproj" />
     <ProjectReference Include="..\Order.Domain\Order.Domain.csproj" />
+    <ProjectReference Include="..\Order.IntegrationEvent\Order.IntegrationEvents.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Orders\EventHandlers\Domain\" />
+    <Folder Include="Orders\EventHandlers\Integration\" />
   </ItemGroup>
 
 </Project>
