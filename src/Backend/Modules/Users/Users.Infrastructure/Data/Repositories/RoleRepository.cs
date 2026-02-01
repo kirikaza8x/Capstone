@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Users.Infrastructure.Persistence.Contexts;
 using Shared.Infrastructure.Data;
 
-namespace Users.Infrastructure.Repositories
+namespace Users.Infrastructure.Data.Repositories
 {
     public class RoleRepository : RepositoryBase<Role,Guid>, IRoleRepository
     {

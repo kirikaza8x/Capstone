@@ -7,6 +7,7 @@ using Shared.Api.Extensions;
 using Shared.Application;
 using Shared.Infrastructure.Extensions;
 using Users.Api;
+using Users.Application;
 
 namespace Api;
 
@@ -28,6 +29,7 @@ public class Program
             Order.Api.AssemblyReference.Assembly,
 
             // user
+            UsersApplicationAssemblyReference.Assembly,
             UsersApiAssemblyReference.Assembly,
 
         };
@@ -88,10 +90,11 @@ public class Program
         app.MapCarter();
 
         // Use module
-        app
-            .UseOrderModule()
-            .UseProductModule()
-            ;
+        // app
+        //     .UseOrderModule()
+        //     .UseProductModule()
+        //     .UseUserModule()
+        //     ;
 
         app.Run();
     }

@@ -14,7 +14,9 @@ using Shared.Infrastructure.Configs.Database;
 using Shared.Infrastructure.Configs.Security;
 using Shared.Infrastructure.Data.Interceptors;
 using Shared.Infrastructure.Extensions;
+using Users.Domain.UOW;
 using Users.Infrastructure.Authentication;
+using Users.Infrastructure.Data.UOW;
 using Users.Infrastructure.Persistence.Contexts;
 
 namespace Users.Infrastructure
@@ -34,7 +36,7 @@ namespace Users.Infrastructure
                 .WithScopedLifetime());
 
             //services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<UserModuleDbContext>());
-
+            services.AddScoped<IUserUnitOfWork, UserUnitOfWork>();
             services.Scan(scan => scan
                 .FromAssemblyOf<UsersInfrastructureAssemblyReference>()
                 .AddClasses(classes => classes.AssignableTo(typeof(IRepository<,>)))

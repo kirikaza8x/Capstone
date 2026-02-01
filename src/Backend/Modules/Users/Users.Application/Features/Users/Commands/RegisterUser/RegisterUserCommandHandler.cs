@@ -7,6 +7,7 @@ using Users.Domain.Entities;
 using Users.Domain.Repositories;
 using FluentValidation;
 using AutoMapper;
+using Users.Domain.UOW;
 
 namespace Users.Application.Features.Users.Commands.RegisterUser
 {
@@ -47,11 +48,13 @@ namespace Users.Application.Features.Users.Commands.RegisterUser
         private readonly IUserRepository _userRepository;
         private readonly IPasswordHasher _passwordHasher;
         private readonly IMapper _mapper;
-        private readonly IValidator<RegisterUserCommand> _validator;
+        private readonly IValidator<RegisterUserCommand> _validator;        
+        // private readonly IUserUnitOfWork _unitOfWork; 
 
         public RegisterUserCommandHandler(
             IUserRepository userRepository,
             IPasswordHasher passwordHasher,
+            IUserUnitOfWork unitOfWork, 
             IMapper mapper,
             IValidator<RegisterUserCommand> validator)
         {
@@ -59,6 +62,7 @@ namespace Users.Application.Features.Users.Commands.RegisterUser
             _passwordHasher = passwordHasher;
             _mapper = mapper;
             _validator = validator;
+            // _unitOfWork = unitOfWork;
         }
 
         public async Task<Result<UserResponseDto>> Handle(RegisterUserCommand command, CancellationToken cancellationToken)
@@ -102,7 +106,7 @@ namespace Users.Application.Features.Users.Commands.RegisterUser
             );
 
             _userRepository.Add(user);
-
+            // await _unitOfWork.SaveChangesAsync(cancellationToken);
             var response = _mapper.Map<UserResponseDto>(user);
 
             return Result.Success(response);

@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Users.Domain.Repositories;
 using Users.Infrastructure.Persistence.Contexts;
 using Shared.Infrastructure.Data;
-namespace Users.Infrastructure.Repositories
+namespace Users.Infrastructure.Data.Repositories
 {
     public class RefreshTokenRepository 
         : RepositoryBase<RefreshToken, Guid>, IRefreshTokenRepository
