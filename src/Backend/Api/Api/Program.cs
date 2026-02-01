@@ -1,6 +1,7 @@
 using Api.Extensions;
 using Api.Middleware;
 using Carter;
+using Order.Infrastructure;
 using Products.Infrastructure;
 using Shared.Api.Extensions;
 using Shared.Application;
@@ -18,9 +19,17 @@ public class Program
         // Assemblies array
         var assemblies = new[]
         {
+            // product
             Products.Application.AssemblyReference.Assembly,
             Products.Api.AssemblyReference.Assembly,
+
+            // order
+            Order.Application.AssemblyReference.Assembly,
+            Order.Api.AssemblyReference.Assembly,
+
+            // user
             UsersApiAssemblyReference.Assembly,
+
         };
 
         // Add Application Services
@@ -52,8 +61,10 @@ public class Program
 
         // Add module
         builder.Services
-        .AddProductModule(Configuration)
-        .AddUserModule(Configuration);
+            .AddProductModule(Configuration)
+            .AddOrderModule(Configuration)
+            .AddUserModule(Configuration)
+        ;
 
         builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
         builder.Services.AddProblemDetails();
@@ -77,7 +88,10 @@ public class Program
         app.MapCarter();
 
         // Use module
-        //app.UseProductModule();
+        app
+            .UseOrderModule()
+            .UseProductModule()
+            ;
 
         app.Run();
     }

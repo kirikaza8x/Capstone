@@ -6,7 +6,7 @@ using Users.Domain.UOW;
 
 namespace Users.Infrastructure.Persistence.Contexts
 {
-    public class UserModuleDbContext : DbContextBase , IUserUnitOfWork
+    public class UserModuleDbContext : DbContext
     {
         public DbSet<User> Users { get; set; } = default!;
         public DbSet<Role> Roles { get; set; } = default!;
@@ -17,7 +17,6 @@ namespace Users.Infrastructure.Persistence.Contexts
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(UserModuleDbContext).Assembly);
-            modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration());
             base.OnModelCreating(modelBuilder);
         }
     }

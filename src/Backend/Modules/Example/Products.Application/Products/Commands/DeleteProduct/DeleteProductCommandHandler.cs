@@ -4,16 +4,12 @@ using Shared.Domain.Abstractions;
 
 namespace Products.Application.Products.Commands.DeleteProduct;
 
-internal sealed class DeleteProductCommandHandler
+internal sealed class DeleteProductCommandHandler(
+        IProductRepository _productRepository,
+        IProductUnitOfWork uow
+    )
     : ICommandHandler<DeleteProductCommand>
 {
-    private readonly IProductRepository _productRepository;
-
-    public DeleteProductCommandHandler(IProductRepository productRepository)
-    {
-        _productRepository = productRepository;
-    }
-
     public async Task<Result> Handle(
         DeleteProductCommand request,
         CancellationToken cancellationToken)
@@ -29,7 +25,7 @@ internal sealed class DeleteProductCommandHandler
 
         product.Delete();
         _productRepository.Update(product);
-
+        await uow.SaveChangesAsync(cancellationToken);
         return Result.Success();
     }
 }

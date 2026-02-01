@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Order.Domain.Orders;
-using Shared.Infrastructure.Repository;
+using Shared.Infrastructure.Data;
 
 namespace Order.Infrastructure.Data.Repositories;
 

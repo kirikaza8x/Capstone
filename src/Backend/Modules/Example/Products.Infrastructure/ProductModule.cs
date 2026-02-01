@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using MassTransit.Configuration;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
+using Products.Application.Products.EventHandlers.IntergrationEvents;
 using Products.Domain.Products;
 using Products.Infrastructure.Data;
 using Products.Infrastructure.Data.Repositories;
@@ -32,7 +34,7 @@ public static class ProductModule
         services.AddScoped<ISaveChangesInterceptor, DispatchDomainEventInterceptor>();
 
         services.TryAddScoped<IProductRepository, ProductRepository>();
-
+        services.TryAddScoped<IProductUnitOfWork, ProductUnitOfWork>();
         // Register Public API
         services.AddScoped<IProductsApi, ProductsApi>();
 
@@ -53,8 +55,6 @@ public static class ProductModule
             .UseSnakeCaseNamingConvention()
             .AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
         });
-
-        services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<ProductsDbContext>());
 
         return services;
     }

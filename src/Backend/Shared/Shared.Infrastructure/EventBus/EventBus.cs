@@ -3,7 +3,7 @@ using Shared.Application.EventBus;
 
 namespace Shared.Infrastructure.EventBus;
 
-internal sealed class EventBus : IEventBus
+public sealed class EventBus : IEventBus
 {
     private readonly IPublishEndpoint _publishEndpoint;
 

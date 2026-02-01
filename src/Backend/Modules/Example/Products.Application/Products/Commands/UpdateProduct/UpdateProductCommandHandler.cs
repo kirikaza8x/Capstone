@@ -28,15 +28,12 @@ internal sealed class UpdateProductCommandValidator : AbstractValidator<UpdatePr
     }
 }
 
-internal sealed class UpdateProductCommandHandler
+internal sealed class UpdateProductCommandHandler(
+        IProductRepository _productRepository,
+        IProductUnitOfWork uow
+    )
     : ICommandHandler<UpdateProductCommand>
 {
-    private readonly IProductRepository _productRepository;
-
-    public UpdateProductCommandHandler(IProductRepository productRepository)
-    {
-        _productRepository = productRepository;
-    }
 
     public async Task<Result> Handle(
         UpdateProductCommand command,
@@ -65,9 +62,8 @@ internal sealed class UpdateProductCommandHandler
             command.Description,
             command.Price,
             command.Stock);
-
         _productRepository.Update(product);
-
+        await uow.SaveChangesAsync(cancellationToken);
         return Result.Success();
     }
 }

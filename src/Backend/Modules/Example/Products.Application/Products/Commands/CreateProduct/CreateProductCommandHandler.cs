@@ -25,7 +25,10 @@ internal sealed class CreateProductCommandValidator : AbstractValidator<CreatePr
     }
 }
 
-internal class CreateProductCommandHandler(IProductRepository productRepository) : ICommandHandler<CreateProductCommand, Guid>
+internal class CreateProductCommandHandler(
+        IProductRepository productRepository,
+        IProductUnitOfWork uow
+    ) : ICommandHandler<CreateProductCommand, Guid>
 {
     public async Task<Result<Guid>> Handle(CreateProductCommand command, CancellationToken cancellationToken)
     {
@@ -45,7 +48,7 @@ internal class CreateProductCommandHandler(IProductRepository productRepository)
             command.Stock);
 
         productRepository.Add(product);
-
+        await uow.SaveChangesAsync(cancellationToken);
         return Result.Success(product.Id);
     }
 }
