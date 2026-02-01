@@ -3,9 +3,9 @@ using Users.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Users.Infrastructure.Persistence.Contexts;
 using Shared.Infrastructure.Data;
-namespace Users.Infrastructure.Repositories
+namespace Users.Infrastructure.Data.Repositories
 {
-    public class UserRepository : RepositoryBase<User,Guid>, IUserRepository
+    public class UserRepository : RepositoryBase<User, Guid>, IUserRepository
     {
         private readonly UserModuleDbContext _context;
         private readonly DbSet<User> _dbSet;
@@ -49,7 +49,18 @@ namespace Users.Infrastructure.Repositories
                          || userNamesOrEmails.Contains(u.UserName ?? string.Empty))
                 .FirstOrDefaultAsync(cancellationToken);
         }
-
-
+        public async Task<RefreshToken?> GetValidRefreshTokenForDevice(
+            Guid userId, 
+            string deviceId, 
+            CancellationToken cancellationToken = default)
+        {
+            return await _context.Set<RefreshToken>()
+                .Where(rt => 
+                    rt.UserId == userId && 
+                    rt.DeviceId == deviceId &&
+                    !rt.IsRevoked && 
+                    rt.ExpiryDate > DateTime.UtcNow)
+                .FirstOrDefaultAsync(cancellationToken);
+        }
     }
 }
