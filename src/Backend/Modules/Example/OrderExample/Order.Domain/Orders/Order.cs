@@ -39,9 +39,6 @@ public class Order : AggregateRoot<Guid>
             customerId,
             customerName,
             shippingAddress);
-
-        order.RaiseDomainEvent(new OrderCreatedDomainEvent(order.Id));
-
         return order;
     }
 
@@ -62,6 +59,8 @@ public class Order : AggregateRoot<Guid>
         RaiseDomainEvent(new OrderItemAddedDomainEvent(Id, productId, quantity));
     }
 
+
+
     public void RemoveItem(Guid productId)
     {
         var item = _orderItems.FirstOrDefault(x => x.ProductId == productId);
@@ -69,6 +68,11 @@ public class Order : AggregateRoot<Guid>
         {
             _orderItems.Remove(item);
         }
+    }
+
+    public void MarkAsCreated()
+    {
+        RaiseDomainEvent(new OrderCreatedDomainEvent(Id, _orderItems.ToList()));
     }
 
     public void Confirm()

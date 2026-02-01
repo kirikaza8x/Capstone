@@ -19,4 +19,8 @@ public static class ProductErrors
     public static Error InvalidStock => Error.Validation(
         "Products.InvalidStock",
         "Stock cannot be negative");
+
+    public static Error InsufficientStock(Guid productId) => Error.Validation(
+        "Products.InsufficientStock",
+        $"Insufficient stock for product with ID '{productId}'");
 }

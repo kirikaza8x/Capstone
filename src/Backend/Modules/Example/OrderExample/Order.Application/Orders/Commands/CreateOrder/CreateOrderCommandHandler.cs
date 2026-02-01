@@ -1,8 +1,6 @@
 ﻿using FluentValidation;
 using Order.Domain.Orders;
-using Order.IntegrationEvents;
 using Products.PublicApi;
-using Shared.Application.EventBus;
 using Shared.Application.Messaging;
 using Shared.Domain.Abstractions;
 
@@ -37,26 +35,23 @@ public sealed class CreateOrderCommandValidator : AbstractValidator<CreateOrderC
 internal sealed class CreateOrderCommandHandler : ICommandHandler<CreateOrderCommand, Guid>
 {
     private readonly IOrderRepository _orderRepository;
+    private readonly IOrderUnitOfWork _unitOfWork;
     private readonly IProductsApi _productsApi;
-    private readonly IEventBus _eventBus;
 
     public CreateOrderCommandHandler(
         IOrderRepository orderRepository,
-        IProductsApi productsApi,
-        IEventBus eventBus)
+        IOrderUnitOfWork unitOfWork,
+        IProductsApi productsApi)
     {
         _orderRepository = orderRepository;
+        _unitOfWork = unitOfWork;
         _productsApi = productsApi;
-        _eventBus = eventBus;
     }
 
     public async Task<Result<Guid>> Handle(CreateOrderCommand command, CancellationToken cancellationToken)
     {
-        // Validate products and stock
+        // Validate products exist and are active
         var productIds = command.Items.Select(x => x.ProductId).ToList();
-        //
-        // Use public API to get product details
-        //
         var products = await _productsApi.GetByIdsAsync(productIds, cancellationToken);
 
         foreach (var item in command.Items)
@@ -69,33 +64,29 @@ internal sealed class CreateOrderCommandHandler : ICommandHandler<CreateOrderCom
             if (!product.IsActive)
                 return Result.Failure<Guid>(OrderErrors.ProductNotFound(item.ProductId));
 
+            // Check stock availability
             var inStock = await _productsApi.IsInStockAsync(item.ProductId, item.Quantity, cancellationToken);
             if (!inStock)
                 return Result.Failure<Guid>(OrderErrors.InsufficientStock(item.ProductId));
         }
 
+        // Create order with items
         var order = Domain.Orders.Order.Create(
             command.CustomerId,
             command.CustomerName,
             command.ShippingAddress);
 
+        // Add items to order
         foreach (var item in command.Items)
         {
             var product = products.First(p => p.Id == item.ProductId);
             order.AddItem(item.ProductId, product.Name, product.Price, item.Quantity);
         }
-
+        order.MarkAsCreated();
         _orderRepository.Add(order);
 
-        var integrationEvent = new OrderCreatedIntegrationEvent(
-            order.Id,
-            command.Items.Select(i => new OrderItemDto
-            {
-                ProductId = i.ProductId,
-                Quantity = i.Quantity
-            }).ToList()
-        );
-        await _eventBus.PublishAsync(integrationEvent, cancellationToken);
+        // Save changes - Domain event sẽ được tự động dispatch qua DispatchDomainEventInterceptor
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Success(order.Id);
     }

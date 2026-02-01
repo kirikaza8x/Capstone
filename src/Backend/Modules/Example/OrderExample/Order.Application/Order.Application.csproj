@@ -14,7 +14,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Orders\EventHandlers\Domain\" />
     <Folder Include="Orders\EventHandlers\Integration\" />
   </ItemGroup>
 

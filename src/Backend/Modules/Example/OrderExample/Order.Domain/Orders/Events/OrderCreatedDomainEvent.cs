@@ -2,4 +2,4 @@
 
 namespace Order.Domain.Orders.Events;
 
-public sealed record OrderCreatedDomainEvent(Guid OrderId) : DomainEvent;
+public sealed record OrderCreatedDomainEvent(Guid OrderId, List<OrderItem> Items) : DomainEvent;

@@ -50,7 +50,6 @@ public static class OrderModule
             .AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
         });
 
-        services.AddScoped<IEventBus, EventBus>();
         return services;
     }
 
