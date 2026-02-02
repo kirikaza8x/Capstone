@@ -44,7 +44,7 @@ public class Order : AggregateRoot<Guid>
 
     public void AddItem(Guid productId, string productName, decimal unitPrice, int quantity)
     {
-        var existingItem = _orderItems.FirstOrDefault(x => x.ProductId == productId);
+        var existingItem = OrderItems.FirstOrDefault(x => x.ProductId == productId);
 
         if (existingItem is not null)
         {
@@ -55,10 +55,7 @@ public class Order : AggregateRoot<Guid>
             var item = new OrderItem(Id, productId, productName, unitPrice, quantity);
             _orderItems.Add(item);
         }
-
-        RaiseDomainEvent(new OrderItemAddedDomainEvent(Id, productId, quantity));
     }
-
 
 
     public void RemoveItem(Guid productId)

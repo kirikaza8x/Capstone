@@ -30,6 +30,7 @@ public class UnitOfWorkBase<TDbContext> : IUnitOfWork where TDbContext : DbConte
         return await _dbContext.SaveChangesAsync(cancellationToken);
     }
 
+
     public bool IsInTransaction => _currentTransaction != null;
 
     public async Task BeginTransactionAsync(CancellationToken cancellationToken = default)

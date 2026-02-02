@@ -12,6 +12,8 @@ internal sealed class OrderItemConfiguration : IEntityTypeConfiguration<OrderIte
         builder.ToTable("order_items");
 
         builder.HasKey(i => i.Id);
+        builder.Property(i => i.Id)
+            .ValueGeneratedNever();
 
         builder.Property(i => i.ProductName)
             .HasMaxLength(200)

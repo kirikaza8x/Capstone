@@ -27,7 +27,5 @@ internal sealed class OrderConfiguration : IEntityTypeConfiguration<Order.Domain
             .WithOne()
             .HasForeignKey(i => i.OrderId)
             .OnDelete(DeleteBehavior.Cascade);
-
-        builder.Navigation(o => o.OrderItems).AutoInclude();
     }
 }

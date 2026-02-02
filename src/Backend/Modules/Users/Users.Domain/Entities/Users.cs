@@ -18,7 +18,6 @@ namespace Users.Domain.Entities
         public ICollection<Role> Roles { get; private set; } = new List<Role>();
         public ICollection<RefreshToken> RefreshTokens { get; private set; } = new List<RefreshToken>();
 
-
         // EF Core constructor
         private User() { }
 
