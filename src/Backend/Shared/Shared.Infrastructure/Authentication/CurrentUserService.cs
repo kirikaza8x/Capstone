@@ -8,10 +8,14 @@ namespace Shared.Infrastructure.Authentication;
 public class CurrentUserService : ICurrentUserService
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IDeviceDetectionService _deviceDetectionService;
 
-    public CurrentUserService(IHttpContextAccessor httpContextAccessor)
+    public CurrentUserService(
+        IHttpContextAccessor httpContextAccessor,
+        IDeviceDetectionService deviceDetectionService)
     {
         _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
+        _deviceDetectionService = deviceDetectionService ?? throw new ArgumentNullException(nameof(deviceDetectionService));
     }
 
     private HttpContext? Context => _httpContextAccessor.HttpContext;
@@ -38,16 +42,28 @@ public class CurrentUserService : ICurrentUserService
 
     public string? DeviceId => GetClaimValue("DeviceId") ?? GetDeviceIdFromHeader();
 
-    public CurrentUserDto GetCurrentUser() => new()
+    public CurrentUserDto GetCurrentUser()
     {
-        UserId = UserId,
-        Email = Email,
-        Name = Name,
-        Roles = Roles.ToList(),
-        Jti = Jti,
-        IpAddress = IpAddress,
-        DeviceId = DeviceId
-    };
+        var deviceInfo = _deviceDetectionService.GetDeviceInfo(UserAgent, IpAddress, DeviceId);
+
+        return new CurrentUserDto
+        {
+            UserId = UserId,
+            Email = Email,
+            Name = Name,
+            Roles = Roles.ToList(),
+            Jti = Jti,
+            IpAddress = deviceInfo.IpAddress,
+            DeviceId = deviceInfo.DeviceId,
+            DeviceName = deviceInfo.DeviceName,
+            Browser = deviceInfo.Browser,
+            OperatingSystem = deviceInfo.OperatingSystem,
+            DeviceType = deviceInfo.DeviceType,
+            BrowserVersion = deviceInfo.BrowserVersion,
+            OSVersion = deviceInfo.OSVersion,
+            UserAgent = deviceInfo.UserAgent
+        };
+    }
 
     private string? GetClaimValue(string claimType)
     {

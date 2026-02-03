@@ -2,10 +2,9 @@ using AutoMapper;
 using Shared.Application.Messaging;
 using Shared.Domain.Abstractions;
 using Users.Application.Features.Users.Dtos;
-using Users.Application.Features.Users.Queries;
 using Users.Domain.Repositories;
 
-namespace ClothingStore.Application.Features.Users.Queries
+namespace Users.Application.Features.Users.Queries
 {
     public class GetUserByIdQueryHandler 
         : IQueryHandler<GetUserByIdQuery, UserResponseDto>

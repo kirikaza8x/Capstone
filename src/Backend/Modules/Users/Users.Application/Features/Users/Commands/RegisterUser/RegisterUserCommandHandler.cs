@@ -46,23 +46,26 @@ namespace Users.Application.Features.Users.Commands.RegisterUser
     public class RegisterUserCommandHandler : ICommandHandler<RegisterUserCommand, UserResponseDto>
     {
         private readonly IUserRepository _userRepository;
+        private readonly IRoleRepository _roleRepository;
         private readonly IPasswordHasher _passwordHasher;
         private readonly IMapper _mapper;
         private readonly IValidator<RegisterUserCommand> _validator;        
-        // private readonly IUserUnitOfWork _unitOfWork; 
+        private readonly IUserUnitOfWork _unitOfWork; 
 
         public RegisterUserCommandHandler(
             IUserRepository userRepository,
+            IRoleRepository roleRepository,
             IPasswordHasher passwordHasher,
             IUserUnitOfWork unitOfWork, 
             IMapper mapper,
             IValidator<RegisterUserCommand> validator)
         {
             _userRepository = userRepository;
+            _roleRepository = roleRepository;
             _passwordHasher = passwordHasher;
             _mapper = mapper;
             _validator = validator;
-            // _unitOfWork = unitOfWork;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<Result<UserResponseDto>> Handle(RegisterUserCommand command, CancellationToken cancellationToken)
@@ -105,10 +108,21 @@ namespace Users.Application.Features.Users.Commands.RegisterUser
                 address: command.Address
             );
 
-            _userRepository.Add(user);
-            // await _unitOfWork.SaveChangesAsync(cancellationToken);
-            var response = _mapper.Map<UserResponseDto>(user);
+            var roleName = "User";
+            var role = await _roleRepository.GetByRoleNameAsync(roleName, cancellationToken);
 
+            if (role == null)
+            {
+                role = Role.Create(roleName, "Default role with standard permissions.");
+                _roleRepository.Add(role);
+            }
+
+            user.AssignRole(role);
+
+            _userRepository.Add(user);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            var response = _mapper.Map<UserResponseDto>(user);
             return Result.Success(response);
         }
     }

@@ -19,7 +19,7 @@ public static class MassTransitExtentions
         services.ConfigureOptions<MessageBrokerConfigSetup>();
 
         // Register IEventBus
-        services.AddScoped<IEventBus, Shared.Infrastructure.EventBus.EventBus>();
+        services.AddScoped<IEventBus, EventBus.EventBus>();
 
         // Auto-register all IntegrationEventHandlers
         RegisterIntegrationEventHandlers(services, assemblies);

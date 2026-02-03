@@ -35,7 +35,6 @@ namespace Users.Infrastructure
                 .AsImplementedInterfaces()
                 .WithScopedLifetime());
 
-            //services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<UserModuleDbContext>());
             services.AddScoped<IUserUnitOfWork, UserUnitOfWork>();
             services.Scan(scan => scan
                 .FromAssemblyOf<UsersInfrastructureAssemblyReference>()

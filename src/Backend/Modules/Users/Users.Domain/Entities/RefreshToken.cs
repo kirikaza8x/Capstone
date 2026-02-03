@@ -15,26 +15,29 @@ public class RefreshToken : Entity<Guid>
 
     private RefreshToken() { }
 
-    public RefreshToken(
-        string token,
-        DateTime expiryDate,
-        Guid userId,
-        string? deviceId = null,
-        string? deviceName = null,
-        string? ipAddress = null,
-        string? userAgent = null)
-    {
-        Id = Guid.NewGuid();
-        Token = token;
-        ExpiryDate = expiryDate;
-        UserId = userId;
-        DeviceId = deviceId;
-        DeviceName = deviceName;
-        IpAddress = ipAddress;
-        UserAgent = userAgent;
-        CreatedAt = DateTime.UtcNow;
-        IsRevoked = false;
-    }
+    public static RefreshToken Create( 
+        string token, 
+        DateTime expiryDate, 
+        Guid userId, 
+        string? deviceId = null, 
+        string? deviceName = null, 
+        string? ipAddress = null, 
+        string? userAgent = null) 
+        { 
+            return new RefreshToken 
+            { 
+                Id = Guid.NewGuid(), 
+                Token = token, 
+                ExpiryDate = expiryDate, 
+                UserId = userId, 
+                DeviceId = deviceId, 
+                DeviceName = deviceName, 
+                IpAddress = ipAddress, 
+                UserAgent = userAgent, 
+                CreatedAt = DateTime.UtcNow, 
+                IsRevoked = false 
+            }; 
+        }
 
     /// <summary>
     /// Marks the refresh token as revoked.

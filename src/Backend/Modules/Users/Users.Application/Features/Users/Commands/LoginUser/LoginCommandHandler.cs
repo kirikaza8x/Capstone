@@ -4,11 +4,11 @@ using Shared.Domain.Abstractions;
 using Users.Application.Features.Users.Commands.Records;
 using Users.Application.Features.Users.Dtos;
 using Users.Domain.Repositories;
+using FluentValidation;
+using Users.Domain.UOW;
+using Users.Domain.Entities;
 
 namespace Users.Application.Features.Users.Commands.Handlers;
-
-using FluentValidation;
-
 
 public class LoginUserCommandValidator : AbstractValidator<LoginUserCommand>
 {
@@ -48,8 +48,6 @@ public class LoginUserCommandValidator : AbstractValidator<LoginUserCommand>
     }
 }
 
-
-
 public class LoginUserCommandHandler : ICommandHandler<LoginUserCommand, LoginResponseDto>
 {
     private readonly IUserRepository _userRepository;
@@ -58,6 +56,7 @@ public class LoginUserCommandHandler : ICommandHandler<LoginUserCommand, LoginRe
     private readonly IRefreshTokenService _refreshTokenService;
     private readonly ICurrentUserService _currentUserService;
     private readonly IDeviceDetectionService _deviceDetectionService;
+    private readonly IUserUnitOfWork _unitOfWork;
     private readonly IValidator<LoginUserCommand> _validator;
 
     public LoginUserCommandHandler(
@@ -67,6 +66,7 @@ public class LoginUserCommandHandler : ICommandHandler<LoginUserCommand, LoginRe
         IRefreshTokenService refreshTokenService,
         ICurrentUserService currentUserService,
         IDeviceDetectionService deviceDetectionService,
+        IUserUnitOfWork unitOfWork,
         IValidator<LoginUserCommand> validator)
     {
         _userRepository = userRepository;
@@ -75,6 +75,7 @@ public class LoginUserCommandHandler : ICommandHandler<LoginUserCommand, LoginRe
         _refreshTokenService = refreshTokenService;
         _currentUserService = currentUserService;
         _deviceDetectionService = deviceDetectionService;
+        _unitOfWork = unitOfWork;
         _validator = validator;
     }
 
@@ -90,11 +91,8 @@ public class LoginUserCommandHandler : ICommandHandler<LoginUserCommand, LoginRe
             );
         }
 
-        // Find user
-        var user = await _userRepository.GetUserByMailOrUserName(
-            command.EmailOrUserName,
-            cancellationToken);
-
+        // ✅ Load user with roles and refresh tokens tracked
+        var user = await _userRepository.GetUserByMailOrUserName(command.EmailOrUserName, cancellationToken);
         if (user == null)
         {
             return Result.Failure<LoginResponseDto>(
@@ -110,39 +108,28 @@ public class LoginUserCommandHandler : ICommandHandler<LoginUserCommand, LoginRe
             );
         }
 
-        var roles = user.Roles.Select(r => r.Name).ToList();
+        var roles = user.Roles?.Select(r => r.Name).ToList() ?? new List<string>();
 
         // Auto-detect device information
         var userAgent = _currentUserService.UserAgent;
-        var deviceInfo = _deviceDetectionService.GetDeviceInfo(
-            userAgent,
-            command.DeviceId
-        );
-
-        // Override with user-provided device name if present
-        if (!string.IsNullOrWhiteSpace(command.DeviceName))
-        {
-            deviceInfo.DeviceName = command.DeviceName;
-        }
-
         var ipAddress = _currentUserService.IpAddress;
+        var deviceInfo = _deviceDetectionService.GetDeviceInfo(userAgent, ipAddress, command.DeviceId);
 
-        // Check for existing valid token on this device
+        if (!string.IsNullOrWhiteSpace(command.DeviceName))
+            deviceInfo.DeviceName = command.DeviceName;
+
+        // ✅ Use aggregate root to manage refresh tokens
         var existingToken = user.RefreshTokens
-            .FirstOrDefault(rt =>
-                rt.DeviceId == deviceInfo.DeviceId &&
-                _refreshTokenService.ValidateToken(rt));
+            .FirstOrDefault(rt => rt.DeviceId == deviceInfo.DeviceId && _refreshTokenService.ValidateToken(rt));
 
         string refreshToken;
         if (existingToken != null)
         {
-            // Reuse existing valid token
             refreshToken = existingToken.Token;
             existingToken.UpdateDeviceInfo(deviceInfo.DeviceName, ipAddress, userAgent);
         }
         else
         {
-            // Create new token
             var newToken = _refreshTokenService.GenerateToken(user.Id);
             var tokenEntity = user.AddRefreshToken(
                 newToken.Token,
@@ -155,15 +142,24 @@ public class LoginUserCommandHandler : ICommandHandler<LoginUserCommand, LoginRe
             refreshToken = tokenEntity.Token;
         }
 
-        _userRepository.Update(user);
+        // ✅ No Update(user) call — EF is already tracking
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // Generate access token (include DeviceId in claims)
+        // Generate access token
         var accessToken = _jwtTokenService.GenerateToken(
             user.Id,
             user.Email,
             user.UserName,
             roles,
-            deviceInfo.DeviceId
+            deviceInfo.DeviceId,
+            deviceInfo.IpAddress,
+            deviceInfo.UserAgent,
+            deviceInfo.DeviceName,
+            deviceInfo.Browser,
+            deviceInfo.OperatingSystem,
+            deviceInfo.DeviceType,
+            deviceInfo.BrowserVersion,
+            deviceInfo.OSVersion
         );
 
         var response = new LoginResponseDto(

@@ -6,6 +6,7 @@ using Shared.Domain.Abstractions;
 using Users.Application.Features.Users.Commands.Records;
 using Users.Application.Features.Users.Dtos;
 using Users.Domain.Repositories;
+using Users.Domain.UOW;
 
 namespace Users.Application.Features.Users.Handlers.RefreshTokenCommandHandler
 {
@@ -42,6 +43,7 @@ namespace Users.Application.Features.Users.Handlers.RefreshTokenCommandHandler
                 .WithMessage("UserAgent must not exceed 512 characters.");
         }
     }
+
     public class RefreshTokenCommandHandler : ICommandHandler<RefreshTokenCommand, LoginResponseDto>
     {
         private readonly IUserRepository _userRepository;
@@ -50,6 +52,7 @@ namespace Users.Application.Features.Users.Handlers.RefreshTokenCommandHandler
         private readonly ICurrentUserService _currentUserService;
         private readonly IDeviceDetectionService _deviceDetectionService;
         private readonly IValidator<RefreshTokenCommand> _validator;
+        private readonly IUserUnitOfWork _unitOfWork; 
 
         public RefreshTokenCommandHandler(
             IUserRepository userRepository,
@@ -57,7 +60,8 @@ namespace Users.Application.Features.Users.Handlers.RefreshTokenCommandHandler
             IRefreshTokenService refreshTokenService,
             ICurrentUserService currentUserService,
             IDeviceDetectionService deviceDetectionService,
-            IValidator<RefreshTokenCommand> validator)
+            IValidator<RefreshTokenCommand> validator,
+            IUserUnitOfWork unitOfWork)
         {
             _userRepository = userRepository;
             _jwtTokenService = jwtTokenService;
@@ -65,6 +69,7 @@ namespace Users.Application.Features.Users.Handlers.RefreshTokenCommandHandler
             _currentUserService = currentUserService;
             _deviceDetectionService = deviceDetectionService;
             _validator = validator;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<Result<LoginResponseDto>> Handle(RefreshTokenCommand command, CancellationToken cancellationToken)
@@ -94,6 +99,7 @@ namespace Users.Application.Features.Users.Handlers.RefreshTokenCommandHandler
                     Error.NotFound("User.NotFound", "User not found.")
                 );
             }
+
             var storedToken = user.RefreshTokens
                 .FirstOrDefault(rt => rt.Token == command.RefreshToken);
 
@@ -104,6 +110,7 @@ namespace Users.Application.Features.Users.Handlers.RefreshTokenCommandHandler
                 );
             }
 
+            // Revoke old token and issue new one
             _refreshTokenService.RevokeToken(storedToken);
             var newRefreshToken = _refreshTokenService.GenerateToken(user.Id);
 
@@ -121,16 +128,25 @@ namespace Users.Application.Features.Users.Handlers.RefreshTokenCommandHandler
             );
 
             var roles = user.Roles.Select(r => r.Name).ToList();
+
             var newAccessToken = _jwtTokenService.GenerateToken(
                 user.Id,
                 user.Email,
                 user.UserName,
                 roles,
-                deviceInfo.DeviceId
+                deviceInfo.DeviceId,
+                deviceInfo.IpAddress,
+                deviceInfo.UserAgent,
+                deviceInfo.DeviceName,
+                deviceInfo.Browser,
+                deviceInfo.OperatingSystem,
+                deviceInfo.DeviceType,
+                deviceInfo.BrowserVersion,
+                deviceInfo.OSVersion
             );
 
             _userRepository.Update(user);
-
+            await _unitOfWork.SaveChangesAsync(cancellationToken); 
             var response = new LoginResponseDto(
                 AccessToken: newAccessToken,
                 RefreshToken: newRefreshToken.Token,

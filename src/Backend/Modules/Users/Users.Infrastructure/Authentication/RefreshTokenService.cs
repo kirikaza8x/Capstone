@@ -19,7 +19,7 @@ namespace Users.Infrastructure.Authentication
         {
             var token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
 
-            return new RefreshToken(
+            return RefreshToken.Create(
                 token: token,
                 expiryDate: DateTime.UtcNow.AddDays(RefreshTokenExpiryDays),
                 userId: userId

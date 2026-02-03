@@ -1,5 +1,6 @@
 using Shared.Domain.DDD;
 using Users.Domain.Events;
+
 namespace Users.Domain.Entities
 {
     public class User : AggregateRoot<Guid>
@@ -14,10 +15,8 @@ namespace Users.Domain.Entities
         public string? Address { get; private set; }
         public string? ProfileImageUrl { get; private set; }
 
-        // Navigation properties
         public ICollection<Role> Roles { get; private set; } = new List<Role>();
         public ICollection<RefreshToken> RefreshTokens { get; private set; } = new List<RefreshToken>();
-
 
         // EF Core constructor
         private User() { }
@@ -48,24 +47,16 @@ namespace Users.Domain.Entities
                 Roles = new List<Role>(),
                 RefreshTokens = new List<RefreshToken>()
             };
+
             if (role != null) user.AssignRole(role);
+
             user.RaiseDomainEvent(new UserCreatedEvent(user.Id, user.Email ?? string.Empty, user.UserName));
             return user;
         }
 
-
         // Domain behaviors
-        public void ChangeEmail(string newEmail)
-        {
-            Email = newEmail;
-            // RaiseEvent(new UserEmailChangedEvent(Id, newEmail));
-        }
-
-        public void ChangePassword(string newPasswordHash)
-        {
-            PasswordHash = newPasswordHash;
-            // RaiseEvent(new UserPasswordChangedEvent(Id));
-        }
+        public void ChangeEmail(string newEmail) => Email = newEmail;
+        public void ChangePassword(string newPasswordHash) => PasswordHash = newPasswordHash;
 
         public void UpdateProfile(string? firstName, string? lastName, string? phone, string? address, string? profileImageUrl)
         {
@@ -76,20 +67,11 @@ namespace Users.Domain.Entities
             ProfileImageUrl = profileImageUrl ?? ProfileImageUrl;
         }
 
-        public void DeactivateUser()
-        {
-            IsActive = false;
-            // RaiseEvent(new UserDeactivatedEvent(Id));
-        }
+        public void DeactivateUser() => IsActive = false;
 
         public void AssignRole(Role role)
         {
-            // Check by Id (preferred if Role is an entity)
-            if (Roles.Any(r => r.Id == role.Id))
-                return;
-
-            // Or check by Name if that's the unique identifier
-            if (Roles.Any(r => r.Name == role.Name))
+            if (Roles.Any(r => r.Id == role.Id || r.Name == role.Name))
                 return;
 
             Roles.Add(role);
@@ -102,9 +84,15 @@ namespace Users.Domain.Entities
         }
 
         // Refresh token management
-        public RefreshToken AddRefreshToken(string token, DateTime expiry)
+        public RefreshToken AddRefreshToken(
+            string token,
+            DateTime expiry,
+            string? deviceId = null,
+            string? deviceName = null,
+            string? ipAddress = null,
+            string? userAgent = null)
         {
-            var refreshToken = new RefreshToken(token, expiry, Id);
+            var refreshToken = RefreshToken.Create(token, expiry, Id, deviceId, deviceName, ipAddress, userAgent);
             RefreshTokens.Add(refreshToken);
             return refreshToken;
         }
@@ -118,39 +106,13 @@ namespace Users.Domain.Entities
         public void RevokeAllRefreshTokens()
         {
             foreach (var token in RefreshTokens.Where(rt => !rt.IsRevoked))
-            {
                 token.Revoke();
-            }
-        }
-
-        public RefreshToken? GetValidRefreshToken(string token)
-        {
-            return RefreshTokens.FirstOrDefault(rt =>
-                rt.Token == token &&
-                !rt.IsRevoked &&
-                rt.ExpiryDate > DateTime.UtcNow);
-        }
-
-
-        public RefreshToken AddRefreshToken(
-        string token,
-        DateTime expiry,
-        string? deviceId = null,
-        string? deviceName = null,
-        string? ipAddress = null,
-        string? userAgent = null)
-        {
-            var refreshToken = new RefreshToken(token, expiry, Id, deviceId, deviceName, ipAddress, userAgent);
-            RefreshTokens.Add(refreshToken);
-            return refreshToken;
         }
 
         public void RevokeRefreshTokensByDevice(string deviceId)
         {
             foreach (var token in RefreshTokens.Where(rt => rt.DeviceId == deviceId && !rt.IsRevoked))
-            {
                 token.Revoke();
-            }
         }
 
         public RefreshToken? GetValidRefreshToken(string token, string? deviceId = null)
@@ -161,9 +123,7 @@ namespace Users.Domain.Entities
                 rt.ExpiryDate > DateTime.UtcNow);
 
             if (!string.IsNullOrEmpty(deviceId))
-            {
                 query = query.Where(rt => rt.DeviceId == deviceId);
-            }
 
             return query.FirstOrDefault();
         }
