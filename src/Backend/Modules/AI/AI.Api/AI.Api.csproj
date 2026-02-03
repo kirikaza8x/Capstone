@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\Shared\Shared.Api\Shared.Api.csproj" />
     <ProjectReference Include="..\AI.Infrastructure\AI.Infrastructure.csproj" />
   </ItemGroup>
 

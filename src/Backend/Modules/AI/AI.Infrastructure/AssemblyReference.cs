@@ -1,4 +1,9 @@
-namespace Modules.AI.Infrastructure
+using System.Reflection;
+
+namespace AI.Infrastructure
 {
-    public static class InfrastructureAssemblyReference { }
+    public class AiInfrastructureAssemblyReference
+    {
+        public static readonly Assembly Assembly = typeof(AiInfrastructureAssemblyReference).Assembly;
+    }
 }

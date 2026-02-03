@@ -1,4 +1,9 @@
-namespace Modules.AI.Application
+using System.Reflection;
+
+namespace AI.Application
 {
-    public static class ApplicationAssemblyReference { }
+    public class AiApplicationAssemblyReference
+    {
+        public static readonly Assembly Assembly = typeof(AiApplicationAssemblyReference).Assembly;
+    }
 }
