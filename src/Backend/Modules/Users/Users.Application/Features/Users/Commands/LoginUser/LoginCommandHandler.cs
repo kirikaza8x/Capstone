@@ -81,7 +81,6 @@ public class LoginUserCommandHandler : ICommandHandler<LoginUserCommand, LoginRe
 
     public async Task<Result<LoginResponseDto>> Handle(LoginUserCommand command, CancellationToken cancellationToken)
     {
-        // Validate input
         var validationResult = await _validator.ValidateAsync(command, cancellationToken);
         if (!validationResult.IsValid)
         {
@@ -91,61 +90,39 @@ public class LoginUserCommandHandler : ICommandHandler<LoginUserCommand, LoginRe
             );
         }
 
-        // ✅ Load user with roles and refresh tokens tracked
-        var user = await _userRepository.GetUserByMailOrUserName(command.EmailOrUserName, cancellationToken);
+        var user = await _userRepository.GetUserByMailOrUserNameAsync(command.EmailOrUserName, cancellationToken);
         if (user == null)
-        {
-            return Result.Failure<LoginResponseDto>(
-                Error.NotFound("User.NotFound", "User not found.")
-            );
-        }
+            return Result.Failure<LoginResponseDto>(Error.NotFound("User.NotFound", "User not found."));
 
-        // Verify password
         if (!_passwordHasher.VerifyPassword(command.Password, user.PasswordHash))
-        {
-            return Result.Failure<LoginResponseDto>(
-                Error.Unauthorized("User.InvalidCredentials", "Invalid password.")
-            );
-        }
+            return Result.Failure<LoginResponseDto>(Error.Unauthorized("User.InvalidCredentials", "Invalid password."));
 
         var roles = user.Roles?.Select(r => r.Name).ToList() ?? new List<string>();
 
-        // Auto-detect device information
-        var userAgent = _currentUserService.UserAgent;
-        var ipAddress = _currentUserService.IpAddress;
-        var deviceInfo = _deviceDetectionService.GetDeviceInfo(userAgent, ipAddress, command.DeviceId);
+        var deviceInfo = _deviceDetectionService.GetDeviceInfo(
+            _currentUserService.UserAgent,
+            _currentUserService.IpAddress,
+            command.DeviceId);
 
         if (!string.IsNullOrWhiteSpace(command.DeviceName))
             deviceInfo.DeviceName = command.DeviceName;
 
-        // ✅ Use aggregate root to manage refresh tokens
-        var existingToken = user.RefreshTokens
-            .FirstOrDefault(rt => rt.DeviceId == deviceInfo.DeviceId && _refreshTokenService.ValidateToken(rt));
-
-        string refreshToken;
-        if (existingToken != null)
-        {
-            refreshToken = existingToken.Token;
-            existingToken.UpdateDeviceInfo(deviceInfo.DeviceName, ipAddress, userAgent);
-        }
-        else
-        {
-            var newToken = _refreshTokenService.GenerateToken(user.Id);
-            var tokenEntity = user.AddRefreshToken(
+        var newToken = _refreshTokenService.GenerateToken(user.Id);
+        var refreshTokenEntity = await _userRepository.AddOrUpdateRefreshTokenAsync(
+            user,
+            RefreshToken.Create(
                 newToken.Token,
                 newToken.ExpiryDate,
+                user.Id,
                 deviceInfo.DeviceId,
                 deviceInfo.DeviceName,
-                ipAddress,
-                userAgent
-            );
-            refreshToken = tokenEntity.Token;
-        }
+                deviceInfo.IpAddress,
+                deviceInfo.UserAgent
+            ),
+            cancellationToken);
 
-        // ✅ No Update(user) call — EF is already tracking
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // Generate access token
         var accessToken = _jwtTokenService.GenerateToken(
             user.Id,
             user.Email,
@@ -164,7 +141,7 @@ public class LoginUserCommandHandler : ICommandHandler<LoginUserCommand, LoginRe
 
         var response = new LoginResponseDto(
             AccessToken: accessToken,
-            RefreshToken: refreshToken,
+            RefreshToken: refreshTokenEntity.Token,
             ExpiresAt: DateTime.UtcNow.AddMinutes(_jwtTokenService.ExpiryMinutes),
             User: new UserInfoDto(user.Id, user.FirstName ?? "", user.UserName, user.Email, roles),
             DeviceId: deviceInfo.DeviceId,
@@ -173,4 +150,6 @@ public class LoginUserCommandHandler : ICommandHandler<LoginUserCommand, LoginRe
 
         return Result.Success(response);
     }
+
+
 }

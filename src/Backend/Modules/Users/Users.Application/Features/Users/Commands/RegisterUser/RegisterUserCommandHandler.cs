@@ -49,14 +49,14 @@ namespace Users.Application.Features.Users.Commands.RegisterUser
         private readonly IRoleRepository _roleRepository;
         private readonly IPasswordHasher _passwordHasher;
         private readonly IMapper _mapper;
-        private readonly IValidator<RegisterUserCommand> _validator;        
-        private readonly IUserUnitOfWork _unitOfWork; 
+        private readonly IValidator<RegisterUserCommand> _validator;
+        private readonly IUserUnitOfWork _unitOfWork;
 
         public RegisterUserCommandHandler(
             IUserRepository userRepository,
             IRoleRepository roleRepository,
             IPasswordHasher passwordHasher,
-            IUserUnitOfWork unitOfWork, 
+            IUserUnitOfWork unitOfWork,
             IMapper mapper,
             IValidator<RegisterUserCommand> validator)
         {
@@ -79,7 +79,7 @@ namespace Users.Application.Features.Users.Commands.RegisterUser
                 );
             }
 
-            var existingUser = await _userRepository.GetUserByMailOrUserName(
+            var existingUser = await _userRepository.GetUserByMailOrUserNameAsync(
                 new[] { command.UserName, command.Email },
                 cancellationToken);
 
@@ -108,18 +108,10 @@ namespace Users.Application.Features.Users.Commands.RegisterUser
                 address: command.Address
             );
 
-            var roleName = "User";
-            var role = await _roleRepository.GetByRoleNameAsync(roleName, cancellationToken);
+            var role = Role.Create("User", "Default role with standard permissions.");
 
-            if (role == null)
-            {
-                role = Role.Create(roleName, "Default role with standard permissions.");
-                _roleRepository.Add(role);
-            }
+            await _userRepository.RegisterAsync(user, role, cancellationToken);
 
-            user.AssignRole(role);
-
-            _userRepository.Add(user);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             var response = _mapper.Map<UserResponseDto>(user);
