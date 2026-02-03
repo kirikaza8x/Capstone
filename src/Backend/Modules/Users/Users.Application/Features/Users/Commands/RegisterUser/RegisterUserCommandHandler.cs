@@ -8,6 +8,7 @@ using Users.Domain.Repositories;
 using FluentValidation;
 using AutoMapper;
 using Users.Domain.UOW;
+using Users.Domain.Enums;
 
 namespace Users.Application.Features.Users.Commands.RegisterUser
 {
@@ -76,7 +77,7 @@ namespace Users.Application.Features.Users.Commands.RegisterUser
                 address: command.Address
             );
 
-            var role = Role.Create("User", "Default role with standard permissions.");
+            var role = Role.Create(RoleType.User.ToString(), "Default role with standard permissions.");
 
             await _userRepository.RegisterAsync(user, role, cancellationToken);
 

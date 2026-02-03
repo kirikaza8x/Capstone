@@ -68,7 +68,12 @@ public class LoginUserCommandHandler : ICommandHandler<LoginUserCommand, LoginRe
         if (!string.IsNullOrWhiteSpace(command.DeviceName))
             deviceInfo.DeviceName = command.DeviceName;
 
+        // Generate a new refresh token
         var newToken = _refreshTokenService.GenerateToken(user.Id);
+
+        // revoke any existing token for this device before adding the new one
+        user.RevokeRefreshTokensByDevice(deviceInfo.DeviceId);
+
         var refreshTokenEntity = await _userRepository.AddOrUpdateRefreshTokenAsync(
             user,
             RefreshToken.Create(
@@ -111,6 +116,4 @@ public class LoginUserCommandHandler : ICommandHandler<LoginUserCommand, LoginRe
 
         return Result.Success(response);
     }
-
-
 }
