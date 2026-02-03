@@ -1,0 +1,6 @@
+@AI.PublicApi_HostAddress = http://localhost:5110
+
+GET {{AI.PublicApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
