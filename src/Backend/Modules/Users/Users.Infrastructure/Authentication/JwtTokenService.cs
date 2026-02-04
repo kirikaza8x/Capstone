@@ -43,17 +43,25 @@ namespace Users.Infrastructure.Authentication
         public int RefreshTokenExpiryDays => _refreshTokenExpiryDays;
 
         public string GenerateToken(
-            Guid userId,
-            string? email,
-            string? name,
-            IEnumerable<string> roles,
-            string? deviceId = null)
+    Guid userId,
+    string? email,
+    string? name,
+    IEnumerable<string> roles,
+    string? deviceId = null,
+    string? ipAddress = null,
+    string? userAgent = null,
+    string? deviceName = null,
+    string? browser = null,
+    string? operatingSystem = null,
+    string? deviceType = null,
+    string? browserVersion = null,
+    string? osVersion = null)
         {
             var claims = new List<Claim>
-            {
-                new(JwtRegisteredClaimNames.Sub, userId.ToString()),
-                new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-            };
+    {
+        new(JwtRegisteredClaimNames.Sub, userId.ToString()),
+        new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+    };
 
             if (!string.IsNullOrWhiteSpace(email))
                 claims.Add(new(JwtRegisteredClaimNames.Email, email));
@@ -63,6 +71,30 @@ namespace Users.Infrastructure.Authentication
 
             if (!string.IsNullOrWhiteSpace(deviceId))
                 claims.Add(new("DeviceId", deviceId));
+
+            if (!string.IsNullOrWhiteSpace(ipAddress))
+                claims.Add(new("IpAddress", ipAddress));
+
+            if (!string.IsNullOrWhiteSpace(userAgent))
+                claims.Add(new("UserAgent", userAgent));
+
+            if (!string.IsNullOrWhiteSpace(deviceName))
+                claims.Add(new("DeviceName", deviceName));
+
+            if (!string.IsNullOrWhiteSpace(browser))
+                claims.Add(new("Browser", browser));
+
+            if (!string.IsNullOrWhiteSpace(operatingSystem))
+                claims.Add(new("OperatingSystem", operatingSystem));
+
+            if (!string.IsNullOrWhiteSpace(deviceType))
+                claims.Add(new("DeviceType", deviceType));
+
+            if (!string.IsNullOrWhiteSpace(browserVersion))
+                claims.Add(new("BrowserVersion", browserVersion));
+
+            if (!string.IsNullOrWhiteSpace(osVersion))
+                claims.Add(new("OSVersion", osVersion));
 
             claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 

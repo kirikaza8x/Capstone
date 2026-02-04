@@ -28,7 +28,7 @@ public class DeviceDetectionService : IDeviceDetectionService
                 OperatingSystem = "Unknown",
                 DeviceType = "Unknown",
                 UserAgent = userAgent,
-                //IpAddress = ipAddress
+                IpAddress = ipAddress
             };
         }
 
@@ -49,7 +49,7 @@ public class DeviceDetectionService : IDeviceDetectionService
             BrowserVersion = clientInfo.UA.Major,
             OSVersion = clientInfo.OS.Major,
             UserAgent = userAgent,
-            //IpAddress = ipAddress
+            IpAddress = ipAddress
         };
     }
 

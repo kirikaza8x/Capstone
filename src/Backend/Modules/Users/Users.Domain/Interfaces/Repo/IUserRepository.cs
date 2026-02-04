@@ -7,9 +7,12 @@ namespace Users.Domain.Repositories
     {
         Task<User?> GetByUserNameAsync(string userName, CancellationToken cancellationToken = default);
         Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default);
-        Task<User?> LoginAsync(string userNameOrEmail, string password, CancellationToken cancellationToken = default);
-        Task<User?> GetUserByMailOrUserName(string userNameOrEmail, CancellationToken cancellationToken = default);
-        Task<User?> GetUserByMailOrUserName(IEnumerable<string> userNamesOrEmails, CancellationToken cancellationToken = default);
-        Task<RefreshToken?> GetValidRefreshTokenForDevice(Guid userId, string deviceId, CancellationToken cancellationToken = default);
+        Task<User?> GetUserByMailOrUserNameAsync(string userNameOrEmail, CancellationToken cancellationToken = default);
+        Task<User?> GetUserByMailOrUserNameAsync(IEnumerable<string> userNamesOrEmails, CancellationToken cancellationToken = default);
+        Task<RefreshToken?> GetValidRefreshTokenForDeviceAsync(Guid userId, string deviceId, CancellationToken cancellationToken = default);
+        Task<User?> LoginAsync(string userNameOrEmail, string passwordHash, CancellationToken cancellationToken = default);
+        Task<RefreshToken> AddOrUpdateRefreshTokenAsync(User user, RefreshToken newToken, CancellationToken cancellationToken = default);
+        Task<User> RegisterAsync(User user, Role role, CancellationToken cancellationToken = default);
+         
     }
 }

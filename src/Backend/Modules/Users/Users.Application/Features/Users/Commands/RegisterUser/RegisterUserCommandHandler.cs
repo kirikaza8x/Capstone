@@ -8,61 +8,33 @@ using Users.Domain.Repositories;
 using FluentValidation;
 using AutoMapper;
 using Users.Domain.UOW;
+using Users.Domain.Enums;
 
 namespace Users.Application.Features.Users.Commands.RegisterUser
 {
-    public class RegisterUserCommandValidator : AbstractValidator<RegisterUserCommand>
-    {
-        public RegisterUserCommandValidator()
-        {
-            RuleFor(x => x.Email)
-                .NotEmpty().WithMessage("Email is required.")
-                .EmailAddress().WithMessage("Email must be valid.");
-
-            RuleFor(x => x.UserName)
-                .NotEmpty().WithMessage("Username is required.")
-                .MaximumLength(100).WithMessage("Username must not exceed 100 characters.");
-
-            RuleFor(x => x.Password)
-                .NotEmpty().WithMessage("Password is required.")
-                .MinimumLength(6).WithMessage("Password must be at least 6 characters long.");
-
-            RuleFor(x => x.FirstName)
-                .NotEmpty().WithMessage("First name is required.");
-
-            RuleFor(x => x.LastName)
-                .NotEmpty().WithMessage("Last name is required.");
-
-            RuleFor(x => x.PhoneNumber)
-                .MaximumLength(20)
-                .When(x => !string.IsNullOrWhiteSpace(x.PhoneNumber));
-
-            RuleFor(x => x.Address)
-                .MaximumLength(256)
-                .When(x => !string.IsNullOrWhiteSpace(x.Address));
-        }
-    }
-
     public class RegisterUserCommandHandler : ICommandHandler<RegisterUserCommand, UserResponseDto>
     {
         private readonly IUserRepository _userRepository;
+        private readonly IRoleRepository _roleRepository;
         private readonly IPasswordHasher _passwordHasher;
         private readonly IMapper _mapper;
-        private readonly IValidator<RegisterUserCommand> _validator;        
-        // private readonly IUserUnitOfWork _unitOfWork; 
+        private readonly IValidator<RegisterUserCommand> _validator;
+        private readonly IUserUnitOfWork _unitOfWork;
 
         public RegisterUserCommandHandler(
             IUserRepository userRepository,
+            IRoleRepository roleRepository,
             IPasswordHasher passwordHasher,
-            IUserUnitOfWork unitOfWork, 
+            IUserUnitOfWork unitOfWork,
             IMapper mapper,
             IValidator<RegisterUserCommand> validator)
         {
             _userRepository = userRepository;
+            _roleRepository = roleRepository;
             _passwordHasher = passwordHasher;
             _mapper = mapper;
             _validator = validator;
-            // _unitOfWork = unitOfWork;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<Result<UserResponseDto>> Handle(RegisterUserCommand command, CancellationToken cancellationToken)
@@ -76,7 +48,7 @@ namespace Users.Application.Features.Users.Commands.RegisterUser
                 );
             }
 
-            var existingUser = await _userRepository.GetUserByMailOrUserName(
+            var existingUser = await _userRepository.GetUserByMailOrUserNameAsync(
                 new[] { command.UserName, command.Email },
                 cancellationToken);
 
@@ -105,10 +77,13 @@ namespace Users.Application.Features.Users.Commands.RegisterUser
                 address: command.Address
             );
 
-            _userRepository.Add(user);
-            // await _unitOfWork.SaveChangesAsync(cancellationToken);
-            var response = _mapper.Map<UserResponseDto>(user);
+            var role = Role.Create(RoleType.User.ToString(), "Default role with standard permissions.");
 
+            await _userRepository.RegisterAsync(user, role, cancellationToken);
+
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            var response = _mapper.Map<UserResponseDto>(user);
             return Result.Success(response);
         }
     }

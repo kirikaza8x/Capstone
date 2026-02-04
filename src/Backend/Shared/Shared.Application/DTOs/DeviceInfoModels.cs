@@ -1,3 +1,4 @@
+
 namespace Shared.Application.DTOs;
 
 public class DeviceInfo
@@ -10,4 +11,5 @@ public class DeviceInfo
     public string? BrowserVersion { get; set; }
     public string? OSVersion { get; set; }
     public string? UserAgent { get; set; }
+    public string? IpAddress { get; set; }
 }

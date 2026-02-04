@@ -10,12 +10,20 @@ namespace Shared.Application.Abstractions.Authentication
         /// <summary>
         /// Generates a signed JWT access token for the given user.
         /// </summary>
-        string GenerateToken(
-            Guid userId,
-            string? email,
-            string? name,
-            IEnumerable<string> roles,
-            string? deviceId = null);
+        string GenerateToken( 
+            Guid userId, 
+            string? email, 
+            string? name, 
+            IEnumerable<string> roles, 
+            string? deviceId = null, 
+            string? ipAddress = null, 
+            string? userAgent = null, 
+            string? deviceName = null, 
+            string? browser = null, 
+            string? operatingSystem = null, 
+            string? deviceType = null, 
+            string? browserVersion = null, 
+            string? osVersion = null);
 
         /// <summary>
         /// Validates a JWT access token and returns its claims if valid.
