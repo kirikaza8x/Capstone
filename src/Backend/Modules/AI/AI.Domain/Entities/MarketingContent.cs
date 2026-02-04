@@ -9,10 +9,9 @@ namespace AI.Domain.Entities
         public Guid PublisherId { get; private set; }
         public string Description { get; private set; } = default!;
         public string Tags { get; private set; } = default!;
-        public string Status { get; private set; } = "draft"; // draft, pending, published, closed
+        public string Status { get; private set; } = "draft";
         public Guid EventId { get; private set; }
 
-        // Child collection
         public ICollection<MarketingAnalytics> Analytics { get; private set; } = new List<MarketingAnalytics>();
 
         private MarketingContent() { }
@@ -38,13 +37,11 @@ namespace AI.Domain.Entities
             };
         }
 
-        // Domain behaviors
         public void Publish() => Status = "published";
         public void Close() => Status = "closed";
         public void UpdateDescription(string newDescription) => Description = newDescription;
         public void UpdateTags(string newTags) => Tags = newTags;
 
-        // Manage analytics
         public void AddAnalytics(int views, int clicks, int conversions)
         {
             Analytics.Add(MarketingAnalytics.Create(Id, views, clicks, conversions));
@@ -65,7 +62,7 @@ namespace AI.Domain.Entities
 
         protected override void Apply(IDomainEvent @event)
         {
-            // Event sourcing hook if needed
+            // Event sourcing hook
         }
     }
 }

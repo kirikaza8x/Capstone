@@ -5,32 +5,35 @@ namespace AI.Domain.Entities
     public class UserInterestScore : AggregateRoot<Guid>
     {
         public Guid UserId { get; private set; }
-        public int CategoryId { get; private set; }
+        public string Category { get; private set; } = default!;
         public double InterestScore { get; private set; }
         public DateTime LastInteractionAt { get; private set; }
 
-        // EF Core constructor
         private UserInterestScore() { }
 
-        public static UserInterestScore Create(Guid userId, int categoryId, double initialScore)
+        public static UserInterestScore Create(Guid userId, string category, double initialScore)
         {
             return new UserInterestScore
             {
                 Id = Guid.NewGuid(),
                 UserId = userId,
-                CategoryId = categoryId,
+                Category = category,
                 InterestScore = initialScore,
                 LastInteractionAt = DateTime.UtcNow
             };
         }
 
-        // Domain behaviors
         public void UpdateScore(double delta)
         {
             InterestScore += delta;
             LastInteractionAt = DateTime.UtcNow;
         }
 
+        /// <summary>
+        /// ALGORITHM: Exponential Time Decay
+        /// Formula: score = score × decayFactor
+        /// where decayFactor = exp(-λ × time)
+        /// </summary>
         public void ApplyDecay(double decayFactor)
         {
             InterestScore *= decayFactor;
@@ -45,10 +48,7 @@ namespace AI.Domain.Entities
 
         protected override void Apply(IDomainEvent @event)
         {
-            // switch (@event)
-            // {
-                
-            // }
+            // Event sourcing hook
         }
     }
 }

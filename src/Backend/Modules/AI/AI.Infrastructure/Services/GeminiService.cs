@@ -3,6 +3,7 @@ using GenerativeAI;
 using GenerativeAI.Types;
 using Microsoft.Extensions.Configuration;
 using System.Text.Json;
+using System.Runtime.CompilerServices;
 
 namespace Infrastructure.Services.AI;
 
@@ -70,21 +71,33 @@ public sealed class GeminiService : IGeminiService
         if (string.IsNullOrWhiteSpace(response.Text))
             throw new InvalidOperationException("Gemini returned empty response.");
 
-        try
+        return JsonSerializer.Deserialize<TResponse>(
+            response.Text,
+            JsonOptions
+        ) ?? throw new InvalidOperationException("Failed to deserialize Gemini response.");
+    }
+
+    public async IAsyncEnumerable<string> StreamChatAsync(
+        string userMessage,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(userMessage))
         {
-            return JsonSerializer.Deserialize<TResponse>(
-                response.Text,
-                JsonOptions
-            ) ?? throw new InvalidOperationException("Failed to deserialize Gemini response.");
+            yield break;
         }
-        catch (JsonException ex)
+
+        var stream = _model.StreamContentAsync(userMessage, cancellationToken: cancellationToken);
+
+        await foreach (var chunk in stream.ConfigureAwait(false))
         {
-            throw new InvalidOperationException(
-                $"Invalid JSON returned by Gemini: {response.Text}", ex);
+            if (cancellationToken.IsCancellationRequested)
+                yield break;
+
+            if (!string.IsNullOrEmpty(chunk.Text))
+                yield return chunk.Text;
         }
     }
 
-    
     private static string BuildPrompt(string? systemPrompt, string userPrompt)
     {
         return $"""

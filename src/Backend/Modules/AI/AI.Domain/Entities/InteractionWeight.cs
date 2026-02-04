@@ -8,7 +8,6 @@ namespace AI.Domain.Entities
         public double Weight { get; private set; }
         public string? Description { get; private set; }
 
-        // EF Core constructor
         private InteractionWeight() { }
 
         public static InteractionWeight Create(string actionType, double weight, string? description = null)
@@ -25,7 +24,6 @@ namespace AI.Domain.Entities
             };
         }
 
-        // Domain behaviors
         public void UpdateWeight(double newWeight)
         {
             Weight = newWeight;
@@ -40,12 +38,10 @@ namespace AI.Domain.Entities
         {
             IsActive = true;
         }
+
         protected override void Apply(IDomainEvent @event)
         {
-            // switch (@event)
-            // {
-
-            // }
+            // Event sourcing hook if needed
         }
     }
 }
