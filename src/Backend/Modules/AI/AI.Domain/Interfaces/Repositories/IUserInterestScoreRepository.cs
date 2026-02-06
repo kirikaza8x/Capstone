@@ -14,7 +14,7 @@ namespace AI.Domain.Repositories
         /// <param name="userId"></param>
         /// <param name="category"></param>
         /// <returns></returns>
-        Task<UserInterestScore?> GetAsync(Guid userId, string category);
+        Task<UserInterestScore?> GetByUserAndCategoryAsync(Guid userId, string category);
         
 
         /// <summary>

@@ -65,7 +65,7 @@ namespace AI.Application.Services
                     // ---------------------------------------------------------
                     foreach (var category in categories)
                     {
-                        var userScore = await _scoreRepo.GetAsync(userId, category);
+                        var userScore = await _scoreRepo.GetByUserAndCategoryAsync(userId, category);
 
                         if (userScore == null)
                         {

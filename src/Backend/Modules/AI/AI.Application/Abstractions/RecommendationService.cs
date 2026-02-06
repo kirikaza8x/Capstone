@@ -3,7 +3,12 @@ using AI.Application.Features.Recommendations.DTOs;
 
 namespace AI.Application.Services
 {
-    public class RecommendationService
+    public interface IRecommendationService
+    {
+        Task<List<RecommendationResult>> GetRecommendationsAsync(Guid? userId, int topN = 10);
+    }
+
+    public class RecommendationService : IRecommendationService
     {
         private readonly IUserInterestScoreRepository _userScoreRepo;
         private readonly IGlobalCategoryStatRepository _globalStatRepo;
