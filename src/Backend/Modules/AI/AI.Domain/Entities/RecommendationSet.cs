@@ -5,35 +5,41 @@ namespace AI.Domain.Entities
     public class RecommendationSet : AggregateRoot<Guid>
     {
         public Guid UserId { get; private set; }
+        public string Type { get; private set; } = default!; // e.g. "HomeFeed", "DailyMix"
         public DateTime GeneratedAt { get; private set; }
-        public ICollection<RecommendationItem> Items { get; private set; } = new List<RecommendationItem>();
+        
+        // Navigation Property
+        private readonly List<RecommendationItem> _items = new();
+        public IReadOnlyCollection<RecommendationItem> Items => _items.AsReadOnly();
 
         private RecommendationSet() { }
 
-        public static RecommendationSet Create(Guid userId)
+        public static RecommendationSet Create(Guid userId, string type)
         {
             return new RecommendationSet
             {
                 Id = Guid.NewGuid(),
                 UserId = userId,
+                Type = type,
                 GeneratedAt = DateTime.UtcNow
             };
         }
 
-        // Domain behavior
-        public void AddItem(Guid eventId, double score, string? explanation = null)
+        public void AddItem(string category, double score, string explanation)
         {
-            Items.Add(new RecommendationItem(eventId, score, explanation));
+            // Rank is automatically determined by the order you add them
+            int rank = _items.Count + 1;
+            _items.Add(new RecommendationItem(Id, category, score, rank, explanation));
+        }
+
+        public void ClearItems()
+        {
+            _items.Clear();
         }
 
         protected override void Apply(IDomainEvent @event)
         {
-            // switch (@event)
-            // {
-                
-            // }
+            // Implement event application logic if needed
         }
     }
-
-
 }

@@ -4,11 +4,11 @@ namespace AI.Domain.Entities
 {
     public class UserInterestScore : AggregateRoot<Guid>
     {
-        public Guid UserId { get; private set; }
-        public string Category { get; private set; } = default!;
-        public double InterestScore { get; private set; }
-        public DateTime LastInteractionAt { get; private set; }
-
+        public Guid UserId { get; private set; } 
+        public string Category { get; private set; } = string.Empty;
+        public double Score { get; private set; }
+        public int TotalInteractions { get; private set; }
+        public DateTime LastUpdated { get; private set; }
         private UserInterestScore() { }
 
         public static UserInterestScore Create(Guid userId, string category, double initialScore)
@@ -17,38 +17,42 @@ namespace AI.Domain.Entities
             {
                 Id = Guid.NewGuid(),
                 UserId = userId,
-                Category = category,
-                InterestScore = initialScore,
-                LastInteractionAt = DateTime.UtcNow
+                Category = category.ToLowerInvariant(),
+                Score = initialScore,
+                LastUpdated = DateTime.UtcNow,
+                TotalInteractions = 1
             };
         }
 
-        public void UpdateScore(double delta)
+        /// <summary>
+        /// Step 1: Apply Time Decay.
+        /// If user hasn't acted in 7 days, score drops.
+        /// </summary>
+        public void ApplyDecay(double halfLifeInDays)
         {
-            InterestScore += delta;
-            LastInteractionAt = DateTime.UtcNow;
+            double daysElapsed = (DateTime.UtcNow - LastUpdated).TotalDays;
+            if (daysElapsed <= 0) return;
+
+            // Math: NewScore = OldScore * (0.5 ^ (Days / HalfLife))
+            double decayFactor = Math.Pow(0.5, daysElapsed / halfLifeInDays);
+            
+            Score *= decayFactor;
+            // Note: We do NOT update LastUpdated here; we wait for the score update.
         }
 
         /// <summary>
-        /// ALGORITHM: Exponential Time Decay
-        /// Formula: score = score × decayFactor
-        /// where decayFactor = exp(-λ × time)
+        /// Step 2: Add new points.
         /// </summary>
-        public void ApplyDecay(double decayFactor)
+        public void AddScore(double points)
         {
-            InterestScore *= decayFactor;
-            LastInteractionAt = DateTime.UtcNow;
-        }
-
-        public void Reset()
-        {
-            InterestScore = 0;
-            LastInteractionAt = DateTime.UtcNow;
+            Score += points;
+            TotalInteractions++;    
+            LastUpdated = DateTime.UtcNow;
         }
 
         protected override void Apply(IDomainEvent @event)
         {
-            // Event sourcing hook
+            // Implement event application logic if needed
         }
     }
 }

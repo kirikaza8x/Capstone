@@ -1,116 +1,85 @@
-using Shared.Domain.DDD;
+using Shared.Domain.DDD; 
 
 namespace AI.Domain.Entities
 {
     public class UserBehaviorLog : AggregateRoot<Guid>
     {
-        public Guid SessionId { get; private set; }
+        // 1. Identity & Context
         public Guid UserId { get; private set; }
-        public Guid EventId { get; private set; }
-        public string ActionType { get; private set; } = default!;
-        public string? Metadata { get; private set; }
-        
-        // Learning fields - track if action led to conversion
-        public bool LedToConversion { get; private set; }
-        public Guid? ConversionEventId { get; private set; }
-        public DateTime? ConversionTimestamp { get; private set; }
+
+        // 2. The "What"
+        public string ActionType { get; private set; } = default!; // e.g., "click", "view"
+        public string TargetId { get; private set; } = default!;   // e.g., "product-123"
+        public string TargetType { get; private set; } = default!; // e.g., "item", "category"
+
+        // 3. The "When" (Crucial for Time Decay!)
+        // Renamed from 'lastOccurredAt'. A log never changes, so it's just 'OccurredAt'.
+        public DateTime OccurredAt { get; private set; }
+
+        // 4. Flexible Data
+        // specific backing field for EF Core / ORM JSON serialization support
+        private Dictionary<string, string> _metadata = new();
+        public IReadOnlyDictionary<string, string> Metadata => _metadata.AsReadOnly();
 
         private UserBehaviorLog() { }
 
         public static UserBehaviorLog Create(
-            Guid sessionId,
             Guid userId,
-            Guid eventId,
             string actionType,
-            string? metadata = null)
+            string targetId,
+            string targetType,
+            Dictionary<string, string>? metadata = null)
         {
+            // GUARD CLAUSES: Fail fast if data is invalid
+            if (string.IsNullOrWhiteSpace(actionType)) throw new ArgumentException("ActionType is required.");
+            if (string.IsNullOrWhiteSpace(targetId)) throw new ArgumentException("TargetId is required.");
+
             return new UserBehaviorLog
             {
-                Id = Guid.NewGuid(), 
-                SessionId = sessionId,
+                Id = Guid.NewGuid(),
                 UserId = userId,
-                EventId = eventId,
-                ActionType = actionType,
-                Metadata = metadata,
-                CreatedAt = DateTime.UtcNow,
-                LedToConversion = false
+                ActionType = actionType.Trim().ToLowerInvariant(),
+                TargetId = targetId.Trim(),
+                TargetType = targetType.Trim().ToLowerInvariant(),
+                OccurredAt = DateTime.UtcNow,
+                _metadata = metadata ?? new Dictionary<string, string>()
             };
         }
 
-        // Mark when user converts after this action
-        public void MarkAsLeadingToConversion(Guid conversionEventId)
-        {
-            LedToConversion = true;
-            ConversionEventId = conversionEventId;
-            ConversionTimestamp = DateTime.UtcNow;
-        }
-
-        public void AttachMetadata(string key, string value)
-        {
-            Metadata = string.IsNullOrEmpty(Metadata)
-                ? $"{key}:{value}"
-                : $"{Metadata};{key}:{value}";
-        }
-
-        // Helper to identify high-value actions
-        public bool IsHighValueAction()
-        {
-            return ActionType.ToLower() switch
-            {
-                "purchase" => true,
-                "register" => true,
-                "ticket_purchase" => true,
-                "share" => true,
-                _ => false
-            };
-        }
+        // ----------------------------
+        // Domain Helpers (Optimized)
+        // ----------------------------
 
         /// <summary>
-        /// Extract category from metadata
-        /// Metadata format: "category:music;other:value"
-        /// </summary>
-        public string? GetCategory()
-        {
-            if (string.IsNullOrEmpty(Metadata))
-                return null;
-
-            var parts = Metadata.Split(';');
-            var categoryPart = parts.FirstOrDefault(p => p.StartsWith("category:", StringComparison.OrdinalIgnoreCase));
-            
-            if (categoryPart == null)
-                return null;
-
-            return categoryPart.Split(':')[1].ToLowerInvariant();
-        }
-        /// <summary>
-        /// Get all categories from metadata
-        /// Metadata format: "categories:music,jazz,concert;other:value"
+        /// Robust category parser.
+        /// Handles: "Music", "Music, Jazz", " Music ; Jazz "
         /// </summary>
         public List<string> GetCategories()
         {
-            if (string.IsNullOrEmpty(Metadata))
-                return new List<string>();
-
-            var parts = Metadata.Split(';');
-            var categoriesPart = parts.FirstOrDefault(p => p.StartsWith("categories:", StringComparison.OrdinalIgnoreCase));
-            
-            if (categoriesPart == null)
+            if (!_metadata.TryGetValue("categories", out var value) && 
+                !_metadata.TryGetValue("category", out value))
             {
-                // Try singular "category"
-                var singleCategory = GetCategory();
-                return singleCategory != null ? new List<string> { singleCategory } : new List<string>();
+                return new List<string>();
             }
 
-            var categoriesValue = categoriesPart.Split(':')[1];
-            return categoriesValue.Split(',')
+            // Normalize delimiters (handle comma or semicolon)
+            return value
+                .Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
                 .Select(c => c.Trim().ToLowerInvariant())
-                .Where(c => !string.IsNullOrEmpty(c))
+                .Distinct() // Avoid duplicates like "Jazz, jazz"
                 .ToList();
         }
 
-        protected override void Apply(IDomainEvent @event)
+        /// <summary>
+        /// Checks if this action represents a Conversion.
+        /// NOTE: It is often better to keep this logic in the "InteractionWeight" config,
+        /// but keeping a helper here is fine for quick filtering.
+        /// </summary>
+        public bool IsConversion()
         {
-            // Event sourcing hook
+            return ActionType is "purchase" or "subscribe" or "checkout";
         }
+
+        protected override void Apply(IDomainEvent @event) { }
     }
 }
