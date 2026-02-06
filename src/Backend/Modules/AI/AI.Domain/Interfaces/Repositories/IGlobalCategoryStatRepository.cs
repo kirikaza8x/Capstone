@@ -15,6 +15,8 @@ namespace AI.Domain.Repositories
         // BACKGROUND JOB USES THIS:
         // "Find the stat for 'Jazz' so I can update it"
         Task<GlobalCategoryStat?> GetByCategoryAsync(string category);
+
+        Task<List<GlobalCategoryStat>> GetTopCategoriesAsync(int count=10);
         
     }
 }

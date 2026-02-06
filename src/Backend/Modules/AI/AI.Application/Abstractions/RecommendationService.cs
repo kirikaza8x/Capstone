@@ -30,7 +30,7 @@ namespace AI.Application.Services
         {
             // 1. Fetch Global Stats (The Baseline)
             // In a real app, cache this for 10-60 minutes!
-            var globalStats = await _globalStatRepo.GetAllAsync();
+            var globalStats = await _globalStatRepo.GetTopCategoriesAsync(topN);
 
             // Normalize Global Scores to 0-1 range for fair math
             // (Assumes PopularityScore is 0-100, so we divide by 100)

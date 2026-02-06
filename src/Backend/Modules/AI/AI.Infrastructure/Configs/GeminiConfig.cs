@@ -1,6 +1,8 @@
+using Shared.Infrastructure.Configs;
+
 namespace AI.Infrastructure.Configs;
 
-public class GeminiConfig
+public class GeminiConfig : ConfigBase
 {
     public string ApiKey { get; set; } = default!;
     public string Model { get; set; } = "gemini-2.5-flash";
