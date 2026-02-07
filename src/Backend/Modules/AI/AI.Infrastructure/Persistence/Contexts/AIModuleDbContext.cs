@@ -16,8 +16,8 @@ namespace AI.Infrastructure.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(AIModuleDbContext).Assembly);
             base.OnModelCreating(modelBuilder);
-            
             // Apply configurations if you have separate configuration files
             // modelBuilder.ApplyConfigurationsFromAssembly(typeof(AIDbContext).Assembly);
             

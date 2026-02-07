@@ -88,7 +88,9 @@ dotnet sln "$SolutionPath" add "$SrcDir/$ModuleName.Infrastructure/$ModuleName.I
 dotnet sln "$SolutionPath" add "$SrcDir/$ModuleName.IntegrationEvents/$ModuleName.IntegrationEvents.csproj"
 dotnet sln "$SolutionPath" add "$SrcDir/$ModuleName.PublicApi/$ModuleName.PublicApi.csproj"
 
-if ($HostProj) { dotnet sln "$SolutionPath" add "$HostProj" }
+if ($HostProj) { 
+    dotnet sln "$SolutionPath" add "$HostProj" --solution-folder "Backend"
+}
 
 # === Marker AssemblyReference classes ===
 @"

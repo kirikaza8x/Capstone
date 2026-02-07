@@ -1,9 +1,5 @@
-using System.Reflection;
 using AI.Application.Abstractions;
-using AI.Domain.Interfaces.UOW;
-using AI.Infrastructure.Configs;
 using AI.Infrastructure.Data;
-using AI.Infrastructure.Data.UOW;
 using Infrastructure.Services.AI;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
@@ -24,9 +20,10 @@ namespace AI.Infrastructure
     {
         public static IServiceCollection AddAiInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
+            services.AddOptions();
             // Register all config classes inheriting from ConfigBase
             services.Scan(scan => scan
-                .FromAssemblyOf<GeminiConfig>()
+                .FromAssemblyOf<AiInfrastructureAssemblyReference>()
                 .AddClasses(classes => classes.AssignableTo<ConfigBase>())
                 .AsSelf()
                 .WithSingletonLifetime());
@@ -37,8 +34,7 @@ namespace AI.Infrastructure
             // Register DbContext with DatabaseConfig
             services.AddDbContext<AIModuleDbContext>((sp, options) =>
             {
-                var dbConfig = sp.GetRequiredService<DatabaseConfig>();
-
+                var dbConfig = sp.GetRequiredService<IOptions<DatabaseConfig>>().Value;
                 options.UseNpgsql(dbConfig.ConnectionString, a =>
                 {
                     if (dbConfig.MaxRetryCount > 0)
