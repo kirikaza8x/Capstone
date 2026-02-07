@@ -1,27 +1,30 @@
 ﻿
 namespace Shared.Api.Results;
 
+public sealed class ApiResult
+{
+    public bool IsSuccess { get; init; }
+    public string? Message { get; init; }
+    public DateTime Timestamp { get; init; } = DateTime.UtcNow;
+
+    public static ApiResult Success(string? message = null) => new()
+    {
+        IsSuccess = true,
+        Message = message
+    };
+}
+
 public sealed class ApiResult<TData>
 {
     public bool IsSuccess { get; init; }
     public TData? Data { get; init; }
+    public string? Message { get; init; }
+    public DateTime Timestamp { get; init; } = DateTime.UtcNow;
 
-    public static ApiResult<TData> Success(TData data) => new()
+    public static ApiResult<TData> Success(TData data, string? message = null) => new()
     {
         IsSuccess = true,
-        Data = data
+        Data = data,
+        Message = message
     };
-
-    public static ApiResult<TData> Success() => new()
-    {
-        IsSuccess = true,
-        Data = default
-    };
-}
-
-public sealed class ApiResult
-{
-    public bool IsSuccess { get; init; }
-
-    public static ApiResult Success() => new() { IsSuccess = true };
 }

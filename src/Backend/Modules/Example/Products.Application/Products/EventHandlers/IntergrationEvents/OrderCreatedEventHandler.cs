@@ -1,7 +1,6 @@
 ﻿using MediatR;
 using Order.IntegrationEvents;
 using Products.Application.Products.Commands.ReduceStockCommand;
-using Products.Domain.Products;
 using Shared.Application.EventBus;
 
 namespace Products.Application.Products.EventHandlers.IntergrationEvents;

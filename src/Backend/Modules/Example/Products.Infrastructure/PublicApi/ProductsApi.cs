@@ -1,6 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Products.Domain.Products;
-using Products.Infrastructure.Data;
+﻿using Products.Domain.Products;
 using Products.PublicApi;
 using Products.PublicApi.Dtos;
 
