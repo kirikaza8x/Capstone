@@ -13,7 +13,7 @@ namespace AI.Domain.Repositories
     /// </summary>
     public interface IInteractionWeightRepository : IRepository<InteractionWeight, Guid>
     {
-        Task<InteractionWeight?> GetByTypeAsync(string actionType);
+        Task<InteractionWeight?> GetByActionTypeAsync(string actionType);
     }
 
     /// <summary>
