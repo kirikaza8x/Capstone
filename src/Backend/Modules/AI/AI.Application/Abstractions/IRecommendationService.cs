@@ -4,7 +4,7 @@ namespace AI.Application.Services
 {
     public interface IRecommendationService
     {
-        Task<List<RecommendationResult>> GetRecommendationsAsync(Guid? userId, int topN = 10);
+        Task<List<RecommendationResultDto>> GetRecommendationsAsync(Guid? userId, int topN = 10);
     }
 
 }

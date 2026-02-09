@@ -7,9 +7,9 @@ namespace AI.Application.Features.Tracking.Handlers
 {
     public class TrackActivityCommandHandler : ICommandHandler<TrackActivityCommand, bool>
     {
-        private readonly UserActivityOrchestrator _orchestrator;
+        private readonly IUserActivityOrchestrator _orchestrator;
 
-        public TrackActivityCommandHandler(UserActivityOrchestrator orchestrator)
+        public TrackActivityCommandHandler(IUserActivityOrchestrator orchestrator)
         {
             _orchestrator = orchestrator;
         }

@@ -32,8 +32,8 @@ public class CreateOrderEndpoint : ICarterModule
                     request.Items),
                 cancellationToken);
 
-            return result.ToCreated(id => $"/api/orders/{id}");
-        })
+                return result.ToCreated($"/api/orders/{result.Value}");        
+                })
         .WithTags(Constants.Orders)
         .WithName("CreateOrder")
         .WithSummary("Create a new order")

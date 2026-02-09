@@ -32,7 +32,7 @@ namespace AI.Domain.Services
                 return personalProfile.PersonalizedWeight;
             }
 
-            var globalWeight = await _globalRepo.GetByTypeAsync(actionType);
+            var globalWeight = await _globalRepo.GetByActionTypeAsync(actionType);
             
             // Default safety: If database is empty, return 1.0 to avoid breaking math
             return globalWeight?.Weight ?? 1.0; 

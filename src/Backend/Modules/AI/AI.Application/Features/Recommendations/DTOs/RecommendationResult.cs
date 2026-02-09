@@ -1,6 +1,6 @@
 namespace AI.Application.Features.Recommendations.DTOs
 {
-    public class RecommendationResult
+    public class RecommendationResultDto
     {
         // The category name (e.g., "Jazz", "Technology")
         public string Category { get; set; } = default!;

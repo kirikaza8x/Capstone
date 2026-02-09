@@ -24,7 +24,7 @@ namespace AI.Infrastructure.Services
             _globalStatRepo = globalStatRepo;
         }
 
-        public async Task<List<RecommendationResult>> GetRecommendationsAsync(Guid? userId, int topN = 10)
+        public async Task<List<RecommendationResultDto>> GetRecommendationsAsync(Guid? userId, int topN = 10)
         {
             // 1. Fetch Global Stats (The Baseline)
             // In a real app, cache this for 10-60 minutes!
@@ -45,7 +45,7 @@ namespace AI.Infrastructure.Services
 
             // 3. The Great Unification (Bayesian Smoothing)
             var allCategories = globalMap.Keys.Union(userScores.Select(u => u.Category)).Distinct();
-            var recommendations = new List<RecommendationResult>();
+            var recommendations = new List<RecommendationResultDto>();
 
             foreach (var category in allCategories)
             {
@@ -68,7 +68,7 @@ namespace AI.Infrastructure.Services
                 // D. The Formula
                 double finalScore = (personalScore * confidenceFactor) + (globalScore * (1.0 - confidenceFactor));
 
-                recommendations.Add(new RecommendationResult
+                recommendations.Add(new RecommendationResultDto
                 {
                     Category = category,
                     Score = finalScore,
