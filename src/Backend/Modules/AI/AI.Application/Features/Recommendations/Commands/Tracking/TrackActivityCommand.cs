@@ -1,0 +1,12 @@
+using Shared.Application.Messaging; 
+
+namespace AI.Application.Features.Tracking.Commands
+{
+    public record TrackActivityCommand(
+        Guid UserId,
+        string ActionType, // "click", "view", "purchase"
+        string TargetId,   // "product-123"
+        string TargetType, // "product"
+        Dictionary<string, string>? Metadata
+    ) : ICommand<bool>;
+}

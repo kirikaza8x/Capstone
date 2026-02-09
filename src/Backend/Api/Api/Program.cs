@@ -1,3 +1,5 @@
+using Ai.Api;
+using AI.Application;
 using Api.Extensions;
 using Api.Middleware;
 using Carter;
@@ -36,6 +38,10 @@ public class Program
             // event
             Events.Application.AssemblyReference.Assembly,
             Events.Api.AssemblyReference.Assembly,
+            
+            // AI
+            AiApplicationAssemblyReference.Assembly,
+            AiApiAssemblyReference.Assembly,
         };
 
         // Add Application Services
@@ -71,6 +77,7 @@ public class Program
             .AddOrderModule(Configuration)
             .AddUserModule(Configuration)
             .AddEventModule(Configuration)
+            .AddAiModule(Configuration)
         ;
 
         builder.Services.AddExceptionHandler<GlobalExceptionHandler>();

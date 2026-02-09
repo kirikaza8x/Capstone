@@ -21,6 +21,11 @@ public static class EventErrors
         public static readonly Error CannotClose = Error.Validation(
             "Event.CannotClose",
             "Only published events can be closed.");
+
+        public static Error UrlPathAlreadyExists(string urlPath)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public static class Seat

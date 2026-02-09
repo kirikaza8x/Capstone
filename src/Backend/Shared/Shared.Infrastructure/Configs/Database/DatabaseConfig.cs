@@ -1,6 +1,6 @@
 ﻿namespace Shared.Infrastructure.Configs.Database;
 
-public class DatabaseConfig
+public class DatabaseConfig : ConfigBase
 {
     public string ConnectionString { get; set; } = string.Empty;
     public int MaxRetryCount { get; set; } = 3;

@@ -19,6 +19,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Modules\Events\Events.Api\Events.Api.csproj" />
     <ProjectReference Include="..\..\Modules\Events\Events.Application\Events.Application.csproj" />
+    <ProjectReference Include="..\..\Modules\AI\AI.Api\AI.Api.csproj" />
     <ProjectReference Include="..\..\Modules\Example\OrderExample\Order.Api\Order.Api.csproj" />
     <ProjectReference Include="..\..\Modules\Example\OrderExample\Order.Application\Order.Application.csproj" />
     <ProjectReference Include="..\..\Modules\Example\Products.Api\Products.Api.csproj" />

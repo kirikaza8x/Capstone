@@ -11,4 +11,8 @@
     <ProjectReference Include="..\Events.Infrastructure\Events.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Events\Queries\" />
+  </ItemGroup>
+
 </Project>
