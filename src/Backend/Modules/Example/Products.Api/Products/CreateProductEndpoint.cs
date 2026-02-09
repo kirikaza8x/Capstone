@@ -35,7 +35,7 @@ public class CreateProductEndpoint : ICarterModule
                     request.Stock),
                 cancellationToken);
 
-            return result.ToCreated(id => $"/api/products/{id}");
+            return result.ToCreated("GetProductById", id => new { id });
         })
         .WithTags(Constants.Products)
         .WithName("CreateProduct")

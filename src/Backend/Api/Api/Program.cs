@@ -1,6 +1,7 @@
 using Api.Extensions;
 using Api.Middleware;
 using Carter;
+using Events.Infrastructure;
 using Order.Infrastructure;
 using Products.Infrastructure;
 using Shared.Api.Extensions;
@@ -32,6 +33,9 @@ public class Program
             UsersApplicationAssemblyReference.Assembly,
             UsersApiAssemblyReference.Assembly,
 
+            // event
+            Events.Application.AssemblyReference.Assembly,
+            Events.Api.AssemblyReference.Assembly,
         };
 
         // Add Application Services
@@ -66,6 +70,7 @@ public class Program
             .AddProductModule(Configuration)
             .AddOrderModule(Configuration)
             .AddUserModule(Configuration)
+            .AddEventModule(Configuration)
         ;
 
         builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
