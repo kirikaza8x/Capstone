@@ -10,6 +10,7 @@ using Microsoft.IdentityModel.Tokens;
 using Shared.Application.Abstractions.Authentication;
 using Shared.Domain.Data;
 using Shared.Infrastructure.Authentication;
+using Shared.Infrastructure.Configs;
 using Shared.Infrastructure.Configs.Database;
 using Shared.Infrastructure.Configs.Security;
 using Shared.Infrastructure.Data.Interceptors;
@@ -26,8 +27,16 @@ namespace Users.Infrastructure
     {
         public static IServiceCollection AddUserInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
-            services.ConfigureOptions<DatabaseConfigSetup>();
-            services.ConfigureOptions<JwtConfigSetup>();
+            services.AddOptions();
+            // Register all config classes inheriting from ConfigBase
+            services.Scan(scan => scan
+                .FromAssemblyOf<UsersInfrastructureAssemblyReference>()
+                .AddClasses(classes => classes.AssignableTo<ConfigBase>())
+                .AsSelf()
+                .WithSingletonLifetime());
+
+            // Register binder once for all configs inheriting ConfigBase
+            services.AddTransient(typeof(IConfigureOptions<>), typeof(ConfigurationBinderSetup<>));
 
             services.Scan(scan => scan
                 .FromAssemblyOf<AuditableEntityInterceptor>()

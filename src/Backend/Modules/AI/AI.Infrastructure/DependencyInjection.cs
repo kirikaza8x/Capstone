@@ -48,21 +48,21 @@ namespace AI.Infrastructure
             });
             // Register DbContext with DatabaseConfig
             services.AddDbContext<AIModuleDbContext>((sp, options) =>
-{
-    var dataSource = sp.GetRequiredService<NpgsqlDataSource>();
-    var dbConfig = sp.GetRequiredService<IOptions<DatabaseConfig>>().Value;
+            {
+                var dataSource = sp.GetRequiredService<NpgsqlDataSource>();
+                var dbConfig = sp.GetRequiredService<IOptions<DatabaseConfig>>().Value;
 
-    options.UseNpgsql(dataSource, a =>
-    {
-        if (dbConfig.MaxRetryCount > 0)
-            a.EnableRetryOnFailure(dbConfig.MaxRetryCount);
+                options.UseNpgsql(dataSource, a =>
+                {
+                    if (dbConfig.MaxRetryCount > 0)
+                        a.EnableRetryOnFailure(dbConfig.MaxRetryCount);
 
-        if (dbConfig.CommandTimeout > 0)
-            a.CommandTimeout(dbConfig.CommandTimeout);
-    })
-    .UseSnakeCaseNamingConvention()
-    .AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
-});
+                    if (dbConfig.CommandTimeout > 0)
+                        a.CommandTimeout(dbConfig.CommandTimeout);
+                })
+                .UseSnakeCaseNamingConvention()
+                .AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
+            });
 
 
             // Register repositories
