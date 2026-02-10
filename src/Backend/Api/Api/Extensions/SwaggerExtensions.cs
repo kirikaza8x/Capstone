@@ -48,14 +48,11 @@ public static class SwaggerExtensions
 
     public static IApplicationBuilder UseSwaggerDocumentation(this IApplicationBuilder app)
     {
-        app.UseSwagger(options =>
-        {
-            options.RouteTemplate = "swagger/{documentName}/swagger.json";
-        });
-
+        app.UseSwagger();
         app.UseSwaggerUI(options =>
         {
             options.SwaggerEndpoint("/swagger/v1/swagger.json", "AIPromo API v1");
+            options.RoutePrefix = "swagger";
             options.DefaultModelsExpandDepth(-1);
         });
 

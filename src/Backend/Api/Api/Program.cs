@@ -56,6 +56,7 @@ public class Program
             assemblies
         );
 
+        //swagger
         builder.Services.AddSwaggerDocumentation();
         builder.Services.AddAuthentication();
         builder.Services.AddAuthorization();
@@ -83,14 +84,11 @@ public class Program
         builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
         builder.Services.AddProblemDetails();
 
-        builder.Services.AddSwaggerGen();
-
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
         {
-            app.UseSwagger();
             app.UseSwaggerDocumentation();
         }
 
@@ -99,6 +97,7 @@ public class Program
         app.UseAuthentication();
         app.UseAuthorization();
         app.UseExceptionHandler();
+
         app.MapCarter();
 
         // Use module

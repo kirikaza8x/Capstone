@@ -57,7 +57,6 @@ public sealed class Event : AggregateRoot<Guid>
         string location,
         string? mapUrl,
         string description,
-        string urlPath,
         int eventCategoryId)
     {
         var @event = new Event
@@ -70,7 +69,6 @@ public sealed class Event : AggregateRoot<Guid>
             Location = location,
             MapUrl = mapUrl,
             Description = description,
-            UrlPath = urlPath,
             EventCategoryId = eventCategoryId,
             CreatedAt = DateTime.UtcNow
         };
@@ -78,6 +76,12 @@ public sealed class Event : AggregateRoot<Guid>
         @event.RaiseDomainEvent(new EventCreatedDomainEvent(@event.Id, organizerId));
 
         return @event;
+    }
+
+    public void UpdateUrlPath(string urlPath)
+    {
+        UrlPath = urlPath;
+        ModifiedAt = DateTime.UtcNow;
     }
 
     public void UpdateSchedule(
