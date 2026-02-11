@@ -16,33 +16,63 @@ namespace AI.Infrastructure.Repositories
             _dbSet = dbContext.Set<GlobalCategoryStat>();
         }
 
-        // The interface likely inherits GetAllAsync from IRepository, 
-        // but if you have custom logic (like ordering by popularity), add it here.
-        public async Task<List<GlobalCategoryStat>> GetTopCategoriesAsync(int count)
+         public async Task<GlobalCategoryStat?> GetByCategoryAsync(string category)
         {
-            return await _dbContext.Set<GlobalCategoryStat>()
-                .OrderByDescending(x => x.PopularityScore)
-                .Take(count)
+            return await _dbSet
+                .FirstOrDefaultAsync(x => x.Category == category.ToLower());
+        }
+
+        public async Task<List<GlobalCategoryStat>> GetByCategoryNamesAsync(List<string> categories)
+        {
+            var normalizedCategories = categories
+                .Select(c => c.ToLowerInvariant())
+                .ToList();
+
+            return await _dbSet
+                .Where(x => normalizedCategories.Contains(x.Category))
                 .ToListAsync();
         }
 
-        public async Task<GlobalCategoryStat?> GetByCategoryAsync(string category)
+        public async Task<List<GlobalCategoryStat>> GetTopCategoriesAsync(int topN = 20)
         {
-            return await _dbContext.Set<GlobalCategoryStat>()
-                .FirstOrDefaultAsync(x => x.Category == category);
+            return await _dbSet
+                .OrderByDescending(x => x.PopularityScore)
+                .Take(topN)
+                .ToListAsync();
         }
 
         public async Task<List<GlobalCategoryStat>> GetAllAsync()
         {
-            return await _dbContext.Set<GlobalCategoryStat>()
-                .ToListAsync();
+            return await _dbSet.ToListAsync();
         }
 
-        public async Task<List<GlobalCategoryStat>> GetByCategoryNamesAsync(List<string> categoryNames)
-{
-        return await _dbContext.Set<GlobalCategoryStat>()
-        .Where(s => categoryNames.Contains(s.Category))
-        .ToListAsync();
-}
+        public async Task ApplyGlobalDecayAsync(double decayFactor)
+        {
+            var allStats = await _dbSet.ToListAsync();
+            
+            foreach (var stat in allStats)
+            {
+                stat.ApplyDecay(decayFactor);
+            }
+            
+            _dbSet.UpdateRange(allStats);
+        }
+
+        public async Task<int> GetTotalCategoriesAsync()
+        {
+            return await _dbSet.CountAsync();
+        }
+
+        public async Task<List<GlobalCategoryStat>> GetStaleStatsAsync(int daysThreshold = 90)
+        {
+            var cutoff = DateTime.UtcNow.AddDays(-daysThreshold);
+            
+            return await _dbSet
+                .Where(x => 
+                    x.LastCalculated < cutoff && 
+                    x.PopularityScore < 1.0 &&
+                    x.TotalInteractions == 0)
+                .ToListAsync();
+        }
     }
 }

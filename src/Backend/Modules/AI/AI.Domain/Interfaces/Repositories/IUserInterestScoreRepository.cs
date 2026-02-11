@@ -1,26 +1,46 @@
 using AI.Domain.Entities;
 using Shared.Domain.Data;
-using Shared.Domain.DDD; // Assuming your base IRepository lives here
 
 namespace AI.Domain.Repositories
 {
-    
-    // 4. SCORING: Read-Modify-Write
+    /// <summary>
+    /// Repository for UserInterestScore with optimized batch operations
+    /// </summary>
     public interface IUserInterestScoreRepository : IRepository<UserInterestScore, Guid>
     {
-        /// <summary>
-        /// "Get me the score for User X in Category 'Jazz'"
-        /// </summary>
-        /// <param name="userId"></param>
-        /// <param name="category"></param>
-        /// <returns></returns>
+        // ===== BASIC CRUD =====
+        Task<UserInterestScore?> GetByIdAsync(Guid id);
         Task<UserInterestScore?> GetByUserAndCategoryAsync(Guid userId, string category);
-        
+        Task<List<UserInterestScore>> GetAllForUserAsync(Guid userId);
+        void Delete(UserInterestScore entity);
+
+        // ===== OPTIMIZATION: Batch Operations =====
+        /// <summary>
+        /// Fetches multiple categories for a user in a single DB call
+        /// </summary>
+        Task<List<UserInterestScore>> GetByUserAndCategoriesAsync(Guid userId, List<string> categories);
 
         /// <summary>
-        /// layer (Recommendations): "Get all scores for User X"
+        /// Thread-safe UPSERT operation to prevent race conditions.
+        /// Returns the existing or newly created entity.
         /// </summary>
-        /// <param name="userId"></param>
-        Task<List<UserInterestScore>> GetAllForUserAsync(Guid userId);
+        Task<UserInterestScore> UpsertAsync(Guid userId, string category, double weight, double halfLifeDays);
+
+        /// <summary>
+        /// Gets top N categories for a user ordered by score
+        /// </summary>
+        Task<List<UserInterestScore>> GetTopCategoriesAsync(Guid userId, int topN = 10);
+
+
+        // ===== ANALYTICS QUERIES =====
+        /// <summary>
+        /// Gets all scores that haven't been updated in X days (for cleanup)
+        /// </summary>
+        Task<List<UserInterestScore>> GetStaleScoresAsync(int daysThreshold = 90);
+
+        /// <summary>
+        /// Gets the total number of tracked interests for a user
+        /// </summary>
+        Task<int> GetInterestCountAsync(Guid userId);
     }
 }
