@@ -1,10 +1,10 @@
 using AI.Application.Abstractions;
 using AI.Application.Services;
-using AI.Domain.Repositories;
 using AI.Domain.Services;
+using AI.Infrastructure.BackgroundJobs;
 using AI.Infrastructure.Data;
+using AI.Infrastructure.ExternalServices;
 using AI.Infrastructure.Services;
-using Infrastructure.Services.AI;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -87,13 +87,14 @@ namespace AI.Infrastructure
                 .WithScopedLifetime());
 
             // Register services
+            services.AddScoped<IGlobalTrendService, GlobalTrendService>();
             services.AddScoped<IUserActivityOrchestrator, UserActivityOrchestrator>();
             services.AddScoped<InteractionWeightCalculator>();
             services.AddScoped<IRecommendationService, RecommendationService>();
             services.AddScoped<IGeminiService, GeminiService>();
             services.AddScoped<ICurrentUserService, CurrentUserService>();
             services.AddScoped<IDeviceDetectionService, DeviceDetectionService>();
-
+            services.AddHostedService<GlobalTrendWorker>();
             services.AddHttpContextAccessor();
 
             return services;

@@ -17,6 +17,8 @@ namespace AI.Domain.Repositories
         Task<GlobalCategoryStat?> GetByCategoryAsync(string category);
 
         Task<List<GlobalCategoryStat>> GetTopCategoriesAsync(int count=10);
+
+        Task<List<GlobalCategoryStat>> GetByCategoryNamesAsync(List<string> categoryNames);
         
     }
 }

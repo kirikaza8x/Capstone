@@ -1,6 +1,6 @@
 using AI.Application.Features.Recommendations.DTOs;
 
-namespace AI.Application.Services
+namespace AI.Application.Abstractions
 {
     public interface IRecommendationService
     {

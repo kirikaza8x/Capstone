@@ -1,7 +1,7 @@
 using AI.Domain.Repositories;
 using AI.Application.Features.Recommendations.DTOs;
-using AI.Application.Services;
 using AI.Domain.Entities;
+using AI.Application.Abstractions;
 
 namespace AI.Infrastructure.Services
 {

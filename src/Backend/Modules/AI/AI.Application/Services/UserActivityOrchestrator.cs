@@ -1,10 +1,11 @@
+using AI.Application.Services;
 using AI.Domain.Entities;
 using AI.Domain.Interfaces.UOW;
 using AI.Domain.Repositories;
 using AI.Domain.Services;
-using Microsoft.Extensions.Logging; // 1. Added Namespace
+using Microsoft.Extensions.Logging; 
 
-namespace AI.Application.Services
+namespace AI.Application.Abstractions
 {
     public class UserActivityOrchestrator : IUserActivityOrchestrator
     {
@@ -12,7 +13,7 @@ namespace AI.Application.Services
         private readonly IUserInterestScoreRepository _scoreRepo;
         private readonly InteractionWeightCalculator _weightCalculator;
         private readonly IAiUnitOfWork _unitOfWork;
-        private readonly ILogger<UserActivityOrchestrator> _logger; // 2. Added Logger Field
+        private readonly ILogger<UserActivityOrchestrator> _logger; 
 
         private const double DefaultDecayHalfLifeInDays = 7.0;
 
@@ -21,7 +22,7 @@ namespace AI.Application.Services
             IUserInterestScoreRepository scoreRepo,
             InteractionWeightCalculator weightCalculator,
             IAiUnitOfWork unitOfWork,
-            ILogger<UserActivityOrchestrator> logger) // 3. Injected Logger
+            ILogger<UserActivityOrchestrator> logger) 
         {
             _logRepo = logRepo;
             _scoreRepo = scoreRepo;

@@ -37,5 +37,12 @@ namespace AI.Infrastructure.Repositories
             return await _dbContext.Set<GlobalCategoryStat>()
                 .ToListAsync();
         }
+
+        public async Task<List<GlobalCategoryStat>> GetByCategoryNamesAsync(List<string> categoryNames)
+{
+        return await _dbContext.Set<GlobalCategoryStat>()
+        .Where(s => categoryNames.Contains(s.Category))
+        .ToListAsync();
+}
     }
 }
