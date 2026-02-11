@@ -104,4 +104,26 @@ public class UnitOfWorkBase<TDbContext> : IUnitOfWork where TDbContext : DbConte
 
         _disposed = true;
     }
+
+    public async Task ExecuteInTransactionAsync(Func<Task> operation)
+    {
+        var strategy = _dbContext.Database.CreateExecutionStrategy();
+
+        await strategy.ExecuteAsync(async () =>
+        {
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync();
+
+            try
+            {
+                await operation();
+                await _dbContext.SaveChangesAsync();
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        });
+    }
 }
