@@ -66,7 +66,7 @@ namespace AI.Infrastructure.Services
             // STEP 2: Determine strategy based on user data
             if (!userId.HasValue || !userScores.Any())
             {
-                _logger.LogInformation("👤 Cold start user - using global trends only");
+                _logger.LogInformation("Cold start user - using global trends only");
                 return GetGlobalRecommendations(globalStats, topN);
             }
 
