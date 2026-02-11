@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Users.Domain.Entities;
+using Users.Domain.Enums;
 
 namespace Users.Infrastructure.Persistence.Configs
 {
@@ -40,6 +41,14 @@ namespace Users.Infrastructure.Persistence.Configs
                    .HasColumnName("last_name")
                    .HasMaxLength(100);
 
+            builder.Property(u => u.Birthday)
+                   .HasColumnName("birthday");
+
+            builder.Property(u => u.Gender)
+                   .HasColumnName("gender")
+                   .HasConversion<string>()
+                   .HasMaxLength(10);
+
             builder.Property(u => u.PhoneNumber)
                    .HasColumnName("phone_number")
                    .HasMaxLength(20);
@@ -48,9 +57,52 @@ namespace Users.Infrastructure.Persistence.Configs
                    .HasColumnName("address")
                    .HasMaxLength(255);
 
+            builder.Property(u => u.Description)
+                   .HasColumnName("description")
+                   .HasMaxLength(1000);
+
+            builder.Property(u => u.SocialLink)
+                   .HasColumnName("social_link")
+                   .HasMaxLength(500);
+
             builder.Property(u => u.ProfileImageUrl)
                    .HasColumnName("profile_image_url")
                    .HasMaxLength(500);
+
+            builder.Property(u => u.Status)
+                   .HasColumnName("status")
+                   .HasConversion<string>()
+                   .HasMaxLength(20)
+                   .HasDefaultValue(UserStatus.Active);
+
+            builder.Property(u => u.WalletId)
+                   .HasColumnName("wallet_id");
+
+            builder.HasOne(u => u.Wallet)
+                   .WithOne(w => w.User)
+                   .HasForeignKey<Wallet>(w => w.UserId)
+                   .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasIndex(u => u.Email)
+                   .IsUnique()
+                   .HasDatabaseName("ix_user_email");
+
+            builder.HasIndex(u => u.UserName)
+                   .IsUnique()
+                   .HasDatabaseName("ix_user_username");
+
+            builder.HasIndex(u => u.WalletId)
+                   .IsUnique()
+                   .HasDatabaseName("ix_user_wallet_id");
+
+            builder.HasIndex(u => u.Status)
+                   .HasDatabaseName("ix_user_status");
+
+            builder.HasIndex(u => u.IsActive)
+                   .HasDatabaseName("ix_user_is_active");
+
+            builder.HasIndex(u => u.CreatedAt)
+                   .HasDatabaseName("ix_user_created_at");
 
             // --- Auditing (from AggregateRoot) ---
             builder.Property(u => u.CreatedAt)
@@ -76,7 +128,7 @@ namespace Users.Infrastructure.Persistence.Configs
 
             // --- Relationships ---
 
-            // 1. Roles (Many-to-Many)
+            // Roles (Many-to-Many)
             builder.HasMany(u => u.Roles)
                    .WithMany()
                    .UsingEntity<Dictionary<string, object>>(
@@ -98,9 +150,10 @@ namespace Users.Infrastructure.Persistence.Configs
                            j.HasKey("user_id", "role_id");
                            j.ToTable("user_roles");
                        });
+
             builder.Navigation(u => u.Roles)
                    .UsePropertyAccessMode(PropertyAccessMode.Field);
-           
+
             builder.Navigation(u => u.RefreshTokens)
                    .UsePropertyAccessMode(PropertyAccessMode.Field);
         }
