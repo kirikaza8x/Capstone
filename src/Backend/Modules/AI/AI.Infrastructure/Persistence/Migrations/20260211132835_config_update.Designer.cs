@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using AI.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AI.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AIModuleDbContext))]
-    partial class AIModuleDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260211132835_config_update")]
+    partial class config_update
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

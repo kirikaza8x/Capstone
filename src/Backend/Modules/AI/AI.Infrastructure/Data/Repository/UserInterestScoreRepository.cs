@@ -136,7 +136,7 @@ namespace AI.Infrastructure.Repositories
             var cutoff = DateTime.UtcNow.AddDays(-daysThreshold);
             
             return await _dbSet
-                .Where(x => x.LastUpdated < cutoff && x.Score < 1.0)
+                .Where(x => x.ModifiedAt < cutoff && x.Score < 1.0)
                 .ToListAsync();
         }
 
