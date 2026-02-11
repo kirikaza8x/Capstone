@@ -11,7 +11,6 @@ public sealed class Area : Entity<Guid>
 
     public Guid EventId { get; private set; }
     public string Name { get; private set; } = string.Empty;
-    public decimal Price { get; private set; }
     public int Capacity { get; private set; }
     public AreaType Type { get; private set; }
 
@@ -21,7 +20,6 @@ public sealed class Area : Entity<Guid>
     public static Area Create(
         Guid eventId,
         string name,
-        decimal price,
         int capacity,
         AreaType type)
     {
@@ -30,24 +28,18 @@ public sealed class Area : Entity<Guid>
             Id = Guid.NewGuid(),
             EventId = eventId,
             Name = name,
-            Price = price,
             Capacity = capacity,
             Type = type,
             CreatedAt = DateTime.UtcNow
         };
     }
 
-    public void AddSeat(Seat seat) => _seats.Add(seat);
-
-    public void UpdatePrice(decimal price)
+    public void Update(string name, int capacity)
     {
-        Price = price;
-        ModifiedAt = DateTime.UtcNow;
-    }
-
-    public void UpdateCapacity(int capacity)
-    {
+        Name = name;
         Capacity = capacity;
         ModifiedAt = DateTime.UtcNow;
     }
+
+    public void AddSeat(Seat seat) => _seats.Add(seat);
 }

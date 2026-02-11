@@ -19,12 +19,7 @@ internal sealed class AreaConfiguration : IEntityTypeConfiguration<Area>
             .HasMaxLength(100)
             .IsRequired();
 
-        builder.Property(e => e.Price)
-            .HasPrecision(18, 2)
-            .IsRequired();
-
-        builder.Property(e => e.Capacity)
-            .IsRequired();
+        builder.Property(e => e.Capacity).IsRequired();
 
         builder.Property(e => e.Type)
             .HasConversion(

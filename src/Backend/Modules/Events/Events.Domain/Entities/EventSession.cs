@@ -1,18 +1,24 @@
 ﻿using Shared.Domain.DDD;
+using System.Net.Sockets;
 
 namespace Events.Domain.Entities;
 
 public sealed class EventSession : Entity<Guid>
 {
+    private readonly List<TicketType> _ticketTypes = [];
+    private readonly List<SessionSeatStatus> _sessionSeatStatuses = [];
+
     private EventSession() { }
 
+    public Guid EventId { get; private set; }
     public string Title { get; private set; } = string.Empty;
     public string? Description { get; private set; }
     public DateTime StartTime { get; private set; }
     public DateTime EndTime { get; private set; }
-    public Guid EventId { get; private set; }
 
     public Event Event { get; private set; } = null!;
+    public IReadOnlyCollection<TicketType> TicketTypes => _ticketTypes.AsReadOnly();
+    public IReadOnlyCollection<SessionSeatStatus> SessionSeatStatuses => _sessionSeatStatuses.AsReadOnly();
 
     public static EventSession Create(
         Guid eventId,
@@ -41,4 +47,6 @@ public sealed class EventSession : Entity<Guid>
         EndTime = endTime;
         ModifiedAt = DateTime.UtcNow;
     }
+
+    public void AddTicketType(TicketType ticketType) => _ticketTypes.Add(ticketType);
 }

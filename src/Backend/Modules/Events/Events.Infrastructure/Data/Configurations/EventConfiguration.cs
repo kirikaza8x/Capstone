@@ -26,24 +26,22 @@ internal sealed class EventConfiguration : IEntityTypeConfiguration<Event>
             .HasMaxLength(20)
             .IsRequired();
 
-        builder.Property(e => e.Description).HasColumnType("text");
-        builder.Property(e => e.BannerUrl).HasColumnType("text");
-        builder.Property(e => e.Location).HasMaxLength(500);
-        builder.Property(e => e.MapUrl).HasMaxLength(500);
-        builder.Property(e => e.UrlPath).HasMaxLength(255).IsRequired();
-        builder.Property(e => e.EventCategoryId).IsRequired();
-
         builder.Property(e => e.TicketSaleStartAt).IsRequired(false);
         builder.Property(e => e.TicketSaleEndAt).IsRequired(false);
         builder.Property(e => e.EventStartAt).IsRequired(false);
         builder.Property(e => e.EventEndAt).IsRequired(false);
 
+        builder.Property(e => e.Description).HasColumnType("text");
+        builder.Property(e => e.BannerUrl).HasColumnType("text");
+        builder.Property(e => e.Location).HasMaxLength(500);
+        builder.Property(e => e.MapUrl).HasMaxLength(500);
         builder.Property(e => e.Policy).HasColumnType("text");
         builder.Property(e => e.Spec).HasColumnType("jsonb");
         builder.Property(e => e.SeatmapImage).HasMaxLength(500);
+        builder.Property(e => e.UrlPath).HasMaxLength(255).IsRequired();
         builder.Property(e => e.EventTypeId).IsRequired(false);
+        builder.Property(e => e.EventCategoryId).IsRequired();
 
-        // Indexes
         builder.HasIndex(e => e.UrlPath).IsUnique();
         builder.HasIndex(e => e.OrganizerId);
         builder.HasIndex(e => e.Status);

@@ -7,16 +7,17 @@ public sealed class EventsDbContext(DbContextOptions<EventsDbContext> options) :
 {
     public DbSet<Event> Events => Set<Event>();
     public DbSet<EventSession> EventSessions => Set<EventSession>();
-    public DbSet<EventImage> EventImages => Set<EventImage>();
-    public DbSet<EventCategory> EventCategories => Set<EventCategory>();
-    public DbSet<EventCategoryMapping> EventCategoryMappings => Set<EventCategoryMapping>();
-    public DbSet<Hashtag> Hashtags => Set<Hashtag>();
-    public DbSet<EventHashtag> EventHashtags => Set<EventHashtag>();
-    public DbSet<EventStaff> EventStaffs => Set<EventStaff>();
-    public DbSet<EventActorImage> EventActorImages => Set<EventActorImage>();
+    public DbSet<TicketType> TicketTypes => Set<TicketType>();
     public DbSet<Area> Areas => Set<Area>();
     public DbSet<Seat> Seats => Set<Seat>();
-
+    public DbSet<SessionSeatStatus> SessionSeatStatuses => Set<SessionSeatStatus>();
+    public DbSet<EventCategory> EventCategories => Set<EventCategory>();
+    public DbSet<EventCategoryMapping> EventCategoryMappings => Set<EventCategoryMapping>();
+    public DbSet<EventImage> EventImages => Set<EventImage>();
+    public DbSet<EventActorImage> EventActorImages => Set<EventActorImage>();
+    public DbSet<EventStaff> EventStaffs => Set<EventStaff>();
+    public DbSet<Hashtag> Hashtags => Set<Hashtag>();
+    public DbSet<EventHashtag> EventHashtags => Set<EventHashtag>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

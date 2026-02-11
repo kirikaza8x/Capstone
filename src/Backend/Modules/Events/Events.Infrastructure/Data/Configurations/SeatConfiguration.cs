@@ -27,11 +27,8 @@ internal sealed class SeatConfiguration : IEntityTypeConfiguration<Seat>
             .HasMaxLength(10)
             .IsRequired();
 
-        builder.Property(e => e.X)
-            .IsRequired();
-
-        builder.Property(e => e.Y)
-            .IsRequired();
+        builder.Property(e => e.X).IsRequired();
+        builder.Property(e => e.Y).IsRequired();
 
         builder.Property(e => e.Status)
             .HasConversion(
@@ -41,7 +38,6 @@ internal sealed class SeatConfiguration : IEntityTypeConfiguration<Seat>
             .IsRequired();
 
         builder.HasIndex(e => e.AreaId);
-        builder.HasIndex(e => new { e.AreaId, e.SeatCode })
-            .IsUnique();
+        builder.HasIndex(e => new { e.AreaId, e.SeatCode }).IsUnique();
     }
 }

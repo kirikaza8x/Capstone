@@ -2,7 +2,7 @@
 
 namespace Events.Domain.Entities;
 
-public sealed class EventCategoryMapping : Entity<Guid>
+public sealed class EventCategoryMapping
 {
     private EventCategoryMapping() { }
 
@@ -16,10 +16,8 @@ public sealed class EventCategoryMapping : Entity<Guid>
     {
         return new EventCategoryMapping
         {
-            Id = Guid.NewGuid(),
             EventId = eventId,
-            CategoryId = categoryId,
-            CreatedAt = DateTime.UtcNow
+            CategoryId = categoryId
         };
     }
 }

@@ -11,6 +11,7 @@ internal sealed class EventSessionConfiguration : IEntityTypeConfiguration<Event
         builder.ToTable("event_sessions");
 
         builder.HasKey(e => e.Id);
+
         builder.Property(i => i.Id)
             .ValueGeneratedNever();
 
@@ -19,14 +20,21 @@ internal sealed class EventSessionConfiguration : IEntityTypeConfiguration<Event
             .IsRequired();
 
         builder.Property(e => e.Description)
-            .HasColumnType("text");
+            .HasMaxLength(1000);
 
-        builder.Property(e => e.StartTime)
-            .IsRequired();
-
-        builder.Property(e => e.EndTime)
-            .IsRequired();
+        builder.Property(e => e.StartTime).IsRequired();
+        builder.Property(e => e.EndTime).IsRequired();
 
         builder.HasIndex(e => e.EventId);
+
+        builder.HasMany(e => e.TicketTypes)
+            .WithOne(t => t.EventSession)
+            .HasForeignKey(t => t.EventSessionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(e => e.SessionSeatStatuses)
+            .WithOne(s => s.EventSession)
+            .HasForeignKey(s => s.EventSessionId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

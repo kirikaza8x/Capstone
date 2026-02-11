@@ -21,10 +21,4 @@ public sealed class EventImage : Entity<Guid>
             CreatedAt = DateTime.UtcNow
         };
     }
-
-    public void UpdateImageUrl(string? imageUrl)
-    {
-        ImageUrl = imageUrl;
-        ModifiedAt = DateTime.UtcNow;
-    }
 }

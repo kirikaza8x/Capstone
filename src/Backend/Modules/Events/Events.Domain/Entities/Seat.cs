@@ -1,5 +1,4 @@
-﻿using Events.Domain.DomainEvents;
-using Events.Domain.Enums;
+﻿using Events.Domain.Enums;
 using Shared.Domain.DDD;
 
 namespace Events.Domain.Entities;
@@ -35,32 +34,12 @@ public sealed class Seat : Entity<Guid>
             ColumnLabel = columnLabel,
             X = x,
             Y = y,
-            Status = SeatStatus.Available,
+            Status = SeatStatus.Active,
             CreatedAt = DateTime.UtcNow
         };
     }
 
-    public void Reserve()
-    {
-        if (Status != SeatStatus.Available)
-            throw new InvalidOperationException("Seat is not available for reservation.");
-
-        Status = SeatStatus.Reserved;
-        ModifiedAt = DateTime.UtcNow;
-    }
-
-    public void Sell()
-    {
-        if (Status != SeatStatus.Reserved)
-            throw new InvalidOperationException("Seat must be reserved before selling.");
-
-        Status = SeatStatus.Sold;
-        ModifiedAt = DateTime.UtcNow;
-    }
-
-    public void Release()
-    {
-        Status = SeatStatus.Available;
-        ModifiedAt = DateTime.UtcNow;
-    }
+    public void Activate() => Status = SeatStatus.Active;
+    public void Deactivate() => Status = SeatStatus.Inactive;
+    public void SetMaintenance() => Status = SeatStatus.Maintenance;
 }
