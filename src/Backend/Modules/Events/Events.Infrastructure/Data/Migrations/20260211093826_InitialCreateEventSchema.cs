@@ -46,19 +46,20 @@ namespace Events.Infrastructure.Data.Migrations
                     organizer_id = table.Column<Guid>(type: "uuid", nullable: false),
                     title = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
-                    ticket_sale_start_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ticket_sale_end_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    event_start_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    event_end_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    description = table.Column<string>(type: "text", nullable: false),
+                    banner_url = table.Column<string>(type: "text", nullable: true),
                     location = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
-                    map_url = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    map_url = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    description = table.Column<string>(type: "text", nullable: false),
+                    url_path = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    event_category_id = table.Column<int>(type: "integer", nullable: false),
+                    ticket_sale_start_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    ticket_sale_end_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    event_start_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    event_end_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     policy = table.Column<string>(type: "text", nullable: false),
                     spec = table.Column<string>(type: "jsonb", nullable: true),
                     seatmap_image = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
-                    url_path = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
-                    event_type_id = table.Column<int>(type: "integer", nullable: false),
-                    event_category_id = table.Column<int>(type: "integer", nullable: false),
+                    event_type_id = table.Column<int>(type: "integer", nullable: true),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     created_by = table.Column<string>(type: "text", nullable: true),
                     modified_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
@@ -99,7 +100,6 @@ namespace Events.Infrastructure.Data.Migrations
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     event_id = table.Column<Guid>(type: "uuid", nullable: false),
                     name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    price = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
                     capacity = table.Column<int>(type: "integer", nullable: false),
                     type = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
@@ -153,18 +153,12 @@ namespace Events.Infrastructure.Data.Migrations
                 schema: "events",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
                     event_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    category_id = table.Column<int>(type: "integer", nullable: false),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    created_by = table.Column<string>(type: "text", nullable: true),
-                    modified_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    modified_by = table.Column<string>(type: "text", nullable: true),
-                    is_active = table.Column<bool>(type: "boolean", nullable: false)
+                    category_id = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_event_category_mappings", x => x.id);
+                    table.PrimaryKey("pk_event_category_mappings", x => new { x.event_id, x.category_id });
                     table.ForeignKey(
                         name: "fk_event_category_mappings_event_categories_category_id",
                         column: x => x.category_id,
@@ -188,7 +182,6 @@ namespace Events.Infrastructure.Data.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     event_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    banner_url = table.Column<string>(type: "text", nullable: true),
                     image_url = table.Column<string>(type: "text", nullable: true),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     created_by = table.Column<string>(type: "text", nullable: true),
@@ -214,11 +207,11 @@ namespace Events.Infrastructure.Data.Migrations
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
+                    event_id = table.Column<Guid>(type: "uuid", nullable: false),
                     title = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
-                    description = table.Column<string>(type: "text", nullable: true),
+                    description = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
                     start_time = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     end_time = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    event_id = table.Column<Guid>(type: "uuid", nullable: false),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     created_by = table.Column<string>(type: "text", nullable: true),
                     modified_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
@@ -324,6 +317,79 @@ namespace Events.Infrastructure.Data.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "ticket_types",
+                schema: "events",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    event_session_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    price = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
+                    quantity = table.Column<int>(type: "integer", nullable: false),
+                    sold_quantity = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
+                    type = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    area_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    created_by = table.Column<string>(type: "text", nullable: true),
+                    modified_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    modified_by = table.Column<string>(type: "text", nullable: true),
+                    is_active = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_ticket_types", x => x.id);
+                    table.ForeignKey(
+                        name: "fk_ticket_types_areas_area_id",
+                        column: x => x.area_id,
+                        principalSchema: "events",
+                        principalTable: "areas",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "fk_ticket_types_event_sessions_event_session_id",
+                        column: x => x.event_session_id,
+                        principalSchema: "events",
+                        principalTable: "event_sessions",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "session_seat_statuses",
+                schema: "events",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    event_session_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    seat_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    user_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    created_by = table.Column<string>(type: "text", nullable: true),
+                    modified_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    modified_by = table.Column<string>(type: "text", nullable: true),
+                    is_active = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_session_seat_statuses", x => x.id);
+                    table.ForeignKey(
+                        name: "fk_session_seat_statuses_event_sessions_event_session_id",
+                        column: x => x.event_session_id,
+                        principalSchema: "events",
+                        principalTable: "event_sessions",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "fk_session_seat_statuses_seats_seat_id",
+                        column: x => x.seat_id,
+                        principalSchema: "events",
+                        principalTable: "seats",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "ix_areas_event_id",
                 schema: "events",
@@ -347,13 +413,6 @@ namespace Events.Infrastructure.Data.Migrations
                 schema: "events",
                 table: "event_category_mappings",
                 column: "category_id");
-
-            migrationBuilder.CreateIndex(
-                name: "ix_event_category_mappings_event_id_category_id",
-                schema: "events",
-                table: "event_category_mappings",
-                columns: new[] { "event_id", "category_id" },
-                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "ix_event_hashtags_hashtag_id",
@@ -437,6 +496,37 @@ namespace Events.Infrastructure.Data.Migrations
                 table: "seats",
                 columns: new[] { "area_id", "seat_code" },
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "ix_session_seat_statuses_event_session_id",
+                schema: "events",
+                table: "session_seat_statuses",
+                column: "event_session_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_session_seat_statuses_event_session_id_seat_id",
+                schema: "events",
+                table: "session_seat_statuses",
+                columns: new[] { "event_session_id", "seat_id" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "ix_session_seat_statuses_seat_id",
+                schema: "events",
+                table: "session_seat_statuses",
+                column: "seat_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_ticket_types_area_id",
+                schema: "events",
+                table: "ticket_types",
+                column: "area_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_ticket_types_event_session_id",
+                schema: "events",
+                table: "ticket_types",
+                column: "event_session_id");
         }
 
         /// <inheritdoc />
@@ -459,15 +549,15 @@ namespace Events.Infrastructure.Data.Migrations
                 schema: "events");
 
             migrationBuilder.DropTable(
-                name: "event_sessions",
-                schema: "events");
-
-            migrationBuilder.DropTable(
                 name: "event_staffs",
                 schema: "events");
 
             migrationBuilder.DropTable(
-                name: "seats",
+                name: "session_seat_statuses",
+                schema: "events");
+
+            migrationBuilder.DropTable(
+                name: "ticket_types",
                 schema: "events");
 
             migrationBuilder.DropTable(
@@ -476,6 +566,14 @@ namespace Events.Infrastructure.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "hashtags",
+                schema: "events");
+
+            migrationBuilder.DropTable(
+                name: "seats",
+                schema: "events");
+
+            migrationBuilder.DropTable(
+                name: "event_sessions",
                 schema: "events");
 
             migrationBuilder.DropTable(

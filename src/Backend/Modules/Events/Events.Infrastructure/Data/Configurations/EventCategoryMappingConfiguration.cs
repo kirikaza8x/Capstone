@@ -10,12 +10,7 @@ internal sealed class EventCategoryMappingConfiguration : IEntityTypeConfigurati
     {
         builder.ToTable("event_category_mappings");
 
-        builder.HasKey(e => e.Id);
-        builder.Property(i => i.Id)
-            .ValueGeneratedNever();
-
-        builder.HasIndex(e => new { e.EventId, e.CategoryId })
-            .IsUnique();
+        builder.HasKey(e => new { e.EventId, e.CategoryId });
 
         builder.HasOne(e => e.Category)
             .WithMany()

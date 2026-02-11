@@ -13,8 +13,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Events.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(EventsDbContext))]
-    [Migration("20260210042123_Set_Nullable_For_Events_Properties")]
-    partial class Set_Nullable_For_Events_Properties
+    [Migration("20260211093826_InitialCreateEventSchema")]
+    partial class InitialCreateEventSchema
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -66,11 +66,6 @@ namespace Events.Infrastructure.Data.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("name");
-
-                    b.Property<decimal>("Price")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)")
-                        .HasColumnName("price");
 
                     b.Property<string>("Type")
                         .IsRequired()
@@ -321,47 +316,19 @@ namespace Events.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Events.Domain.Entities.EventCategoryMapping", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<Guid>("EventId")
                         .HasColumnType("uuid")
-                        .HasColumnName("id");
+                        .HasColumnName("event_id");
 
                     b.Property<int>("CategoryId")
                         .HasColumnType("integer")
                         .HasColumnName("category_id");
 
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("created_by");
-
-                    b.Property<Guid>("EventId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("event_id");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_active");
-
-                    b.Property<DateTime?>("ModifiedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("modified_at");
-
-                    b.Property<string>("ModifiedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("modified_by");
-
-                    b.HasKey("Id")
+                    b.HasKey("EventId", "CategoryId")
                         .HasName("pk_event_category_mappings");
 
                     b.HasIndex("CategoryId")
                         .HasDatabaseName("ix_event_category_mappings_category_id");
-
-                    b.HasIndex("EventId", "CategoryId")
-                        .IsUnique()
-                        .HasDatabaseName("ix_event_category_mappings_event_id_category_id");
 
                     b.ToTable("event_category_mappings", "events");
                 });
@@ -443,7 +410,8 @@ namespace Events.Infrastructure.Data.Migrations
                         .HasColumnName("created_by");
 
                     b.Property<string>("Description")
-                        .HasColumnType("text")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
                         .HasColumnName("description");
 
                     b.Property<DateTime>("EndTime")
@@ -686,6 +654,138 @@ namespace Events.Infrastructure.Data.Migrations
                     b.ToTable("seats", "events");
                 });
 
+            modelBuilder.Entity("Events.Domain.Entities.SessionSeatStatus", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text")
+                        .HasColumnName("created_by");
+
+                    b.Property<Guid>("EventSessionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("event_session_id");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<DateTime?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modified_at");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasColumnType("text")
+                        .HasColumnName("modified_by");
+
+                    b.Property<Guid>("SeatId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("seat_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_session_seat_statuses");
+
+                    b.HasIndex("EventSessionId")
+                        .HasDatabaseName("ix_session_seat_statuses_event_session_id");
+
+                    b.HasIndex("SeatId")
+                        .HasDatabaseName("ix_session_seat_statuses_seat_id");
+
+                    b.HasIndex("EventSessionId", "SeatId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_session_seat_statuses_event_session_id_seat_id");
+
+                    b.ToTable("session_seat_statuses", "events");
+                });
+
+            modelBuilder.Entity("Events.Domain.Entities.TicketType", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("AreaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("area_id");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text")
+                        .HasColumnName("created_by");
+
+                    b.Property<Guid>("EventSessionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("event_session_id");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<DateTime?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modified_at");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasColumnType("text")
+                        .HasColumnName("modified_by");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("price");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer")
+                        .HasColumnName("quantity");
+
+                    b.Property<int>("SoldQuantity")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("sold_quantity");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("type");
+
+                    b.HasKey("Id")
+                        .HasName("pk_ticket_types");
+
+                    b.HasIndex("AreaId")
+                        .HasDatabaseName("ix_ticket_types_area_id");
+
+                    b.HasIndex("EventSessionId")
+                        .HasDatabaseName("ix_ticket_types_event_session_id");
+
+                    b.ToTable("ticket_types", "events");
+                });
+
             modelBuilder.Entity("Events.Domain.Entities.Area", b =>
                 {
                     b.HasOne("Events.Domain.Entities.Event", "Event")
@@ -800,6 +900,47 @@ namespace Events.Infrastructure.Data.Migrations
                     b.Navigation("Area");
                 });
 
+            modelBuilder.Entity("Events.Domain.Entities.SessionSeatStatus", b =>
+                {
+                    b.HasOne("Events.Domain.Entities.EventSession", "EventSession")
+                        .WithMany("SessionSeatStatuses")
+                        .HasForeignKey("EventSessionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_session_seat_statuses_event_sessions_event_session_id");
+
+                    b.HasOne("Events.Domain.Entities.Seat", "Seat")
+                        .WithMany()
+                        .HasForeignKey("SeatId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_session_seat_statuses_seats_seat_id");
+
+                    b.Navigation("EventSession");
+
+                    b.Navigation("Seat");
+                });
+
+            modelBuilder.Entity("Events.Domain.Entities.TicketType", b =>
+                {
+                    b.HasOne("Events.Domain.Entities.Area", "Area")
+                        .WithMany()
+                        .HasForeignKey("AreaId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_ticket_types_areas_area_id");
+
+                    b.HasOne("Events.Domain.Entities.EventSession", "EventSession")
+                        .WithMany("TicketTypes")
+                        .HasForeignKey("EventSessionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_ticket_types_event_sessions_event_session_id");
+
+                    b.Navigation("Area");
+
+                    b.Navigation("EventSession");
+                });
+
             modelBuilder.Entity("Events.Domain.Entities.Area", b =>
                 {
                     b.Navigation("Seats");
@@ -820,6 +961,13 @@ namespace Events.Infrastructure.Data.Migrations
                     b.Navigation("Sessions");
 
                     b.Navigation("Staffs");
+                });
+
+            modelBuilder.Entity("Events.Domain.Entities.EventSession", b =>
+                {
+                    b.Navigation("SessionSeatStatuses");
+
+                    b.Navigation("TicketTypes");
                 });
 
             modelBuilder.Entity("Events.Domain.Entities.Hashtag", b =>
