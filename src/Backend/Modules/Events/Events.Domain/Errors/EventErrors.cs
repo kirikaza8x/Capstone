@@ -6,43 +6,48 @@ public static class EventErrors
 {
     public static class Event
     {
-        public static readonly Error NotFound = Error.NotFound(
+        public static Error NotFound(Guid eventId) => Error.NotFound(
             "Event.NotFound",
-            "The event was not found.");
+            $"The event with ID '{eventId}' was not found.");
 
-        public static readonly Error AlreadyPublished = Error.Conflict(
-            "Event.AlreadyPublished",
-            "The event has already been published.");
+        public static Error UrlPathAlreadyExists(string urlPath) => Error.Conflict(
+            "Event.UrlPathAlreadyExists",
+            $"An event with URL path '{urlPath}' already exists.");
+    }
 
-        public static readonly Error CannotPublishDraft = Error.Validation(
-            "Event.CannotPublishDraft",
-            "Only draft events can be published.");
+    public static class EventSession
+    {
+        public static Error NotFound(Guid sessionId) => Error.NotFound(
+            "EventSession.NotFound",
+            $"The event session with ID '{sessionId}' was not found.");
+    }
 
-        public static readonly Error CannotClose = Error.Validation(
-            "Event.CannotClose",
-            "Only published events can be closed.");
+    public static class TicketType
+    {
+        public static Error NotFound(Guid ticketTypeId) => Error.NotFound(
+            "TicketType.NotFound",
+            $"The ticket type with ID '{ticketTypeId}' was not found.");
 
-        public static Error UrlPathAlreadyExists(string urlPath)
-        {
-            throw new NotImplementedException();
-        }
+        public static readonly Error SoldOut = Error.Conflict(
+            "TicketType.SoldOut",
+            "The ticket type is sold out.");
+
+        public static Error NotEnoughTickets(int requested, int available) => Error.Validation(
+            "TicketType.NotEnoughTickets",
+            $"Requested {requested} tickets but only {available} available.");
+    }
+
+    public static class Area
+    {
+        public static Error NotFound(Guid areaId) => Error.NotFound(
+            "Area.NotFound",
+            $"The area with ID '{areaId}' was not found.");
     }
 
     public static class Seat
     {
         public static readonly Error NotAvailable = Error.Conflict(
             "Seat.NotAvailable",
-            "The seat is not available for reservation.");
-
-        public static readonly Error NotReserved = Error.Validation(
-            "Seat.NotReserved",
-            "The seat must be reserved before selling.");
-    }
-
-    public static class Area
-    {
-        public static readonly Error NotFound = Error.NotFound(
-            "Area.NotFound",
-            "The area was not found.");
+            "The seat is not available.");
     }
 }
