@@ -196,6 +196,16 @@ namespace Users.Domain.Entities
 
             return query.FirstOrDefault();
         }
+        public RefreshToken? GetActiveRefreshTokenForDevice(string deviceId)
+        {
+            return RefreshTokens
+                .FirstOrDefault(rt =>
+                    rt.DeviceId == deviceId &&
+                    !rt.IsRevoked &&
+                    !rt.IsExpired()
+                );
+        }
+
 
         public IEnumerable<RefreshToken> GetActiveDevices()
         {

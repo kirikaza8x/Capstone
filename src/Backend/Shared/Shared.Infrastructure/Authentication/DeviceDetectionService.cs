@@ -16,7 +16,13 @@ public class DeviceDetectionService : IDeviceDetectionService
         string? ipAddress = null,
         string? existingDeviceId = null)
     {
-        var deviceId = existingDeviceId ?? GenerateDeviceId();
+        if (string.IsNullOrWhiteSpace(existingDeviceId))
+        {
+            throw new InvalidOperationException(
+                "DeviceId must be explicitly generated during login.");
+        }
+
+        var deviceId = existingDeviceId;
 
         if (string.IsNullOrWhiteSpace(userAgent))
         {

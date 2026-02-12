@@ -40,7 +40,7 @@ public class CurrentUserService : ICurrentUserService
 
     public string? UserAgent => Context?.Request?.Headers["User-Agent"].ToString();
 
-    public string? DeviceId => GetClaimValue("DeviceId") ?? GetDeviceIdFromHeader();
+    public string? DeviceId => GetDeviceIdFromHeader();
 
     public CurrentUserDto GetCurrentUser()
     {

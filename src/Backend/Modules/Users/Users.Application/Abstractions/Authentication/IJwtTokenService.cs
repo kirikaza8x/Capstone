@@ -14,16 +14,8 @@ namespace Shared.Application.Abstractions.Authentication
             Guid userId, 
             string? email, 
             string? name, 
-            IEnumerable<string> roles, 
-            string? deviceId = null, 
-            string? ipAddress = null, 
-            string? userAgent = null, 
-            string? deviceName = null, 
-            string? browser = null, 
-            string? operatingSystem = null, 
-            string? deviceType = null, 
-            string? browserVersion = null, 
-            string? osVersion = null);
+            IEnumerable<string> roles
+            );
 
         /// <summary>
         /// Validates a JWT access token and returns its claims if valid.

@@ -100,12 +100,13 @@ public class Program
 
         app.MapCarter();
 
-        // Use module
-        // app
-        //     .UseOrderModule()
-        //     .UseProductModule()
-        //     .UseUserModule()
-        //     ;
+        app
+            // .UseOrderModule()
+            // .UseProductModule()
+            .UseUserModule()
+            // .UseEventModule()
+            // .UseAiModule()
+            ;
 
         app.Run();
     }

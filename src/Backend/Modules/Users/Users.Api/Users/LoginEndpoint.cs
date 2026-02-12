@@ -24,7 +24,6 @@ public class LoginUserEndpoint : ICarterModule
                 new LoginUserCommand(
                     request.EmailOrUserName,
                     request.Password,
-                    request.DeviceId,
                     request.DeviceName,
                     request.IpAddress,
                     request.UserAgent),
