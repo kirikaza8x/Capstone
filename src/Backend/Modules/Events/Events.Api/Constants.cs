@@ -3,10 +3,6 @@
 internal static class Constants
 {
     internal const string Events = "Events";
-    internal const string EventSessions = "Event Sessions";
-    internal const string TicketTypes = "Ticket Types";
-    internal const string Areas = "Areas";
-    internal const string Seats = "Seats";
 
     internal static class Routes
     {

@@ -38,7 +38,7 @@ public class CreateEventSessionEndpoint : ICarterModule
                 $"/api/events/{eventId}/sessions/{result.Value}",
                 "Event session created successfully.");
         })
-        .WithTags(Constants.EventSessions)
+        .WithTags(Constants.Events)
         .WithName("CreateEventSession")
         .WithSummary("Create a new event session")
         .WithDescription("Creates a new session for an event with specified time range.")

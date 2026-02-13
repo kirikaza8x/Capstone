@@ -72,6 +72,9 @@ public class Program
             });
         });
 
+        // Add storage service
+        builder.Services.AddStorageService(Configuration);
+
         // Add module
         builder.Services
             .AddProductModule(Configuration)
