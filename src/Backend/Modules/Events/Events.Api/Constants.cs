@@ -27,5 +27,10 @@ internal static class Constants
         // Seats
         public const string Seats = $"{AreaById}/seats";
         public const string SeatById = $"{Seats}/{{seatId:guid}}";
+
+        // Images
+        public const string EventImages = $"{EventById}/images";
+        public const string EventImageById = $"{EventImages}/{{imageId:guid}}";
+
     }
 }

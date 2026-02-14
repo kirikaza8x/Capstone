@@ -50,4 +50,23 @@ public static class EventErrors
             "Seat.NotAvailable",
             "The seat is not available.");
     }
+
+    public static class EventImageErrors
+    {
+        public static Error NotFound(Guid imageId) => Error.NotFound(
+            "EventImage.NotFound",
+            $"The event image with ID '{imageId}' was not found.");
+
+        public static Error InvalidFileType() => Error.Validation(
+            "EventImage.InvalidFileType",
+            "Invalid file type. Allowed: JPEG, PNG, GIF, WebP.");
+
+        public static Error FileTooLarge(long maxSizeInMb) => Error.Validation(
+            "EventImage.FileTooLarge",
+            $"File size exceeds {maxSizeInMb}MB limit.");
+
+        public static Error FileRequired() => Error.Validation(
+            "EventImage.FileRequired",
+            "File is required.");
+    }
 }

@@ -140,6 +140,37 @@ public sealed class Event : AggregateRoot<Guid>
         ModifiedAt = DateTime.UtcNow;
     }
 
+    public void RemoveImage(Guid imageId)
+    {
+        var image = _images.FirstOrDefault(i => i.Id == imageId);
+        if (image is not null)
+        {
+            _images.Remove(image);
+            ModifiedAt = DateTime.UtcNow;
+        }
+    }
+
+    public EventImage AddImage(string imageUrl)
+    {
+        var image = EventImage.Create(Id, imageUrl);
+        _images.Add(image);
+        ModifiedAt = DateTime.UtcNow;
+        return image;
+    }
+
+    public void UpdateImage(Guid imageId, string newImageUrl)
+    {
+        var image = _images.FirstOrDefault(i => i.Id == imageId);
+        image?.UpdateImageUrl(newImageUrl);
+        ModifiedAt = DateTime.UtcNow;
+    }
+
+    public EventImage? GetImage(Guid imageId)
+    {
+        return _images.FirstOrDefault(i => i.Id == imageId);
+    }
+
+
     public void AddSession(EventSession session) => _sessions.Add(session);
     public void AddImage(EventImage image) => _images.Add(image);
     public void AddArea(Area area) => _areas.Add(area);
