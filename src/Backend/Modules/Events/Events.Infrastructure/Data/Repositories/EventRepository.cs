@@ -64,4 +64,10 @@ internal sealed class EventRepository(EventsDbContext context)
         return await _context.Events
             .AnyAsync(e => e.UrlPath == urlPath, cancellationToken);
     }
+
+    public async Task<EventSession?> GetEventSessionByIdAsync(Guid sessionId, CancellationToken cancellationToken = default)
+    {
+        return await _context.EventSessions
+            .FirstOrDefaultAsync(s => s.Id == sessionId, cancellationToken);
+    }
 }
