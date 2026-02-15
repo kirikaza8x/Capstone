@@ -13,6 +13,11 @@ public static class EventErrors
         public static Error UrlPathAlreadyExists(string urlPath) => Error.Conflict(
             "Event.UrlPathAlreadyExists",
             $"An event with URL path '{urlPath}' already exists.");
+
+
+        public static Error InvalidUrlPathFormat(string urlPath) => Error.Validation(
+            "Event.InvalidUrlPathFormat",
+            $"The URL path '{urlPath}' contains invalid characters. Only lowercase letters, numbers, and hyphens are allowed.");
     }
 
     public static class EventSession

@@ -13,7 +13,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Events.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(EventsDbContext))]
-    [Migration("20260211093826_InitialCreateEventSchema")]
+    [Migration("20260215164915_InitialCreateEventSchema")]
     partial class InitialCreateEventSchema
     {
         /// <inheritdoc />
@@ -125,6 +125,12 @@ namespace Events.Infrastructure.Data.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean")
                         .HasColumnName("is_active");
+
+                    b.Property<bool>("IsEmailReminderEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_email_reminder_enabled");
 
                     b.Property<string>("Location")
                         .IsRequired()

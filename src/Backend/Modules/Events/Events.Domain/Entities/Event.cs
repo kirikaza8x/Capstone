@@ -25,6 +25,7 @@ public sealed class Event : AggregateRoot<Guid>
     public string Policy { get; private set; } = string.Empty;
     public string? Spec { get; private set; }
     public string? SeatmapImage { get; private set; }
+    public bool IsEmailReminderEnabled { get; private set; } = false;
     public int? EventTypeId { get; private set; }
 
     private readonly List<EventSession> _sessions = [];
@@ -111,6 +112,19 @@ public sealed class Event : AggregateRoot<Guid>
     public void UpdateBannerUrl(string? bannerUrl)
     {
         BannerUrl = bannerUrl;
+        ModifiedAt = DateTime.UtcNow;
+    }
+
+
+    public void UpdateSettings(bool isEmailReminderEnabled, string? urlPath)
+    {
+        IsEmailReminderEnabled = isEmailReminderEnabled;
+
+        if (!string.IsNullOrWhiteSpace(urlPath))
+        {
+            UrlPath = urlPath.Trim().ToLowerInvariant();
+        }
+
         ModifiedAt = DateTime.UtcNow;
     }
 

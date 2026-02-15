@@ -70,4 +70,11 @@ internal sealed class EventRepository(EventsDbContext context)
         return await _context.EventSessions
             .FirstOrDefaultAsync(s => s.Id == sessionId, cancellationToken);
     }
+
+    public async Task<Event?> GetByIdWithImagesAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await _context.Events
+                    .Include(e => e.Images)
+                    .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
+    }
 }

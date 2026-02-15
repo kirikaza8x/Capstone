@@ -41,6 +41,7 @@ internal sealed class EventConfiguration : IEntityTypeConfiguration<Event>
         builder.Property(e => e.UrlPath).HasMaxLength(255).IsRequired();
         builder.Property(e => e.EventTypeId).IsRequired(false);
         builder.Property(e => e.EventCategoryId).IsRequired();
+        builder.Property(e => e.IsEmailReminderEnabled).HasDefaultValue(false);
 
         builder.HasIndex(e => e.UrlPath).IsUnique();
         builder.HasIndex(e => e.OrganizerId);

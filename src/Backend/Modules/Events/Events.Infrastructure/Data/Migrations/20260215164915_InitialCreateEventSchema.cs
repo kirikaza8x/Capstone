@@ -59,6 +59,7 @@ namespace Events.Infrastructure.Data.Migrations
                     policy = table.Column<string>(type: "text", nullable: false),
                     spec = table.Column<string>(type: "jsonb", nullable: true),
                     seatmap_image = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    is_email_reminder_enabled = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
                     event_type_id = table.Column<int>(type: "integer", nullable: true),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     created_by = table.Column<string>(type: "text", nullable: true),
