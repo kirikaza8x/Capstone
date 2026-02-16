@@ -1,6 +1,6 @@
 ﻿using Shared.Application.Messaging;
 
-namespace Events.Application.Events.Commands.CreateEventSession;
+namespace Events.Application.EventSessions.Commands.CreateEventSession;
 
 public sealed record CreateEventSessionCommand(
     Guid EventId,

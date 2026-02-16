@@ -1,4 +1,5 @@
-﻿using Shared.Domain.Abstractions;
+﻿using Events.Domain.Enums;
+using Shared.Domain.Abstractions;
 
 namespace Events.Domain.Errors;
 
@@ -14,6 +15,21 @@ public static class EventErrors
             "Event.UrlPathAlreadyExists",
             $"An event with URL path '{urlPath}' already exists.");
 
+        public static Error CannotPublish(EventStatus currentStatus) => Error.Validation(
+            "Event.CannotPublish",
+            $"Cannot publish event. Current status is '{currentStatus}'. Only draft events can be published.");
+
+        public static Error CannotClose(EventStatus currentStatus) => Error.Validation(
+            "Event.CannotClose",
+            $"Cannot close event. Current status is '{currentStatus}'. Only published events can be closed.");
+
+        public static Error UrlPathTooShort() => Error.Validation(
+            "Event.UrlPathTooShort",
+            "The URL path must be at least 3 characters long.");
+
+        public static Error UrlPathTooLong() => Error.Validation(
+            "Event.UrlPathTooLong",
+            "The URL path must not exceed 100 characters.");
 
         public static Error InvalidUrlPathFormat(string urlPath) => Error.Validation(
             "Event.InvalidUrlPathFormat",

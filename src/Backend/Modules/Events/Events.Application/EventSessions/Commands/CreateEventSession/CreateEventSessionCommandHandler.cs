@@ -6,7 +6,7 @@ using FluentValidation;
 using Shared.Application.Messaging;
 using Shared.Domain.Abstractions;
 
-namespace Events.Application.Events.Commands.CreateEventSession;
+namespace Events.Application.EventSessions.Commands.CreateEventSession;
 
 public sealed class CreateEventSessionValidator : AbstractValidator<CreateEventSessionCommand>
 {

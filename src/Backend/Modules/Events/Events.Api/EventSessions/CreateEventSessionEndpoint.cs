@@ -1,5 +1,5 @@
 ﻿using Carter;
-using Events.Application.Events.Commands.CreateEventSession;
+using Events.Application.EventSessions.Commands.CreateEventSession;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Shared.Api.Results;
 
-namespace Events.Api.Events;
+namespace Events.Api.EventSessions;
 
 public sealed record CreateEventSessionRequest(
     string Title,
