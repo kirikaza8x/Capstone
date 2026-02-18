@@ -25,7 +25,7 @@ public class DeleteEventImageEndpoint : ICarterModule
 
             return result.ToNoContent();
         })
-        .WithTags(Constants.Events)
+        .WithTags(Constants.Tags.Events)
         .WithName("DeleteEventImage")
         .WithSummary("Delete event image")
         .WithDescription("Delete an image from the specified event. Also removes the file from storage.")

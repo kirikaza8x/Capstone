@@ -11,8 +11,8 @@ namespace Shared.Infrastructure.Data;
 public class RepositoryBase<TEntity, TId> : IRepository<TEntity, TId>
     where TEntity : Entity<TId>
 {
-    private readonly DbContext Context;
-    private readonly DbSet<TEntity> DbSet;
+    protected readonly DbContext Context;
+    protected readonly DbSet<TEntity> DbSet;
 
     public RepositoryBase(DbContext context)
     {
@@ -43,26 +43,34 @@ public class RepositoryBase<TEntity, TId> : IRepository<TEntity, TId>
     }
 
     public virtual async Task<PagedResult<TEntity>> GetPagedAsync(
-            PagedQuery pagedQuery,
-            Expression<Func<TEntity, bool>>? predicate = null,
-            CancellationToken cancellationToken = default)
+        PagedQuery pagedQuery,
+        Expression<Func<TEntity, bool>>? predicate = null,
+        CancellationToken cancellationToken = default)
     {
         IQueryable<TEntity> query = DbSet.AsNoTracking();
 
+        // 1. Apply hard filter (from code)
         if (predicate is not null)
         {
             query = query.Where(predicate);
         }
 
-        var sortedQuery = query.ApplySorting(pagedQuery);
+        // 2. Apply Dynamic Filter
+        query = query.ApplyDynamicFilters(pagedQuery.Filter);
 
-        if (string.IsNullOrWhiteSpace(pagedQuery.SortColumn) &&
-            typeof(TEntity).GetProperty("CreatedAt") != null)
+        if (pagedQuery.Sorts == null || !pagedQuery.Sorts.Any())
         {
-            sortedQuery = sortedQuery.OrderByDescending(e => EF.Property<DateTime?>(e, "CreatedAt"));
+            query = query.ApplyDynamicSorting(new List<Sort>
+            {
+                new Sort { Field = "CreatedAt", Dir = "desc" }
+            });
+        }
+        else
+        {
+            query = query.ApplyDynamicSorting(pagedQuery.Sorts);
         }
 
-        return await sortedQuery.ToPagedResultAsync(pagedQuery, cancellationToken);
+        return await query.ToPagedResultAsync(pagedQuery, cancellationToken);
     }
 
     public virtual async Task<PagedResult<TResult>> GetPagedAsync<TResult>(
@@ -78,21 +86,23 @@ public class RepositoryBase<TEntity, TId> : IRepository<TEntity, TId>
             query = query.Where(predicate);
         }
 
-        var totalCount = await query.CountAsync(cancellationToken);
+        query = query.ApplyDynamicFilters(pagedQuery.Filter);
 
-        var sortedQuery = query.ApplySorting(pagedQuery);
+        if (pagedQuery.Sorts == null || !pagedQuery.Sorts.Any())
+        {
+            query = query.ApplyDynamicSorting(new List<Sort>
+            {
+                new Sort { Field = "CreatedAt", Dir = "desc" }
+            });
+        }
+        else
+        {
+            query = query.ApplyDynamicSorting(pagedQuery.Sorts);
+        }
 
-        var items = await sortedQuery
+        return await query
             .Select(selector)
-            .Skip(pagedQuery.Skip)
-            .Take(pagedQuery.PageSize)
-            .ToListAsync(cancellationToken);
-
-        return PagedResult<TResult>.Create(
-            items,
-            pagedQuery.PageNumber,
-            pagedQuery.PageSize,
-            totalCount);
+            .ToPagedResultAsync(pagedQuery, cancellationToken);
     }
 
     public virtual async Task<TEntity?> FirstOrDefaultAsync(

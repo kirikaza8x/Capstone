@@ -32,7 +32,7 @@ public class UpdateEventSettingsEndpoint : ICarterModule
 
             return result.ToOk("Event settings updated successfully.");
         })
-        .WithTags(Constants.Events)
+        .WithTags(Constants.Tags.Events)
         .WithName("UpdateEventSettings")
         .WithSummary("Update event settings")
         .WithDescription("Update event settings including email reminder and custom URL path.")

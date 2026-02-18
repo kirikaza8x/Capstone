@@ -27,7 +27,7 @@ public class UpdateEventBannerEndpoint : ICarterModule
 
             return result.ToOk("Event banner updated successfully.");
         })
-        .WithTags(Constants.Events)
+        .WithTags(Constants.Tags.Events)
         .WithName("UpdateEventBanner")
         .WithSummary("Update event banner")
         .WithDescription("Update the banner URL for an event.")

@@ -18,4 +18,17 @@ public interface IEventRepository : IRepository<Event, Guid>
     Task<EventSession?> GetEventSessionByIdAsync(Guid sessionId, CancellationToken cancellationToken = default);
 
     Task<Event?> GetByIdWithImagesAsync(Guid id, CancellationToken cancellationToken = default);
+
+    Task<(IReadOnlyList<Event> Events, int TotalCount)> GetPagedAsync(
+        string? searchTerm = null,
+        EventStatus? status = null,
+        int? categoryId = null,
+        Guid? organizerId = null,
+        DateTime? fromDate = null,
+        DateTime? toDate = null,
+        int pageNumber = 1,
+        int pageSize = 10,
+        string? sortBy = null,
+        bool isDescending = true,
+        CancellationToken cancellationToken = default);
 }

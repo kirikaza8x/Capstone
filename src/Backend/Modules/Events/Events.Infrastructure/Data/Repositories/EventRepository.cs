@@ -29,14 +29,12 @@ internal sealed class EventRepository(EventsDbContext context)
     public async Task<Event?> GetByIdWithAllDetailsAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await _context.Events
-            .Include(e => e.Sessions)
-            .Include(e => e.Images)
-            .Include(e => e.CategoryMappings)
-            .Include(e => e.Staffs)
-            .Include(e => e.ActorImages)
-            .Include(e => e.Areas)
-                .ThenInclude(a => a.Seats)
-            .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
+        .Include(e => e.Images)
+        .Include(e => e.Sessions)
+        .Include(e => e.EventHashtags)
+            .ThenInclude(eh => eh.Hashtag)
+        .AsSplitQuery()
+        .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
     }
 
     public async Task<IReadOnlyList<Event>> GetByOrganizerIdAsync(Guid organizerId, CancellationToken cancellationToken = default)
@@ -76,5 +74,10 @@ internal sealed class EventRepository(EventsDbContext context)
         return await _context.Events
                     .Include(e => e.Images)
                     .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
+    }
+
+    public Task<(IReadOnlyList<Event> Events, int TotalCount)> GetPagedAsync(string? searchTerm = null, EventStatus? status = null, int? categoryId = null, Guid? organizerId = null, DateTime? fromDate = null, DateTime? toDate = null, int pageNumber = 1, int pageSize = 10, string? sortBy = null, bool isDescending = true, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 }

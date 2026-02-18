@@ -55,7 +55,7 @@ public class UploadEventBannerEndpoint : ICarterModule
 
             return Results.Ok(new UploadEventBannerResponse(url, file.FileName, file.Length, file.ContentType));
         })
-        .WithTags(Constants.Events)
+        .WithTags(Constants.Tags.Events)
         .WithName("UploadEventBanner")
         .WithSummary("Upload event banner image")
         .WithDescription("Upload banner image and get URL.")

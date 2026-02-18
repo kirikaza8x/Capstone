@@ -26,7 +26,7 @@ public class UpdateEventImageEndpoint : ICarterModule
 
             return result.ToOk("Event image updated successfully.");
         })
-        .WithTags(Constants.Events)
+        .WithTags(Constants.Tags.Events)
         .WithName("UpdateEventImage")
         .WithSummary("Update event image")
         .WithDescription("Replace an existing event image with a new one. Allowed types: JPEG, PNG, GIF, WebP. Max size: 10MB.")

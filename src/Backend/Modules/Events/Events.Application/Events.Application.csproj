@@ -13,7 +13,6 @@
 
   <ItemGroup>
     <Folder Include="Events\Commands\PublishEvent\" />
-    <Folder Include="Events\Queries\" />
     <Folder Include="Areas\" />
     <Folder Include="Categories\" />
     <Folder Include="Search\" />

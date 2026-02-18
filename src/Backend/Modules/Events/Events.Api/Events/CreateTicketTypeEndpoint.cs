@@ -42,7 +42,7 @@ public class CreateTicketTypeEndpoint : ICarterModule
                 $"/api/events/{eventId}/sessions/{sessionId}/ticket-types/{result.Value}",
                 "Ticket type created successfully.");
         })
-        .WithTags(Constants.Events)
+        .WithTags(Constants.Tags.Events)
         .WithName("CreateTicketType")
         .WithSummary("Create a new ticket type")
         .WithDescription("Creates a new ticket type for a session.")
