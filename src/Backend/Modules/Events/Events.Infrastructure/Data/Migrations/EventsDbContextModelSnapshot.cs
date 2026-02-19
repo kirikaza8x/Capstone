@@ -123,6 +123,12 @@ namespace Events.Infrastructure.Data.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("is_active");
 
+                    b.Property<bool>("IsEmailReminderEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_email_reminder_enabled");
+
                     b.Property<string>("Location")
                         .IsRequired()
                         .HasMaxLength(500)

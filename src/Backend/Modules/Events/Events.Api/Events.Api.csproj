@@ -12,4 +12,13 @@
     <ProjectReference Include="..\Events.Infrastructure\Events.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Areas\" />
+    <Folder Include="Categories\" />
+    <Folder Include="Search\" />
+    <Folder Include="Staff\" />
+    <Folder Include="TicketTypes\" />
+    <Folder Include="Seats\" />
+  </ItemGroup>
+
 </Project>

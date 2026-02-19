@@ -12,7 +12,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Events\Queries\" />
+    <Folder Include="Events\Commands\PublishEvent\" />
+    <Folder Include="Areas\" />
+    <Folder Include="Categories\" />
+    <Folder Include="Search\" />
+    <Folder Include="Staff\" />
+    <Folder Include="TicketTypes\" />
+    <Folder Include="Seats\" />
   </ItemGroup>
 
 </Project>

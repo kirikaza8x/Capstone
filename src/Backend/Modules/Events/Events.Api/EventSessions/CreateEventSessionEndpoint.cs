@@ -1,5 +1,5 @@
 ﻿using Carter;
-using Events.Application.Events.Commands.CreateEventSession;
+using Events.Application.EventSessions.Commands.CreateEventSession;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Shared.Api.Results;
 
-namespace Events.Api.Events;
+namespace Events.Api.EventSessions;
 
 public sealed record CreateEventSessionRequest(
     string Title,
@@ -19,7 +19,7 @@ public class CreateEventSessionEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPost(Constants.Routes.EventSessions, async (
+        app.MapPost(Constants.Routes.Sessions, async (
             [FromRoute] Guid eventId,
             [FromBody] CreateEventSessionRequest request,
             ISender sender,
@@ -38,7 +38,7 @@ public class CreateEventSessionEndpoint : ICarterModule
                 $"/api/events/{eventId}/sessions/{result.Value}",
                 "Event session created successfully.");
         })
-        .WithTags(Constants.Events)
+        .WithTags(Constants.Tags.Events)
         .WithName("CreateEventSession")
         .WithSummary("Create a new event session")
         .WithDescription("Creates a new session for an event with specified time range.")

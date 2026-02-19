@@ -1,6 +1,9 @@
 ﻿using Events.Domain.DomainEvents;
 using Events.Domain.Enums;
+using Events.Domain.Errors;
+using Shared.Domain.Abstractions;
 using Shared.Domain.DDD;
+using static Events.Domain.Errors.EventErrors;
 
 namespace Events.Domain.Entities;
 
@@ -25,6 +28,7 @@ public sealed class Event : AggregateRoot<Guid>
     public string Policy { get; private set; } = string.Empty;
     public string? Spec { get; private set; }
     public string? SeatmapImage { get; private set; }
+    public bool IsEmailReminderEnabled { get; private set; } = false;
     public int? EventTypeId { get; private set; }
 
     private readonly List<EventSession> _sessions = [];
@@ -114,24 +118,40 @@ public sealed class Event : AggregateRoot<Guid>
         ModifiedAt = DateTime.UtcNow;
     }
 
-    public void Publish()
+    public void UpdateSettings(bool isEmailReminderEnabled, string? urlPath)
+    {
+        IsEmailReminderEnabled = isEmailReminderEnabled;
+
+        if (!string.IsNullOrWhiteSpace(urlPath))
+        {
+            UrlPath = urlPath.Trim().ToLowerInvariant();
+        }
+
+        ModifiedAt = DateTime.UtcNow;
+    }
+
+    public Result Publish()
     {
         if (Status != EventStatus.Draft)
-            throw new InvalidOperationException("Only draft events can be published.");
+            return Result.Failure(EventErrors.Event.CannotPublish(Status));
 
         Status = EventStatus.Published;
         ModifiedAt = DateTime.UtcNow;
 
         RaiseDomainEvent(new EventPublishedDomainEvent(Id));
+
+        return Result.Success();
     }
 
-    public void Close()
+    public Result Close()
     {
         if (Status != EventStatus.Published)
-            throw new InvalidOperationException("Only published events can be closed.");
+            return Result.Failure(EventErrors.Event.CannotClose(Status));
 
         Status = EventStatus.Closed;
         ModifiedAt = DateTime.UtcNow;
+
+        return Result.Success();
     }
 
     public void SetSeatmapImage(string? seatmapImage)
@@ -140,14 +160,49 @@ public sealed class Event : AggregateRoot<Guid>
         ModifiedAt = DateTime.UtcNow;
     }
 
+    public Result RemoveImage(Guid imageId)
+    {
+        var image = _images.FirstOrDefault(i => i.Id == imageId);
+        if (image is null)
+            return Result.Failure(EventImageErrors.NotFound(imageId));
+
+        _images.Remove(image);
+        ModifiedAt = DateTime.UtcNow;
+
+        return Result.Success();
+    }
+
+    public EventImage AddImage(string imageUrl)
+    {
+        var image = EventImage.Create(Id, imageUrl);
+        _images.Add(image);
+        ModifiedAt = DateTime.UtcNow;
+        return image;
+    }
+
+    public Result UpdateImage(Guid imageId, string newImageUrl)
+    {
+        var image = _images.FirstOrDefault(i => i.Id == imageId);
+        if (image is null)
+            return Result.Failure(EventImageErrors.NotFound(imageId));
+
+        image.UpdateImageUrl(newImageUrl);
+        ModifiedAt = DateTime.UtcNow;
+
+        return Result.Success();
+    }
+
+    public EventImage? GetImage(Guid imageId)
+    {
+        return _images.FirstOrDefault(i => i.Id == imageId);
+    }
+
     public void AddSession(EventSession session) => _sessions.Add(session);
-    public void AddImage(EventImage image) => _images.Add(image);
     public void AddArea(Area area) => _areas.Add(area);
     public void AddStaff(EventStaff staff) => _staffs.Add(staff);
     public void AddActorImage(EventActorImage actorImage) => _actorImages.Add(actorImage);
     public void AddCategoryMapping(EventCategoryMapping mapping) => _categoryMappings.Add(mapping);
     public void AddHashtag(EventHashtag eventHashtag) => _eventHashtags.Add(eventHashtag);
-
 
     protected override void Apply(IDomainEvent @event)
     { }
