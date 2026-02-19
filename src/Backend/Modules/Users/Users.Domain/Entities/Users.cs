@@ -35,7 +35,7 @@ namespace Users.Domain.Entities
         public ICollection<RefreshToken> RefreshTokens { get; private set; } = new List<RefreshToken>();
 
         // wallet
-        public Guid WalletId { get; private set; }
+        //public Guid WalletId { get; private set; }
         public Wallet? Wallet { get; private set; }
         // EF Core constructor
         private User() { }
@@ -78,12 +78,12 @@ namespace Users.Domain.Entities
         // --------------------
         // Domain Behaviors
         // --------------------
-        public void AttachWallet(Guid walletId)
+        public void AttachWallet(Wallet wallet)
         {
-            if (WalletId != Guid.Empty)
+            if (Wallet != null)
                 throw new InvalidOperationException("User already has a wallet.");
 
-            WalletId = walletId;
+            Wallet = wallet;
         }
         public void ChangeEmail(string newEmail)
         {

@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Ai.Api;
 using AI.Application;
 using Api.Extensions;
@@ -55,6 +56,13 @@ public class Program
             Configuration,
             assemblies
         );
+
+
+        // builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>
+        // {
+        //     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        // });
+
 
         //swagger
         builder.Services.AddSwaggerDocumentation();

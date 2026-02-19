@@ -75,14 +75,13 @@ namespace Users.Infrastructure.Persistence.Configs
                    .HasMaxLength(20)
                    .HasDefaultValue(UserStatus.Active);
 
-            builder.Property(u => u.WalletId)
-                   .HasColumnName("wallet_id");
-
+            // --- Wallet Relationship ---
             builder.HasOne(u => u.Wallet)
                    .WithOne(w => w.User)
                    .HasForeignKey<Wallet>(w => w.UserId)
                    .OnDelete(DeleteBehavior.Cascade);
 
+            // --- Indexes ---
             builder.HasIndex(u => u.Email)
                    .IsUnique()
                    .HasDatabaseName("ix_user_email");
@@ -90,10 +89,6 @@ namespace Users.Infrastructure.Persistence.Configs
             builder.HasIndex(u => u.UserName)
                    .IsUnique()
                    .HasDatabaseName("ix_user_username");
-
-            builder.HasIndex(u => u.WalletId)
-                   .IsUnique()
-                   .HasDatabaseName("ix_user_wallet_id");
 
             builder.HasIndex(u => u.Status)
                    .HasDatabaseName("ix_user_status");

@@ -258,10 +258,6 @@ namespace Users.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("username");
 
-                    b.Property<Guid>("WalletId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("wallet_id");
-
                     b.HasKey("Id")
                         .HasName("pk_user");
 
@@ -281,10 +277,6 @@ namespace Users.Infrastructure.Persistence.Migrations
                     b.HasIndex("UserName")
                         .IsUnique()
                         .HasDatabaseName("ix_user_username");
-
-                    b.HasIndex("WalletId")
-                        .IsUnique()
-                        .HasDatabaseName("ix_user_wallet_id");
 
                     b.ToTable("user", (string)null);
                 });
@@ -540,7 +532,7 @@ namespace Users.Infrastructure.Persistence.Migrations
                         .HasForeignKey("Users.Domain.Entities.Wallet", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_wallet_user_user_id");
+                        .HasConstraintName("fk_wallet_users_user_id");
 
                     b.Navigation("User");
                 });

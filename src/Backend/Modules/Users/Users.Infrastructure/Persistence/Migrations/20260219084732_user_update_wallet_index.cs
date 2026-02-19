@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Users.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class add_entitiy_wallet_session_transac : Migration
+    public partial class user_update_wallet_index : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -47,7 +47,6 @@ namespace Users.Infrastructure.Persistence.Migrations
                     social_link = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     profile_image_url = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false, defaultValue: "Active"),
-                    wallet_id = table.Column<Guid>(type: "uuid", nullable: false),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true, defaultValueSql: "NOW()"),
                     created_by = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     modified_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
@@ -153,7 +152,7 @@ namespace Users.Infrastructure.Persistence.Migrations
                 {
                     table.PrimaryKey("pk_wallet", x => x.id);
                     table.ForeignKey(
-                        name: "fk_wallet_user_user_id",
+                        name: "fk_wallet_users_user_id",
                         column: x => x.user_id,
                         principalTable: "user",
                         principalColumn: "id",
@@ -220,12 +219,6 @@ namespace Users.Infrastructure.Persistence.Migrations
                 name: "ix_user_username",
                 table: "user",
                 column: "username",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "ix_user_wallet_id",
-                table: "user",
-                column: "wallet_id",
                 unique: true);
 
             migrationBuilder.CreateIndex(

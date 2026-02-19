@@ -102,17 +102,27 @@ namespace Users.Infrastructure.Data.Repositories
         public async Task<User> RegisterAsync(User user, Role role, CancellationToken cancellationToken = default)
         {
             var existingRole = await _dbContext.Set<Role>()
-            .FirstOrDefaultAsync(r => r.Name == role.Name, cancellationToken);
-            if (existingRole != null) 
-            { 
-                user.AssignRole(existingRole); 
+                .FirstOrDefaultAsync(r => r.Name == role.Name, cancellationToken);
+
+            if (existingRole != null)
+            {
+                user.AssignRole(existingRole);
             }
-            else 
-            { 
-                user.AssignRole(role); _dbContext.Set<Role>().Add(role); 
+            else
+            {
+                user.AssignRole(role);
+                _dbContext.Set<Role>().Add(role);
             }
+
+            // Add the user
             _users.Add(user);
+
+            // Initialize wallet for the user
+            var wallet = Wallet.Create(user.Id, 1000); // Default balance of 1000, can be adjusted as needed
+            user.AttachWallet(wallet);
+            _dbContext.Set<Wallet>().Add(wallet);
             return user;
         }
+
     }
 }
