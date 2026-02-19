@@ -14,7 +14,6 @@ namespace AI.Domain.Repositories
     public interface IInteractionWeightRepository : IRepository<InteractionWeight, Guid>
     {
         Task<InteractionWeight?> GetByActionTypeAsync(string actionType);
-        Task<List<InteractionWeight>> GetAllAsync();
         Task<List<InteractionWeight>> GetActiveWeightsAsync();
     }
 

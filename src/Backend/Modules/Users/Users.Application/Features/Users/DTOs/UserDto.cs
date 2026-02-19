@@ -1,5 +1,6 @@
 using Shared.Application.DTOs;
 using System.ComponentModel;
+using Users.Domain.Enums;
 
 namespace Users.Application.Features.Users.Dtos;
 
@@ -56,3 +57,22 @@ public class GoogleLoginRequestDto
     [DefaultValue("server id token")]
     public string IdToken { get; set; } = default!;
 }
+
+
+
+public record UserProfileDto(
+    Guid UserId,
+    string UserName,
+    string? Email,
+    string? FirstName,
+    string? LastName,
+    DateOnly? Birthday,
+    Gender? Gender,
+    string? PhoneNumber,
+    string? Address,
+    string? Description,
+    string? SocialLink,
+    string? ProfileImageUrl,
+    UserStatus Status,
+    IEnumerable<string> Roles
+);

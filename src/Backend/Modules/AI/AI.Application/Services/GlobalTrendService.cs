@@ -59,13 +59,12 @@ namespace AI.Application.Services
                 // ---------------------------------------------------------
                 var cutoff = DateTime.UtcNow.AddHours(-LOOKBACK_HOURS);
                 var recentLogsTask = await _logRepo.GetLogsSinceAsync(cutoff);
-                var weightsTask = await _weightRepo.GetAllAsync();
+                var weightsTask = await _weightRepo.FindAsync(w => w.IsActive);
                 var allExistingStatsTask = await _globalRepo.GetAllAsync();
 
 
                 var recentLogs = recentLogsTask;
-                var weights = ( weightsTask)
-                    .Where(w => w.IsActive)  // Only use active weights
+                var weights =  weightsTask
                     .ToDictionary(
                         w => w.ActionType.ToLower().Trim(), 
                         w => w.Weight
@@ -191,7 +190,7 @@ namespace AI.Application.Services
                     _logger.LogInformation(
                         "Cleaning up {Count} categories with score < {Threshold}",
                         statsToCleanup.Count, MIN_SCORE_THRESHOLD);
-                    // _globalRepo.DeleteRange(statsToCleanup);
+                    _globalRepo.RemoveRange(statsToCleanup);
                     // Note: Implement Delete method in repository if needed
                     // For now, we keep them at zero for analytics
                 }
