@@ -1,12 +1,9 @@
-using Shared.Application.Messaging;
-using Shared.Domain.Pagination;
 using Shared.Domain.Queries;
-using Users.Application.Features.Users.Dtos;
 using Users.Domain.Enums;
 
-namespace Users.Application.Features.Users.Queries;
+namespace Users.Application.Features.Users.Dtos;
 
-public sealed record GetUsersQuery : PagedQuery, IQuery<PagedResult<UserResponseDto>>
+public sealed record UserFilterRequestDto : PagedQuery
 {
     public string? Email { get; init; }
     public string? UserName { get; init; }
