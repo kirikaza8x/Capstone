@@ -78,6 +78,11 @@ namespace Users.Domain.Entities
         // --------------------
         // Domain Behaviors
         // --------------------
+
+        public void UpdateProfileImage(string imageUrl)
+        {
+            ProfileImageUrl = imageUrl;
+        }
         public void AttachWallet(Wallet wallet)
         {
             if (Wallet != null)

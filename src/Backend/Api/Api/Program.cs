@@ -57,13 +57,6 @@ public class Program
             assemblies
         );
 
-
-        // builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>
-        // {
-        //     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
-        // });
-
-
         //swagger
         builder.Services.AddSwaggerDocumentation();
         builder.Services.AddAuthentication();
