@@ -26,6 +26,7 @@ public static class SwaggerExtensions
                 In = ParameterLocation.Header,
                 Description = "Enter your JWT token."
             });
+            options.SchemaFilter<FilterSchemaFilter>();
 
             options.AddSecurityRequirement(new OpenApiSecurityRequirement
             {

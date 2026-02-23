@@ -18,11 +18,11 @@ public sealed record UserFilterRequestDto : PagedRequestDto
     [DefaultValue("")]
     public string? LastName { get; init; }
 
-    [DefaultValue("1990-01-01")]
-    public DateOnly? BirthdayFrom { get; init; }
+    [DefaultValue("1900-01-01T00:00:00Z")] 
+    public DateTime? BirthdayFrom { get; init; } = new DateTime(1900, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
-    [DefaultValue("2999-12-31")]
-    public DateOnly? BirthdayTo { get; init; }
+    [DefaultValue("2100-12-31T23:59:59Z")]
+    public DateTime? BirthdayTo { get; init; } = new DateTime(2100, 12, 31, 23, 59, 59, DateTimeKind.Utc);
 
     [DefaultValue("Male")]
     public Gender? Gender { get; init; }
