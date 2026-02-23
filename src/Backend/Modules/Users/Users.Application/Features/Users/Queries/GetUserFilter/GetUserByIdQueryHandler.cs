@@ -3,7 +3,6 @@ using Shared.Application.Messaging;
 using Shared.Domain.Abstractions;
 using Shared.Domain.Pagination;
 using Users.Application.Features.Users.Dtos;
-using Users.Domain.Entities;
 using Users.Domain.Repositories;
 
 namespace Users.Application.Features.Users.Queries
