@@ -8,7 +8,7 @@ namespace Users.Application.Features.Users.Commands.Records
         Guid UserId,
         string? FirstName,
         string? LastName,
-        DateOnly? Birthday,
+        DateTime? Birthday,
         Gender? Gender,
         string? Phone,
         string? Address,

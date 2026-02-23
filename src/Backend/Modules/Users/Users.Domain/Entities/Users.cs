@@ -17,7 +17,7 @@ namespace Users.Domain.Entities
         // --------------------
         public string? FirstName { get; private set; }
         public string? LastName { get; private set; }
-        public DateOnly? Birthday { get; private set; }
+        public DateTime? Birthday { get; private set; }
         public Gender? Gender { get; private set; }
         public string? PhoneNumber { get; private set; }
         public string? Address { get; private set; }
@@ -103,7 +103,7 @@ namespace Users.Domain.Entities
         public void UpdateProfile(
             string? firstName,
             string? lastName,
-            DateOnly? birthday,
+            DateTime? birthday,
             Gender? gender,
             string? phone,
             string? address,

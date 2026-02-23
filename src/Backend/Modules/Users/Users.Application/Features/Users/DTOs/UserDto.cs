@@ -68,7 +68,7 @@ public record UserProfileDto
     public string? Email { get; init; }
     public string? FirstName { get; init; }
     public string? LastName { get; init; }
-    public DateOnly? Birthday { get; init; }
+    public DateTime? Birthday { get; init; }
     public Gender? Gender { get; init; }
     public string? PhoneNumber { get; init; }
     public string? Address { get; init; }
@@ -94,8 +94,8 @@ public class UpdateProfileRequestDto
     [DefaultValue("Doe")]
     public string? LastName { get; set; }
 
-    [DefaultValue("1990-05-15")]
-    public DateOnly? Birthday { get; set; }
+    [DefaultValue("")]
+    public DateTime? Birthday { get; set; }
 
     [JsonConverter(typeof(JsonStringEnumConverter))] 
     public Gender? Gender { get; set; }
