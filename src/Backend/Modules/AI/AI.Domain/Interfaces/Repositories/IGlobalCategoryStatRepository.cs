@@ -6,17 +6,14 @@ namespace AI.Domain.Repositories
     public interface IGlobalCategoryStatRepository : IRepository<GlobalCategoryStat, Guid>
     {
       
-        /// <summary>
-        /// RECOMMENDATION SERVICE USES THIS:
-        /// "Give me the stats for all categories so I can calculate Bayesian averages"
-        /// </summary>
-        Task<List<GlobalCategoryStat>> GetAllAsync();
-
-        // BACKGROUND JOB USES THIS:
-        // "Find the stat for 'Jazz' so I can update it"
         Task<GlobalCategoryStat?> GetByCategoryAsync(string category);
-
-        Task<List<GlobalCategoryStat>> GetTopCategoriesAsync(int count=10);
+        Task<List<GlobalCategoryStat>> GetByCategoryNamesAsync(List<string> categories);
+        Task<List<GlobalCategoryStat>> GetTopCategoriesAsync(int topN = 20);
+        Task<List<GlobalCategoryStat>> GetAllAsync();
         
+        // Batch operations
+        Task ApplyGlobalDecayAsync(double decayFactor);
+        Task<int> GetTotalCategoriesAsync();
+        Task<List<GlobalCategoryStat>> GetStaleStatsAsync(int daysThreshold = 90);
     }
 }

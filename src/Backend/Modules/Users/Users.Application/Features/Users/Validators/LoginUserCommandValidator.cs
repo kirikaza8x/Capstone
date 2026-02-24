@@ -19,11 +19,6 @@ public class LoginUserCommandValidator : AbstractValidator<LoginUserCommand>
             .MinimumLength(6)
             .WithMessage("Password must be at least 6 characters long.");
 
-        RuleFor(x => x.DeviceId)
-            .MaximumLength(128)
-            .When(x => !string.IsNullOrWhiteSpace(x.DeviceId))
-            .WithMessage("DeviceId must not exceed 128 characters.");
-
         RuleFor(x => x.DeviceName)
             .MaximumLength(128)
             .When(x => !string.IsNullOrWhiteSpace(x.DeviceName))

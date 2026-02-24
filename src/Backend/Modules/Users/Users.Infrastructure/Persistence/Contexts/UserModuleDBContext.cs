@@ -1,8 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Shared.Infrastructure.Data;
-using Shared.Infrastructure.Outbox;
 using Users.Domain.Entities;
-using Users.Domain.UOW;
 
 namespace Users.Infrastructure.Persistence.Contexts
 {

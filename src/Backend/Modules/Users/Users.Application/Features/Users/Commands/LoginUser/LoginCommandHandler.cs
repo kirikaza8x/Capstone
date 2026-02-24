@@ -60,18 +60,17 @@ public class LoginUserCommandHandler : ICommandHandler<LoginUserCommand, LoginRe
 
         var roles = user.Roles?.Select(r => r.Name).ToList() ?? new List<string>();
 
+        var deviceId = _currentUserService.DeviceId;
         var deviceInfo = _deviceDetectionService.GetDeviceInfo(
             _currentUserService.UserAgent,
             _currentUserService.IpAddress,
-            command.DeviceId);
+            deviceId);
 
         if (!string.IsNullOrWhiteSpace(command.DeviceName))
             deviceInfo.DeviceName = command.DeviceName;
 
-        // Generate a new refresh token
         var newToken = _refreshTokenService.GenerateToken(user.Id);
 
-        // revoke any existing token for this device before adding the new one
         user.RevokeRefreshTokensByDevice(deviceInfo.DeviceId);
 
         var refreshTokenEntity = await _userRepository.AddOrUpdateRefreshTokenAsync(
@@ -93,16 +92,7 @@ public class LoginUserCommandHandler : ICommandHandler<LoginUserCommand, LoginRe
             user.Id,
             user.Email,
             user.UserName,
-            roles,
-            deviceInfo.DeviceId,
-            deviceInfo.IpAddress,
-            deviceInfo.UserAgent,
-            deviceInfo.DeviceName,
-            deviceInfo.Browser,
-            deviceInfo.OperatingSystem,
-            deviceInfo.DeviceType,
-            deviceInfo.BrowserVersion,
-            deviceInfo.OSVersion
+            roles
         );
 
         var response = new LoginResponseDto(
@@ -116,4 +106,6 @@ public class LoginUserCommandHandler : ICommandHandler<LoginUserCommand, LoginRe
 
         return Result.Success(response);
     }
+
+
 }

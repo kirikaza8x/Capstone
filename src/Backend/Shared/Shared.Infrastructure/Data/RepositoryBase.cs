@@ -63,6 +63,67 @@ public class RepositoryBase<TEntity, TId> : IRepository<TEntity, TId>
         return await query.ToPagedResultAsync(pagedQuery, cancellationToken);
     }
 
+    public virtual async Task<Shared.Domain.Pagination.PagedResult<TEntity>> GetPagedAsync(
+        AdvancedPagedQuery query,
+        Expression<Func<TEntity, bool>>? predicate = null,
+        CancellationToken cancellationToken = default)
+    {
+        IQueryable<TEntity> dbQuery = DbSet.AsNoTracking();
+
+        if (predicate is not null)
+        {
+            dbQuery = dbQuery.Where(predicate);
+        }
+
+        dbQuery = dbQuery.ApplyDynamicFilters(query.Filter);
+
+        if (query.Sorts == null || !query.Sorts.Any())
+        {
+            dbQuery = dbQuery.ApplyDynamicSorting(new List<Sort>
+            {
+                new Sort { Field = "CreatedAt", Dir = "desc" }
+            });
+        }
+        else
+        {
+            dbQuery = dbQuery.ApplyDynamicSorting(query.Sorts);
+        }
+
+        return await dbQuery.ToPagedResultAsync(query, cancellationToken);
+    }
+
+    public virtual async Task<Shared.Domain.Pagination.PagedResult<TResult>> GetPagedAsync<TResult>(
+        AdvancedPagedQuery query,
+        Expression<Func<TEntity, TResult>> selector,
+        Expression<Func<TEntity, bool>>? predicate = null,
+        CancellationToken cancellationToken = default)
+    {
+        IQueryable<TEntity> dbQuery = DbSet.AsNoTracking();
+
+        if (predicate is not null)
+        {
+            dbQuery = dbQuery.Where(predicate);
+        }
+
+        dbQuery = dbQuery.ApplyDynamicFilters(query.Filter);
+
+        if (query.Sorts == null || !query.Sorts.Any())
+        {
+            dbQuery = dbQuery.ApplyDynamicSorting(new List<Sort>
+            {
+                new Sort { Field = "CreatedAt", Dir = "desc" }
+            });
+        }
+        else
+        {
+            dbQuery = dbQuery.ApplyDynamicSorting(query.Sorts);
+        }
+
+        return await dbQuery
+            .Select(selector)
+            .ToPagedResultAsync(query, cancellationToken);
+    }
+
     public virtual async Task<TEntity?> FirstOrDefaultAsync(
         Expression<Func<TEntity, bool>> predicate,
         CancellationToken cancellationToken = default)

@@ -10,8 +10,13 @@ namespace AI.Domain.Repositories
     /// </summary>
     public interface IUserBehaviorLogRepository : IRepository<UserBehaviorLog, Guid>
     {
-        
+        /// <summary>
+        /// Fetches all raw logs since a specific time (e.g., Last 24 Hours).
+        /// We need the raw logs because the "Category" is inside the Metadata JSON,
+        /// so we must process the grouping in C# memory, not SQL.
+        /// </summary>
+        Task<List<UserBehaviorLog>> GetLogsSinceAsync(DateTime since);
     }
 
-    
+
 }

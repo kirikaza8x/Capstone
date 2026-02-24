@@ -36,6 +36,17 @@ public interface IRepository<TEntity, TId>
         Expression<Func<TEntity, bool>>? predicate = null,
         CancellationToken cancellationToken = default);
 
+    Task<PagedResult<TEntity>> GetPagedAsync(
+            AdvancedPagedQuery query,
+            Expression<Func<TEntity, bool>>? predicate = null,
+            CancellationToken cancellationToken = default);
+
+    Task<PagedResult<TResult>> GetPagedAsync<TResult>(
+        AdvancedPagedQuery query,
+        Expression<Func<TEntity, TResult>> selector,
+        Expression<Func<TEntity, bool>>? predicate = null,
+        CancellationToken cancellationToken = default);
+
     void Add(TEntity entity);
     void AddRange(IEnumerable<TEntity> entities);
     void Update(TEntity entity);

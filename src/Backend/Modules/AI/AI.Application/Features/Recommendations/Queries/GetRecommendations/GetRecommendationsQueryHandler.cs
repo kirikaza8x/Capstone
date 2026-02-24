@@ -1,8 +1,8 @@
 using Shared.Application.Messaging;
 using Shared.Domain.Abstractions;
 using AI.Application.Features.Recommendations.Queries;
-using AI.Application.Services;
 using AI.Application.Features.Recommendations.DTOs;
+using AI.Application.Abstractions;
 
 namespace AI.Application.Features.Recommendations.Handlers
 {

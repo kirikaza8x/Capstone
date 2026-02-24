@@ -1,5 +1,7 @@
 using Shared.Application.DTOs;
 using System.ComponentModel;
+using System.Text.Json.Serialization;
+using Users.Domain.Enums;
 
 namespace Users.Application.Features.Users.Dtos;
 
@@ -55,4 +57,61 @@ public class GoogleLoginRequestDto
 {
     [DefaultValue("server id token")]
     public string IdToken { get; set; } = default!;
+}
+
+
+
+public record UserProfileDto
+{
+    public Guid UserId { get; init; }
+    public string UserName { get; init; } = default!;
+    public string? Email { get; init; }
+    public string? FirstName { get; init; }
+    public string? LastName { get; init; }
+    public DateTime? Birthday { get; init; }
+    public Gender? Gender { get; init; }
+    public string? PhoneNumber { get; init; }
+    public string? Address { get; init; }
+    public string? Description { get; init; }
+    public string? SocialLink { get; init; }
+    public string? ProfileImageUrl { get; init; }
+    public UserStatus Status { get; init; }
+    public IEnumerable<string> Roles { get; init; } = new List<string>();
+}
+
+
+
+
+
+public class UpdateProfileRequestDto 
+{
+    [DefaultValue("d3f8a1b2-1234-5678-9abc-def012345678")]
+    public Guid UserId { get; set; }
+
+    [DefaultValue("John")]
+    public string? FirstName { get; set; }
+
+    [DefaultValue("Doe")]
+    public string? LastName { get; set; }
+
+    [DefaultValue("")]
+    public DateTime? Birthday { get; set; }
+
+    [JsonConverter(typeof(JsonStringEnumConverter))] 
+    public Gender? Gender { get; set; }
+
+    [DefaultValue("+1234567890")]
+    public string? Phone { get; set; }
+
+    [DefaultValue("123 Main St, Springfield")]
+    public string? Address { get; set; }
+
+    [DefaultValue("Software engineer passionate about clean code.")]
+    public string? Description { get; set; }
+
+    [DefaultValue("https://linkedin.com/in/johndoe")]
+    public string? SocialLink { get; set; }
+
+    [DefaultValue("https://cdn.example.com/images/johndoe.png")]
+    public string? ProfileImageUrl { get; set; }
 }

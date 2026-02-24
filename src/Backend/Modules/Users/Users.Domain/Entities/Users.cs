@@ -1,33 +1,55 @@
 using Shared.Domain.DDD;
 using Users.Domain.Events;
+using Users.Domain.Enums;
 
 namespace Users.Domain.Entities
 {
     public class User : AggregateRoot<Guid>
     {
+        // --------------------
         // Identity
-        public string? Email { get; private set; } = default!;
+        // --------------------
+        public string? Email { get; private set; }
         public string UserName { get; private set; } = default!;
+        public string PasswordHash { get; private set; } = default!;
+        // --------------------
+        // Profile
+        // --------------------
         public string? FirstName { get; private set; }
         public string? LastName { get; private set; }
-        public string PasswordHash { get; private set; } = default!;
+        public DateTime? Birthday { get; private set; }
+        public Gender? Gender { get; private set; }
         public string? PhoneNumber { get; private set; }
         public string? Address { get; private set; }
+        public string? Description { get; private set; }
+        public string? SocialLink { get; private set; }
         public string? ProfileImageUrl { get; private set; }
-
+        // --------------------
+        // Status
+        // --------------------
+        public UserStatus Status { get; private set; }
+        // --------------------
+        // Auth
+        // --------------------
         public ICollection<Role> Roles { get; private set; } = new List<Role>();
         public ICollection<RefreshToken> RefreshTokens { get; private set; } = new List<RefreshToken>();
 
+        // wallet
+        //public Guid WalletId { get; private set; }
+        public Wallet? Wallet { get; private set; }
         // EF Core constructor
         private User() { }
 
+        // --------------------
+        // Factory
+        // --------------------
         public static User Create(
             string? email,
             string userName,
             string passwordHash,
             string? firstName = null,
-            string? lastName = null,
-            string? phoneNumber = null,
+            string? lastName = null, string?
+            phoneNumber = null,
             string? address = null,
             string? profileImageUrl = null,
             Role? role = null)
@@ -47,28 +69,66 @@ namespace Users.Domain.Entities
                 Roles = new List<Role>(),
                 RefreshTokens = new List<RefreshToken>()
             };
-
-            if (role != null) user.AssignRole(role);
-
+            if (role != null)
+                user.AssignRole(role);
             user.RaiseDomainEvent(new UserCreatedEvent(user.Id, user.Email ?? string.Empty, user.UserName));
             return user;
         }
 
-        // Domain behaviors
-        public void ChangeEmail(string newEmail) => Email = newEmail;
-        public void ChangePassword(string newPasswordHash) => PasswordHash = newPasswordHash;
+        // --------------------
+        // Domain Behaviors
+        // --------------------
 
-        public void UpdateProfile(string? firstName, string? lastName, string? phone, string? address, string? profileImageUrl)
+        public void UpdateProfileImage(string imageUrl)
+        {
+            ProfileImageUrl = imageUrl;
+        }
+        public void AttachWallet(Wallet wallet)
+        {
+            if (Wallet != null)
+                throw new InvalidOperationException("User already has a wallet.");
+
+            Wallet = wallet;
+        }
+        public void ChangeEmail(string newEmail)
+        {
+            Email = newEmail;
+        }
+
+        public void ChangePassword(string newPasswordHash)
+        {
+            PasswordHash = newPasswordHash;
+        }
+
+        public void UpdateProfile(
+            string? firstName,
+            string? lastName,
+            DateTime? birthday,
+            Gender? gender,
+            string? phone,
+            string? address,
+            string? description,
+            string? socialLink,
+            string? profileImageUrl)
         {
             FirstName = firstName ?? FirstName;
             LastName = lastName ?? LastName;
+            Birthday = birthday ?? Birthday;
+            Gender = gender ?? Gender;
             PhoneNumber = phone ?? PhoneNumber;
             Address = address ?? Address;
+            Description = description ?? Description;
+            SocialLink = socialLink ?? SocialLink;
             ProfileImageUrl = profileImageUrl ?? ProfileImageUrl;
         }
 
-        public void DeactivateUser() => IsActive = false;
+        public void Activate() => Status = UserStatus.Active;
+        public void Deactivate() => Status = UserStatus.Inactive;
+        public void Ban() => Status = UserStatus.Banned;
 
+        // --------------------
+        // Roles
+        // --------------------
         public void AssignRole(Role role)
         {
             if (Roles.Any(r => r.Id == role.Id || r.Name == role.Name))
@@ -83,7 +143,9 @@ namespace Users.Domain.Entities
                 Roles.Remove(role);
         }
 
-        // Refresh token management
+        // --------------------
+        // Refresh Tokens
+        // --------------------
         public RefreshToken AddRefreshToken(
             string token,
             DateTime expiry,
@@ -92,15 +154,24 @@ namespace Users.Domain.Entities
             string? ipAddress = null,
             string? userAgent = null)
         {
-            var refreshToken = RefreshToken.Create(token, expiry, Id, deviceId, deviceName, ipAddress, userAgent);
+            var refreshToken = RefreshToken.Create(
+                token,
+                expiry,
+                Id,
+                deviceId,
+                deviceName,
+                ipAddress,
+                userAgent);
+
             RefreshTokens.Add(refreshToken);
             return refreshToken;
         }
 
         public void RevokeRefreshToken(string token)
         {
-            var refreshToken = RefreshTokens.FirstOrDefault(rt => rt.Token == token);
-            refreshToken?.Revoke();
+            RefreshTokens
+                .FirstOrDefault(rt => rt.Token == token)
+                ?.Revoke();
         }
 
         public void RevokeAllRefreshTokens()
@@ -111,8 +182,11 @@ namespace Users.Domain.Entities
 
         public void RevokeRefreshTokensByDevice(string deviceId)
         {
-            foreach (var token in RefreshTokens.Where(rt => rt.DeviceId == deviceId && !rt.IsRevoked))
+            foreach (var token in RefreshTokens.Where(rt =>
+                rt.DeviceId == deviceId && !rt.IsRevoked))
+            {
                 token.Revoke();
+            }
         }
 
         public RefreshToken? GetValidRefreshToken(string token, string? deviceId = null)
@@ -127,6 +201,16 @@ namespace Users.Domain.Entities
 
             return query.FirstOrDefault();
         }
+        public RefreshToken? GetActiveRefreshTokenForDevice(string deviceId)
+        {
+            return RefreshTokens
+                .FirstOrDefault(rt =>
+                    rt.DeviceId == deviceId &&
+                    !rt.IsRevoked &&
+                    !rt.IsExpired()
+                );
+        }
+
 
         public IEnumerable<RefreshToken> GetActiveDevices()
         {
@@ -135,16 +219,17 @@ namespace Users.Domain.Entities
                 .OrderByDescending(rt => rt.CreatedAt);
         }
 
+        // --------------------
+        // Event Applier
+        // --------------------
         protected override void Apply(IDomainEvent @event)
         {
-            switch (@event)
+            if (@event is UserCreatedEvent e)
             {
-                case UserCreatedEvent e:
-                    Id = e.UserId;
-                    Email = e.Email;
-                    UserName = e.UserName;
-                    IsActive = true;
-                    break;
+                Id = e.UserId;
+                Email = e.Email;
+                UserName = e.UserName;
+                Status = UserStatus.Active;
             }
         }
     }

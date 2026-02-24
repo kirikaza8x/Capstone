@@ -48,6 +48,10 @@ namespace AI.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("created_by");
 
+                    b.Property<DateTime?>("DeactivatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deactivated_at");
+
                     b.Property<string>("Description")
                         .HasMaxLength(512)
                         .HasColumnType("character varying(512)")
@@ -68,12 +72,24 @@ namespace AI.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("modified_by");
 
+                    b.Property<string>("Version")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasDefaultValue("default")
+                        .HasColumnName("version");
+
                     b.Property<double>("Weight")
                         .HasColumnType("double precision")
                         .HasColumnName("weight");
 
                     b.HasKey("Id")
                         .HasName("pk_interaction_weight");
+
+                    b.HasIndex("ActionType", "Version", "IsActive")
+                        .IsUnique()
+                        .HasDatabaseName("ux_interaction_weight_action_version_active");
 
                     b.ToTable("interaction_weight", (string)null);
                 });
@@ -146,6 +162,15 @@ namespace AI.Infrastructure.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_user_behavior_log");
 
+                    b.HasIndex("OccurredAt")
+                        .HasDatabaseName("ix_user_behavior_log_occurred");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_user_behavior_log_user");
+
+                    b.HasIndex("UserId", "ActionType")
+                        .HasDatabaseName("ix_user_behavior_log_user_action");
+
                     b.ToTable("user_behavior_log", (string)null);
                 });
 
@@ -207,6 +232,10 @@ namespace AI.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_user_interest_score");
+
+                    b.HasIndex("UserId", "Category")
+                        .IsUnique()
+                        .HasDatabaseName("ux_user_interest_score_user_category");
 
                     b.ToTable("user_interest_score", (string)null);
                 });
@@ -294,6 +323,10 @@ namespace AI.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("created_by");
 
+                    b.Property<DateTime>("FirstSeen")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("first_seen");
+
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
@@ -317,12 +350,20 @@ namespace AI.Infrastructure.Persistence.Migrations
                         .HasColumnType("double precision")
                         .HasColumnName("popularity_score");
 
+                    b.Property<double>("RawWeightedScore")
+                        .HasColumnType("double precision")
+                        .HasColumnName("raw_weighted_score");
+
                     b.Property<int>("TotalInteractions")
                         .HasColumnType("integer")
                         .HasColumnName("total_interactions");
 
                     b.HasKey("Id")
                         .HasName("pk_global_category_stat");
+
+                    b.HasIndex("Category")
+                        .IsUnique()
+                        .HasDatabaseName("ux_global_category_stat_category");
 
                     b.ToTable("global_category_stat", (string)null);
                 });

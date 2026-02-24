@@ -14,16 +14,17 @@ namespace AI.Domain.Repositories
     public interface IInteractionWeightRepository : IRepository<InteractionWeight, Guid>
     {
         Task<InteractionWeight?> GetByActionTypeAsync(string actionType);
+        Task<List<InteractionWeight>> GetActiveWeightsAsync();
     }
 
-    /// <summary>
-    /// Repository interface for managing UserWeightProfile entities.
-    /// ex: personalized weights for different user actions per user.
-    /// ex: User A's weight for "click" might be 0.5, while User B's is 2.0.
-    /// </summary>
-    public interface IUserWeightProfileRepository : IRepository<UserWeightProfile,Guid>
-    {
-        Task<UserWeightProfile?> GetAsync(Guid userId, string actionType);
-    }
+    // /// <summary>
+    // /// Repository interface for managing UserWeightProfile entities.
+    // /// ex: personalized weights for different user actions per user.
+    // /// ex: User A's weight for "click" might be 0.5, while User B's is 2.0.
+    // /// </summary>
+    // public interface IUserWeightProfileRepository : IRepository<UserWeightProfile,Guid>
+    // {
+    //     Task<UserWeightProfile?> GetAsync(Guid userId, string actionType);
+    // }
     
 }
