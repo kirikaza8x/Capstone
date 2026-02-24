@@ -105,11 +105,11 @@ public class Program
         app.MapCarter();
 
         app
-            // .UseOrderModule()
-            // .UseProductModule()
-            .UseUserModule()
-            // .UseEventModule()
-            // .UseAiModule()
+        .UseOrderModule()
+        .UseProductModule()
+        .UseUserModule()
+        .UseEventModule()
+        .UseAiModule()
             ;
 
         app.Run();
