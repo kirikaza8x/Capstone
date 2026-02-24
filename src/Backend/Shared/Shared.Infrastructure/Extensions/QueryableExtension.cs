@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Shared.Domain.Pagination;
 using Shared.Domain.Queries;
 using System.Linq.Dynamic.Core;
 using System.Text.Json;
@@ -18,14 +19,63 @@ public static class QueryableExtensions
         {"contains", "Contains"}, {"doesnotcontain", "Contains"}
     };
 
+    #region Pagination (Merged with IPageable and int?)
+    public static IQueryable<TEntity> ApplyPagination<TEntity>(
+        this IQueryable<TEntity> query, IPageable pageable)
+    {
+        int page = pageable.PageNumber ?? 1;
+        int size = pageable.PageSize ?? 10;
+        return query.Skip((page - 1) * size).Take(size);
+    }
+
+    /// <summary>
+    /// Executes query and returns Domain-specific PagedResult.
+    /// </summary>
+    public static async Task<Domain.Pagination.PagedResult<T>> ToPagedResultAsync<T>(
+        this IQueryable<T> query,
+        int pageNumber,
+        int pageSize,
+        CancellationToken cancellationToken = default)
+    {
+        var totalCount = await query.CountAsync(cancellationToken);
+        var items = await query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync(cancellationToken);
+
+        return Domain.Pagination.PagedResult<T>.Create(items, pageNumber, pageSize, totalCount);
+    }
+
+    /// <summary>
+    /// Helper for PagedQuery objects (Safely handles null values).
+    /// </summary>
+    public static Task<Domain.Pagination.PagedResult<T>> ToPagedResultAsync<T>(
+        this IQueryable<T> query,
+        PagedQuery pagedQuery,
+        CancellationToken cancellationToken = default)
+    {
+        return query.ToPagedResultAsync(
+            pagedQuery.PageNumber ?? 1,
+            pagedQuery.PageSize ?? 10,
+            cancellationToken);
+    }
+
+    public static async Task<Domain.Pagination.PagedResult<T>> ToPagedResultAsync<T>(
+        this IQueryable<T> query,
+        IPageable pageable,
+        CancellationToken cancellationToken = default)
+    {
+        var totalCount = await query.CountAsync(cancellationToken);
+        var items = await query.ApplyPagination(pageable).ToListAsync(cancellationToken);
+
+        return Domain.Pagination.PagedResult<T>.Create(
+            items,
+            pageable.PageNumber ?? 1,
+            pageable.PageSize ?? 10,
+            totalCount);
+    }
+    #endregion
+
+    #region Dynamic Filtering (Merged with Teammate's Guard Clauses)
     /// <summary>
     /// Applies complex, nested filtering to the query using System.Linq.Dynamic.Core.
-    /// <example>
-    /// <code>
-    /// var filter = new Filter { Field = "Email", Operator = "contains", Value = "@gmail.com" };
-    /// query = query.ApplyDynamicFilters(filter);
-    /// </code>
-    /// </example>
     /// </summary>
     public static IQueryable<T> ApplyDynamicFilters<T>(this IQueryable<T> query, Filter? filter)
     {
@@ -50,28 +100,6 @@ public static class QueryableExtensions
         }
 
         return query;
-    }
-
-    /// <summary>
-    /// Applies multiple sorting criteria. Guards against null collections and empty field names.
-    /// <example>
-    /// <code>
-    /// query = query.ApplyDynamicSorting(new List&lt;Sort&gt; { new Sort { Field = "Id", Dir = "asc" } });
-    /// </code>
-    /// </example>
-    /// </summary>
-    public static IQueryable<T> ApplyDynamicSorting<T>(this IQueryable<T> query, IEnumerable<Sort>? sorts)
-    {
-        if (sorts == null) return query;
-
-        var validSorts = sorts
-            .Where(s => !string.IsNullOrWhiteSpace(s.Field))
-            .ToList();
-
-        if (!validSorts.Any()) return query;
-
-        var ordering = string.Join(",", validSorts.Select(s => $"{s.Field} {s.Dir}"));
-        return !string.IsNullOrWhiteSpace(ordering) ? query.OrderBy(ordering) : query;
     }
 
     /// <summary>
@@ -121,7 +149,7 @@ public static class QueryableExtensions
         // GUARD: Handle unknown operators gracefully
         if (string.IsNullOrWhiteSpace(filter.Operator) || !Operators.TryGetValue(filter.Operator.ToLower(), out var comparison))
         {
-            return ""; 
+            return "";
         }
 
         if (filter.Operator.Equals("doesnotcontain", StringComparison.OrdinalIgnoreCase))
@@ -152,37 +180,31 @@ public static class QueryableExtensions
                                         element.TryGetGuid(out var g) ? g : element.GetString(),
                 JsonValueKind.True => true,
                 JsonValueKind.False => false,
-                JsonValueKind.Null => null, 
-                JsonValueKind.Undefined => null, 
+                JsonValueKind.Null => null,
+                JsonValueKind.Undefined => null,
                 _ => element.ToString()
             };
         }
         return value;
     }
+    #endregion
 
+    #region Dynamic Sorting (Merged with Teammate's Guard Clauses)
     /// <summary>
-    /// Executes query and returns Domain-specific PagedResult.
+    /// Applies multiple sorting criteria. Guards against null collections and empty field names.
     /// </summary>
-    public static async Task<Domain.Pagination.PagedResult<T>> ToPagedResultAsync<T>(
-        this IQueryable<T> query,
-        int pageNumber,
-        int pageSize,
-        CancellationToken cancellationToken = default)
+    public static IQueryable<T> ApplyDynamicSorting<T>(this IQueryable<T> query, IEnumerable<Sort>? sorts)
     {
-        var totalCount = await query.CountAsync(cancellationToken);
-        var items = await query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync(cancellationToken);
+        if (sorts == null) return query;
 
-        return Domain.Pagination.PagedResult<T>.Create(items, pageNumber, pageSize, totalCount);
-    }
+        var validSorts = sorts
+            .Where(s => !string.IsNullOrWhiteSpace(s.Field))
+            .ToList();
 
-    /// <summary>
-    /// Helper for PagedQuery objects.
-    /// </summary>
-    public static Task<Domain.Pagination.PagedResult<T>> ToPagedResultAsync<T>(
-        this IQueryable<T> query,
-        PagedQuery pagedQuery,
-        CancellationToken cancellationToken = default)
-    {
-        return query.ToPagedResultAsync(pagedQuery.PageNumber, pagedQuery.PageSize, cancellationToken);
+        if (!validSorts.Any()) return query;
+
+        var ordering = string.Join(",", validSorts.Select(s => $"{s.Field} {s.Dir}"));
+        return !string.IsNullOrWhiteSpace(ordering) ? query.OrderBy(ordering) : query;
     }
+    #endregion
 }

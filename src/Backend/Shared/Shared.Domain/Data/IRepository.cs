@@ -19,14 +19,8 @@ public interface IRepository<TEntity, TId>
         Expression<Func<TEntity, bool>> predicate,
         CancellationToken cancellationToken = default);
 
-    Task<PagedResult<TEntity>> GetPagedAsync(
+    Task<PagedResult<TEntity>> GetAllWithPagingAsync(
         PagedQuery pagedQuery,
-        Expression<Func<TEntity, bool>>? predicate = null,
-        CancellationToken cancellationToken = default);
-
-    Task<PagedResult<TResult>> GetPagedAsync<TResult>(
-        PagedQuery pagedQuery,
-        Expression<Func<TEntity, TResult>> selector,
         Expression<Func<TEntity, bool>>? predicate = null,
         CancellationToken cancellationToken = default);
 
@@ -39,6 +33,17 @@ public interface IRepository<TEntity, TId>
         CancellationToken cancellationToken = default);
 
     Task<int> CountAsync(
+        Expression<Func<TEntity, bool>>? predicate = null,
+        CancellationToken cancellationToken = default);
+
+    Task<PagedResult<TEntity>> GetPagedAsync(
+            AdvancedPagedQuery query,
+            Expression<Func<TEntity, bool>>? predicate = null,
+            CancellationToken cancellationToken = default);
+
+    Task<PagedResult<TResult>> GetPagedAsync<TResult>(
+        AdvancedPagedQuery query,
+        Expression<Func<TEntity, TResult>> selector,
         Expression<Func<TEntity, bool>>? predicate = null,
         CancellationToken cancellationToken = default);
 

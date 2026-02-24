@@ -2,9 +2,9 @@
 using Shared.Domain.Data;
 using Shared.Domain.Queries;
 using Shared.Domain.DDD;
-using Shared.Domain.Pagination;
 using System.Linq.Expressions;
 using Shared.Infrastructure.Extensions;
+using System.Linq.Dynamic.Core;
 
 namespace Shared.Infrastructure.Data;
 
@@ -42,67 +42,86 @@ public class RepositoryBase<TEntity, TId> : IRepository<TEntity, TId>
             .ToListAsync(cancellationToken);
     }
 
-    public virtual async Task<PagedResult<TEntity>> GetPagedAsync(
+    public virtual async Task<Domain.Pagination.PagedResult<TEntity>> GetAllWithPagingAsync(
         PagedQuery pagedQuery,
         Expression<Func<TEntity, bool>>? predicate = null,
         CancellationToken cancellationToken = default)
     {
         IQueryable<TEntity> query = DbSet.AsNoTracking();
 
-        // 1. Apply hard filter (from code)
         if (predicate is not null)
         {
             query = query.Where(predicate);
         }
 
-        // 2. Apply Dynamic Filter
-        query = query.ApplyDynamicFilters(pagedQuery.Filter);
-
-        if (pagedQuery.Sorts == null || !pagedQuery.Sorts.Any())
+        if (!string.IsNullOrWhiteSpace(pagedQuery.SortColumn))
         {
-            query = query.ApplyDynamicSorting(new List<Sort>
-            {
-                new Sort { Field = "CreatedAt", Dir = "desc" }
-            });
-        }
-        else
-        {
-            query = query.ApplyDynamicSorting(pagedQuery.Sorts);
+            var sortDir = pagedQuery.SortOrder == SortOrder.Descending ? "desc" : "asc";
+            query = query.OrderBy($"{pagedQuery.SortColumn} {sortDir}");
         }
 
         return await query.ToPagedResultAsync(pagedQuery, cancellationToken);
     }
 
-    public virtual async Task<PagedResult<TResult>> GetPagedAsync<TResult>(
-        PagedQuery pagedQuery,
-        Expression<Func<TEntity, TResult>> selector,
+    public virtual async Task<Shared.Domain.Pagination.PagedResult<TEntity>> GetPagedAsync(
+        AdvancedPagedQuery query,
         Expression<Func<TEntity, bool>>? predicate = null,
         CancellationToken cancellationToken = default)
     {
-        IQueryable<TEntity> query = DbSet.AsNoTracking();
+        IQueryable<TEntity> dbQuery = DbSet.AsNoTracking();
 
         if (predicate is not null)
         {
-            query = query.Where(predicate);
+            dbQuery = dbQuery.Where(predicate);
         }
 
-        query = query.ApplyDynamicFilters(pagedQuery.Filter);
+        dbQuery = dbQuery.ApplyDynamicFilters(query.Filter);
 
-        if (pagedQuery.Sorts == null || !pagedQuery.Sorts.Any())
+        if (query.Sorts == null || !query.Sorts.Any())
         {
-            query = query.ApplyDynamicSorting(new List<Sort>
+            dbQuery = dbQuery.ApplyDynamicSorting(new List<Sort>
             {
                 new Sort { Field = "CreatedAt", Dir = "desc" }
             });
         }
         else
         {
-            query = query.ApplyDynamicSorting(pagedQuery.Sorts);
+            dbQuery = dbQuery.ApplyDynamicSorting(query.Sorts);
         }
 
-        return await query
+        return await dbQuery.ToPagedResultAsync(query, cancellationToken);
+    }
+
+    public virtual async Task<Shared.Domain.Pagination.PagedResult<TResult>> GetPagedAsync<TResult>(
+        AdvancedPagedQuery query,
+        Expression<Func<TEntity, TResult>> selector,
+        Expression<Func<TEntity, bool>>? predicate = null,
+        CancellationToken cancellationToken = default)
+    {
+        IQueryable<TEntity> dbQuery = DbSet.AsNoTracking();
+
+        if (predicate is not null)
+        {
+            dbQuery = dbQuery.Where(predicate);
+        }
+
+        dbQuery = dbQuery.ApplyDynamicFilters(query.Filter);
+
+        if (query.Sorts == null || !query.Sorts.Any())
+        {
+            dbQuery = dbQuery.ApplyDynamicSorting(new List<Sort>
+            {
+                new Sort { Field = "CreatedAt", Dir = "desc" }
+            });
+        }
+        else
+        {
+            dbQuery = dbQuery.ApplyDynamicSorting(query.Sorts);
+        }
+
+        return await dbQuery
             .Select(selector)
-            .ToPagedResultAsync(pagedQuery, cancellationToken);
+            .ToPagedResultAsync(query, cancellationToken);
     }
 
     public virtual async Task<TEntity?> FirstOrDefaultAsync(
