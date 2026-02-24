@@ -124,5 +124,17 @@ namespace Users.Infrastructure.Data.Repositories
             return user;
         }
 
+        public async Task<User?> GetByExternalIdentityAsync(string provider, string providerKey, CancellationToken cancellationToken = default)
+        {
+            return await _users
+                .Include(u => u.Roles)
+                .Include(u => u.RefreshTokens)
+                .Include(u => u.ExternalIdentities)
+                .AsTracking()
+                .FirstOrDefaultAsync(u =>
+                    u.ExternalIdentities.Any(e => e.Provider == provider && e.ProviderKey == providerKey),
+                    cancellationToken);
+        }
+
     }
 }

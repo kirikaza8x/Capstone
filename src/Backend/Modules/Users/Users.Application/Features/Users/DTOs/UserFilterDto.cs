@@ -6,16 +6,12 @@ namespace Users.Application.Features.Users.Dtos;
 
 public sealed record UserFilterRequestDto : PagedRequestDto
 {
-    [DefaultValue("")]
     public string? Email { get; init; }
 
-    [DefaultValue("")]
     public string? UserName { get; init; }
 
-    [DefaultValue("")]
     public string? FirstName { get; init; }
 
-    [DefaultValue("")]
     public string? LastName { get; init; }
 
     [DefaultValue("1900-01-01T00:00:00Z")] 

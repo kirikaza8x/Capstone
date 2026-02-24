@@ -16,6 +16,7 @@ using Shared.Infrastructure.Configs.Database;
 using Shared.Infrastructure.Configs.Security;
 using Shared.Infrastructure.Data.Interceptors;
 using Shared.Infrastructure.Extensions;
+using Users.Application.Abstractions.Authentication;
 using Users.Domain.UOW;
 using Users.Infrastructure.Authentication;
 using Users.Infrastructure.Data.UOW;
@@ -97,6 +98,7 @@ namespace Users.Infrastructure
                     options.TokenValidationParameters.ValidIssuer = jwtSettings.Issuer;
                     options.TokenValidationParameters.ValidAudience = jwtSettings.Audience;
                 });
+            services.AddScoped<IGooglePayloadValidator, GooglePayloadValidatorService>();
             services.AddScoped<IJwtTokenService, JwtTokenService>();
             services.AddScoped<IPasswordHasher, PasswordHasher>();
             services.AddScoped<ICurrentUserService, CurrentUserService>();

@@ -13,6 +13,7 @@ namespace Users.Domain.Repositories
         Task<User?> LoginAsync(string userNameOrEmail, string passwordHash, CancellationToken cancellationToken = default);
         Task<RefreshToken> AddOrUpdateRefreshTokenAsync(User user, RefreshToken newToken, CancellationToken cancellationToken = default);
         Task<User> RegisterAsync(User user, Role role, CancellationToken cancellationToken = default);
+        Task<User?> GetByExternalIdentityAsync(string provider, string providerKey, CancellationToken cancellationToken = default);
          
     }
 }

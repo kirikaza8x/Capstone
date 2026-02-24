@@ -49,4 +49,15 @@ public static class ResultExtensions
             ? TypedResults.Accepted(uri, ApiResult.Success(successMessage))
             : CustomResults.Problem(result);
     }
+
+    public static IResult ToProblem(this Result result)
+    {
+        return CustomResults.Problem(result);
+    }
+
+    public static IResult ToProblem<T>(this Result<T> result)
+    {
+        return CustomResults.Problem(result);
+    }
+
 }
