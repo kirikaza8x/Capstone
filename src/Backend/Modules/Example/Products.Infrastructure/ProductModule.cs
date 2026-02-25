@@ -14,7 +14,6 @@ using Shared.Application.Abstractions.Authentication;
 using Shared.Infrastructure.Authentication;
 using Shared.Infrastructure.Configs.Database;
 using Shared.Infrastructure.Data.Interceptors;
-using Shared.Infrastructure.Extensions;
 
 namespace Products.Infrastructure;
 
@@ -58,7 +57,7 @@ public static class ProductModule
 
     public static IApplicationBuilder UseProductModule(this IApplicationBuilder app)
     {
-        app.UseMigration<ProductsDbContext>();
+        // app.UseMigration<ProductsDbContext>();
         return app;
     }
 }
