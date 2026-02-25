@@ -6,6 +6,7 @@ using Carter;
 using Events.Infrastructure;
 using Shared.Api.Extensions;
 using Shared.Application;
+using Shared.Infrastructure;
 using Shared.Infrastructure.Extensions;
 using Users.Api;
 using Users.Application;
@@ -36,6 +37,11 @@ public class Program
 
         // Add Application Services
         builder.Services.AddApplication(assemblies);
+
+        // Add Infrastructure Services
+        builder.Services.AddInfrastructure(
+            assemblies
+        );
 
         // Carter services
         builder.Services.AddCarterWithAssemblies(assemblies);

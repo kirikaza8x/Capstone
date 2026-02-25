@@ -4,6 +4,8 @@ using Shared.Infrastructure.Configs.Security;
 using Microsoft.Extensions.Options;
 using Users.Application.Abstractions.Authentication;
 
+namespace Users.Infrastructure.Services.Authentication;
+
 public class GooglePayloadValidatorService : IGooglePayloadValidator
 {
     private readonly GoogleAuthConfigs _configs;

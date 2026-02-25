@@ -13,14 +13,13 @@ using Shared.Domain.Data;
 using Shared.Infrastructure.Authentication;
 using Shared.Infrastructure.Configs;
 using Shared.Infrastructure.Configs.Database;
-using Shared.Infrastructure.Configs.Security;
 using Shared.Infrastructure.Data.Interceptors;
 using Shared.Infrastructure.Extensions;
 using Users.Application.Abstractions.Authentication;
 using Users.Domain.UOW;
-using Users.Infrastructure.Authentication;
 using Users.Infrastructure.Data.UOW;
 using Users.Infrastructure.Persistence.Contexts;
+using Users.Infrastructure.Services.Authentication;
 
 namespace Users.Infrastructure
 {
@@ -29,7 +28,7 @@ namespace Users.Infrastructure
     {
         public static IServiceCollection AddUserInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddOptions();
+            // services.AddOptions();
             // Register all config classes inheriting from ConfigBase
             services.Scan(scan => scan
                 .FromAssemblyOf<UsersInfrastructureAssemblyReference>()
@@ -38,7 +37,7 @@ namespace Users.Infrastructure
                 .WithSingletonLifetime());
 
             // Register binder once for all configs inheriting ConfigBase
-            services.AddTransient(typeof(IConfigureOptions<>), typeof(ConfigurationBinderSetup<>));
+            // services.AddTransient(typeof(IConfigureOptions<>), typeof(ConfigurationBinderSetup<>));
 
             services.Scan(scan => scan
                 .FromAssemblyOf<AuditableEntityInterceptor>()
@@ -105,12 +104,12 @@ namespace Users.Infrastructure
             services.AddScoped<ICurrentUserService, CurrentUserService>();
             services.AddScoped<IRefreshTokenService, RefreshTokenService>();
             services.AddScoped<IDeviceDetectionService, DeviceDetectionService>();
-            services.ConfigureHttpJsonOptions(options =>
-            {
-                options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
-            });
-            services.AddControllers().AddJsonOptions(options => { options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()); });
-            services.AddHttpContextAccessor();
+            // services.ConfigureHttpJsonOptions(options =>
+            // {
+            //     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+            // });
+            // services.AddControllers().AddJsonOptions(options => { options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()); });
+            // services.AddHttpContextAccessor();
             return services;
         }
 

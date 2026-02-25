@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using Shared.Application.Abstractions.Authentication;
 
-namespace Users.Infrastructure.Authentication
+namespace Users.Infrastructure.Services.Authentication
 {
     public sealed class RefreshTokenService : IRefreshTokenService
     {

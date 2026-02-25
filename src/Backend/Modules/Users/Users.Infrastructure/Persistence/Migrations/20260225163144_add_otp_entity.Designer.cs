@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Users.Infrastructure.Persistence.Contexts;
@@ -11,9 +12,11 @@ using Users.Infrastructure.Persistence.Contexts;
 namespace Users.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(UserModuleDbContext))]
-    partial class UserModuleDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260225163144_add_otp_entity")]
+    partial class add_otp_entity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -183,18 +186,14 @@ namespace Users.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("id");
 
                     b.Property<DateTime?>("CreatedAt")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at")
-                        .HasDefaultValueSql("NOW()");
+                        .HasColumnName("created_at");
 
                     b.Property<string>("CreatedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasColumnType("text")
                         .HasColumnName("created_by");
 
                     b.Property<DateTime>("ExpiryDate")
@@ -202,15 +201,11 @@ namespace Users.Infrastructure.Persistence.Migrations
                         .HasColumnName("expiry_date");
 
                     b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
-                        .HasDefaultValue(true)
                         .HasColumnName("is_active");
 
                     b.Property<bool>("IsUsed")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
-                        .HasDefaultValue(false)
                         .HasColumnName("is_used");
 
                     b.Property<DateTime?>("ModifiedAt")
@@ -218,14 +213,12 @@ namespace Users.Infrastructure.Persistence.Migrations
                         .HasColumnName("modified_at");
 
                     b.Property<string>("ModifiedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasColumnType("text")
                         .HasColumnName("modified_by");
 
                     b.Property<string>("OtpCode")
                         .IsRequired()
-                        .HasMaxLength(6)
-                        .HasColumnType("character varying(6)")
+                        .HasColumnType("text")
                         .HasColumnName("otp_code");
 
                     b.Property<Guid>("UserId")
@@ -235,11 +228,8 @@ namespace Users.Infrastructure.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_otp");
 
-                    b.HasIndex("ExpiryDate")
-                        .HasDatabaseName("ix_otp_expiry_date");
-
-                    b.HasIndex("UserId", "OtpCode")
-                        .HasDatabaseName("ix_otp_user_code");
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_otp_user_id");
 
                     b.ToTable("otp", "users");
                 });
