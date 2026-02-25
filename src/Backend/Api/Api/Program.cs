@@ -1,12 +1,9 @@
-using System.Text.Json.Serialization;
 using Ai.Api;
 using AI.Application;
 using Api.Extensions;
 using Api.Middleware;
 using Carter;
 using Events.Infrastructure;
-using Order.Infrastructure;
-using Products.Infrastructure;
 using Shared.Api.Extensions;
 using Shared.Application;
 using Shared.Infrastructure.Extensions;
@@ -24,14 +21,6 @@ public class Program
         // Assemblies array
         var assemblies = new[]
         {
-            // product
-            Products.Application.AssemblyReference.Assembly,
-            Products.Api.AssemblyReference.Assembly,
-
-            // order
-            Order.Application.AssemblyReference.Assembly,
-            Order.Api.AssemblyReference.Assembly,
-
             // user
             UsersApplicationAssemblyReference.Assembly,
             UsersApiAssemblyReference.Assembly,
@@ -78,8 +67,6 @@ public class Program
 
         // Add module
         builder.Services
-            .AddProductModule(Configuration)
-            .AddOrderModule(Configuration)
             .AddUserModule(Configuration)
             .AddEventModule(Configuration)
             .AddAiModule(Configuration)
