@@ -1,5 +1,4 @@
 ﻿using Events.Domain.Entities;
-using Events.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

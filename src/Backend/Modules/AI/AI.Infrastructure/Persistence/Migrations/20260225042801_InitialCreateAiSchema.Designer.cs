@@ -13,14 +13,15 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AI.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AIModuleDbContext))]
-    [Migration("20260211132835_config_update")]
-    partial class config_update
+    [Migration("20260225042801_InitialCreateAiSchema")]
+    partial class InitialCreateAiSchema
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .HasDefaultSchema("ai")
                 .HasAnnotation("ProductVersion", "9.0.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
@@ -94,7 +95,7 @@ namespace AI.Infrastructure.Persistence.Migrations
                         .IsUnique()
                         .HasDatabaseName("ux_interaction_weight_action_version_active");
 
-                    b.ToTable("interaction_weight", (string)null);
+                    b.ToTable("interaction_weight", "ai");
                 });
 
             modelBuilder.Entity("AI.Domain.Entities.UserBehaviorLog", b =>
@@ -174,7 +175,7 @@ namespace AI.Infrastructure.Persistence.Migrations
                     b.HasIndex("UserId", "ActionType")
                         .HasDatabaseName("ix_user_behavior_log_user_action");
 
-                    b.ToTable("user_behavior_log", (string)null);
+                    b.ToTable("user_behavior_log", "ai");
                 });
 
             modelBuilder.Entity("AI.Domain.Entities.UserInterestScore", b =>
@@ -240,7 +241,7 @@ namespace AI.Infrastructure.Persistence.Migrations
                         .IsUnique()
                         .HasDatabaseName("ux_user_interest_score_user_category");
 
-                    b.ToTable("user_interest_score", (string)null);
+                    b.ToTable("user_interest_score", "ai");
                 });
 
             modelBuilder.Entity("AI.Domain.Entities.UserWeightProfile", b =>
@@ -298,7 +299,7 @@ namespace AI.Infrastructure.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_user_weight_profile");
 
-                    b.ToTable("user_weight_profile", (string)null);
+                    b.ToTable("user_weight_profile", "ai");
                 });
 
             modelBuilder.Entity("AI.Domain.ReadModels.GlobalCategoryStat", b =>
@@ -368,7 +369,7 @@ namespace AI.Infrastructure.Persistence.Migrations
                         .IsUnique()
                         .HasDatabaseName("ux_global_category_stat_category");
 
-                    b.ToTable("global_category_stat", (string)null);
+                    b.ToTable("global_category_stat", "ai");
                 });
 #pragma warning restore 612, 618
         }

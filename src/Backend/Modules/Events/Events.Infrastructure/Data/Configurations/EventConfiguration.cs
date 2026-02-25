@@ -65,8 +65,7 @@ internal sealed class EventConfiguration : IEntityTypeConfiguration<Event>
 
         builder.HasMany(e => e.EventHashtags)
             .WithOne(eh => eh.Event)
-            .HasForeignKey(eh => eh.EventId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .HasForeignKey(eh => eh.EventId);
 
         builder.HasMany(e => e.Staffs)
             .WithOne(s => s.Event)

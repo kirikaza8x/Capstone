@@ -56,13 +56,14 @@ namespace Users.Infrastructure
             {
                 var dbConfig = sp.GetRequiredService<IOptions<DatabaseConfig>>().Value;
 
-                options.UseNpgsql(dbConfig.ConnectionString, a =>
+                options.UseNpgsql(dbConfig.ConnectionString, npgsqlOptions =>
                 {
+                    npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", Constants.SchemaName);
                     if (dbConfig.MaxRetryCount > 0)
-                        a.EnableRetryOnFailure(dbConfig.MaxRetryCount);
+                        npgsqlOptions.EnableRetryOnFailure(dbConfig.MaxRetryCount);
 
                     if (dbConfig.CommandTimeout > 0)
-                        a.CommandTimeout(dbConfig.CommandTimeout);
+                        npgsqlOptions.CommandTimeout(dbConfig.CommandTimeout);
                 })
                 .UseSnakeCaseNamingConvention()
                 .AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());

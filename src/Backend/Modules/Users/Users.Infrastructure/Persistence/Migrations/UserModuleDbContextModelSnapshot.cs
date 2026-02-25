@@ -17,6 +17,7 @@ namespace Users.Infrastructure.Persistence.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .HasDefaultSchema("users")
                 .HasAnnotation("ProductVersion", "9.0.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
@@ -102,7 +103,7 @@ namespace Users.Infrastructure.Persistence.Migrations
                     b.HasIndex("UserId")
                         .HasDatabaseName("ix_refresh_token_user_id");
 
-                    b.ToTable("refresh_token", (string)null);
+                    b.ToTable("refresh_token", "users");
                 });
 
             modelBuilder.Entity("Users.Domain.Entities.Role", b =>
@@ -153,7 +154,7 @@ namespace Users.Infrastructure.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_role");
 
-                    b.ToTable("role", (string)null);
+                    b.ToTable("role", "users");
                 });
 
             modelBuilder.Entity("Users.Domain.Entities.User", b =>
@@ -278,7 +279,7 @@ namespace Users.Infrastructure.Persistence.Migrations
                         .IsUnique()
                         .HasDatabaseName("ix_user_username");
 
-                    b.ToTable("user", (string)null);
+                    b.ToTable("user", "users");
                 });
 
             modelBuilder.Entity("Users.Domain.Entities.UserSession", b =>
@@ -354,7 +355,7 @@ namespace Users.Infrastructure.Persistence.Migrations
                     b.HasIndex("UserId")
                         .HasDatabaseName("ix_user_session_user_id");
 
-                    b.ToTable("user_session", (string)null);
+                    b.ToTable("user_session", "users");
                 });
 
             modelBuilder.Entity("Users.Domain.Entities.Wallet", b =>
@@ -410,7 +411,7 @@ namespace Users.Infrastructure.Persistence.Migrations
                         .IsUnique()
                         .HasDatabaseName("ix_wallet_user_id");
 
-                    b.ToTable("wallet", (string)null);
+                    b.ToTable("wallet", "users");
                 });
 
             modelBuilder.Entity("Users.Domain.Entities.WalletTransaction", b =>
@@ -493,7 +494,7 @@ namespace Users.Infrastructure.Persistence.Migrations
                     b.HasIndex("WalletId")
                         .HasDatabaseName("ix_wallet_transaction_wallet_id");
 
-                    b.ToTable("wallet_transaction", (string)null);
+                    b.ToTable("wallet_transaction", "users");
                 });
 
             modelBuilder.Entity("user_roles", b =>
@@ -512,7 +513,7 @@ namespace Users.Infrastructure.Persistence.Migrations
                     b.HasIndex("role_id")
                         .HasDatabaseName("ix_user_roles_role_id");
 
-                    b.ToTable("user_roles", (string)null);
+                    b.ToTable("user_roles", "users");
                 });
 
             modelBuilder.Entity("RefreshToken", b =>

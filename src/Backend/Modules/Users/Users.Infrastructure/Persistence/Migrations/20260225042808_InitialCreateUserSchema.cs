@@ -6,13 +6,17 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Users.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class user_update_wallet_index : Migration
+    public partial class InitialCreateUserSchema : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.EnsureSchema(
+                name: "users");
+
             migrationBuilder.CreateTable(
                 name: "role",
+                schema: "users",
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
@@ -31,6 +35,7 @@ namespace Users.Infrastructure.Persistence.Migrations
 
             migrationBuilder.CreateTable(
                 name: "user",
+                schema: "users",
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
@@ -39,7 +44,7 @@ namespace Users.Infrastructure.Persistence.Migrations
                     password_hash = table.Column<string>(type: "text", nullable: false),
                     first_name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     last_name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    birthday = table.Column<DateOnly>(type: "date", nullable: true),
+                    birthday = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     gender = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
                     phone_number = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
                     address = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
@@ -60,6 +65,7 @@ namespace Users.Infrastructure.Persistence.Migrations
 
             migrationBuilder.CreateTable(
                 name: "user_session",
+                schema: "users",
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -82,6 +88,7 @@ namespace Users.Infrastructure.Persistence.Migrations
 
             migrationBuilder.CreateTable(
                 name: "refresh_token",
+                schema: "users",
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
@@ -105,6 +112,7 @@ namespace Users.Infrastructure.Persistence.Migrations
                     table.ForeignKey(
                         name: "fk_refresh_token_users_user_id",
                         column: x => x.user_id,
+                        principalSchema: "users",
                         principalTable: "user",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
@@ -112,6 +120,7 @@ namespace Users.Infrastructure.Persistence.Migrations
 
             migrationBuilder.CreateTable(
                 name: "user_roles",
+                schema: "users",
                 columns: table => new
                 {
                     user_id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -123,12 +132,14 @@ namespace Users.Infrastructure.Persistence.Migrations
                     table.ForeignKey(
                         name: "fk_userroles_role",
                         column: x => x.role_id,
+                        principalSchema: "users",
                         principalTable: "role",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "fk_userroles_user",
                         column: x => x.user_id,
+                        principalSchema: "users",
                         principalTable: "user",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
@@ -136,6 +147,7 @@ namespace Users.Infrastructure.Persistence.Migrations
 
             migrationBuilder.CreateTable(
                 name: "wallet",
+                schema: "users",
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -154,6 +166,7 @@ namespace Users.Infrastructure.Persistence.Migrations
                     table.ForeignKey(
                         name: "fk_wallet_users_user_id",
                         column: x => x.user_id,
+                        principalSchema: "users",
                         principalTable: "user",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
@@ -161,6 +174,7 @@ namespace Users.Infrastructure.Persistence.Migrations
 
             migrationBuilder.CreateTable(
                 name: "wallet_transaction",
+                schema: "users",
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -184,6 +198,7 @@ namespace Users.Infrastructure.Persistence.Migrations
                     table.ForeignKey(
                         name: "fk_wallet_transaction_wallet_wallet_id",
                         column: x => x.wallet_id,
+                        principalSchema: "users",
                         principalTable: "wallet",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
@@ -191,85 +206,101 @@ namespace Users.Infrastructure.Persistence.Migrations
 
             migrationBuilder.CreateIndex(
                 name: "ix_refresh_token_user_id",
+                schema: "users",
                 table: "refresh_token",
                 column: "user_id");
 
             migrationBuilder.CreateIndex(
                 name: "ix_user_created_at",
+                schema: "users",
                 table: "user",
                 column: "created_at");
 
             migrationBuilder.CreateIndex(
                 name: "ix_user_email",
+                schema: "users",
                 table: "user",
                 column: "email",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "ix_user_is_active",
+                schema: "users",
                 table: "user",
                 column: "is_active");
 
             migrationBuilder.CreateIndex(
                 name: "ix_user_status",
+                schema: "users",
                 table: "user",
                 column: "status");
 
             migrationBuilder.CreateIndex(
                 name: "ix_user_username",
+                schema: "users",
                 table: "user",
                 column: "username",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "ix_user_roles_role_id",
+                schema: "users",
                 table: "user_roles",
                 column: "role_id");
 
             migrationBuilder.CreateIndex(
                 name: "ix_user_session_campaign_id",
+                schema: "users",
                 table: "user_session",
                 column: "campaign_id");
 
             migrationBuilder.CreateIndex(
                 name: "ix_user_session_last_active_at",
+                schema: "users",
                 table: "user_session",
                 column: "last_active_at");
 
             migrationBuilder.CreateIndex(
                 name: "ix_user_session_session_id",
+                schema: "users",
                 table: "user_session",
                 column: "session_id",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "ix_user_session_user_id",
+                schema: "users",
                 table: "user_session",
                 column: "user_id");
 
             migrationBuilder.CreateIndex(
                 name: "ix_wallet_status",
+                schema: "users",
                 table: "wallet",
                 column: "status");
 
             migrationBuilder.CreateIndex(
                 name: "ix_wallet_user_id",
+                schema: "users",
                 table: "wallet",
                 column: "user_id",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "ix_wallet_transaction_created_at",
+                schema: "users",
                 table: "wallet_transaction",
                 column: "created_at");
 
             migrationBuilder.CreateIndex(
                 name: "ix_wallet_transaction_status",
+                schema: "users",
                 table: "wallet_transaction",
                 column: "status");
 
             migrationBuilder.CreateIndex(
                 name: "ix_wallet_transaction_wallet_id",
+                schema: "users",
                 table: "wallet_transaction",
                 column: "wallet_id");
         }
@@ -278,25 +309,32 @@ namespace Users.Infrastructure.Persistence.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "refresh_token");
+                name: "refresh_token",
+                schema: "users");
 
             migrationBuilder.DropTable(
-                name: "user_roles");
+                name: "user_roles",
+                schema: "users");
 
             migrationBuilder.DropTable(
-                name: "user_session");
+                name: "user_session",
+                schema: "users");
 
             migrationBuilder.DropTable(
-                name: "wallet_transaction");
+                name: "wallet_transaction",
+                schema: "users");
 
             migrationBuilder.DropTable(
-                name: "role");
+                name: "role",
+                schema: "users");
 
             migrationBuilder.DropTable(
-                name: "wallet");
+                name: "wallet",
+                schema: "users");
 
             migrationBuilder.DropTable(
-                name: "user");
+                name: "user",
+                schema: "users");
         }
     }
 }

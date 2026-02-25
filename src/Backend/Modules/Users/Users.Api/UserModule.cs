@@ -18,7 +18,7 @@ public static class UserModule
     public static IApplicationBuilder UseUserModule(this IApplicationBuilder app)
     {
         app.UseMiddleware<DeviceIdMiddleware>();
-        // app.UseMigration<UserModuleDbContext>();
+        app.UseMigration<UserModuleDbContext>();
         return app;
     }
 }
