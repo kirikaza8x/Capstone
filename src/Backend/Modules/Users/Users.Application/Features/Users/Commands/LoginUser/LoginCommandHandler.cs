@@ -1,15 +1,18 @@
+using FluentValidation;
 using Shared.Application.Abstractions.Authentication;
+using Shared.Application.DTOs;
 using Shared.Application.Messaging;
 using Shared.Domain.Abstractions;
 using Users.Application.Features.Users.Commands.Records;
 using Users.Application.Features.Users.Dtos;
+using Users.Domain.Entities;
 using Users.Domain.Repositories;
-using FluentValidation;
 using Users.Domain.UOW;
 
 namespace Users.Application.Features.Users.Commands.Handlers;
 
-public class LoginUserCommandHandler : ICommandHandler<LoginUserCommand, LoginResponseDto>
+public class LoginUserCommandHandler
+    : ICommandHandler<LoginUserCommand, LoginResponseDto>
 {
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHasher _passwordHasher;
@@ -40,72 +43,159 @@ public class LoginUserCommandHandler : ICommandHandler<LoginUserCommand, LoginRe
         _validator = validator;
     }
 
-    public async Task<Result<LoginResponseDto>> Handle(LoginUserCommand command, CancellationToken cancellationToken)
+    // ============================================================
+    // Handle
+    // ============================================================
+    public async Task<Result<LoginResponseDto>> Handle(
+        LoginUserCommand command,
+        CancellationToken cancellationToken)
     {
-        var validationResult = await _validator.ValidateAsync(command, cancellationToken);
-        if (!validationResult.IsValid)
-        {
-            var firstError = validationResult.Errors.First();
+        var validation = await ValidateAsync(command, cancellationToken);
+        if (validation.IsFailure)
+            return validation;
+
+        var user = await GetUserAsync(command, cancellationToken);
+        if (user is null)
             return Result.Failure<LoginResponseDto>(
-                Error.Validation("Login.Validation", firstError.ErrorMessage)
-            );
+                Error.NotFound("User.NotFound", "User not found."));
+
+        if (!VerifyPassword(command.Password, user))
+            return Result.Failure<LoginResponseDto>(
+                Error.Unauthorized("User.InvalidCredentials", "Invalid password."));
+
+        var roles = user.Roles.Select(r => r.Name).ToList();
+
+        var deviceInfo = ResolveDevice(command);
+
+        var refreshToken = await CreateRefreshTokenAsync(
+            user,
+            deviceInfo,
+            cancellationToken);
+
+        var accessToken = CreateAccessToken(user, roles);
+
+        return Result.Success(
+            BuildResponse(
+                user,
+                roles,
+                accessToken,
+                refreshToken,
+                deviceInfo));
+    }
+
+    // ============================================================
+    // Validation
+    // ============================================================
+    private async Task<Result<LoginResponseDto>> ValidateAsync(
+        LoginUserCommand command,
+        CancellationToken cancellationToken)
+    {
+        var result = await _validator.ValidateAsync(command, cancellationToken);
+
+        if (!result.IsValid)
+        {
+            var error = result.Errors.First();
+            return Result.Failure<LoginResponseDto>(
+                Error.Validation("Login.Validation", error.ErrorMessage));
         }
 
-        var user = await _userRepository.GetUserByMailOrUserNameAsync(command.EmailOrUserName, cancellationToken);
-        if (user == null)
-            return Result.Failure<LoginResponseDto>(Error.NotFound("User.NotFound", "User not found."));
+        return Result.Success<LoginResponseDto>(default!);
+    }
 
-        if (!_passwordHasher.VerifyPassword(command.Password, user.PasswordHash))
-            return Result.Failure<LoginResponseDto>(Error.Unauthorized("User.InvalidCredentials", "Invalid password."));
+    // ============================================================
+    // User & Credentials
+    // ============================================================
+    private async Task<User?> GetUserAsync(
+        LoginUserCommand command,
+        CancellationToken cancellationToken)
+    {
+        return await _userRepository.GetUserByMailOrUserNameAsync(
+            command.EmailOrUserName,
+            cancellationToken);
+    }
 
-        var roles = user.Roles?.Select(r => r.Name).ToList() ?? new List<string>();
+    private bool VerifyPassword(string password, User user)
+    {
+        return _passwordHasher.VerifyPassword(password, user.PasswordHash);
+    }
 
-        var deviceId = _currentUserService.DeviceId;
+    // ============================================================
+    // Device
+    // ============================================================
+    private DeviceInfo ResolveDevice(LoginUserCommand command)
+    {
         var deviceInfo = _deviceDetectionService.GetDeviceInfo(
             _currentUserService.UserAgent,
             _currentUserService.IpAddress,
-            deviceId);
+            _currentUserService.DeviceId);
 
         if (!string.IsNullOrWhiteSpace(command.DeviceName))
             deviceInfo.DeviceName = command.DeviceName;
 
-        var newToken = _refreshTokenService.GenerateToken(user.Id);
+        return deviceInfo;
+    }
+
+    // ============================================================
+    // Tokens
+    // ============================================================
+    private async Task<RefreshToken> CreateRefreshTokenAsync(
+        User user,
+        DeviceInfo deviceInfo,
+        CancellationToken cancellationToken)
+    {
+        var generated = _refreshTokenService.GenerateToken(user.Id);
 
         user.RevokeRefreshTokensByDevice(deviceInfo.DeviceId);
 
-        var refreshTokenEntity = await _userRepository.AddOrUpdateRefreshTokenAsync(
+        var refreshToken = RefreshToken.Create(
+            generated.Token,
+            generated.ExpiryDate,
+            user.Id,
+            deviceInfo.DeviceId,
+            deviceInfo.DeviceName,
+            deviceInfo.IpAddress,
+            deviceInfo.UserAgent);
+
+        var persisted = await _userRepository.AddOrUpdateRefreshTokenAsync(
             user,
-            RefreshToken.Create(
-                newToken.Token,
-                newToken.ExpiryDate,
-                user.Id,
-                deviceInfo.DeviceId,
-                deviceInfo.DeviceName,
-                deviceInfo.IpAddress,
-                deviceInfo.UserAgent
-            ),
+            refreshToken,
             cancellationToken);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        var accessToken = _jwtTokenService.GenerateToken(
+        return persisted;
+    }
+
+    private string CreateAccessToken(User user, List<string> roles)
+    {
+        return _jwtTokenService.GenerateToken(
             user.Id,
             user.Email,
             user.UserName,
-            roles
-        );
-
-        var response = new LoginResponseDto(
-            AccessToken: accessToken,
-            RefreshToken: refreshTokenEntity.Token,
-            ExpiresAt: DateTime.UtcNow.AddMinutes(_jwtTokenService.ExpiryMinutes),
-            User: new UserInfoDto(user.Id, user.FirstName ?? "", user.UserName, user.Email, roles),
-            DeviceId: deviceInfo.DeviceId,
-            DeviceName: deviceInfo.DeviceName
-        );
-
-        return Result.Success(response);
+            roles);
     }
 
-
+    // ============================================================
+    // Response
+    // ============================================================
+    private LoginResponseDto BuildResponse(
+        User user,
+        List<string> roles,
+        string accessToken,
+        RefreshToken refreshToken,
+        DeviceInfo deviceInfo)
+    {
+        return new LoginResponseDto(
+            AccessToken: accessToken,
+            RefreshToken: refreshToken.Token,
+            ExpiresAt: DateTime.UtcNow.AddMinutes(_jwtTokenService.ExpiryMinutes),
+            User: new UserInfoDto(
+                user.Id,
+                user.FirstName ?? string.Empty,
+                user.UserName,
+                user.Email,
+                roles),
+            DeviceId: deviceInfo.DeviceId,
+            DeviceName: deviceInfo.DeviceName);
+    }
 }
