@@ -22,12 +22,8 @@ public class GetUsersFilterEndpoint : ICarterModule
             IMapper mapper,
             CancellationToken cancellationToken) =>
         {
-            // 1. Map the 'Stimulated' DTO (UserFilterRequestDto) 
-            // to the Domain Query (GetUsersQuery).
-            // AutoMapper handles the recursive Filter/Sort conversion.
             var query = mapper.Map<GetUsersQuery>(request);
 
-            // 2. Send the clean Domain Query to the MediatR Handler
             var result = await sender.Send(query, cancellationToken);
 
             // 3. Return the PagedResult using your Result extension
