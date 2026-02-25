@@ -113,11 +113,12 @@ docker-compose up -d
 }
 ```
   4. Run project
+     
     1. Open project in Visual Studio
-    2.Set `Api project` as startup project
+    2. Set `Api project` as startup project
     3. Press `F5`.
      
-  5. Access API
+  6. Access API
   Swagger:
   
   ```
