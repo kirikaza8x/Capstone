@@ -175,7 +175,7 @@ namespace Users.Infrastructure.Persistence.Migrations
                         .IsUnique()
                         .HasDatabaseName("ix_external_identity_provider_key");
 
-                    b.ToTable("external_identity", (string)null);
+                    b.ToTable("external_identity", "users");
                 });
 
             modelBuilder.Entity("Users.Domain.Entities.Role", b =>

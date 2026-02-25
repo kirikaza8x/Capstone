@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Users.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreateUserSchema : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -42,6 +42,7 @@ namespace Users.Infrastructure.Persistence.Migrations
                     email = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     username = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     password_hash = table.Column<string>(type: "text", nullable: false),
+                    status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false, defaultValue: "Active"),
                     first_name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     last_name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     birthday = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
@@ -51,7 +52,6 @@ namespace Users.Infrastructure.Persistence.Migrations
                     description = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
                     social_link = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     profile_image_url = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
-                    status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false, defaultValue: "Active"),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true, defaultValueSql: "NOW()"),
                     created_by = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     modified_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
@@ -84,6 +84,34 @@ namespace Users.Infrastructure.Persistence.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("pk_user_session", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "external_identity",
+                schema: "users",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    user_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    provider = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    provider_key = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    linked_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true, defaultValueSql: "NOW()"),
+                    created_by = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    modified_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    modified_by = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    is_active = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_external_identity", x => x.id);
+                    table.ForeignKey(
+                        name: "fk_external_identity_users_user_id",
+                        column: x => x.user_id,
+                        principalSchema: "users",
+                        principalTable: "user",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -205,6 +233,25 @@ namespace Users.Infrastructure.Persistence.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "ix_external_identity_created_at",
+                schema: "users",
+                table: "external_identity",
+                column: "created_at");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_external_identity_provider_key",
+                schema: "users",
+                table: "external_identity",
+                columns: new[] { "provider", "provider_key" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "ix_external_identity_user_id",
+                schema: "users",
+                table: "external_identity",
+                column: "user_id");
+
+            migrationBuilder.CreateIndex(
                 name: "ix_refresh_token_user_id",
                 schema: "users",
                 table: "refresh_token",
@@ -308,6 +355,10 @@ namespace Users.Infrastructure.Persistence.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "external_identity",
+                schema: "users");
+
             migrationBuilder.DropTable(
                 name: "refresh_token",
                 schema: "users");

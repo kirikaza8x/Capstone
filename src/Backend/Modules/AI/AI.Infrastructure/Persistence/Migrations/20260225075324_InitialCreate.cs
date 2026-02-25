@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace AI.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreateAiSchema : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
