@@ -4,6 +4,7 @@ using Api.Extensions;
 using Api.Middleware;
 using Carter;
 using Events.Infrastructure;
+using Shared.Api;
 using Shared.Api.Extensions;
 using Shared.Application;
 using Shared.Infrastructure;
@@ -36,40 +37,25 @@ public class Program
         };
 
         // Add Application Services
-        builder.Services.AddApplication(assemblies);
+        builder.Services.AddApplication(
+            assemblies
+            );
 
         // Add Infrastructure Services
         builder.Services.AddInfrastructure(
-            assemblies
+            assemblies,
+            Configuration
         );
 
-        // Carter services
-        builder.Services.AddCarterWithAssemblies(assemblies);
-
-        // Masstransit services
-        builder.Services.AddMassTransitWithAssemblies(
-            Configuration,
-            assemblies
+        // Add Api Services
+        builder.Services.AddApi(
+            assemblies, 
+            Configuration
         );
 
         //swagger
         builder.Services.AddSwaggerDocumentation();
-        builder.Services.AddAuthentication();
-        builder.Services.AddAuthorization();
 
-        // Add CORS
-        builder.Services.AddCors(options =>
-        {
-            options.AddDefaultPolicy(policy =>
-            {
-                policy.AllowAnyOrigin()
-                      .AllowAnyMethod()
-                      .AllowAnyHeader();
-            });
-        });
-
-        // Add storage service
-        builder.Services.AddStorageService(Configuration);
 
         // Add module
         builder.Services

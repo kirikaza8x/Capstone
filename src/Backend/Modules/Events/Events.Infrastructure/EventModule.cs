@@ -24,7 +24,6 @@ public static class EventModule
         services.ConfigureOptions<DatabaseConfigSetup>();
 
         services.AddScoped<ICurrentUserService, CurrentUserService>();
-        // services.AddHttpContextAccessor();
 
         services.AddScoped<ISaveChangesInterceptor, AuditableEntityInterceptor>();
         services.AddScoped<ISaveChangesInterceptor, DispatchDomainEventInterceptor>();
