@@ -15,7 +15,7 @@ public class UpdateProfileEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPut("api/users/profile", async (
+        app.MapPatch("api/users/profile", async (
             [FromBody] UpdateProfileRequestDto requestDto,
             ISender sender,
             CancellationToken cancellationToken) =>

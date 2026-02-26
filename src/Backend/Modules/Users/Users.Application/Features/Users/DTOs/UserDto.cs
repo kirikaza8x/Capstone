@@ -57,6 +57,9 @@ public class GoogleLoginRequestDto
 {
     [DefaultValue("server id token")]
     public string IdToken { get; set; } = default!;
+
+    // Optional device information
+    public string? DeviceName { get; set; }
 }
 
 

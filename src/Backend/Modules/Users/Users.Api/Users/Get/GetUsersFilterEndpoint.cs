@@ -10,7 +10,7 @@ using Shared.Domain.Pagination;
 using Users.Application.Features.Users.Dtos;
 using Users.Application.Features.Users.Queries;
 
-namespace Users.Api.Users;
+namespace Users.Api.Users.Get;
 
 public class GetUsersFilterEndpoint : ICarterModule
 {

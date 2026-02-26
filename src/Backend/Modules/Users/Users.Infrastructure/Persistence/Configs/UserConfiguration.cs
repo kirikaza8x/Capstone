@@ -17,7 +17,8 @@ namespace Users.Infrastructure.Persistence.Configs
             builder.Property(u => u.Id)
                    .HasColumnName("id")
                    .HasColumnType("uuid")
-                   .HasDefaultValueSql("gen_random_uuid()");
+                   .HasDefaultValueSql("gen_random_uuid()")
+                   .ValueGeneratedNever();
 
             // --- Properties ---
             builder.Property(u => u.Email)

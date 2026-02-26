@@ -1,6 +1,7 @@
 using Shared.Domain.DDD;
 using Users.Domain.Events;
 using Users.Domain.Enums;
+using Users.Domain.Errors.Users;
 
 namespace Users.Domain.Entities
 {
@@ -60,7 +61,17 @@ namespace Users.Domain.Entities
         }
 
         public void ChangeEmail(string newEmail) => Email = newEmail;
-        public void ChangePassword(string newPasswordHash) => PasswordHash = newPasswordHash;
+        public void ChangePassword(string newHash)
+        {
+            if (this.PasswordHash == newHash)
+            {
+                throw new InvalidOperationException(UserErrors.SamePassword.Code);
+            }
+
+            this.PasswordHash = newHash;
+        }
+
+        
 
         public void Activate() => Status = UserStatus.Active;
         public void Deactivate() => Status = UserStatus.Inactive;

@@ -1,5 +1,4 @@
 using System.Text;
-using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
@@ -28,16 +27,11 @@ namespace Users.Infrastructure
     {
         public static IServiceCollection AddUserInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
-            // services.AddOptions();
-            // Register all config classes inheriting from ConfigBase
             services.Scan(scan => scan
                 .FromAssemblyOf<UsersInfrastructureAssemblyReference>()
                 .AddClasses(classes => classes.AssignableTo<ConfigBase>())
                 .AsSelf()
                 .WithSingletonLifetime());
-
-            // Register binder once for all configs inheriting ConfigBase
-            // services.AddTransient(typeof(IConfigureOptions<>), typeof(ConfigurationBinderSetup<>));
 
             services.Scan(scan => scan
                 .FromAssemblyOf<AuditableEntityInterceptor>()
@@ -104,12 +98,6 @@ namespace Users.Infrastructure
             services.AddScoped<ICurrentUserService, CurrentUserService>();
             services.AddScoped<IRefreshTokenService, RefreshTokenService>();
             services.AddScoped<IDeviceDetectionService, DeviceDetectionService>();
-            // services.ConfigureHttpJsonOptions(options =>
-            // {
-            //     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
-            // });
-            // services.AddControllers().AddJsonOptions(options => { options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()); });
-            // services.AddHttpContextAccessor();
             return services;
         }
 

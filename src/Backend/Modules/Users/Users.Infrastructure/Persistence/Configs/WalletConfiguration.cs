@@ -15,7 +15,9 @@ namespace Users.Infrastructure.Persistence.Configs
 
             builder.Property(w => w.Id)
                    .HasColumnName("id")
-                   .HasColumnType("uuid");
+                   .HasColumnType("uuid")
+                   .ValueGeneratedNever()
+                   .HasDefaultValueSql("gen_random_uuid()");
 
             builder.Property(w => w.UserId)
                    .HasColumnName("user_id")

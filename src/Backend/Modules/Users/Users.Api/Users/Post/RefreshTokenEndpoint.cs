@@ -9,13 +9,13 @@ using Shared.Domain.Abstractions;
 using Users.Application.Features.Users.Commands.Records;
 using Users.Application.Features.Users.Dtos;
 
-namespace Users.Api.Users;
+namespace Users.Api.Users.Post;
 
 public class RefreshTokenEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPost("api/users/refresh-token", async (
+        app.MapPost("api/auth/refresh-token", async (
             [FromBody] RefreshTokenRequestDto request,
             ISender sender,
             CancellationToken cancellationToken) =>
@@ -32,7 +32,7 @@ public class RefreshTokenEndpoint : ICarterModule
 
             return result.ToOk();
         })
-        .WithTags("Users")
+        .WithTags("Authentication")
         .WithName("RefreshToken")
         .WithSummary("Refresh user tokens")
         .WithDescription("Validates refresh token and issues new access/refresh tokens")

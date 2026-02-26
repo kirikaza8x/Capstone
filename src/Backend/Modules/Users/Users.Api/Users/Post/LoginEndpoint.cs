@@ -9,13 +9,13 @@ using Shared.Domain.Abstractions;
 using Users.Application.Features.Users.Commands.Records;
 using Users.Application.Features.Users.Dtos;
 
-namespace Users.Api.Users;
+namespace Users.Api.Users.Post;
 
 public class LoginUserEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPost("api/users/login", async (
+        app.MapPost("api/auth/login", async (
             [FromBody] LoginRequestDto request,
             ISender sender,
             CancellationToken cancellationToken) =>
@@ -31,7 +31,7 @@ public class LoginUserEndpoint : ICarterModule
 
             return result.ToOk();
         }) 
-        .WithTags("Users")
+        .WithTags("Authentication")
         .WithName("LoginUser")
         .WithSummary("Login a user")
         .WithDescription("Authenticates a user and returns access/refresh tokens along with user info")

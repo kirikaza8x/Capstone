@@ -8,7 +8,7 @@ using Users.Application.Features.Users.Dtos;
 using Carter;
 using MediatR;
 
-namespace Users.Api.Users;
+namespace Users.Api.Users.Patch;
 
 public class UpdateProfileImageEndpoint : ICarterModule
 {

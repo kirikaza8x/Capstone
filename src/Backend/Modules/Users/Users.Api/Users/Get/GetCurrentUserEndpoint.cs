@@ -8,7 +8,7 @@ using Shared.Application.DTOs;
 using Users.Application.Features.Users.Queries;
 using Carter;
 
-namespace Users.Api.Users;
+namespace Users.Api.Users.Get;
 
 public class GetCurrentUserEndpoint : ICarterModule
 {

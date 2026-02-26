@@ -1,5 +1,6 @@
 using Shared.Domain.DDD;
 using Users.Domain.Errors.Otp;
+using Users.Domain.Errors.Users; // Added for SamePassword error
 using Users.Domain.Events;
 
 namespace Users.Domain.Entities
@@ -12,8 +13,15 @@ namespace Users.Domain.Entities
         // --------------------
         // Password Reset Flow
         // --------------------
+        
         public Otp CreateOtp()
         {
+            // Invalidate any previous unused OTPs to prevent confusion
+            foreach (var existingOtp in _otps.Where(o => !o.IsUsed))
+            {
+                existingOtp.MarkUsed(); 
+            }
+
             var otp = Otp.Create(Id);
             _otps.Add(otp);
 
@@ -21,32 +29,32 @@ namespace Users.Domain.Entities
             return otp;
         }
 
+        private Otp? GetLatestActiveOtp() => 
+            _otps.Where(o => !o.IsUsed && !o.IsExpired())
+                 .OrderByDescending(o => o.CreatedAt)
+                 .FirstOrDefault();
+
         public bool VerifyOtp(string otpCode)
         {
-            var otp = _otps
-                .Where(o => !o.IsUsed && !o.IsExpired())
-                .OrderByDescending(o => o.CreatedAt)
-                .FirstOrDefault();
-
+            var otp = GetLatestActiveOtp();
             return otp != null && otp.Verify(otpCode);
         }
 
         public void ResetPassword(string otpCode, string newPasswordHash)
         {
-            var otp = _otps
-                .Where(o => !o.IsUsed && !o.IsExpired())
-                .OrderByDescending(o => o.CreatedAt)
-                .FirstOrDefault();
+            var otp = GetLatestActiveOtp();
 
             if (otp == null || !otp.Verify(otpCode))
-                throw new InvalidOperationException(OtpErrors.InvalidCode.ToString());
+            {
+                throw new InvalidOperationException(OtpErrors.InvalidCode.Code);
+            }
 
             ChangePassword(newPasswordHash);
             otp.MarkUsed();
 
             RaiseDomainEvent(new PasswordChangedEvent(Id));
         }
-    }
 
-    
+        
+    }
 }
