@@ -1,3 +1,5 @@
+using Users.Domain.Events;
+
 namespace Users.Domain.Entities
 {
     public partial class User
@@ -38,5 +40,44 @@ namespace Users.Domain.Entities
                 ExternalIdentity.Create(Id, provider, providerKey)
             );
         }
+
+        public void UnbindExternalIdentity(string provider, string providerKey)
+        {
+            var identity = ExternalIdentities.FirstOrDefault(e =>
+                e.Provider == provider && e.ProviderKey == providerKey);
+
+            if (identity != null)
+                ExternalIdentities.Remove(identity);
+        }
+
+        public static User CreateExternal(
+            string email,
+            string userName,
+            string provider,
+            string providerKey,
+            string? firstName = null,
+            string? lastName = null)
+        {
+            var user = new User
+            {
+                Id = Guid.NewGuid(),
+                Email = email,
+                UserName = userName,
+                FirstName = firstName,
+                LastName = lastName,
+                PasswordHash = string.Empty, 
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            // Bind the provider (e.g., "Google") and the unique subject ID
+            user.BindExternalIdentity(provider, providerKey);
+
+            // You can also assign a default 'User' role here if needed
+            user.RaiseDomainEvent(new UserCreatedEvent(user.Id, email, userName));
+
+            return user;
+        }
+        
     }
 }

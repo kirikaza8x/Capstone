@@ -6,7 +6,7 @@ using Users.Domain.Enums;
 
 namespace Users.Application.Features.Users.Queries;
 
-public sealed record GetUsersQuery : AdvancedPagedQuery, IQuery<PagedResult<UserResponseDto>>
+public sealed record GetUsersQuery : AdvancedPagedQuery, IQuery<PagedResult<UserProfileDto>>
 {
     public string? Email { get; init; }
     public string? UserName { get; init; }

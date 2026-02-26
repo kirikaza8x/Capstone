@@ -15,7 +15,9 @@ namespace Users.Infrastructure.Persistence.Configs
 
             builder.Property(t => t.Id)
                    .HasColumnName("id")
-                   .HasColumnType("uuid");
+                   .HasColumnType("uuid")
+                   .ValueGeneratedNever()
+                   .HasDefaultValueSql("gen_random_uuid()");
 
             builder.Property(t => t.WalletId)
                    .HasColumnName("wallet_id")

@@ -8,6 +8,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="AWSSDK.S3" Version="4.0.18.5" />
+		<PackageReference Include="ClosedXML" Version="0.105.0" />
 		<PackageReference Include="EFCore.BulkExtensions" Version="9.0.2" />
 		<PackageReference Include="EFCore.NamingConventions" Version="9.0.0" />
 		<PackageReference Include="MassTransit" Version="8.5.7" />

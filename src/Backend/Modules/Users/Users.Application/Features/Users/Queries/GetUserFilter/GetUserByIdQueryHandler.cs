@@ -8,7 +8,7 @@ using Users.Domain.Repositories;
 namespace Users.Application.Features.Users.Queries
 {
     public sealed class GetUsersQueryHandler
-        : IQueryHandler<GetUsersQuery, PagedResult<UserResponseDto>>
+        : IQueryHandler<GetUsersQuery, PagedResult<UserProfileDto>>
     {
         private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
@@ -19,13 +19,13 @@ namespace Users.Application.Features.Users.Queries
             _mapper = mapper;
         }
 
-        public async Task<Result<PagedResult<UserResponseDto>>> Handle(
+        public async Task<Result<PagedResult<UserProfileDto>>> Handle(
             GetUsersQuery query,
             CancellationToken cancellationToken)
         {
             var pagedResult = await _userRepository.GetPagedAsync(
                 query,
-                selector: u => _mapper.Map<UserResponseDto>(u),
+                selector: u => _mapper.Map<UserProfileDto>(u),
                 predicate: u =>
                     (string.IsNullOrWhiteSpace(query.Email) ||
                      (u.Email != null && u.Email.Contains(query.Email))) &&
@@ -35,9 +35,11 @@ namespace Users.Application.Features.Users.Queries
                      (u.FirstName != null && u.FirstName.Contains(query.FirstName))) &&
                     (string.IsNullOrWhiteSpace(query.LastName) ||
                      (u.LastName != null && u.LastName.Contains(query.LastName))) &&
-                     // For date range, we need to check if the user's birthday is not null before comparing is currently error for user have null birthday
-                    (!query.BirthdayFrom.HasValue || (u.Birthday != null && u.Birthday >= query.BirthdayFrom.Value)) &&
-                    (!query.BirthdayTo.HasValue || (u.Birthday != null && u.Birthday <= query.BirthdayTo.Value)) &&
+                    // For date range, we need to check if the user's birthday is not null before comparing is currently error for user have null birthday
+                    // ((!query.BirthdayFrom.HasValue && !query.BirthdayTo.HasValue) ||
+                    // (u.Birthday != null &&
+                    //     (!query.BirthdayFrom.HasValue || u.Birthday >= query.BirthdayFrom.Value) &&
+                    //     (!query.BirthdayTo.HasValue || u.Birthday <= query.BirthdayTo.Value)))&&
                     (!query.Gender.HasValue || u.Gender == query.Gender.Value) &&
                     (string.IsNullOrWhiteSpace(query.PhoneNumber) ||
                      (u.PhoneNumber != null && u.PhoneNumber.Contains(query.PhoneNumber))) &&

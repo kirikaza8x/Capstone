@@ -26,7 +26,6 @@ namespace Users.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("RefreshToken", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id")
                         .HasDefaultValueSql("gen_random_uuid()");
@@ -109,7 +108,6 @@ namespace Users.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Users.Domain.Entities.ExternalIdentity", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id")
                         .HasDefaultValueSql("gen_random_uuid()");
@@ -175,13 +173,77 @@ namespace Users.Infrastructure.Persistence.Migrations
                         .IsUnique()
                         .HasDatabaseName("ix_external_identity_provider_key");
 
-                    b.ToTable("external_identity", (string)null);
+                    b.ToTable("external_identity", "users");
+                });
+
+            modelBuilder.Entity("Users.Domain.Entities.Otp", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime>("ExpiryDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expiry_date");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
+
+                    b.Property<bool>("IsUsed")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_used");
+
+                    b.Property<DateTime?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modified_at");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("modified_by");
+
+                    b.Property<string>("OtpCode")
+                        .IsRequired()
+                        .HasMaxLength(6)
+                        .HasColumnType("character varying(6)")
+                        .HasColumnName("otp_code");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_otp");
+
+                    b.HasIndex("ExpiryDate")
+                        .HasDatabaseName("ix_otp_expiry_date");
+
+                    b.HasIndex("UserId", "OtpCode")
+                        .HasDatabaseName("ix_otp_user_code");
+
+                    b.ToTable("otp", "users");
                 });
 
             modelBuilder.Entity("Users.Domain.Entities.Role", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id")
                         .HasDefaultValueSql("gen_random_uuid()");
@@ -232,7 +294,6 @@ namespace Users.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Users.Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id")
                         .HasDefaultValueSql("gen_random_uuid()");
@@ -357,9 +418,9 @@ namespace Users.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Users.Domain.Entities.UserSession", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id");
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
 
                     b.Property<Guid?>("CampaignId")
                         .HasColumnType("uuid")
@@ -433,9 +494,9 @@ namespace Users.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Users.Domain.Entities.Wallet", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id");
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
 
                     b.Property<decimal>("Balance")
                         .HasColumnType("numeric(18,2)")
@@ -489,9 +550,9 @@ namespace Users.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Users.Domain.Entities.WalletTransaction", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id");
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
 
                     b.Property<decimal>("Amount")
                         .HasColumnType("numeric(18,2)")
@@ -608,6 +669,16 @@ namespace Users.Infrastructure.Persistence.Migrations
                         .HasConstraintName("fk_external_identity_users_user_id");
                 });
 
+            modelBuilder.Entity("Users.Domain.Entities.Otp", b =>
+                {
+                    b.HasOne("Users.Domain.Entities.User", null)
+                        .WithMany("Otps")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_otp_users_user_id");
+                });
+
             modelBuilder.Entity("Users.Domain.Entities.Wallet", b =>
                 {
                     b.HasOne("Users.Domain.Entities.User", "User")
@@ -650,6 +721,8 @@ namespace Users.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Users.Domain.Entities.User", b =>
                 {
                     b.Navigation("ExternalIdentities");
+
+                    b.Navigation("Otps");
 
                     b.Navigation("RefreshTokens");
 

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Shared.Application.EventBus;
+using Shared.Infrastructure.Configs;
 using Shared.Infrastructure.Configs.MessageBroker;
 using Shared.Infrastructure.EventBus;
 using System.Reflection;
@@ -16,7 +17,9 @@ public static class MassTransitExtentions
             IConfiguration configuration,
             params Assembly[] assemblies)
     {
-        services.ConfigureOptions<MessageBrokerConfigSetup>();
+        services.AddSingleton<IConfigureOptions<MessageBrokerConfig>>( 
+            new ConfigurationBinderSetup<MessageBrokerConfig>(configuration)
+            );
 
         // Register IEventBus
         services.AddScoped<IEventBus, EventBus.EventBus>();
@@ -96,4 +99,11 @@ public static class MassTransitExtentions
             config.AddConsumer(consumerType);
         }
     }
+}
+
+public static class MassTransitExtensions
+{
+    
+
+    // Keep RegisterIntegrationEventHandlers and RegisterIntegrationEventConsumers unchanged
 }

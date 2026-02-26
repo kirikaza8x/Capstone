@@ -72,5 +72,34 @@ namespace Users.Domain.Entities
                 .Where(rt => !rt.IsRevoked && rt.ExpiryDate > DateTime.UtcNow)
                 .OrderByDescending(rt => rt.CreatedAt);
         }
+
+        public void LoginDevice(
+            string token,
+            DateTime expiry,
+            string deviceId,
+            string deviceName,
+            string? ip,
+            string? ua) 
+        {
+            var existing = RefreshTokens.FirstOrDefault(t => t.DeviceId == deviceId);
+            if (existing != null)
+            {
+                RefreshTokens.Remove(existing);
+            }
+
+            var finalIp = string.IsNullOrWhiteSpace(ip) ? "0.0.0.0" : ip;
+            var finalUa = string.IsNullOrWhiteSpace(ua) ? "System/Unknown" : ua;
+
+            var newToken = RefreshToken.Create(
+                token,
+                expiry,
+                this.Id,
+                deviceId,
+                deviceName,
+                finalIp,
+                finalUa);
+
+            RefreshTokens.Add(newToken);
+        }
     }
 }
