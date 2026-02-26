@@ -147,6 +147,4 @@ public partial class RepositoryBase<TEntity, TId> : IRepository<TEntity, TId>
             ? await DbSet.CountAsync(cancellationToken)
             : await DbSet.CountAsync(predicate, cancellationToken);
     }
-
-    
 }

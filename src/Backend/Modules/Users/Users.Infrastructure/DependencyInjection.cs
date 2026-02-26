@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Shared.Application.Abstractions.Authentication;
+using Shared.Application.Abstractions.Report;
 using Shared.Domain.Data;
 using Shared.Infrastructure.Authentication;
 using Shared.Infrastructure.Configs;
@@ -15,8 +16,10 @@ using Shared.Infrastructure.Configs.Database;
 using Shared.Infrastructure.Data.Interceptors;
 using Shared.Infrastructure.Extensions;
 using Users.Application.Abstractions.Authentication;
+using Users.Domain.Entities;
 using Users.Domain.UOW;
 using Users.Infrastructure.Data.UOW;
+using Users.Infrastructure.ImportExport;
 using Users.Infrastructure.Persistence.Contexts;
 using Users.Infrastructure.Services.Authentication;
 
@@ -92,6 +95,17 @@ namespace Users.Infrastructure
                     options.TokenValidationParameters.ValidIssuer = jwtSettings.Issuer;
                     options.TokenValidationParameters.ValidAudience = jwtSettings.Audience;
                 });
+            services.AddScoped<ISheetMappings<User>, UserExcelMappings>();
+            services.AddScoped<IFileImportExportService<User>>(sp =>
+            {
+                var mappings = sp.GetRequiredService<ISheetMappings<User>>();
+                return new ClosedXmlImportExportService<User>(
+                    mappings.GetRowMapper(),
+                    mappings.Exporter
+                );
+            });
+
+
             services.AddScoped<IGooglePayloadValidator, GooglePayloadValidatorService>();
             services.AddScoped<IJwtTokenService, JwtTokenService>();
             services.AddScoped<IPasswordHasher, PasswordHasher>();
@@ -108,3 +122,6 @@ namespace Users.Infrastructure
         }
     }
 }
+
+
+
