@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Shared.Application.Abstractions.Authentication;
 using Shared.Infrastructure.Authentication;
+using Shared.Infrastructure.Configs;
 using Shared.Infrastructure.Configs.Database;
 using Shared.Infrastructure.Data.Interceptors;
 using Shared.Infrastructure.Extensions;
@@ -21,8 +22,11 @@ public static class EventModule
 {
     public static IServiceCollection AddEventModule(this IServiceCollection services, IConfiguration configuration)
     {
-        services.ConfigureOptions<DatabaseConfigSetup>();
-
+        // services.Scan(scan => scan
+        //     .FromAssemblyOf<EventModuleAssemblyReference>()
+        //     .AddClasses(classes => classes.AssignableTo<ConfigBase>())
+        //     .AsSelf()
+        //     .WithSingletonLifetime());
         services.AddScoped<ICurrentUserService, CurrentUserService>();
 
         services.AddScoped<ISaveChangesInterceptor, AuditableEntityInterceptor>();
