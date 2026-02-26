@@ -35,6 +35,17 @@ namespace Users.Infrastructure.Data.Repositories
                 .FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
         }
 
+        public async Task<User?> GetByEmailOtpAsync(string email, CancellationToken cancellationToken = default)
+        {
+            return await _users
+                .Include(u => u.Otps) 
+                .AsTracking()         
+                .FirstOrDefaultAsync(u =>
+                    u.Email == email &&
+                    u.IsActive,       
+                    cancellationToken);
+        }
+
         public async Task<User?> GetUserByMailOrUserNameAsync(string userNameOrEmail, CancellationToken cancellationToken = default)
         {
             return await _users

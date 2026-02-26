@@ -1,6 +1,6 @@
 using Shared.Domain.DDD;
+using Users.Domain.Errors.Otp;
 using Users.Domain.Events;
-using Users.Domain.Enums;
 
 namespace Users.Domain.Entities
 {
@@ -39,7 +39,7 @@ namespace Users.Domain.Entities
                 .FirstOrDefault();
 
             if (otp == null || !otp.Verify(otpCode))
-                throw new InvalidOperationException("Invalid or expired OTP.");
+                throw new InvalidOperationException(OtpErrors.InvalidCode.ToString());
 
             ChangePassword(newPasswordHash);
             otp.MarkUsed();
