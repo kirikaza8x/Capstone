@@ -5,7 +5,7 @@ using System.Linq.Expressions;
 
 namespace Shared.Domain.Data;
 
-public interface IRepository<TEntity, TId>
+public partial interface IRepository<TEntity, TId>
     where TEntity : Entity<TId>
 {
     Task<TEntity?> GetByIdAsync(
@@ -47,10 +47,5 @@ public interface IRepository<TEntity, TId>
         Expression<Func<TEntity, bool>>? predicate = null,
         CancellationToken cancellationToken = default);
 
-    void Add(TEntity entity);
-    void AddRange(IEnumerable<TEntity> entities);
-    void Update(TEntity entity);
-    void UpdateRange(IEnumerable<TEntity> entities);
-    void Remove(TEntity entity);
-    void RemoveRange(IEnumerable<TEntity> entities);
 }
+

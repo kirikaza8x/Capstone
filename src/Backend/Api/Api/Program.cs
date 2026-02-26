@@ -5,10 +5,8 @@ using Api.Middleware;
 using Carter;
 using Events.Infrastructure;
 using Shared.Api;
-using Shared.Api.Extensions;
 using Shared.Application;
 using Shared.Infrastructure;
-using Shared.Infrastructure.Extensions;
 using Users.Api;
 using Users.Application;
 
