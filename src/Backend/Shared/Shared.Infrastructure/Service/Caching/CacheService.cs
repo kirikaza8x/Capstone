@@ -3,7 +3,7 @@ using Shared.Application.Caching;
 using System.Buffers;
 using System.Text.Json;
 
-namespace Shared.Infrastructure.Caching;
+namespace Shared.Infrastructure.Service.Caching;
 
 internal sealed class CacheService(IDistributedCache cache) : ICacheService
 {

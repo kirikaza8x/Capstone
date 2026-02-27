@@ -2,6 +2,8 @@ using Shared.Application.Abstractions.Authentication;
 using Shared.Application.DTOs;
 using UAParser;
 
+namespace Shared.Infrastructure.Service.Authentication;
+
 public class DeviceDetectionService : IDeviceDetectionService
 {
     private readonly Parser _uaParser;
