@@ -25,16 +25,25 @@ namespace AI.Infrastructure
     {
         public static IServiceCollection AddAiInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddOptions();
-            // Register all config classes inheriting from ConfigBase
             services.Scan(scan => scan
                 .FromAssemblyOf<AiInfrastructureAssemblyReference>()
                 .AddClasses(classes => classes.AssignableTo<ConfigBase>())
                 .AsSelf()
                 .WithSingletonLifetime());
 
-            // Register binder once for all configs inheriting ConfigBase
-            services.AddTransient(typeof(IConfigureOptions<>), typeof(ConfigurationBinderSetup<>));
+            // Register repositories
+            services.Scan(scan => scan
+                .FromAssemblyOf<AiInfrastructureAssemblyReference>() 
+                .AddClasses(classes => classes.AssignableTo(typeof(IRepository<,>)))
+                .AsImplementedInterfaces()
+                .WithScopedLifetime());
+
+            // Register Unit of Work
+            services.Scan(scan => scan
+                .FromAssemblyOf<AiInfrastructureAssemblyReference>()
+                .AddClasses(classes => classes.AssignableTo(typeof(IUnitOfWork)))
+                .AsImplementedInterfaces()
+                .WithScopedLifetime());
 
             services.AddSingleton<NpgsqlDataSource>(sp =>
             {
@@ -46,7 +55,7 @@ namespace AI.Infrastructure
 
                 return dataSourceBuilder.Build();
             });
-            // Register DbContext with DatabaseConfig
+            
             services.AddDbContext<AIModuleDbContext>((sp, options) =>
             {
                 var dataSource = sp.GetRequiredService<NpgsqlDataSource>();
@@ -66,26 +75,7 @@ namespace AI.Infrastructure
             });
 
 
-            // Register repositories
-            services.Scan(scan => scan
-                .FromAssemblyOf<AiInfrastructureAssemblyReference>() // assembly containing repositories
-                .AddClasses(classes => classes.AssignableTo(typeof(IRepository<,>)))
-                .AsImplementedInterfaces()
-                .WithScopedLifetime());
-
-            // Register Unit of Work
-            services.Scan(scan => scan
-                .FromAssemblyOf<AiInfrastructureAssemblyReference>()
-                .AddClasses(classes => classes.AssignableTo(typeof(IUnitOfWork)))
-                .AsImplementedInterfaces()
-                .WithScopedLifetime());
-
-            // Register interceptors
-            services.Scan(scan => scan
-                .FromAssemblyOf<AuditableEntityInterceptor>()
-                .AddClasses(classes => classes.AssignableTo<ISaveChangesInterceptor>())
-                .AsImplementedInterfaces()
-                .WithScopedLifetime());
+            
 
             // Register services
             services.AddScoped<IGlobalTrendService, GlobalTrendService>();
@@ -93,8 +83,6 @@ namespace AI.Infrastructure
             services.AddScoped<InteractionWeightCalculator>();
             services.AddScoped<IRecommendationService, RecommendationService>();
             services.AddScoped<IGeminiService, GeminiService>();
-            services.AddScoped<ICurrentUserService, CurrentUserService>();
-            services.AddScoped<IDeviceDetectionService, DeviceDetectionService>();
             services.AddHostedService<GlobalTrendWorker>();
             services.AddHttpContextAccessor();
 

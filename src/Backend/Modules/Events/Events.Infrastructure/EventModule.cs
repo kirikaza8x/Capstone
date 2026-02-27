@@ -26,11 +26,6 @@ public static class EventModule
         //     .AddClasses(classes => classes.AssignableTo<ConfigBase>())
         //     .AsSelf()
         //     .WithSingletonLifetime());
-        services.AddScoped<ICurrentUserService, CurrentUserService>();
-
-        services.AddScoped<ISaveChangesInterceptor, AuditableEntityInterceptor>();
-        services.AddScoped<ISaveChangesInterceptor, DispatchDomainEventInterceptor>();
-
         services.TryAddScoped<IEventRepository, EventRepository>();
         services.TryAddScoped<IEventUnitOfWork, EventUnitOfWork>();
         services.AddDbContext<EventsDbContext>((sp, options) =>

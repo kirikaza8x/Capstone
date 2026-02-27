@@ -1,18 +1,23 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Shared.Application.Abstractions.Authentication;
 using Shared.Application.Abstractions.Caching;
 using Shared.Infrastructure.Configs;
 using Shared.Infrastructure.Configs.Redis;
+using Shared.Infrastructure.Data.Interceptors;
 using Shared.Infrastructure.Extensions;
+using Shared.Infrastructure.Service.Authentication;
 using Shared.Infrastructure.Service.Caching;
 using System.Reflection;
 using System.Text.Json.Serialization;
 
 namespace Shared.Infrastructure;
-public  class SharedInfrastructureAssemblyReference
+
+public class SharedInfrastructureAssemblyReference
 {
-   
+
 }
 
 public static class IInfrastructureConfiguration
@@ -29,6 +34,12 @@ public static class IInfrastructureConfiguration
             .AsSelf()
             .WithSingletonLifetime());
 
+        services.Scan(scan => scan
+                .FromAssemblyOf<AuditableEntityInterceptor>()
+                .AddClasses(classes => classes.AssignableTo<ISaveChangesInterceptor>())
+                .AsImplementedInterfaces()
+                .WithScopedLifetime());
+
         services.AddTransient(typeof(IConfigureOptions<>), typeof(ConfigurationBinderSetup<>));
 
         // redis
@@ -41,6 +52,10 @@ public static class IInfrastructureConfiguration
         });
 
         services.AddSingleton<ICacheService, CacheService>();
+
+        services.AddScoped<ICurrentUserService, CurrentUserService>();
+
+        services.AddScoped<IDeviceDetectionService, DeviceDetectionService>();
 
         services.AddMassTransitWithAssemblies(configuration, moduleAssemblies);
 

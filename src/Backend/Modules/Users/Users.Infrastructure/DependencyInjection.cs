@@ -13,7 +13,6 @@ using Shared.Domain.Data;
 using Shared.Infrastructure.Service.Authentication;
 using Shared.Infrastructure.Configs;
 using Shared.Infrastructure.Configs.Database;
-using Shared.Infrastructure.Data.Interceptors;
 using Shared.Infrastructure.Extensions;
 using Shared.Infrastructure.Service.Report;
 using Users.Application.Abstractions.Authentication;
@@ -37,13 +36,6 @@ namespace Users.Infrastructure
                 .AsSelf()
                 .WithSingletonLifetime());
 
-            services.Scan(scan => scan
-                .FromAssemblyOf<AuditableEntityInterceptor>()
-                .AddClasses(classes => classes.AssignableTo<ISaveChangesInterceptor>())
-                .AsImplementedInterfaces()
-                .WithScopedLifetime());
-
-            services.AddScoped<IUserUnitOfWork, UserUnitOfWork>();
             services.Scan(scan => scan
                 .FromAssemblyOf<UsersInfrastructureAssemblyReference>()
                 .AddClasses(classes => classes.AssignableTo(typeof(IRepository<,>)))
@@ -106,11 +98,10 @@ namespace Users.Infrastructure
                 );
             });
 
-
+            services.AddScoped<IUserUnitOfWork, UserUnitOfWork>();
             services.AddScoped<IGooglePayloadValidator, GooglePayloadValidatorService>();
             services.AddScoped<IJwtTokenService, JwtTokenService>();
             services.AddScoped<IPasswordHasher, PasswordHasher>();
-            services.AddScoped<ICurrentUserService, CurrentUserService>();
             services.AddScoped<IRefreshTokenService, RefreshTokenService>();
             services.AddScoped<IDeviceDetectionService, DeviceDetectionService>();
             return services;
