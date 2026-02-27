@@ -3,5 +3,7 @@ using Users.Application.Features.Roles.Dtos;
 
 namespace Users.Application.Features.Roles.Commands
 {
-    public record CreateRoleCommand(RoleRequestDto CreateRoleRequest) : ICommand<RoleResponseDto>,ITransactionalCommand;
+
+    public record CreateRoleCommand(string Name, string? Description ="") : ICommand<Guid>;
+
 }

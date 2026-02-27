@@ -20,7 +20,7 @@ public class RegisterUserEndpoint : ICarterModule
             ISender sender,
             CancellationToken cancellationToken) =>
         {
-            Result<UserResponseDto> result = await sender.Send(
+            Result<Guid> result = await sender.Send(
                 new RegisterUserCommand(
                     request.Email,
                     request.UserName,
@@ -30,8 +30,7 @@ public class RegisterUserEndpoint : ICarterModule
                     request.PhoneNumber,
                     request.Address),
                 cancellationToken);
-
-            return result.ToOk();
+            return result.ToCreated($"/api/user/{result.Value}", "user registered successfully.");
         })
         .WithTags("Authentication")
         .WithName("RegisterUser")

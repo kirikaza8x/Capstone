@@ -3,5 +3,5 @@ using Shared.Application.Messaging;
 
 namespace Users.Application.Features.Roles.Commands
 {
-    public record AssignRoleCommand(Guid UserId, Guid RoleId) : ICommand, ITransactionalCommand;
+    public record AssignRoleCommand(Guid UserId, Guid RoleId) : ICommand;
 }

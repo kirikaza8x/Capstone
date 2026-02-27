@@ -22,6 +22,7 @@ using Users.Infrastructure.Data.UOW;
 using Users.Infrastructure.ImportExport;
 using Users.Infrastructure.Persistence.Contexts;
 using Users.Infrastructure.Services.Authentication;
+using Roles.Domain.UOW;
 
 namespace Users.Infrastructure
 {
@@ -83,7 +84,6 @@ namespace Users.Infrastructure
                 {
                     var jwtSettings = jwtConfigs.Value;
                     var key = Encoding.UTF8.GetBytes(jwtSettings.Secret);
-
                     options.TokenValidationParameters.IssuerSigningKey = new SymmetricSecurityKey(key);
                     options.TokenValidationParameters.ValidIssuer = jwtSettings.Issuer;
                     options.TokenValidationParameters.ValidAudience = jwtSettings.Audience;
@@ -99,6 +99,7 @@ namespace Users.Infrastructure
             });
 
             services.AddScoped<IUserUnitOfWork, UserUnitOfWork>();
+            services.AddScoped<IRoleUnitOfWork, RoleUnitOfWork>();
             services.AddScoped<IGooglePayloadValidator, GooglePayloadValidatorService>();
             services.AddScoped<IJwtTokenService, JwtTokenService>();
             services.AddScoped<IPasswordHasher, PasswordHasher>();

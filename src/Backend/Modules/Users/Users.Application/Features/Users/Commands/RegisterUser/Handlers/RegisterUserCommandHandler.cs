@@ -15,17 +15,16 @@ public class RegisterUserCommandHandler(
     IUserRepository userRepository,
     IPasswordHasher passwordHasher,
     IUserUnitOfWork unitOfWork,
-    IMapper mapper,
     IValidator<RegisterUserCommand> validator
-) : ICommandHandler<RegisterUserCommand, UserResponseDto>
+) : ICommandHandler<RegisterUserCommand, Guid>
 {
-    public async Task<Result<UserResponseDto>> Handle(RegisterUserCommand command, CancellationToken cancellationToken)
+    public async Task<Result<Guid>> Handle(RegisterUserCommand command, CancellationToken cancellationToken)
     {
         // 1. Validation
         var validationResult = await validator.ValidateAsync(command, cancellationToken);
         if (!validationResult.IsValid)
         {
-            return Result.Failure<UserResponseDto>(
+            return Result.Failure<Guid>(
                 Error.Validation("Register.Validation", validationResult.Errors.First().ErrorMessage));
         }
 
@@ -37,7 +36,7 @@ public class RegisterUserCommandHandler(
         if (existingUser != null)
         {
             var msg = existingUser.Email == command.Email ? "Email already in use." : "Username taken.";
-            return Result.Failure<UserResponseDto>(Error.Conflict("User.Exists", msg));
+            return Result.Failure<Guid>(Error.Conflict("User.Exists", msg));
         }
 
         // 3. Creation
@@ -53,12 +52,11 @@ public class RegisterUserCommandHandler(
             address: command.Address
         );
 
-        userRepository.Add(user); // Just Add, no role logic here anymore
-
+        userRepository.Add(user); 
         // 4. Persistence
         // This triggers the dispatch of UserCreatedEvent
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return Result.Success(mapper.Map<UserResponseDto>(user));
+        return Result.Success(user.Id);
     }
 }

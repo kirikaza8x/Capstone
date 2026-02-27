@@ -10,4 +10,4 @@ public record RegisterUserCommand(
     string FirstName, 
     string LastName, 
     string PhoneNumber, 
-    string Address ) : ICommand<UserResponseDto>;
+    string Address ) : ICommand<Guid>;

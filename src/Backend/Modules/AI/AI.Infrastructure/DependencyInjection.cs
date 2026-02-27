@@ -33,7 +33,7 @@ namespace AI.Infrastructure
 
             // Register repositories
             services.Scan(scan => scan
-                .FromAssemblyOf<AiInfrastructureAssemblyReference>() 
+                .FromAssemblyOf<AiInfrastructureAssemblyReference>()
                 .AddClasses(classes => classes.AssignableTo(typeof(IRepository<,>)))
                 .AsImplementedInterfaces()
                 .WithScopedLifetime());
@@ -55,7 +55,7 @@ namespace AI.Infrastructure
 
                 return dataSourceBuilder.Build();
             });
-            
+
             services.AddDbContext<AIModuleDbContext>((sp, options) =>
             {
                 var dataSource = sp.GetRequiredService<NpgsqlDataSource>();
@@ -73,9 +73,6 @@ namespace AI.Infrastructure
                 .UseSnakeCaseNamingConvention()
                 .AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
             });
-
-
-            
 
             // Register services
             services.AddScoped<IGlobalTrendService, GlobalTrendService>();
