@@ -1,6 +1,7 @@
 using ClosedXML.Excel;
 using Shared.Application.Abstractions.Report;
 
+namespace Shared.Infrastructure.Service.Report;
 public class ClosedXmlImportExportService<T> : IFileImportExportService<T>
 {
     private readonly Func<IXLRow, T> _rowMapper;

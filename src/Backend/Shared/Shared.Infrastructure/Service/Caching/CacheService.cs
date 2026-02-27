@@ -4,7 +4,7 @@ using System.Buffers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Shared.Infrastructure.Caching;
+namespace Shared.Infrastructure.Service.Caching;
 
 internal sealed class CacheService(IDistributedCache cache) : ICacheService
 {

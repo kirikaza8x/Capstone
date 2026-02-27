@@ -2,7 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Shared.Application.Abstractions.Storage;
 using Shared.Infrastructure.Configs.Storage;
-using Shared.Infrastructure.Storage;
+using Shared.Infrastructure.Service.Storage;
 
 namespace Shared.Infrastructure.Extensions;
 
