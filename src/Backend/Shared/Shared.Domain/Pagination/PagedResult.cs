@@ -1,8 +1,10 @@
-﻿namespace Shared.Domain.Pagination;
+﻿using System.Text.Json.Serialization;
+
+namespace Shared.Domain.Pagination;
 
 public sealed record PagedResult<T>
 {
-    public IReadOnlyList<T> Items { get; init; }
+    public IReadOnlyList<T> Items { get; init; } = [];
 
     public int PageNumber { get; init; }
 
@@ -16,13 +18,18 @@ public sealed record PagedResult<T>
 
     public int CurrentEndIndex => TotalCount == 0 ? 0 : CurrentStartIndex + CurrentPageSize - 1;
 
-    public int TotalPages => (int)Math.Ceiling(TotalCount / (double)PageSize);
+    public int TotalPages => PageSize == 0 ? 0 : (int)Math.Ceiling(TotalCount / (double)PageSize);
 
     public bool HasPrevious => PageNumber > 1;
 
     public bool HasNext => PageNumber < TotalPages;
 
-    private PagedResult(
+    public PagedResult()
+    {
+    }
+
+    [JsonConstructor]
+    public PagedResult(
         IReadOnlyList<T> items,
         int pageNumber,
         int pageSize,

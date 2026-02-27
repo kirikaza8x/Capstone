@@ -11,7 +11,6 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Shared.Application.Abstractions.Authentication;
 using Shared.Infrastructure.Authentication;
-using Shared.Infrastructure.Configs;
 using Shared.Infrastructure.Configs.Database;
 using Shared.Infrastructure.Data.Interceptors;
 using Shared.Infrastructure.Extensions;
@@ -34,7 +33,6 @@ public static class EventModule
 
         services.TryAddScoped<IEventRepository, EventRepository>();
         services.TryAddScoped<IEventUnitOfWork, EventUnitOfWork>();
-
         services.AddDbContext<EventsDbContext>((sp, options) =>
         {
             var dbConfig = sp.GetRequiredService<IOptions<DatabaseConfig>>().Value;

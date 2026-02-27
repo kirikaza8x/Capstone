@@ -1,12 +1,11 @@
 ﻿using Microsoft.Extensions.Caching.Distributed;
-using Shared.Application.Caching;
-using System.Buffers;
+using Shared.Application.Abstractions.Caching;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Shared.Infrastructure.Caching;
 
-internal sealed class CacheService(IDistributedCache cache) : ICacheService
+public sealed class CacheService(IDistributedCache cache) : ICacheService
 {
     public async Task<T?> GetAsync<T>(string key, CancellationToken cancellationToken = default)
     {

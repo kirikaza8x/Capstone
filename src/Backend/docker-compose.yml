@@ -28,6 +28,20 @@ services:
     networks:
       - aipromo-network
   
+  # Redis Web GUI
+  redis-insight:
+    image: redis/redisinsight:latest
+    container_name: AIPromo-redis-insight
+    restart: unless-stopped
+    ports:
+      - "5540:5540"
+    volumes:
+      - redis_insight_data:/data
+    networks:
+      - aipromo-network
+    depends_on:
+      - redis
+  
   # RabbitMQ
   rabbitmq:
     image: rabbitmq:3-management-alpine
@@ -64,6 +78,7 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  redis_insight_data:
   rabbitmq_data:
   minio_data:
 

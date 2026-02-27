@@ -1,7 +1,10 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Shared.Application.Abstractions.Caching;
+using Shared.Infrastructure.Caching;
 using Shared.Infrastructure.Configs;
+using Shared.Infrastructure.Configs.Redis;
 using Shared.Infrastructure.Extensions;
 using System.Reflection;
 using System.Text.Json.Serialization;
@@ -27,6 +30,17 @@ public static class IInfrastructureConfiguration
             .WithSingletonLifetime());
 
         services.AddTransient(typeof(IConfigureOptions<>), typeof(ConfigurationBinderSetup<>));
+
+        // redis
+        var redisConfig = configuration.GetSection("Redis").Get<RedisConfig>() ?? new RedisConfig();
+
+        services.AddStackExchangeRedisCache(options =>
+        {
+            options.Configuration = redisConfig.ConnectionString;
+            options.InstanceName = redisConfig.InstanceName;
+        });
+
+        services.AddSingleton<ICacheService, CacheService>();
 
         services.AddMassTransitWithAssemblies(configuration, moduleAssemblies);
 

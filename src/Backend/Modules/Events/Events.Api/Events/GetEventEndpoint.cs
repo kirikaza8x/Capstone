@@ -1,5 +1,5 @@
 ﻿using Carter;
-using Events.Application.Events.Queries.GetEvent;
+using Events.Application.Events.Queries.GetEventById;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;

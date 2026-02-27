@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using Events.Application.Events.Queries.GetEvent;
+using Events.Application.Events.Queries.GetEventById;
 using Events.Application.Events.Queries.GetEvents;
 using Events.Domain.Entities;
 
@@ -17,6 +17,7 @@ public sealed class EventProfile : Profile
         CreateMap<EventImage, EventImageDto>();
         CreateMap<EventSession, EventSessionDto>();
         CreateMap<EventHashtag, EventHashtagDto>()
+            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.HashtagId))
             .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Hashtag != null ? src.Hashtag.Name : string.Empty));
 
         CreateMap<Event, EventResponse>()
