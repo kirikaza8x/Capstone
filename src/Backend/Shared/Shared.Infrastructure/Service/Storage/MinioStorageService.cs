@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 using Shared.Application.Abstractions.Storage;
 using Shared.Infrastructure.Configs.Storage;
 
-namespace Shared.Infrastructure.Storage;
+namespace Shared.Infrastructure.Service.Storage;
 
 public sealed class MinioStorageService : IStorageService
 {

@@ -14,7 +14,7 @@ using Microsoft.Extensions.Options;
 using Npgsql;
 using Shared.Application.Abstractions.Authentication;
 using Shared.Domain.Data;
-using Shared.Infrastructure.Authentication;
+using Shared.Infrastructure.Service.Authentication;
 using Shared.Infrastructure.Configs;
 using Shared.Infrastructure.Configs.Database;
 using Shared.Infrastructure.Data.Interceptors;

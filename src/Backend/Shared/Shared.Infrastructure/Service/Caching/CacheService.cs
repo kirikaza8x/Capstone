@@ -3,7 +3,7 @@ using Shared.Application.Abstractions.Caching;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Shared.Infrastructure.Caching;
+namespace Shared.Infrastructure.Service.Caching;
 
 public sealed class CacheService(IDistributedCache cache) : ICacheService
 {

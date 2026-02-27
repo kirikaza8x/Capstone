@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Shared.Application.Abstractions.Authentication;
 using Shared.Application.DTOs;
 
-namespace Shared.Infrastructure.Authentication;
+namespace Shared.Infrastructure.Service.Authentication;
 
 public class CurrentUserService : ICurrentUserService
 {
