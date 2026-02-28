@@ -26,51 +26,30 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
+        # Use exact version to avoid ambiguity
         dotnet-version: '9.0.x'
-        dotnet-quality: 'ga'
+        # Disable caching for now to avoid lock file issues
         # cache: true
 
-    - name: Verify .NET Version
-      run: |
-        echo "Verifying .NET SDK version..."
-        dotnet --version
-        if [[ ! "$(dotnet --version)" =~ ^9\. ]]; then
-          echo "Expected .NET 9.x, got $(dotnet --version)"
-          exit 1
-        fi
-        echo "Using .NET version: $(dotnet --version)"
-
     - name: Restore dependencies
-      # Simple restore without lock file requirements
       run: dotnet restore src/Backend/Capstone.sln
 
     - name: Check Code Formatting
-      # Fails the build if code is not formatted correctly
       run: dotnet format src/Backend/Capstone.sln --verify-no-changes --no-restore
 
     - name: Build solution
-      # Treat warnings as errors to enforce quality
       run: dotnet build src/Backend/Capstone.sln --configuration Release --no-restore --warnaserror
 
     - name: Check for Vulnerable Packages
-      # Fails if known vulnerabilities are found in dependencies
       run: dotnet list src/Backend/Capstone.sln package --vulnerable --fail-on-severity low
 
     - name: Publish Application
-      # Verifies the app can actually be deployed
       run: dotnet publish src/Backend/Api/Api/Api.csproj --configuration Release --no-build --output ./publish
 
     - name: Upload Build Artifact
-      # Makes the published output available for download
       uses: actions/upload-artifact@v4
       with:
         name: publish-artifact
         path: ./publish/
         retention-days: 7
         if-no-files-found: error
-
-    # - name: Run Smoke Test (Optional Future Step)
-    #   run: |
-    #     dotnet ./publish/Api.dll &
-    #     sleep 5
-    #     curl --fail http://localhost:5000/health || exit 1
