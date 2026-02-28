@@ -19,7 +19,7 @@ public class AssignDefaultRoleEventHandler(
         var user = await userRepository.GetByIdAsync(notification.UserId, cancellationToken);
         if (user == null || user.Roles.Any()) return;
 
-        var defaultRole = await roleRepository.GetByRoleNameAsync("user", cancellationToken)
+        var defaultRole = await roleRepository.GetByRoleNameAsync(Shared.Domain.Constants.Roles.Attendee, cancellationToken)
                           ?? await CreateAndPersistDefaultRole(cancellationToken);
 
         user.AssignRole(defaultRole);
@@ -30,7 +30,7 @@ public class AssignDefaultRoleEventHandler(
 
     private async Task<Role> CreateAndPersistDefaultRole(CancellationToken ct)
     {
-        var role = Role.Create("user", "Default system role.");
+        var role = Role.Create(Shared.Domain.Constants.Roles.Attendee, "Default system role.");
         roleRepository.Add(role);
         await unitOfWork.SaveChangesAsync(ct);
         return role;

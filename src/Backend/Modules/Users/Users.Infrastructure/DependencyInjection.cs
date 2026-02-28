@@ -1,4 +1,4 @@
-using System.Text;
+using Amazon;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
@@ -7,22 +7,27 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Roles.Domain.UOW;
+using Shared.Api.Results;
 using Shared.Application.Abstractions.Authentication;
 using Shared.Application.Abstractions.Report;
+using Shared.Domain.Abstractions;
 using Shared.Domain.Data;
-using Shared.Infrastructure.Service.Authentication;
 using Shared.Infrastructure.Configs;
 using Shared.Infrastructure.Configs.Database;
+using Shared.Infrastructure.Data.Seeds;
 using Shared.Infrastructure.Extensions;
+using Shared.Infrastructure.Service.Authentication;
 using Shared.Infrastructure.Service.Report;
+using System.Text;
 using Users.Application.Abstractions.Authentication;
 using Users.Domain.Entities;
 using Users.Domain.UOW;
 using Users.Infrastructure.Data.UOW;
 using Users.Infrastructure.ImportExport;
 using Users.Infrastructure.Persistence.Contexts;
+using Users.Infrastructure.Persistence.Seeds;
 using Users.Infrastructure.Services.Authentication;
-using Roles.Domain.UOW;
 
 namespace Users.Infrastructure
 {
@@ -60,6 +65,7 @@ namespace Users.Infrastructure
                 .AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
             });
 
+            // JWT Authentication
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -69,6 +75,7 @@ namespace Users.Infrastructure
             {
                 options.RequireHttpsMetadata = false;
                 options.SaveToken = true;
+                // token validation
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuerSigningKey = true,
@@ -76,6 +83,29 @@ namespace Users.Infrastructure
                     ValidateAudience = true,
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.Zero
+                };
+
+                // custom events for handling authentication and authorization failures
+                options.Events = new JwtBearerEvents
+                {
+                    OnChallenge = async context =>
+                    {
+                        context.HandleResponse();
+
+                        var error = Error.Unauthorized("Authentication.Failed", "You are not authenticated.");
+                        var result = Result.Failure(error);
+
+                        await CustomResults.Problem(result, context.HttpContext)
+                            .ExecuteAsync(context.HttpContext);
+                    },
+                    OnForbidden = async context =>
+                    {
+                        var error = Error.Forbidden("Authorization.Failed", "You do not have permission to perform this action.");
+                        var result = Result.Failure(error);
+
+                        await CustomResults.Problem(result, context.HttpContext)
+                            .ExecuteAsync(context.HttpContext);
+                    }
                 };
             });
 
@@ -88,6 +118,7 @@ namespace Users.Infrastructure
                     options.TokenValidationParameters.ValidIssuer = jwtSettings.Issuer;
                     options.TokenValidationParameters.ValidAudience = jwtSettings.Audience;
                 });
+
             services.AddScoped<ISheetMappings<User>, UserExcelMappings>();
             services.AddScoped<IFileImportExportService<User>>(sp =>
             {
@@ -105,6 +136,9 @@ namespace Users.Infrastructure
             services.AddScoped<IPasswordHasher, PasswordHasher>();
             services.AddScoped<IRefreshTokenService, RefreshTokenService>();
             services.AddScoped<IDeviceDetectionService, DeviceDetectionService>();
+
+            // seeder 
+            services.AddScoped<IDataSeeder, RoleSeeder>();
             return services;
         }
 

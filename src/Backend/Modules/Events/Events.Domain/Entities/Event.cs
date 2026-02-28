@@ -17,7 +17,7 @@ public sealed class Event : AggregateRoot<Guid>
     public string Location { get; private set; } = string.Empty;
     public string? MapUrl { get; private set; }
     public string Description { get; private set; } = string.Empty;
-    public string UrlPath { get; private set; } = string.Empty;
+    public string? UrlPath { get; private set; }
     public int EventCategoryId { get; private set; }
 
     public DateTime? TicketSaleStartAt { get; private set; }

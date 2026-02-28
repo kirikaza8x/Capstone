@@ -5,7 +5,9 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using Shared.Api.Extensions;
 using Shared.Api.Results;
+using Shared.Domain.Constants;
 
 namespace Events.Api.Events;
 
@@ -50,6 +52,7 @@ public class CreateEventEndpoint : ICarterModule
         .WithDescription("Creates a new event with basic information. The event will be created in Draft status.")
         .Produces<Guid>(StatusCodes.Status201Created)
         .ProducesProblem(StatusCodes.Status400BadRequest)
-        .ProducesProblem(StatusCodes.Status409Conflict);
+        .ProducesProblem(StatusCodes.Status409Conflict)
+        .RequireRoles(Roles.Organizer);
     }
 }

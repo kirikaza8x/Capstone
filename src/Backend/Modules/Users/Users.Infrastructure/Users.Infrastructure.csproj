@@ -5,6 +5,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\Shared\Shared.Api\Shared.Api.csproj" />
     <ProjectReference Include="..\..\..\Shared\Shared.Infrastructure\Shared.Infrastructure.csproj" />
     <ProjectReference Include="..\Users.Application\Users.Application.csproj" />
   </ItemGroup>

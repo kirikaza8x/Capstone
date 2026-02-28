@@ -43,24 +43,23 @@ namespace Users.Infrastructure.Services.Authentication
         public int RefreshTokenExpiryDays => _refreshTokenExpiryDays;
 
         public string GenerateToken(
-    Guid userId,
-    string? email,
-    string? name,
-    IEnumerable<string> roles
-    )
+            Guid userId,
+            string? email,
+            string? name,
+            IEnumerable<string> roles
+        )
         {
             var claims = new List<Claim>
-    {
-        new(JwtRegisteredClaimNames.Sub, userId.ToString()),
-        new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-    };
+            {
+                new(JwtRegisteredClaimNames.Sub, userId.ToString()),
+                new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            };
 
             if (!string.IsNullOrWhiteSpace(email))
                 claims.Add(new(JwtRegisteredClaimNames.Email, email));
 
             if (!string.IsNullOrWhiteSpace(name))
                 claims.Add(new(JwtRegisteredClaimNames.Name, name));
-
 
             claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 

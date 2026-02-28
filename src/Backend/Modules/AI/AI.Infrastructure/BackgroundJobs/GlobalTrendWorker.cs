@@ -23,15 +23,27 @@ namespace AI.Infrastructure.BackgroundJobs
         {
             _logger.LogInformation("Global Trend Worker Started. Running initial calculation...");
 
-            // 1. Run immediately on startup (so you don't wait 1 hour to see if it works)
-            await RunJobAsync(stoppingToken);
-
-            // 2. Start the loop
-            using PeriodicTimer timer = new PeriodicTimer(_period);
-            
-            while (await timer.WaitForNextTickAsync(stoppingToken))
+            try
             {
+                // 1. Run immediately on startup (so you don't wait 1 hour to see if it works)
                 await RunJobAsync(stoppingToken);
+
+                // 2. Start the loop
+                using PeriodicTimer timer = new PeriodicTimer(_period);
+                while (await timer.WaitForNextTickAsync(stoppingToken))
+                {
+                    await RunJobAsync(stoppingToken);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // Service is stopping, ignore this exception
+                _logger.LogInformation("Global Trend Worker is stopping (cancellation requested).");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Global Trend Worker encountered an unexpected error.");
+                throw;
             }
         }
 
