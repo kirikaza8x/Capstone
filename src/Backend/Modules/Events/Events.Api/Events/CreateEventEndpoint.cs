@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Shared.Api.Extensions;
 using Shared.Api.Results;
-using Shared.Domain.Constants;
+using Users.PublicApi.Constants;
 
 namespace Events.Api.Events;
 

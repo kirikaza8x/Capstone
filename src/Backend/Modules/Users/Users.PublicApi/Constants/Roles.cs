@@ -1,4 +1,4 @@
-﻿namespace Shared.Domain.Constants;
+﻿namespace Users.PublicApi.Constants;
 
 public static class Roles
 {

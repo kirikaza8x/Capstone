@@ -5,8 +5,10 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using Shared.Api.Extensions;
 using Shared.Api.Results;
 using Shared.Domain.Pagination;
+using Users.PublicApi.Constants;
 
 namespace Events.Api.Events;
 
@@ -30,6 +32,7 @@ public class GetEventsEndpoint : ICarterModule
         .WithSummary("Get all events")
         .WithDescription("Get all events with pagination.")
         .Produces<PagedResult<EventResponse>>(StatusCodes.Status200OK)
-        .ProducesProblem(StatusCodes.Status400BadRequest);
+        .ProducesProblem(StatusCodes.Status400BadRequest)
+        .RequireRoles(Roles.Admin);
     }
 }

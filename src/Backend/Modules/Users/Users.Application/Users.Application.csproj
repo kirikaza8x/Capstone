@@ -8,6 +8,7 @@
     <ProjectReference Include="..\..\..\Shared\Shared.Application\Shared.Application.csproj" />
     <ProjectReference Include="..\Users.Domain\Users.Domain.csproj" />
     <ProjectReference Include="..\Users.IntegrationEvents\Users.IntegrationEvents.csproj" />
+    <ProjectReference Include="..\Users.PublicApi\Users.PublicApi.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
