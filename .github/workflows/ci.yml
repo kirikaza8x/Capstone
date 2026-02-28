@@ -28,8 +28,7 @@ jobs:
       with:
         dotnet-version: '9.0.x'
         dotnet-quality: 'ga'
-        # Basic caching enabled (simplified - no path filtering)
-        cache: true
+        # cache: true
 
     - name: Verify .NET Version
       run: |
