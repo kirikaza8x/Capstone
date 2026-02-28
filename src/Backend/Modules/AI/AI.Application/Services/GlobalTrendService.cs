@@ -35,7 +35,7 @@ namespace AI.Application.Services
         private const double MIN_SCORE_THRESHOLD = 0.1;  // Floor scores below this to zero
 
         public GlobalTrendService(
-            IUserBehaviorLogRepository logRepo, 
+            IUserBehaviorLogRepository logRepo,
             IGlobalCategoryStatRepository globalRepo,
             IInteractionWeightRepository weightRepo,
             IAiUnitOfWork unitOfWork,
@@ -64,9 +64,9 @@ namespace AI.Application.Services
 
 
                 var recentLogs = recentLogsTask;
-                var weights =  weightsTask
+                var weights = weightsTask
                     .ToDictionary(
-                        w => w.ActionType.ToLower().Trim(), 
+                        w => w.ActionType.ToLower().Trim(),
                         w => w.Weight
                     );
                 var allExistingStats = allExistingStatsTask;
@@ -79,7 +79,7 @@ namespace AI.Application.Services
                 // STEP 2: APPLY DECAY TO ALL EXISTING CATEGORIES (CRITICAL FIX)
                 // ---------------------------------------------------------
                 _logger.LogInformation("Applying decay to all {Count} existing categories...", allExistingStats.Count());
-                
+
                 foreach (var stat in allExistingStats)
                 {
                     stat.ApplyDecay(DAILY_DECAY_FACTOR);
@@ -94,7 +94,7 @@ namespace AI.Application.Services
                 foreach (var log in recentLogs)
                 {
                     var categories = log.GetCategories();
-                    
+
                     if (categories == null || !categories.Any())
                         continue;
 
@@ -111,7 +111,7 @@ namespace AI.Application.Services
 
                         var current = categoryAggregates[key];
                         categoryAggregates[key] = (
-                            current.WeightedScore + weight, 
+                            current.WeightedScore + weight,
                             current.RawCount + 1
                         );
                     }
@@ -126,7 +126,7 @@ namespace AI.Application.Services
                 // ---------------------------------------------------------
                 // Purpose: Compresses the gap between mega-popular and niche categories
                 // Alternative: Use sqrt() for gentler compression
-                
+
                 if (!categoryAggregates.Any())
                 {
                     _logger.LogInformation("ℹ No new activity detected. Stats have been decayed only.");
@@ -160,7 +160,7 @@ namespace AI.Application.Services
                     {
                         double newScore = existingStat.PopularityScore + normalizedScore;
                         int newCount = existingStat.TotalInteractions + count;
-                        
+
                         existingStat.UpdateStats(newScore, newCount, rawScore);
                         _globalRepo.Update(existingStat);
                         updated++;
@@ -168,11 +168,11 @@ namespace AI.Application.Services
                     else
                     {
                         var newStat = GlobalCategoryStat.Create(
-                            categoryName, 
-                            normalizedScore, 
-                            count, 
+                            categoryName,
+                            normalizedScore,
+                            count,
                             rawScore);
-                        
+
                         _globalRepo.Add(newStat);
                         created++;
                     }

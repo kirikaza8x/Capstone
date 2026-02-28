@@ -39,7 +39,7 @@ namespace Users.Domain.Entities
                 CreatedAt = DateTime.UtcNow
             };
 
-            
+
             return transaction;
         }
 

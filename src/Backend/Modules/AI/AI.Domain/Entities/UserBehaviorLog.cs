@@ -1,4 +1,4 @@
-using Shared.Domain.DDD; 
+using Shared.Domain.DDD;
 
 namespace AI.Domain.Entities
 {
@@ -43,14 +43,14 @@ namespace AI.Domain.Entities
             // ===== GUARD CLAUSES: Fail fast =====
             if (userId == Guid.Empty)
                 throw new ArgumentException("UserId cannot be empty.", nameof(userId));
-            
-            if (string.IsNullOrWhiteSpace(actionType)) 
+
+            if (string.IsNullOrWhiteSpace(actionType))
                 throw new ArgumentException("ActionType is required.", nameof(actionType));
-            
-            if (string.IsNullOrWhiteSpace(targetId)) 
+
+            if (string.IsNullOrWhiteSpace(targetId))
                 throw new ArgumentException("TargetId is required.", nameof(targetId));
-            
-            if (string.IsNullOrWhiteSpace(targetType)) 
+
+            if (string.IsNullOrWhiteSpace(targetType))
                 throw new ArgumentException("TargetType is required.", nameof(targetType));
 
             return new UserBehaviorLog
@@ -79,7 +79,7 @@ namespace AI.Domain.Entities
         public List<string> GetCategories()
         {
             // Try both "categories" (plural) and "category" (singular) keys
-            if (!_metadata.TryGetValue("categories", out var value) && 
+            if (!_metadata.TryGetValue("categories", out var value) &&
                 !_metadata.TryGetValue("category", out value))
             {
                 return new List<string>();
@@ -133,7 +133,7 @@ namespace AI.Domain.Entities
         //     return DeviceType is "mobile" or "tablet";
         // }
 
-        protected override void Apply(IDomainEvent @event) 
+        protected override void Apply(IDomainEvent @event)
         {
             // Implement event sourcing logic if needed
             // Example: UserBehaviorLogCreated event

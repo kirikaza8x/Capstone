@@ -17,7 +17,7 @@ public sealed record Error
     public ErrorType Type { get; }
 
     public static Error Failure(string code, string description) =>
-        new(code, description, ErrorType.Failure); 
+        new(code, description, ErrorType.Failure);
 
     public static Error Validation(string code, string description) =>
         new(code, description, ErrorType.Validation);

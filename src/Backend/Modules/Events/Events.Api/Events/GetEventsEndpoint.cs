@@ -27,7 +27,7 @@ public class GetEventsEndpoint : ICarterModule
 
             return result.ToOk();
         })
-        .WithTags(Constants.Tags.Events) 
+        .WithTags(Constants.Tags.Events)
         .WithName("GetEvents")
         .WithSummary("Get all events")
         .WithDescription("Get all events with pagination.")

@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Http;
-using Shared.Application.Abstractions.Storage;  
+using Shared.Application.Abstractions.Storage;
 public class FormFileUpload : IFileUpload
 {
     private readonly IFormFile _file;

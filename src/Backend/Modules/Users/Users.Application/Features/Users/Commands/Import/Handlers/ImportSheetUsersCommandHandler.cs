@@ -9,7 +9,7 @@ using Users.Domain.UOW;
 
 
 namespace Users.Application.Features.Users.Commands.Import.Handlers;
-public class ImportSheetUsersCommandHandler 
+public class ImportSheetUsersCommandHandler
     : ICommandHandler<ImportSheetUsersCommand, int>
 {
     private readonly IFileImportExportService<User> _excelService;
@@ -44,7 +44,7 @@ public class ImportSheetUsersCommandHandler
         var users = await _excelService.ImportAsync(command.File.OpenReadStream(), cancellationToken);
         if (!users.Any())
             return Result.Failure<int>(Error.Validation("Import.EmptyFile", "No users found in the record file."));
-        
+
 
         await _userRepository.BulkInsertAsync(users, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);

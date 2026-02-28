@@ -4,7 +4,7 @@ using Users.Infrastructure.Persistence.Contexts;
 using Shared.Infrastructure.Data;
 namespace Users.Infrastructure.Data.Repositories
 {
-    public class RefreshTokenRepository 
+    public class RefreshTokenRepository
         : RepositoryBase<RefreshToken, Guid>, IRefreshTokenRepository
     {
         private readonly UserModuleDbContext _context;
@@ -17,7 +17,7 @@ namespace Users.Infrastructure.Data.Repositories
         }
 
         public async Task<RefreshToken?> GetByTokenAsync(
-            string token, 
+            string token,
             CancellationToken cancellationToken = default)
         {
             return await _dbSet
@@ -25,7 +25,7 @@ namespace Users.Infrastructure.Data.Repositories
         }
 
         public async Task<IEnumerable<RefreshToken>> GetByUserIdAsync(
-            Guid userId, 
+            Guid userId,
             CancellationToken cancellationToken = default)
         {
             return await _dbSet
@@ -34,14 +34,14 @@ namespace Users.Infrastructure.Data.Repositories
         }
 
         public async Task AddAsync(
-            RefreshToken token, 
+            RefreshToken token,
             CancellationToken cancellationToken = default)
         {
             await _dbSet.AddAsync(token, cancellationToken);
         }
 
         public Task RemoveAsync(
-            RefreshToken token, 
+            RefreshToken token,
             CancellationToken cancellationToken = default)
         {
             _dbSet.Remove(token);
@@ -49,7 +49,7 @@ namespace Users.Infrastructure.Data.Repositories
         }
 
         public async Task<bool> ExistsAsync(
-            string token, 
+            string token,
             CancellationToken cancellationToken = default)
         {
             return await _dbSet

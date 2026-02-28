@@ -12,7 +12,7 @@ namespace Users.Application.Features.Users.Commands.Handlers;
 
 public class GoogleLoginCommandHandler(
     IUserRepository userRepository,
-    IGooglePayloadValidator googleValidator, 
+    IGooglePayloadValidator googleValidator,
     IJwtTokenService jwtTokenService,
     IRefreshTokenService refreshTokenService,
     ICurrentUserService currentUserService,
@@ -24,7 +24,7 @@ public class GoogleLoginCommandHandler(
         // 1. Validate Google Token
         var payloadResult = await googleValidator.ValidateAsync(command.IdToken);
         if (payloadResult.IsFailure) return Result.Failure<LoginResponseDto>(payloadResult.Error);
-        
+
         var payload = payloadResult.Value;
 
         // 2. Find or Register User
@@ -43,21 +43,21 @@ public class GoogleLoginCommandHandler(
         }
 
         var deviceInfo = deviceDetectionService.GetDeviceInfo(
-            currentUserService.UserAgent, 
-            currentUserService.IpAddress, 
+            currentUserService.UserAgent,
+            currentUserService.IpAddress,
             currentUserService.DeviceId);
 
         if (!string.IsNullOrWhiteSpace(command.DeviceName))
             deviceInfo.DeviceName = command.DeviceName;
 
         var tokenData = refreshTokenService.GenerateToken(user.Id);
-        
+
         user.LoginDevice(
-            tokenData.Token, 
-            tokenData.ExpiryDate, 
-            deviceInfo.DeviceId, 
-            deviceInfo.DeviceName, 
-            deviceInfo.IpAddress, 
+            tokenData.Token,
+            tokenData.ExpiryDate,
+            deviceInfo.DeviceId,
+            deviceInfo.DeviceName,
+            deviceInfo.IpAddress,
             deviceInfo.UserAgent);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);

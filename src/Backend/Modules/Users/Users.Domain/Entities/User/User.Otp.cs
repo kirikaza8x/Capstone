@@ -12,13 +12,13 @@ namespace Users.Domain.Entities
         // --------------------
         // Password Reset Flow
         // --------------------
-        
+
         public Otp CreateOtp()
         {
             // Invalidate any previous unused OTPs to prevent confusion
             foreach (var existingOtp in _otps.Where(o => !o.IsUsed))
             {
-                existingOtp.MarkUsed(); 
+                existingOtp.MarkUsed();
             }
 
             var otp = Otp.Create(Id);
@@ -28,7 +28,7 @@ namespace Users.Domain.Entities
             return otp;
         }
 
-        private Otp? GetLatestActiveOtp() => 
+        private Otp? GetLatestActiveOtp() =>
             _otps.Where(o => !o.IsUsed && !o.IsExpired())
                  .OrderByDescending(o => o.CreatedAt)
                  .FirstOrDefault();
@@ -54,6 +54,6 @@ namespace Users.Domain.Entities
             RaiseDomainEvent(new PasswordChangedEvent(Id));
         }
 
-        
+
     }
 }

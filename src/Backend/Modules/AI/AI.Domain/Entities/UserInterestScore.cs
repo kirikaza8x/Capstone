@@ -9,22 +9,22 @@ namespace AI.Domain.Entities
     /// </summary>
     public class UserInterestScore : AggregateRoot<Guid>
     {
-        public Guid UserId { get; private set; } 
+        public Guid UserId { get; private set; }
         public string Category { get; private set; } = string.Empty;
         public double Score { get; private set; }
         public int TotalInteractions { get; private set; }
         public DateTime LastUpdated { get; private set; }
-        
+
         private UserInterestScore() { }
 
         public static UserInterestScore Create(Guid userId, string category, double initialScore)
         {
             if (userId == Guid.Empty)
                 throw new ArgumentException("UserId cannot be empty.", nameof(userId));
-            
+
             if (string.IsNullOrWhiteSpace(category))
                 throw new ArgumentException("Category cannot be empty.", nameof(category));
-            
+
             if (initialScore < 0)
                 throw new ArgumentException("Initial score cannot be negative.", nameof(initialScore));
 
@@ -56,13 +56,13 @@ namespace AI.Domain.Entities
                 throw new ArgumentException("Half-life must be positive.", nameof(halfLifeInDays));
 
             double daysElapsed = (DateTime.UtcNow - LastUpdated).TotalDays;
-            
+
             // No time has passed - no decay needed
             if (daysElapsed <= 0) return;
 
             // Exponential decay formula
             double decayFactor = Math.Pow(0.5, daysElapsed / halfLifeInDays);
-            
+
             Score *= decayFactor;
 
             // ===== OPTIMIZATION: Floor very small scores to zero =====
@@ -83,7 +83,7 @@ namespace AI.Domain.Entities
                 throw new ArgumentException("Cannot add negative points.", nameof(points));
 
             Score += points;
-            TotalInteractions++;    
+            TotalInteractions++;
             LastUpdated = DateTime.UtcNow;
         }
 

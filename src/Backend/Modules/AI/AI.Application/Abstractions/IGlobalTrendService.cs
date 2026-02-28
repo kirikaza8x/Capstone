@@ -4,5 +4,5 @@ namespace AI.Application.Abstractions
     {
         Task UpdateGlobalTrendsAsync();
     }
-    
+
 }

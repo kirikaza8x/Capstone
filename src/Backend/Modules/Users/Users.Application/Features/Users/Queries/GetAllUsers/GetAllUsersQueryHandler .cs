@@ -6,7 +6,7 @@ using Users.Domain.Repositories;
 
 namespace Users.Application.Features.Users.Queries
 {
-    public class GetAllUsersQueryHandler 
+    public class GetAllUsersQueryHandler
         : IQueryHandler<GetAllUsersQuery, IEnumerable<UserResponseDto>>
     {
         private readonly IUserRepository _userRepository;

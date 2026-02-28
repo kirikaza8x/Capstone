@@ -1,8 +1,8 @@
 using AutoMapper;
-using Shared.Application.Dtos.Queries; 
-using Shared.Domain.Queries;           
+using Shared.Application.Dtos.Queries;
+using Shared.Domain.Queries;
 using Users.Application.Features.Users.Dtos;
-using Users.Application.Features.Users.Queries; 
+using Users.Application.Features.Users.Queries;
 using Users.Domain.Entities;
 
 namespace Users.Application.Mappings
@@ -14,7 +14,7 @@ namespace Users.Application.Mappings
             // --- Shared Query Mappings ---
             // These handle the recursion and base types for all search queries
             CreateMap<SortRequestDto, Sort>();
-            
+
             CreateMap<FilterRequestDto, Filter>()
                 .ForMember(dest => dest.Filters, opt => opt.MapFrom(src => src.Filters));
 
@@ -23,7 +23,7 @@ namespace Users.Application.Mappings
             CreateMap<UserFilterRequestDto, GetUsersQuery>();
 
             // --- User Entity Mappings ---
-            
+
             // Map User → UserResponseDto
             CreateMap<User, UserResponseDto>()
                 .ForMember(dest => dest.Roles,

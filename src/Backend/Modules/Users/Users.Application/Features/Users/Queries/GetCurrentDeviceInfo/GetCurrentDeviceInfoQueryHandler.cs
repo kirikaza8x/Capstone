@@ -6,7 +6,7 @@ using Shared.Domain.Abstractions;
 
 namespace Users.Application.Features.Users.Queries
 {
-    public class GetDeviceInfoQueryHandler 
+    public class GetDeviceInfoQueryHandler
         : IQueryHandler<GetCurrentDeviceInfoQuery, DeviceInfo>
     {
         private readonly IDeviceDetectionService _deviceDetectionService;

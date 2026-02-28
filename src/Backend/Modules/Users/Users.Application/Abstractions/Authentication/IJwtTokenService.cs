@@ -10,10 +10,10 @@ namespace Shared.Application.Abstractions.Authentication
         /// <summary>
         /// Generates a signed JWT access token for the given user.
         /// </summary>
-        string GenerateToken( 
-            Guid userId, 
-            string? email, 
-            string? name, 
+        string GenerateToken(
+            Guid userId,
+            string? email,
+            string? name,
             IEnumerable<string> roles
             );
 

@@ -6,7 +6,7 @@ using Shared.Domain.Abstractions;
 
 namespace Users.Application.Features.Users.Queries
 {
-    public class GetCurrentUserQueryHandler 
+    public class GetCurrentUserQueryHandler
         : IQueryHandler<GetCurrentUserQuery, CurrentUserDto>
     {
         private readonly ICurrentUserService _currentUserService;

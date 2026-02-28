@@ -24,7 +24,7 @@ public class UpdateProfileImageEndpoint : ICarterModule
 
             Result<Guid> result = await sender.Send(command, cancellationToken);
 
-            return result.ToCreated( $"/api/users/{userId}/profile-image", "Profile image updated successfully.");
+            return result.ToCreated($"/api/users/{userId}/profile-image", "Profile image updated successfully.");
         })
         .WithTags("Users")
         .WithName("UpdateProfileImage")

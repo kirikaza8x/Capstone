@@ -28,7 +28,7 @@ namespace Users.Application.Features.Roles.Commands
             var role = await _roleRepository.GetByIdAsync(command.RoleId, cancellationToken);
             if (role == null)
             {
-                return Result.Failure<Result>( Error.NotFound("RoleNotFound", "Role does not exist."));
+                return Result.Failure<Result>(Error.NotFound("RoleNotFound", "Role does not exist."));
             }
 
             user.AssignRole(role);

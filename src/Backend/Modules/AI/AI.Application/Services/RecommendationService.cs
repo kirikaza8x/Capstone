@@ -45,7 +45,7 @@ namespace AI.Infrastructure.Services
         // PRIMARY RECOMMENDATION METHOD (Bayesian Strategy)
         // ---------------------------------------------------------
         public async Task<List<RecommendationResultDto>> GetRecommendationsAsync(
-            Guid? userId, 
+            Guid? userId,
             int topN = 10)
         {
             _logger.LogInformation(
@@ -54,7 +54,7 @@ namespace AI.Infrastructure.Services
 
             // STEP 1: Fetch data
             var globalStats = await _globalStatRepo.GetTopCategoriesAsync(topN * CANDIDATE_MULTIPLIER);
-            
+
             var userScores = userId.HasValue
                 ? await _userScoreRepo.GetAllForUserAsync(userId.Value)
                 : new List<UserInterestScore>();
@@ -71,20 +71,20 @@ namespace AI.Infrastructure.Services
             }
 
             int totalUserInteractions = userScores.Sum(s => s.TotalInteractions);
-            
+
             if (totalUserInteractions < MIN_INTERACTIONS_FOR_CONFIDENCE)
             {
                 _logger.LogInformation(
                     "Low confidence user ({Interactions} interactions) - using Bayesian blend",
                     totalUserInteractions);
-                
+
                 return GetBayesianRecommendations(globalStats, userScores, topN);
             }
 
             _logger.LogInformation(
                 "High confidence user ({Interactions} interactions) - using zipper merge",
                 totalUserInteractions);
-            
+
             return GetZipperMergeRecommendations(globalStats, userScores, topN);
         }
 
@@ -109,7 +109,7 @@ namespace AI.Infrastructure.Services
             double minScore = allScores.Min();
             double maxScore = allScores.Max();
             double range = maxScore - minScore;
-            
+
             if (range == 0) range = 1; // Prevent division by zero
 
             _logger.LogDebug(
@@ -124,7 +124,8 @@ namespace AI.Infrastructure.Services
 
             var personalDict = userScores.ToDictionary(
                 u => u.Category,
-                u => new {
+                u => new
+                {
                     NormalizedScore = (u.Score - minScore) / range,
                     Interactions = u.TotalInteractions
                 }
@@ -139,25 +140,25 @@ namespace AI.Infrastructure.Services
 
             foreach (var category in allCategories)
             {
-                double personalScore = personalDict.TryGetValue(category, out var p) 
-                    ? p.NormalizedScore 
-                    : 0.0;
-                
-                double globalScore = globalDict.TryGetValue(category, out var g) 
-                    ? g 
+                double personalScore = personalDict.TryGetValue(category, out var p)
+                    ? p.NormalizedScore
                     : 0.0;
 
-                int userInteractionCount = personalDict.TryGetValue(category, out var u) 
-                    ? u.Interactions 
+                double globalScore = globalDict.TryGetValue(category, out var g)
+                    ? g
+                    : 0.0;
+
+                int userInteractionCount = personalDict.TryGetValue(category, out var u)
+                    ? u.Interactions
                     : 0;
 
                 // BAYESIAN FORMULA:
                 // Weight = UserInteractions / (UserInteractions + MinConfidence)
                 // FinalScore = (Weight × Personal) + ((1 - Weight) × Global)
-                double confidenceWeight = (double)userInteractionCount / 
+                double confidenceWeight = (double)userInteractionCount /
                     (userInteractionCount + MIN_INTERACTIONS_FOR_CONFIDENCE);
 
-                double finalScore = (confidenceWeight * personalScore) + 
+                double finalScore = (confidenceWeight * personalScore) +
                     ((1 - confidenceWeight) * globalScore);
 
                 string explanation = confidenceWeight > 0.5
@@ -178,7 +179,7 @@ namespace AI.Infrastructure.Services
                 .ToList();
 
             _logger.LogInformation("Generated {Count} Bayesian recommendations", result.Count);
-            
+
             return result;
         }
 
@@ -259,7 +260,7 @@ namespace AI.Infrastructure.Services
             }
 
             _logger.LogInformation("Generated {Count} zipper-merged recommendations", finalRecommendations.Count);
-            
+
             return finalRecommendations;
         }
 
@@ -282,7 +283,7 @@ namespace AI.Infrastructure.Services
                 .ToList();
 
             _logger.LogInformation("Generated {Count} global-only recommendations", result.Count);
-            
+
             return result;
         }
     }

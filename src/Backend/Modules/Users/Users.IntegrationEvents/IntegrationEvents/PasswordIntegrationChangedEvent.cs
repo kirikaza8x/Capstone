@@ -2,7 +2,7 @@ using Shared.Application.EventBus;
 
 namespace Users.IntegrationEvents
 {
-    
+
     /// <summary>
     /// Integration event published when a user’s password is changed.
     /// </summary>

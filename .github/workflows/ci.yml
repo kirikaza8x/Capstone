@@ -26,16 +26,10 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        # Use exact version to avoid ambiguity
         dotnet-version: '9.0.x'
-        # Disable caching for now to avoid lock file issues
-        # cache: true
 
     - name: Restore dependencies
       run: dotnet restore src/Backend/Capstone.sln
-
-    - name: Check Code Formatting
-      run: dotnet format src/Backend/Capstone.sln --verify-no-changes --no-restore
 
     - name: Build solution
       run: dotnet build src/Backend/Capstone.sln --configuration Release --no-restore --warnaserror

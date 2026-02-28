@@ -14,7 +14,7 @@ public sealed record UserFilterRequestDto : PagedRequestDto
 
     public string? LastName { get; init; }
 
-    [DefaultValue("1900-01-01T00:00:00Z")] 
+    [DefaultValue("1900-01-01T00:00:00Z")]
     public DateTime? BirthdayFrom { get; init; } = new DateTime(1900, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
     [DefaultValue("2100-12-31T23:59:59Z")]

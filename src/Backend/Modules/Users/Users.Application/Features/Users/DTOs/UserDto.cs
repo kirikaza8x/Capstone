@@ -13,7 +13,7 @@ public class UserResponseDto : BaseDto<Guid>
     public string? LastName { get; set; }
     public string? PhoneNumber { get; set; }
     public string? Address { get; set; }
-    public IEnumerable<string>? Roles { get; set; } 
+    public IEnumerable<string>? Roles { get; set; }
 }
 
 public class LoginRequestDto
@@ -40,7 +40,7 @@ public class RegisterRequestDto
 
     [DefaultValue("123456789")]
     public string Password { get; set; } = default!;
-    
+
     [DefaultValue("Admin")]
     public string? FirstName { get; set; } = default!;
     [DefaultValue("User")]
@@ -86,7 +86,7 @@ public record UserProfileDto
 
 
 
-public class UpdateProfileRequestDto 
+public class UpdateProfileRequestDto
 {
     [DefaultValue("d3f8a1b2-1234-5678-9abc-def012345678")]
     public Guid UserId { get; set; }
@@ -100,7 +100,7 @@ public class UpdateProfileRequestDto
     [DefaultValue("")]
     public DateTime? Birthday { get; set; }
 
-    [JsonConverter(typeof(JsonStringEnumConverter))] 
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public Gender? Gender { get; set; }
 
     [DefaultValue("+1234567890")]

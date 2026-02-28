@@ -12,7 +12,7 @@ public class FilterSchemaFilter : ISchemaFilter
         {
             var example = new
             {
-                field = "", 
+                field = "",
                 @operator = "",
                 value = "",
                 logic = "and",
