@@ -42,15 +42,15 @@ public class RegisterRequestDto
     public string Password { get; set; } = default!;
     
     [DefaultValue("Admin")]
-    public string FirstName { get; set; } = default!;
+    public string? FirstName { get; set; } = default!;
     [DefaultValue("User")]
-    public string LastName { get; set; } = default!;
+    public string? LastName { get; set; } = default!;
 
     [DefaultValue("0123456789")]
-    public string PhoneNumber { get; set; } = default!;
+    public string? PhoneNumber { get; set; } = default!;
 
     [DefaultValue("some where in vietnam of course lmao")]
-    public string Address { get; set; } = default!;
+    public string? Address { get; set; } = default!;
 }
 
 public class GoogleLoginRequestDto

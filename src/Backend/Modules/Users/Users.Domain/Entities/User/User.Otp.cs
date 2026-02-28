@@ -1,6 +1,5 @@
 using Shared.Domain.DDD;
 using Users.Domain.Errors.Otp;
-using Users.Domain.Errors.Users; // Added for SamePassword error
 using Users.Domain.Events;
 
 namespace Users.Domain.Entities

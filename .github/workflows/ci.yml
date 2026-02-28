@@ -2,32 +2,51 @@ name: Full CI Pipeline
 
 on:
   push:
-    branches: [ "dev", "main" ]   
+    branches: [ "dev", "main" ]
   pull_request:
-    branches: [ "dev", "main" ]   
+    branches: [ "dev", "main" ]
+
+# Prevent concurrent runs on the same branch/PR to save resources
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build-and-test:
+  build-and-verify:
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '9.0.x'   
+        dotnet-version: '9.0.x'
+        # Enable built-in NuGet caching for faster restores
+        cache: true
 
     - name: Restore dependencies
-      run: dotnet restore src/Backend/Capstone.sln --warnaserror
+      run: dotnet restore src/Backend/Capstone.sln
+
+    - name: Check Code Formatting
+      # Fails the build if code is not formatted correctly
+      run: dotnet format src/Backend/Capstone.sln --verify-no-changes --no-restore
 
     - name: Build solution
-      run: dotnet build src/Backend/Capstone.sln --configuration Release --no-restore
+      # Treat warnings as errors during build to enforce quality
+      run: dotnet build src/Backend/Capstone.sln --configuration Release --no-restore --warnaserror
 
-    # - name: Run tests
-    #   run: dotnet test src/Backend/Capstone.sln --no-build --verbosity normal
+    - name: Check for Vulnerable Packages
+      # Fails if known vulnerabilities are found in dependencies
+      run: dotnet list src/Backend/Capstone.sln package --vulnerable --fail-on-severity low
 
-    # - name: Run backend (run test)
-    #   run: timeout 30s dotnet run --project src/Backend/Api/Api/Api.csproj --configuration Release
+    - name: Publish Application
+      # Verifies the app can actually be deployed (catches missing content files)
+      run: dotnet publish src/Backend/Api/Api/Api.csproj --configuration Release --no-build --output ./publish
 
+    # - name: Run Smoke Test (Optional Future Step)
+    #   run: |
+    #     dotnet ./publish/Api.dll &
+    #     sleep 5
+    #     curl --fail http://localhost:5000/health || exit 1

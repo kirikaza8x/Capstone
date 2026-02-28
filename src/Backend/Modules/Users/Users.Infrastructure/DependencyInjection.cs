@@ -1,4 +1,3 @@
-using Amazon;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
@@ -45,6 +44,12 @@ namespace Users.Infrastructure
             services.Scan(scan => scan
                 .FromAssemblyOf<UsersInfrastructureAssemblyReference>()
                 .AddClasses(classes => classes.AssignableTo(typeof(IRepository<,>)))
+                .AsImplementedInterfaces()
+                .WithScopedLifetime());
+
+            services.Scan(scan => scan
+                .FromAssemblyOf<UsersInfrastructureAssemblyReference>()
+                .AddClasses(classes => classes.AssignableTo(typeof(IDataSeeder<>)))
                 .AsImplementedInterfaces()
                 .WithScopedLifetime());
 
@@ -137,8 +142,6 @@ namespace Users.Infrastructure
             services.AddScoped<IRefreshTokenService, RefreshTokenService>();
             services.AddScoped<IDeviceDetectionService, DeviceDetectionService>();
 
-            // seeder 
-            services.AddScoped<IDataSeeder, RoleSeeder>();
             return services;
         }
 

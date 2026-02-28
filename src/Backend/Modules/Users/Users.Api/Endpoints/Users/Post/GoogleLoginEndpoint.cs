@@ -18,8 +18,6 @@ public class GoogleLoginEndpoint : ICarterModule
             ISender sender,
             CancellationToken cancellationToken) =>
         {
-            // We pass the IdToken directly to the command.
-            // The handler will use a service to validate it.
             var command = new GoogleLoginCommand(request.IdToken, request.DeviceName);
 
             var result = await sender.Send(command, cancellationToken);

@@ -1,7 +1,218 @@
-name: Full CI Pipeline
+# name: Migration Validation
 
-on:
-  push:
-    branches: [ "dev", "main" ]   
-  pull_request:
-    branches: [ "dev", "main" ] 
+# on:
+#   push:
+#     branches: [ "dev", "main" ]
+#     paths:
+#       - "src/Backend/**"
+#       - ".github/workflows/migration-check.yml"
+#   pull_request:
+#     branches: [ "dev", "main" ]
+#     paths:
+#       - "src/Backend/**"
+
+# jobs:
+#   check-migrations:
+#     runs-on: ubuntu-latest
+
+#     # Run SQL Server container for real migration validation
+#     services:
+#       sqlserver:
+#         image: mcr.microsoft.com/mssql/server:2022-latest
+#         env:
+#           SA_PASSWORD: Your_password123!
+#           ACCEPT_EULA: Y
+#         ports:
+#           - 1433:1433
+#         options: >-
+#           --health-cmd="/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'Your_password123!' -Q 'SELECT 1'"
+#           --health-interval=10s
+#           --health-timeout=5s
+#           --health-retries=3
+
+#     env:
+#       DOTNET_CLI_TELEMETRY_OPTOUT: true
+#       # Connection string pointing to the container above
+#       ConnectionStrings__DefaultConnection: "Server=localhost,1433;Database=CapstoneTest;User=sa;Password=Your_password123!;TrustServerCertificate=True;"
+
+#     steps:
+#     - name: Checkout repository
+#       uses: actions/checkout@v4
+
+#     - name: Setup .NET
+#       uses: actions/setup-dotnet@v4
+#       with:
+#         dotnet-version: '9.0.x'
+#         cache: true
+
+#     - name: Install EF Core Tools
+#       run: dotnet tool install --global dotnet-ef
+
+#     - name: Restore dependencies
+#       run: dotnet restore src/Backend/Capstone.sln
+
+#     # ============================================
+#     # AUTO-DISCOVER ALL MODULES
+#     # ============================================
+#     - name: Discover Modules
+#       id: discover
+#       run: |
+#         cd src/Backend/Modules
+#         modules=""
+#         for dir in */; do
+#           module_name="${dir%/}"
+#           # Verify Infrastructure project exists
+#           infra_proj="Modules/${module_name}/${module_name}.Infrastructure/${module_name}.Infrastructure.csproj"
+#           if [ -f "$infra_proj" ]; then
+#             echo "✓ Found module: $module_name"
+#             modules="${modules}${module_name}\n"
+#           else
+#             echo "⚠ Skipping $module_name (no Infrastructure project)"
+#           fi
+#         done
+#         echo "modules<<EOF" >> $GITHUB_OUTPUT
+#         echo -e "$modules" >> $GITHUB_OUTPUT
+#         echo "EOF" >> $GITHUB_OUTPUT
+
+#     # ============================================
+#     # CHECK PENDING MIGRATIONS FOR EACH MODULE
+#     # ============================================
+#     - name: Check Pending Migrations (All Modules)
+#       run: |
+#         cd src/Backend
+#         failed_modules=""
+        
+#         for dir in Modules/*/; do
+#           module_name="${dir%/}"
+#           module_name="${module_name#Modules/}"
+          
+#           infra_proj="Modules/${module_name}/${module_name}.Infrastructure/${module_name}.Infrastructure.csproj"
+#           context_name="${module_name}ModuleDbContext"
+          
+#           echo ""
+#           echo "=========================================="
+#           echo " Checking Module: $module_name"
+#           echo "=========================================="
+          
+#           if [ ! -f "$infra_proj" ]; then
+#             echo "⚠ Skipping (Infrastructure project not found)"
+#             continue
+#           fi
+          
+#           # Check for pending model changes
+#           set +e
+#           dotnet ef migrations has-pending-model-changes \
+#             --project "$infra_proj" \
+#             --startup-project "Api/Api/Api.csproj" \
+#             --context "$context_name" \
+#             --verbosity quiet
+          
+#           exit_code=$?
+#           set -e
+          
+#           if [ $exit_code -eq 1 ]; then
+#             echo " FAILED: $module_name has pending model changes!"
+#             failed_modules="${failed_modules}${module_name}\n"
+#           elif [ $exit_code -eq 0 ]; then
+#             echo " PASSED: $module_name migrations are in sync"
+#           else
+#             echo "⚠ WARNING: $module_name check returned unexpected code $exit_code"
+#           fi
+#         done
+        
+#         if [ -n "$failed_modules" ]; then
+#           echo ""
+#           echo "=========================================="
+#           echo " MIGRATION CHECKS FAILED"
+#           echo "=========================================="
+#           echo -e "Modules with pending changes:\n$failed_modules"
+#           echo ""
+#           echo "Run this locally to fix:"
+#           echo "   dotnet ef migrations add <MigrationName> --project <Module.Infrastructure.csproj> --context <DbContextName>"
+#           echo "=========================================="
+#           exit 1
+#         fi
+        
+#         echo ""
+#         echo "=========================================="
+#         echo " ALL MODULES PASSED MIGRATION CHECKS"
+#         echo "=========================================="
+
+#     # ============================================
+#     # GENERATE MIGRATION SCRIPTS FOR EACH MODULE
+#     # ============================================
+#     - name: Generate Migration Scripts (All Modules)
+#       run: |
+#         cd src/Backend
+#         mkdir -p ../migration-scripts
+        
+#         for dir in Modules/*/; do
+#           module_name="${dir%/}"
+#           module_name="${module_name#Modules/}"
+          
+#           infra_proj="Modules/${module_name}/${module_name}.Infrastructure/${module_name}.Infrastructure.csproj"
+#           context_name="${module_name}ModuleDbContext"
+          
+#           if [ ! -f "$infra_proj" ]; then
+#             continue
+#           fi
+          
+#           echo " Generating script for: $module_name"
+          
+#           dotnet ef migrations script \
+#             --idempotent \
+#             --project "$infra_proj" \
+#             --startup-project "Api/Api/Api.csproj" \
+#             --context "$context_name" \
+#             --output "../migration-scripts/${module_name}-Migrations.sql" \
+#             --verbosity quiet
+          
+#           echo " Generated: ${module_name}-Migrations.sql"
+#         done
+
+#     # ============================================
+#     # UPLOAD SCRIPTS AS ARTIFACTS
+#     # ============================================
+#     - name: Upload Migration Scripts
+#       uses: actions/upload-artifact@v4
+#       with:
+#         name: migration-scripts
+#         path: migration-scripts/
+#         retention-days: 7
+#         if-no-files-found: warn
+
+#     # ============================================
+#     # OPTIONAL: CHECK FOR DESTRUCTIVE CHANGES
+#     # ============================================
+#     - name: Check for Destructive Changes
+#       continue-on-error: true
+#       run: |
+#         cd src/Backend
+#         echo " Scanning for potentially destructive migration operations..."
+        
+#         destructive_found=false
+        
+#         for sql_file in ../migration-scripts/*.sql; do
+#           if [ -f "$sql_file" ]; then
+#             module_name=$(basename "$sql_file" -Migrations.sql)
+            
+#             # Check for DROP operations
+#             if grep -qi "DROP TABLE\|DROP COLUMN\|ALTER COLUMN.*DROP" "$sql_file"; then
+#               echo "⚠ WARNING: $module_name contains potentially destructive operations!"
+#               grep -in "DROP\|DELETE\|TRUNCATE" "$sql_file" | head -5
+#               destructive_found=true
+#             fi
+#           fi
+#         done
+        
+#         if [ "$destructive_found" = true ]; then
+#           echo ""
+#           echo "=========================================="
+#           echo "⚠ DESTRUCTIVE CHANGE WARNING"
+#           echo "=========================================="
+#           echo "Please review the migration scripts carefully before merging!"
+#           echo "Download artifacts to see full SQL scripts."
+#           echo "=========================================="
+#         else
+#           echo " No obvious destructive changes detected"
+#         fi

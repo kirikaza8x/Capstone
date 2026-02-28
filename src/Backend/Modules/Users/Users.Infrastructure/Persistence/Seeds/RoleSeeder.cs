@@ -5,7 +5,7 @@ using Users.Infrastructure.Persistence.Contexts;
 
 namespace Users.Infrastructure.Persistence.Seeds;
 
-public class RoleSeeder(UserModuleDbContext context) : IDataSeeder
+public class RoleSeeder(UserModuleDbContext context) : IDataSeeder<Role>
 {
     public async Task SeedAllAsync()
     {

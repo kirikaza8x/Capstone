@@ -42,7 +42,6 @@ public class GoogleLoginCommandHandler(
             userRepository.Add(user);
         }
 
-        // 3. Handle Device & Refresh Tokens
         var deviceInfo = deviceDetectionService.GetDeviceInfo(
             currentUserService.UserAgent, 
             currentUserService.IpAddress, 
