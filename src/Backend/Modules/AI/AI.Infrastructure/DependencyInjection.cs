@@ -12,12 +12,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Npgsql;
-using Shared.Application.Abstractions.Authentication;
 using Shared.Domain.Data;
-using Shared.Infrastructure.Service.Authentication;
 using Shared.Infrastructure.Configs;
 using Shared.Infrastructure.Configs.Database;
-using Shared.Infrastructure.Data.Interceptors;
+using Shared.Infrastructure.Data.Seeds;
 
 namespace AI.Infrastructure
 {
@@ -44,6 +42,13 @@ namespace AI.Infrastructure
                 .AddClasses(classes => classes.AssignableTo(typeof(IUnitOfWork)))
                 .AsImplementedInterfaces()
                 .WithScopedLifetime());
+
+            services.Scan(scan => scan
+               .FromAssemblyOf<AiInfrastructureAssemblyReference>()
+               .AddClasses(classes => classes.AssignableTo(typeof(IDataSeeder<>)))
+               .AsImplementedInterfaces()
+               .WithScopedLifetime());
+
 
             services.AddSingleton<NpgsqlDataSource>(sp =>
             {
@@ -75,6 +80,7 @@ namespace AI.Infrastructure
             });
 
             // Register services
+
             services.AddScoped<IGlobalTrendService, GlobalTrendService>();
             services.AddScoped<IUserActivityOrchestrator, UserActivityOrchestrator>();
             services.AddScoped<InteractionWeightCalculator>();

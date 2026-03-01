@@ -22,6 +22,7 @@ namespace Users.Infrastructure.Data.Repositories
             return await _users
                 .Include(u => u.Roles)
                 .Include(u => u.RefreshTokens)
+                .AsSplitQuery()
                 .AsTracking()
                 .FirstOrDefaultAsync(u => u.UserName == userName, cancellationToken);
         }
@@ -31,6 +32,7 @@ namespace Users.Infrastructure.Data.Repositories
             return await _users
                 .Include(u => u.Roles)
                 .Include(u => u.RefreshTokens)
+                .AsSplitQuery()
                 .AsTracking()
                 .FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
         }
@@ -51,6 +53,7 @@ namespace Users.Infrastructure.Data.Repositories
             return await _users
                 .Include(u => u.Roles)
                 .Include(u => u.RefreshTokens)
+                .AsSplitQuery()
                 .AsTracking()
                 .FirstOrDefaultAsync(u =>
                     u.Email == userNameOrEmail || u.UserName == userNameOrEmail,
@@ -62,6 +65,7 @@ namespace Users.Infrastructure.Data.Repositories
             return await _users
                 .Include(u => u.Roles)
                 .Include(u => u.RefreshTokens)
+                .AsSplitQuery()
                 .AsTracking()
                 .FirstOrDefaultAsync(u =>
                     userNamesOrEmails.Contains(u.Email ?? string.Empty)
@@ -86,6 +90,7 @@ namespace Users.Infrastructure.Data.Repositories
             return await _users
                 .Include(u => u.Roles)
                 .Include(u => u.RefreshTokens)
+                .AsSplitQuery()
                 .AsTracking()
                 .FirstOrDefaultAsync(u =>
                     (u.UserName == userNameOrEmail || u.Email == userNameOrEmail)
@@ -141,6 +146,7 @@ namespace Users.Infrastructure.Data.Repositories
                 .Include(u => u.Roles)
                 .Include(u => u.RefreshTokens)
                 .Include(u => u.ExternalIdentities)
+                .AsSplitQuery()
                 .AsTracking()
                 .FirstOrDefaultAsync(u =>
                     u.ExternalIdentities.Any(e => e.Provider == provider && e.ProviderKey == providerKey),
