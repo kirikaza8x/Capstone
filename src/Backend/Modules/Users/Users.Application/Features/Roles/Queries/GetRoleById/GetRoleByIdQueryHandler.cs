@@ -1,31 +1,37 @@
-// using AutoMapper;
-// using Shared.Application.Abstractions.Messaging;
-// using Shared.Application.Common.ResponseModel;
-// using Users.Application.Features.Roles.Dtos;
-// using Users.Domain.Repositories;
+using AutoMapper;
+using Shared.Application.Messaging;
+using Shared.Domain.Abstractions;
+using Users.Application.Features.Roles.Dtos;
+using Users.Application.Features.Roles.Queries.GetRoleById;
+using Users.Domain.Repositories;
 
-// namespace Users.Application.Features.Roles.Queries
-// {
+namespace Users.Application.Features.Roles.Queries
+{    public class GetRoleByIdQueryHandler 
+        : IQueryHandler<GetRoleByIdQuery, RoleResponseDto>
+    {
+        private readonly IRoleRepository _roleRepository;
+        private readonly IMapper _mapper;
 
-//     public class GetRoleByIdQueryHandler 
-//         : IQueryHandler<GetRoleByIdQuery, RoleResponseDto>
-//     {
-//         private readonly IRoleRepository _roleRepository;
-//         private readonly IMapper _mapper;
+        public GetRoleByIdQueryHandler(IRoleRepository roleRepository, IMapper mapper)
+        {
+            _roleRepository = roleRepository;
+            _mapper = mapper;
+        }
 
-//         public GetRoleByIdQueryHandler(IRoleRepository roleRepository, IMapper mapper)
-//         {
-//             _roleRepository = roleRepository;
-//             _mapper = mapper;
-//         }
+        public async Task<Result<RoleResponseDto>> Handle(GetRoleByIdQuery query, CancellationToken cancellationToken)
+        {
+            var role = await _roleRepository.GetByIdAsync(query.Id, cancellationToken);
 
-//         public async Task<Result<RoleResponseDto>> Handle(GetRoleByIdQuery request, CancellationToken cancellationToken)
-//         {
-//             var role = await _roleRepository.GetByIdAsync(request.Id, cancellationToken);
-//             if (role is null)
-//                 return Result.Failure<RoleResponseDto>(new Error("RoleNotFound", "Role not found"));
+            if (role is null)
+            {
+                return Result.Failure<RoleResponseDto>(
+                    Error.NotFound("Role.NotFound", "Role not found.")
+                );
+            }
 
-//             return Result.Success(_mapper.Map<RoleResponseDto>(role));
-//         }
-//     }
-// }
+            var dto = _mapper.Map<RoleResponseDto>(role);
+            return Result.Success(dto);
+        }
+    }
+
+}

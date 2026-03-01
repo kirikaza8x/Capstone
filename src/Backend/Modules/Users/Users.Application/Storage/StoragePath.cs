@@ -1,4 +1,4 @@
-namespace Events.Application;
+namespace Users.Application.Storage;
 
 public static class StoragePath
 {
