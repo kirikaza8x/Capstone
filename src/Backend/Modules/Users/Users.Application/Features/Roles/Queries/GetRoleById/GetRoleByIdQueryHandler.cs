@@ -6,7 +6,8 @@ using Users.Application.Features.Roles.Queries.GetRoleById;
 using Users.Domain.Repositories;
 
 namespace Users.Application.Features.Roles.Queries
-{    public class GetRoleByIdQueryHandler 
+{
+    public class GetRoleByIdQueryHandler
         : IQueryHandler<GetRoleByIdQuery, RoleResponseDto>
     {
         private readonly IRoleRepository _roleRepository;

@@ -6,8 +6,8 @@ using Users.Domain.Repositories;
 
 namespace Users.Application.Features.Roles.Queries
 {
-    
-    public class GetAllRolesQueryHandler 
+
+    public class GetAllRolesQueryHandler
         : IQueryHandler<GetAllRolesQuery, IEnumerable<RoleResponseDto>>
     {
         private readonly IRoleRepository _roleRepository;
@@ -28,6 +28,6 @@ namespace Users.Application.Features.Roles.Queries
         }
     }
 
-   
+
 
 }
