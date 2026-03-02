@@ -1,4 +1,3 @@
-using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using Shared.Application.Dtos.Queries;

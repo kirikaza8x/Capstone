@@ -33,7 +33,7 @@ public class GetUsersFilterEndpoint : ICarterModule
         .WithName("GetUsers")
         .WithSummary("Get paged list of users")
         .WithDescription("Returns a paged list of users with dynamic filtering, sorting, and search options.")
-        .Produces<PagedResult<UserResponseDto>>(StatusCodes.Status200OK)
+        .Produces<PagedResult<UserProfileDto>>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status404NotFound);
         // .WithOpenApi(); // Ensures Swagger metadata is correctly generated

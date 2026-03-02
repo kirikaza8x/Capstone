@@ -1,8 +1,10 @@
+using System.Linq.Expressions;
 using AutoMapper;
 using Shared.Application.Messaging;
 using Shared.Domain.Abstractions;
 using Shared.Domain.Pagination;
 using Users.Application.Features.Users.Dtos;
+using Users.Domain.Entities;
 using Users.Domain.Repositories;
 
 namespace Users.Application.Features.Users.Queries
@@ -35,11 +37,12 @@ namespace Users.Application.Features.Users.Queries
                      (u.FirstName != null && u.FirstName.Contains(query.FirstName))) &&
                     (string.IsNullOrWhiteSpace(query.LastName) ||
                      (u.LastName != null && u.LastName.Contains(query.LastName))) &&
-                    // For date range, we need to check if the user's birthday is not null before comparing is currently error for user have null birthday
-                    // ((!query.BirthdayFrom.HasValue && !query.BirthdayTo.HasValue) ||
-                    // (u.Birthday != null &&
-                    //     (!query.BirthdayFrom.HasValue || u.Birthday >= query.BirthdayFrom.Value) &&
-                    //     (!query.BirthdayTo.HasValue || u.Birthday <= query.BirthdayTo.Value)))&&
+                    ((!query.BirthdayFrom.HasValue && !query.BirthdayTo.HasValue) ||
+                        u.Birthday == null ||  // ← Let null birthdays pass through
+                    (
+                        (!query.BirthdayFrom.HasValue || u.Birthday >= query.BirthdayFrom.Value) &&
+                        (!query.BirthdayTo.HasValue || u.Birthday <= query.BirthdayTo.Value)
+                    )) &&
                     (!query.Gender.HasValue || u.Gender == query.Gender.Value) &&
                     (string.IsNullOrWhiteSpace(query.PhoneNumber) ||
                      (u.PhoneNumber != null && u.PhoneNumber.Contains(query.PhoneNumber))) &&
@@ -49,6 +52,12 @@ namespace Users.Application.Features.Users.Queries
                      (u.UserName != null && u.UserName.Contains(query.SearchTerm)) ||
                      (u.FirstName != null && u.FirstName.Contains(query.SearchTerm)) ||
                      (u.LastName != null && u.LastName.Contains(query.SearchTerm))),
+                includes: new Expression<Func<User, object>>[]
+                    {
+                    u => u.Roles, 
+                    // u => u.RefreshTokens, 
+                    // u => u.ExternalIdentities 
+                    },
                 cancellationToken: cancellationToken);
 
             return Result.Success(pagedResult);

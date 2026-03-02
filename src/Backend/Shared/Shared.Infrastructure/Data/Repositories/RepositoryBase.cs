@@ -45,13 +45,20 @@ public partial class RepositoryBase<TEntity, TId> : IRepository<TEntity, TId>
     public virtual async Task<Domain.Pagination.PagedResult<TEntity>> GetAllWithPagingAsync(
         PagedQuery pagedQuery,
         Expression<Func<TEntity, bool>>? predicate = null,
+        IEnumerable<Expression<Func<TEntity, object>>>? includes = null,
         CancellationToken cancellationToken = default)
     {
         IQueryable<TEntity> query = DbSet.AsNoTracking();
 
         if (predicate is not null)
-        {
             query = query.Where(predicate);
+
+        if (includes is not null)
+        {
+            foreach (var include in includes)
+                query = query.Include(include);
+
+            query = query.AsSplitQuery();
         }
 
         if (!string.IsNullOrWhiteSpace(pagedQuery.SortColumn))
@@ -66,28 +73,27 @@ public partial class RepositoryBase<TEntity, TId> : IRepository<TEntity, TId>
     public virtual async Task<Shared.Domain.Pagination.PagedResult<TEntity>> GetPagedAsync(
         AdvancedPagedQuery query,
         Expression<Func<TEntity, bool>>? predicate = null,
+        IEnumerable<Expression<Func<TEntity, object>>>? includes = null,
         CancellationToken cancellationToken = default)
     {
         IQueryable<TEntity> dbQuery = DbSet.AsNoTracking();
 
         if (predicate is not null)
-        {
             dbQuery = dbQuery.Where(predicate);
+
+        if (includes is not null)
+        {
+            foreach (var include in includes)
+                dbQuery = dbQuery.Include(include);
+
+            dbQuery = dbQuery.AsSplitQuery();
         }
 
         dbQuery = dbQuery.ApplyDynamicFilters(query.Filter);
 
-        if (query.Sorts == null || !query.Sorts.Any())
-        {
-            dbQuery = dbQuery.ApplyDynamicSorting(new List<Sort>
-            {
-                new Sort { Field = "CreatedAt", Dir = "desc" }
-            });
-        }
-        else
-        {
-            dbQuery = dbQuery.ApplyDynamicSorting(query.Sorts);
-        }
+        dbQuery = (query.Sorts == null || !query.Sorts.Any())
+            ? dbQuery.ApplyDynamicSorting(new List<Sort> { new Sort { Field = "CreatedAt", Dir = "desc" } })
+            : dbQuery.ApplyDynamicSorting(query.Sorts);
 
         return await dbQuery.ToPagedResultAsync(query, cancellationToken);
     }
@@ -96,28 +102,27 @@ public partial class RepositoryBase<TEntity, TId> : IRepository<TEntity, TId>
         AdvancedPagedQuery query,
         Expression<Func<TEntity, TResult>> selector,
         Expression<Func<TEntity, bool>>? predicate = null,
+        IEnumerable<Expression<Func<TEntity, object>>>? includes = null,
         CancellationToken cancellationToken = default)
     {
         IQueryable<TEntity> dbQuery = DbSet.AsNoTracking();
 
         if (predicate is not null)
-        {
             dbQuery = dbQuery.Where(predicate);
+
+        if (includes is not null)
+        {
+            foreach (var include in includes)
+                dbQuery = dbQuery.Include(include);
+
+            dbQuery = dbQuery.AsSplitQuery();
         }
 
         dbQuery = dbQuery.ApplyDynamicFilters(query.Filter);
 
-        if (query.Sorts == null || !query.Sorts.Any())
-        {
-            dbQuery = dbQuery.ApplyDynamicSorting(new List<Sort>
-            {
-                new Sort { Field = "CreatedAt", Dir = "desc" }
-            });
-        }
-        else
-        {
-            dbQuery = dbQuery.ApplyDynamicSorting(query.Sorts);
-        }
+        dbQuery = (query.Sorts == null || !query.Sorts.Any())
+            ? dbQuery.ApplyDynamicSorting(new List<Sort> { new Sort { Field = "CreatedAt", Dir = "desc" } })
+            : dbQuery.ApplyDynamicSorting(query.Sorts);
 
         return await dbQuery
             .Select(selector)

@@ -1,3 +1,4 @@
+using Roles.Domain.UOW;
 using Shared.Application.Messaging;
 using Shared.Domain.Abstractions;
 using Users.Domain.Repositories;
@@ -9,12 +10,17 @@ namespace Users.Application.Features.Roles.Commands
         private readonly IUserRepository _userRepository;
         private readonly IRoleRepository _roleRepository;
 
+        private readonly IRoleUnitOfWork _unitOfWork;
+
         public AssignRoleCommandHandler(
             IUserRepository userRepository,
-            IRoleRepository roleRepository)
+            IRoleRepository roleRepository,
+            IRoleUnitOfWork roleUnitOfWork
+            )
         {
             _userRepository = userRepository;
             _roleRepository = roleRepository;
+            _unitOfWork = roleUnitOfWork;
         }
 
         public async Task<Result> Handle(AssignRoleCommand command, CancellationToken cancellationToken)
@@ -34,6 +40,8 @@ namespace Users.Application.Features.Roles.Commands
             user.AssignRole(role);
 
             _userRepository.Update(user);
+
+            await _unitOfWork.SaveChangesAsync();
 
             return Result.Success();
         }

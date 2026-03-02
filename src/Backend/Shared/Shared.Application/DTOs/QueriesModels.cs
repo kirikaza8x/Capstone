@@ -10,6 +10,7 @@ public record PagedRequestDto
     [DefaultValue(10)]
     public int PageSize { get; init; } = 10;
 
+    [DefaultValue("")]
     public string? SearchTerm { get; init; }
 
     public IEnumerable<SortRequestDto>? Sorts { get; init; } = new List<SortRequestDto>();
