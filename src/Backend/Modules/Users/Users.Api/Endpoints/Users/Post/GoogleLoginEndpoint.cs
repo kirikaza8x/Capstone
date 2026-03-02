@@ -5,9 +5,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Shared.Api.Results;
-using Users.Application.Features.Users.Commands.Records;
+using Users.Application.Features.Users.Commands.LoginGoogle;
 using Users.Application.Features.Users.Dtos;
-namespace Users.Api.Users.Post;
+namespace Users.Api.Endpoints.Users.Post;
 
 public class GoogleLoginEndpoint : ICarterModule
 {

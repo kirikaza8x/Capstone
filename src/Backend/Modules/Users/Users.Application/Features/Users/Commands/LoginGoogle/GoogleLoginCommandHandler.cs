@@ -8,7 +8,7 @@ using Users.Domain.Entities;
 using Users.Domain.Repositories;
 using Users.Domain.UOW;
 
-namespace Users.Application.Features.Users.Commands.Handlers;
+namespace Users.Application.Features.Users.Commands.LoginGoogle;
 
 public class GoogleLoginCommandHandler(
     IUserRepository userRepository,
