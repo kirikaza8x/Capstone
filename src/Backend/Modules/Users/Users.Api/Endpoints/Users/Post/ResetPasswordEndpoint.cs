@@ -17,8 +17,8 @@ public class ResetPasswordEndpoint : ICarterModule
             CancellationToken cancellationToken) =>
         {
             var command = new ResetPasswordCommand(
-                request.Email, 
-                request.OtpCode, 
+                request.Email,
+                request.OtpCode,
                 request.NewPassword);
 
             var result = await sender.Send(command, cancellationToken);

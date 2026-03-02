@@ -2,9 +2,9 @@
 
 public sealed class OutboxMessage
 {
-    public Guid Id { get; init; }             
+    public Guid Id { get; init; }
 
-    public string Type { get; init; } = string.Empty;  
+    public string Type { get; init; } = string.Empty;
 
     public string Content { get; init; } = string.Empty;
 

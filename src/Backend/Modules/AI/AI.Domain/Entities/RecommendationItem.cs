@@ -7,15 +7,15 @@ namespace AI.Domain.Entities
     public class RecommendationItem : Entity<Guid>
     {
         public Guid RecommendationSetId { get; private set; }
-        
+
         public string Category { get; private set; } = default!; // Or TargetId/ProductId
-        
+
         // The final Bayesian score used to rank this item
         public double Score { get; private set; }
-        
+
         // 1 = Top pick, 2 = Second pick...
         public int Rank { get; private set; }
-        
+
         // "Because you like Jazz" or "Trending Global"
         public string Explanation { get; private set; } = default!;
 

@@ -5,7 +5,7 @@ using Users.Infrastructure.Persistence.Contexts;
 
 namespace Users.Infrastructure.Persistence.Seeds;
 
-public class RoleSeeder(UserModuleDbContext context) : IDataSeeder
+public class RoleSeeder(UserModuleDbContext context) : IDataSeeder<Role>
 {
     public async Task SeedAllAsync()
     {
@@ -16,7 +16,7 @@ public class RoleSeeder(UserModuleDbContext context) : IDataSeeder
         var rolesToAdd = new List<Role>();
 
         if (!existingRoles.Contains(PublicApi.Constants.Roles.Admin))
-            rolesToAdd.Add(Role.Create( PublicApi.Constants.Roles.Admin, "System Administrator"));
+            rolesToAdd.Add(Role.Create(PublicApi.Constants.Roles.Admin, "System Administrator"));
 
         if (!existingRoles.Contains(PublicApi.Constants.Roles.Staff))
             rolesToAdd.Add(Role.Create(PublicApi.Constants.Roles.Staff, "Staff"));

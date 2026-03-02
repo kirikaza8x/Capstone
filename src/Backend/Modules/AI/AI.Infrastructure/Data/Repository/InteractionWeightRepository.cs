@@ -25,7 +25,7 @@ namespace AI.Infrastructure.Repositories
                 .FirstOrDefaultAsync(x => x.ActionType.ToLower() == actionType.ToLower());
         }
 
-         public async Task<List<InteractionWeight>> GetAllAsync()
+        public async Task<List<InteractionWeight>> GetAllAsync()
         {
             return await _dbSet.ToListAsync();
         }

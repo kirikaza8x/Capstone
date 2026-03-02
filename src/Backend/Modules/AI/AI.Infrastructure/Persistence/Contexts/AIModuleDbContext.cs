@@ -21,7 +21,7 @@ namespace AI.Infrastructure.Data
             base.OnModelCreating(modelBuilder);
             // Apply configurations if you have separate configuration files
             // modelBuilder.ApplyConfigurationsFromAssembly(typeof(AIDbContext).Assembly);
-            
+
             // Or simple fluent API here:
             // modelBuilder.Entity<UserInterestScore>()
             //     .HasIndex(x => new { x.UserId, x.Category }) // Speed up lookups!

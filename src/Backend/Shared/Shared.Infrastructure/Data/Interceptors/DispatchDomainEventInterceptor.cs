@@ -7,7 +7,7 @@ namespace Shared.Infrastructure.Data.Interceptors;
 
 public class DispatchDomainEventInterceptor(IMediator mediator) : SaveChangesInterceptor
 {
-    
+
     public override int SavedChanges(
         SaveChangesCompletedEventData eventData,
         int result)
@@ -21,7 +21,7 @@ public class DispatchDomainEventInterceptor(IMediator mediator) : SaveChangesInt
         return base.SavedChanges(eventData, result);
     }
 
-   
+
     public override async ValueTask<int> SavedChangesAsync(
         SaveChangesCompletedEventData eventData,
         int result,

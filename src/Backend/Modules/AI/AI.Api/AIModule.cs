@@ -6,12 +6,13 @@ using Microsoft.Extensions.DependencyInjection;
 using Shared.Infrastructure.Extensions;
 using Users.Application;
 
-public static class AiModule 
+public static class AiModule
 {
-    public static IServiceCollection AddAiModule(this IServiceCollection services, IConfiguration configuration){
+    public static IServiceCollection AddAiModule(this IServiceCollection services, IConfiguration configuration)
+    {
         services.AiAddApplication();
         services.AddAiInfrastructure(configuration);
-        return services; 
+        return services;
     }
 
     public static IApplicationBuilder UseAiModule(this IApplicationBuilder app)

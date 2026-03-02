@@ -13,12 +13,12 @@ internal sealed class RequestPasswordResetCommandHandler(
 {
     public async Task<Result<Guid>> Handle(RequestPasswordResetCommand command, CancellationToken cancellationToken)
     {
-        
+
         var user = await userRepository.GetByEmailAsync(command.Email, cancellationToken);
-        
-        
+
+
         if (user is null || !user.IsActive)
-            return Result.Success(Guid.Empty); 
+            return Result.Success(Guid.Empty);
 
         user.CreateOtp();
 

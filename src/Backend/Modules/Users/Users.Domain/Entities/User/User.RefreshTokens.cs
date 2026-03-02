@@ -79,7 +79,7 @@ namespace Users.Domain.Entities
             string deviceId,
             string deviceName,
             string? ip,
-            string? ua) 
+            string? ua)
         {
             var existing = RefreshTokens.FirstOrDefault(t => t.DeviceId == deviceId);
             if (existing != null)

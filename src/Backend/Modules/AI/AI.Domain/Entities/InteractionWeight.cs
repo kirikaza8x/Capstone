@@ -12,7 +12,7 @@ namespace AI.Domain.Entities
         public string ActionType { get; private set; } = string.Empty;  // e.g., "view", "click", "purchase"
         public double Weight { get; private set; }                      // e.g., 1.0, 5.0, 25.0
         public string? Description { get; private set; }
-        
+
         // ===== OPTIMIZATION: Support A/B testing and gradual rollouts =====
         public string Version { get; private set; } = "default";
         public DateTime? DeactivatedAt { get; private set; }
@@ -20,17 +20,17 @@ namespace AI.Domain.Entities
         private InteractionWeight() { }
 
         public static InteractionWeight Create(
-            string actionType, 
-            double weight, 
+            string actionType,
+            double weight,
             string? description = null,
             string version = "default")
         {
             if (string.IsNullOrWhiteSpace(actionType))
                 throw new ArgumentException("ActionType cannot be empty.", nameof(actionType));
-            
-            if (weight < 0) 
+
+            if (weight < 0)
                 throw new InvalidOperationException("Weight cannot be negative.");
-            
+
             return new InteractionWeight
             {
                 Id = Guid.NewGuid(),
@@ -48,11 +48,11 @@ namespace AI.Domain.Entities
         /// </summary>
         public void UpdateWeight(double newWeight, string? newDescription = null)
         {
-            if (newWeight < 0) 
+            if (newWeight < 0)
                 throw new InvalidOperationException("Weight cannot be negative.");
-            
+
             Weight = newWeight;
-            
+
             if (newDescription != null)
                 Description = newDescription;
         }
@@ -79,8 +79,8 @@ namespace AI.Domain.Entities
         /// Creates a new version of this weight (useful for A/B testing)
         /// </summary>
         public static InteractionWeight CreateVariant(
-            InteractionWeight baseWeight, 
-            string newVersion, 
+            InteractionWeight baseWeight,
+            string newVersion,
             double newWeight)
         {
             return new InteractionWeight

@@ -17,7 +17,7 @@ namespace AI.Application.Features.ChatBot.Commands
             ChatCommand request,
             CancellationToken cancellationToken)
         {
-            var systemPrompt = string.Empty; 
+            var systemPrompt = string.Empty;
             var userPrompt = request.UserPrompt;
 
             var response = await _geminiService.GenerateTextAsync(

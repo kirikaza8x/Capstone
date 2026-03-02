@@ -22,7 +22,7 @@ namespace Users.Domain.Entities
         // EF Core constructor
         private User() { }
 
-        
+
 
         public void ChangeEmail(string newEmail) => Email = newEmail;
         public void ChangePassword(string newHash)
@@ -35,7 +35,7 @@ namespace Users.Domain.Entities
             this.PasswordHash = newHash;
         }
 
-        
+
 
         public void Activate() => Status = UserStatus.Active;
         public void Deactivate() => Status = UserStatus.Inactive;

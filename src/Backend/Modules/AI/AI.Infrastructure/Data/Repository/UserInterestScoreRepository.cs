@@ -24,8 +24,8 @@ namespace AI.Infrastructure.Repositories
         public async Task<UserInterestScore?> GetByUserAndCategoryAsync(Guid userId, string category)
         {
             return await _dbSet
-                .FirstOrDefaultAsync(x => 
-                    x.UserId == userId && 
+                .FirstOrDefaultAsync(x =>
+                    x.UserId == userId &&
                     x.Category == category.ToLower());
         }
 
@@ -49,7 +49,7 @@ namespace AI.Infrastructure.Repositories
         /// This is a massive performance win for multi-category actions.
         /// </summary>
         public async Task<List<UserInterestScore>> GetByUserAndCategoriesAsync(
-            Guid userId, 
+            Guid userId,
             List<string> categories)
         {
             if (!categories.Any())
@@ -61,8 +61,8 @@ namespace AI.Infrastructure.Repositories
                 .ToList();
 
             return await _dbSet
-                .Where(x => 
-                    x.UserId == userId && 
+                .Where(x =>
+                    x.UserId == userId &&
                     normalizedCategories.Contains(x.Category))
                 .ToListAsync();
         }
@@ -72,9 +72,9 @@ namespace AI.Infrastructure.Repositories
         /// Uses database-level unique constraint + retry logic.
         /// </summary>
         public async Task<UserInterestScore> UpsertAsync(
-            Guid userId, 
-            string category, 
-            double weight, 
+            Guid userId,
+            string category,
+            double weight,
             double halfLifeDays)
         {
             // Normalize the category
@@ -94,7 +94,7 @@ namespace AI.Infrastructure.Repositories
 
             // Create new record
             var newScore = UserInterestScore.Create(userId, normalizedCategory, weight);
-            
+
             try
             {
                 _dbSet.Add(newScore);
@@ -106,7 +106,7 @@ namespace AI.Infrastructure.Repositories
                 // Race condition detected - another thread created it
                 // Refresh and try update instead
                 _dbContext.Entry(newScore).State = EntityState.Detached;
-                
+
                 existing = await GetByUserAndCategoryAsync(userId, normalizedCategory);
                 if (existing != null)
                 {
@@ -115,7 +115,7 @@ namespace AI.Infrastructure.Repositories
                     _dbSet.Update(existing);
                     return existing;
                 }
-                
+
                 throw; // Unexpected error
             }
         }
@@ -134,7 +134,7 @@ namespace AI.Infrastructure.Repositories
         public async Task<List<UserInterestScore>> GetStaleScoresAsync(int daysThreshold = 90)
         {
             var cutoff = DateTime.UtcNow.AddDays(-daysThreshold);
-            
+
             return await _dbSet
                 .Where(x => x.ModifiedAt < cutoff && x.Score < 1.0)
                 .ToListAsync();

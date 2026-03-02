@@ -16,7 +16,7 @@ namespace AI.Infrastructure.Repositories
             _dbSet = dbContext.Set<GlobalCategoryStat>();
         }
 
-         public async Task<GlobalCategoryStat?> GetByCategoryAsync(string category)
+        public async Task<GlobalCategoryStat?> GetByCategoryAsync(string category)
         {
             return await _dbSet
                 .FirstOrDefaultAsync(x => x.Category == category.ToLower());
@@ -49,12 +49,12 @@ namespace AI.Infrastructure.Repositories
         public async Task ApplyGlobalDecayAsync(double decayFactor)
         {
             var allStats = await _dbSet.ToListAsync();
-            
+
             foreach (var stat in allStats)
             {
                 stat.ApplyDecay(decayFactor);
             }
-            
+
             _dbSet.UpdateRange(allStats);
         }
 
@@ -66,10 +66,10 @@ namespace AI.Infrastructure.Repositories
         public async Task<List<GlobalCategoryStat>> GetStaleStatsAsync(int daysThreshold = 90)
         {
             var cutoff = DateTime.UtcNow.AddDays(-daysThreshold);
-            
+
             return await _dbSet
-                .Where(x => 
-                    x.LastCalculated < cutoff && 
+                .Where(x =>
+                    x.LastCalculated < cutoff &&
                     x.PopularityScore < 1.0 &&
                     x.TotalInteractions == 0)
                 .ToListAsync();

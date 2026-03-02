@@ -2,12 +2,12 @@
 namespace Users.Application.Features.Users.Dtos;
 
 public record LoginResponseDto(
-    string AccessToken, 
-    string RefreshToken, 
-    DateTime ExpiresAt, 
+    string AccessToken,
+    string RefreshToken,
+    DateTime ExpiresAt,
     UserInfoDto User,
-    string? DeviceId = null,  
-    string? DeviceName = null 
+    string? DeviceId = null,
+    string? DeviceName = null
 );
 
 public record UserInfoDto(

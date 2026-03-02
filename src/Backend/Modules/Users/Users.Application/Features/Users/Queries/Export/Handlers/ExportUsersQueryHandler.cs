@@ -5,7 +5,7 @@ using Shared.Domain.Abstractions;
 using Users.Domain.Entities;
 using Users.Domain.Repositories;
 
-public class ExportSheetUsersQueryHandler 
+public class ExportSheetUsersQueryHandler
     : IQueryHandler<ExportSheetUsersQuery, byte[]>
 {
     private readonly IFileImportExportService<User> _excelService;

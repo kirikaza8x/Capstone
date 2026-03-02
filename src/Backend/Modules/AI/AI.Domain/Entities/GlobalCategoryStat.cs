@@ -46,10 +46,10 @@ namespace AI.Domain.ReadModels
         {
             if (string.IsNullOrWhiteSpace(category))
                 throw new ArgumentException("Category cannot be empty.", nameof(category));
-            
+
             if (score < 0)
                 throw new ArgumentException("Score cannot be negative.", nameof(score));
-            
+
             if (count < 0)
                 throw new ArgumentException("Count cannot be negative.", nameof(count));
 
@@ -77,7 +77,7 @@ namespace AI.Domain.ReadModels
         {
             if (newScore < 0)
                 throw new ArgumentException("Score cannot be negative.", nameof(newScore));
-            
+
             if (newTotalCount < 0)
                 throw new ArgumentException("Count cannot be negative.", nameof(newTotalCount));
 
@@ -120,7 +120,7 @@ namespace AI.Domain.ReadModels
         {
             if (scoreIncrement < 0)
                 throw new ArgumentException("Score increment cannot be negative.", nameof(scoreIncrement));
-            
+
             if (interactionIncrement < 0)
                 throw new ArgumentException("Interaction increment cannot be negative.", nameof(interactionIncrement));
 
@@ -146,12 +146,12 @@ namespace AI.Domain.ReadModels
         /// </summary>
         public bool IsStale(int daysThreshold = 90)
         {
-            return (DateTime.UtcNow - LastCalculated).TotalDays > daysThreshold 
-                && PopularityScore < 1.0 
+            return (DateTime.UtcNow - LastCalculated).TotalDays > daysThreshold
+                && PopularityScore < 1.0
                 && TotalInteractions == 0;
         }
 
-        protected override void Apply(IDomainEvent @event) 
+        protected override void Apply(IDomainEvent @event)
         {
             // Implement event sourcing logic if needed
             // Example: GlobalCategoryStatUpdated, GlobalCategoryStatDecayed events

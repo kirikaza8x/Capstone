@@ -4,67 +4,67 @@ using AI.Domain.Entities;
 
 namespace AI.Infrastructure.Persistence.Configs
 {
-       public class InteractionWeightConfiguration : IEntityTypeConfiguration<InteractionWeight>
-       {
-              public void Configure(EntityTypeBuilder<InteractionWeight> builder)
-              {
-                     builder.ToTable("interaction_weight");
+    public class InteractionWeightConfiguration : IEntityTypeConfiguration<InteractionWeight>
+    {
+        public void Configure(EntityTypeBuilder<InteractionWeight> builder)
+        {
+            builder.ToTable("interaction_weight");
 
-                     // Primary key
-                     builder.HasKey(iw => iw.Id);
+            // Primary key
+            builder.HasKey(iw => iw.Id);
 
-                     builder.Property(iw => iw.Id)
-                            .HasColumnName("id")
-                            .HasColumnType("uuid")
-                            .HasDefaultValueSql("gen_random_uuid()");
+            builder.Property(iw => iw.Id)
+                   .HasColumnName("id")
+                   .HasColumnType("uuid")
+                   .HasDefaultValueSql("gen_random_uuid()");
 
-                     // Properties
-                     builder.Property(iw => iw.ActionType)
-                            .HasColumnName("action_type")
-                            .IsRequired()
-                            .HasMaxLength(100);
+            // Properties
+            builder.Property(iw => iw.ActionType)
+                   .HasColumnName("action_type")
+                   .IsRequired()
+                   .HasMaxLength(100);
 
-                     builder.Property(iw => iw.Weight)
-                            .HasColumnName("weight")
-                            .HasColumnType("double precision")
-                            .IsRequired();
+            builder.Property(iw => iw.Weight)
+                   .HasColumnName("weight")
+                   .HasColumnType("double precision")
+                   .IsRequired();
 
-                     builder.Property(iw => iw.Description)
-                            .HasColumnName("description")
-                            .HasMaxLength(512);
+            builder.Property(iw => iw.Description)
+                   .HasColumnName("description")
+                   .HasMaxLength(512);
 
-                     builder.Property(iw => iw.Version)
-                            .HasColumnName("version")
-                            .HasMaxLength(50)
-                            .IsRequired()
-                            .HasDefaultValue("default");
+            builder.Property(iw => iw.Version)
+                   .HasColumnName("version")
+                   .HasMaxLength(50)
+                   .IsRequired()
+                   .HasDefaultValue("default");
 
-                     // Auditing
-                     builder.Property(iw => iw.CreatedAt)
-                            .HasColumnName("created_at")
-                            .HasColumnType("timestamp with time zone")
-                            .HasDefaultValueSql("NOW()");
+            // Auditing
+            builder.Property(iw => iw.CreatedAt)
+                   .HasColumnName("created_at")
+                   .HasColumnType("timestamp with time zone")
+                   .HasDefaultValueSql("NOW()");
 
-                     builder.Property(iw => iw.CreatedBy)
-                            .HasColumnName("created_by")
-                            .HasMaxLength(100);
+            builder.Property(iw => iw.CreatedBy)
+                   .HasColumnName("created_by")
+                   .HasMaxLength(100);
 
-                     builder.Property(iw => iw.ModifiedAt)
-                            .HasColumnName("modified_at")
-                            .HasColumnType("timestamp with time zone");
+            builder.Property(iw => iw.ModifiedAt)
+                   .HasColumnName("modified_at")
+                   .HasColumnType("timestamp with time zone");
 
-                     builder.Property(iw => iw.ModifiedBy)
-                            .HasColumnName("modified_by")
-                            .HasMaxLength(100);
+            builder.Property(iw => iw.ModifiedBy)
+                   .HasColumnName("modified_by")
+                   .HasMaxLength(100);
 
-                     builder.Property(iw => iw.IsActive)
-                            .HasColumnName("is_active")
-                            .HasDefaultValue(true);
-                            
-                     builder.HasIndex(iw => new { iw.ActionType, iw.Version, iw.IsActive })
-                            .IsUnique()
-                            .HasDatabaseName("ux_interaction_weight_action_version_active");
+            builder.Property(iw => iw.IsActive)
+                   .HasColumnName("is_active")
+                   .HasDefaultValue(true);
 
-              }
-       }
+            builder.HasIndex(iw => new { iw.ActionType, iw.Version, iw.IsActive })
+                   .IsUnique()
+                   .HasDatabaseName("ux_interaction_weight_action_version_active");
+
+        }
+    }
 }

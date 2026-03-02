@@ -7,7 +7,7 @@ public class UserModuleDbContext : DbContext
 {
     public DbSet<User> Users { get; set; } = default!;
     public DbSet<Role> Roles { get; set; } = default!;
-    public DbSet<RefreshToken> RefreshTokens { get; set; } = default!; 
+    public DbSet<RefreshToken> RefreshTokens { get; set; } = default!;
 
     public UserModuleDbContext(DbContextOptions<UserModuleDbContext> options) : base(options) { }
 

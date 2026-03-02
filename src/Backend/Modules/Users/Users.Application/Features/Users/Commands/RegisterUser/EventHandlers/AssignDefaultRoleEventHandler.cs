@@ -24,7 +24,7 @@ public class AssignDefaultRoleEventHandler(
 
         user.AssignRole(defaultRole);
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        
+
         logger.LogInformation("Default role assigned to User: {UserId}", notification.UserId);
     }
 

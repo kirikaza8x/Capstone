@@ -52,7 +52,7 @@ public class RegisterUserCommandHandler(
             address: command.Address
         );
 
-        userRepository.Add(user); 
+        userRepository.Add(user);
         // 4. Persistence
         // This triggers the dispatch of UserCreatedEvent
         await unitOfWork.SaveChangesAsync(cancellationToken);

@@ -9,7 +9,7 @@ namespace AI.Infrastructure.BackgroundJobs
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<GlobalTrendWorker> _logger;
-        
+
         // Configuration: Run every 1 hour
         private readonly TimeSpan _period = TimeSpan.FromHours(1);
 
@@ -49,14 +49,14 @@ namespace AI.Infrastructure.BackgroundJobs
 
         private async Task RunJobAsync(CancellationToken stoppingToken)
         {
-            try 
+            try
             {
                 _logger.LogInformation("Executing Scheduled Global Trend Update...");
 
                 // CRITICAL: Create a scope because GlobalTrendService uses DbContext (which is Scoped)
                 using (var scope = _serviceProvider.CreateScope())
                 {
-                    var trendService = scope.ServiceProvider.GetRequiredService<IGlobalTrendService>();                    
+                    var trendService = scope.ServiceProvider.GetRequiredService<IGlobalTrendService>();
                     await trendService.UpdateGlobalTrendsAsync();
                 }
 

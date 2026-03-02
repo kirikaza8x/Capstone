@@ -65,7 +65,7 @@ namespace Users.Domain.Entities
                 UserName = userName,
                 FirstName = firstName,
                 LastName = lastName,
-                PasswordHash = string.Empty, 
+                PasswordHash = string.Empty,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow
             };
@@ -78,6 +78,6 @@ namespace Users.Domain.Entities
 
             return user;
         }
-        
+
     }
 }

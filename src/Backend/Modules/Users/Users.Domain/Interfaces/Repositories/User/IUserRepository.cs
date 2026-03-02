@@ -16,6 +16,6 @@ namespace Users.Domain.Repositories
         Task<User?> GetByExternalIdentityAsync(string provider, string providerKey, CancellationToken cancellationToken = default);
         Task<User?> GetByEmailOtpAsync(string email, CancellationToken cancellationToken = default);
 
-         
+
     }
 }

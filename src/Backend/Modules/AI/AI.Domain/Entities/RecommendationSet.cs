@@ -7,7 +7,7 @@ namespace AI.Domain.Entities
         public Guid UserId { get; private set; }
         public string Type { get; private set; } = default!; // e.g. "HomeFeed", "DailyMix"
         public DateTime GeneratedAt { get; private set; }
-        
+
         // Navigation Property
         private readonly List<RecommendationItem> _items = new();
         public IReadOnlyCollection<RecommendationItem> Items => _items.AsReadOnly();

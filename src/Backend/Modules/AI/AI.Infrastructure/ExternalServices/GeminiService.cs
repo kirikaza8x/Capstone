@@ -1,12 +1,12 @@
-using AI.Application.Abstractions; 
+using AI.Application.Abstractions;
 using AI.Infrastructure.Configs;
 using GenerativeAI;
-using Microsoft.Extensions.Options; 
+using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 
-namespace AI.Infrastructure.ExternalServices; 
+namespace AI.Infrastructure.ExternalServices;
 
 public sealed class GeminiService : IGeminiService
 {
@@ -17,7 +17,7 @@ public sealed class GeminiService : IGeminiService
     public GeminiService(IOptions<GeminiConfig> options, ILogger<GeminiService> logger)
     {
         _logger = logger;
-        _config = options.Value; 
+        _config = options.Value;
 
         if (string.IsNullOrWhiteSpace(_config.ApiKey))
         {

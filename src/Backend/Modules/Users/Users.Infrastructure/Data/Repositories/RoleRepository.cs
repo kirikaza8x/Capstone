@@ -6,7 +6,7 @@ using Shared.Infrastructure.Data;
 
 namespace Users.Infrastructure.Data.Repositories
 {
-    public class RoleRepository : RepositoryBase<Role,Guid>, IRoleRepository
+    public class RoleRepository : RepositoryBase<Role, Guid>, IRoleRepository
     {
         private readonly UserModuleDbContext _context;
         private readonly DbSet<Role> _dbSet;

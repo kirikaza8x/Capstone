@@ -22,7 +22,7 @@ namespace AI.Infrastructure.Repositories
             // we fetch the whole profile because 'CustomWeights' is stored as a JSON blob.
             // The logic to find the specific "click" or "view" weight happens in C# memory
             // inside your Calculator service, not in this SQL query.
-            
+
             return await _aiDbContext.UserWeightProfiles
                 .FirstOrDefaultAsync(x => x.UserId == userId);
         }

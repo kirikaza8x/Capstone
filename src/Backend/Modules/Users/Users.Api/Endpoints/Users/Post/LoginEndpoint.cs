@@ -30,7 +30,7 @@ public class LoginUserEndpoint : ICarterModule
                 cancellationToken);
 
             return result.ToOk();
-        }) 
+        })
         .WithTags("Authentication")
         .WithName("LoginUser")
         .WithSummary("Login a user")

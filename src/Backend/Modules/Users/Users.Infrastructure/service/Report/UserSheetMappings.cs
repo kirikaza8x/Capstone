@@ -21,18 +21,18 @@ namespace Users.Infrastructure.ImportExport
             {
                 var row = (IXLRow)rowObj;
 
-                var email       = row.Cell(1).GetString();
-                var userName    = row.Cell(2).GetString();
-                var plainPass   = row.Cell(3).GetString();
-                var firstName   = row.Cell(4).GetString();
-                var lastName    = row.Cell(5).GetString();
-                var birthday    = row.Cell(6).GetDateTime();
-                var genderStr   = row.Cell(7).GetString();
+                var email = row.Cell(1).GetString();
+                var userName = row.Cell(2).GetString();
+                var plainPass = row.Cell(3).GetString();
+                var firstName = row.Cell(4).GetString();
+                var lastName = row.Cell(5).GetString();
+                var birthday = row.Cell(6).GetDateTime();
+                var genderStr = row.Cell(7).GetString();
                 var phoneNumber = row.Cell(8).GetString();
-                var address     = row.Cell(9).GetString();
+                var address = row.Cell(9).GetString();
                 var description = row.Cell(10).GetString();
-                var socialLink  = row.Cell(11).GetString();
-                var statusStr   = row.Cell(12).GetString();
+                var socialLink = row.Cell(11).GetString();
+                var statusStr = row.Cell(12).GetString();
                 var isActiveStr = row.Cell(13).GetString();
 
                 Gender? gender = Enum.TryParse<Gender>(genderStr, true, out var g) ? g : null;

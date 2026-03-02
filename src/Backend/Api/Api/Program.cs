@@ -47,7 +47,7 @@ public class Program
 
         // Add Api Services
         builder.Services.AddApi(
-            assemblies, 
+            assemblies,
             Configuration
         );
 

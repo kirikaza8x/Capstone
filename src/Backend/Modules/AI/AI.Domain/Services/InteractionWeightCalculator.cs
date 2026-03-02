@@ -16,7 +16,7 @@ namespace AI.Domain.Services
         private readonly IInteractionWeightRepository _globalRepo;
 
         public InteractionWeightCalculator(
-            IUserWeightProfileRepository personalRepo, 
+            IUserWeightProfileRepository personalRepo,
             IInteractionWeightRepository globalRepo)
         {
             _personalRepo = personalRepo;
@@ -25,7 +25,7 @@ namespace AI.Domain.Services
 
         public async Task<double> CalculateWeightAsync(Guid userId, string actionType)
         {
-            
+
             var personalProfile = await _personalRepo.GetAsync(userId, actionType);
             if (personalProfile != null)
             {
@@ -33,9 +33,9 @@ namespace AI.Domain.Services
             }
 
             var globalWeight = await _globalRepo.GetByActionTypeAsync(actionType);
-            
+
             // Default safety: If database is empty, return 1.0 to avoid breaking math
-            return globalWeight?.Weight ?? 1.0; 
+            return globalWeight?.Weight ?? 1.0;
         }
     }
 }

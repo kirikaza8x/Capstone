@@ -1,4 +1,4 @@
-using Shared.Application.Messaging; 
+using Shared.Application.Messaging;
 
 namespace AI.Application.Features.Tracking.Commands
 {

@@ -13,4 +13,3 @@ public class RedisConfig : ConfigBase
         ? $"{Host}:{Port},abortConnect=false"
         : $"{Host}:{Port},password={Password},abortConnect=false";
 }
- 

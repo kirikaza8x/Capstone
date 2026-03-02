@@ -3,7 +3,7 @@ using Shared.Domain.Data;
 
 namespace AI.Domain.Repositories
 {
-    
+
     /// <summary>
     /// Repository interface for managing InteractionWeight entities.
     /// ex: global weights for different user actions (click, view, purchase).
@@ -26,5 +26,5 @@ namespace AI.Domain.Repositories
     // {
     //     Task<UserWeightProfile?> GetAsync(Guid userId, string actionType);
     // }
-    
+
 }

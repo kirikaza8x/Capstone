@@ -35,5 +35,5 @@ namespace Users.Application.Features.Users.Validators
         }
     }
 
-    
+
 }
