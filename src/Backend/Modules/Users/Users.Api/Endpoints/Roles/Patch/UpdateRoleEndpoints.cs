@@ -37,25 +37,5 @@ public class RoleEndpoints : ICarterModule
         .Produces<RoleResponseDto>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status404NotFound);
-
-        // Delete Role Endpoint
-        app.MapDelete("api/roles/{id}", async (
-            Guid id,
-            ISender sender,
-            CancellationToken cancellationToken) =>
-        {
-            var command = new DeleteRoleCommand(id);
-
-            var result = await sender.Send(command, cancellationToken);
-
-            return result.ToOk();
-        })
-        .WithTags("Roles")
-        .WithName("DeleteRole")
-        .WithSummary("Delete a role")
-        .WithDescription("Deletes a role by its ID.")
-        .Produces(StatusCodes.Status200OK)
-        .ProducesProblem(StatusCodes.Status400BadRequest)
-        .ProducesProblem(StatusCodes.Status404NotFound);
     }
 }

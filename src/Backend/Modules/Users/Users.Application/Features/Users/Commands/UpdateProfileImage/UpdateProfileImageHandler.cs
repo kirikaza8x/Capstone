@@ -1,4 +1,3 @@
-using Users.Domain.Entities;
 using Users.Domain.Repositories;
 using Users.Domain.UOW;
 using Shared.Application.Abstractions.Storage;
