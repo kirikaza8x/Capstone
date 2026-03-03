@@ -21,7 +21,8 @@ namespace Users.Api.Endpoints.Roles
             {
                 var command = new CreateRoleCommand(request.Name, request.Description);
                 Result<Guid> result = await sender.Send(command, cancellationToken);
-                return result.ToCreated($"/api/roles/{result.Value}", "Role created successfully.");
+                // return result.ToCreated($"/api/roles/{result.Value}", "Role created successfully.");
+                return result.ToOk("Role created successfully");
             })
             .WithTags("Roles")
             .WithName("CreateRole")

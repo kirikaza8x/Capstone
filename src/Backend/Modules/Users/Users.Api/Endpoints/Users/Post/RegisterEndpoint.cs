@@ -30,7 +30,9 @@ public class RegisterUserEndpoint : ICarterModule
                     request.PhoneNumber,
                     request.Address),
                 cancellationToken);
-            return result.ToCreated($"/api/user/{result.Value}", "user registered successfully.");
+            // return result.ToCreated($"/api/user/{result.Value}", "user registered successfully.");
+            return result.ToOk();
+
         })
         .WithTags("Authentication")
         .WithName("RegisterUser")
