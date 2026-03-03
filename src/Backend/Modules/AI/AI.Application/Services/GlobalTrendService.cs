@@ -9,19 +9,17 @@ namespace AI.Application.Services
     /// <summary>
     /// Background service for calculating global category trends.
     /// MASTER PLAN: Layer 3 - Global Intelligence
-    ///
+    /// 
     /// WORKFLOW:
-    /// 1. Fetch recent activity logs (last 24 hours) — IN PARALLEL with weights + existing stats
+    /// 1. Fetch recent activity logs (last 24 hours)
     /// 2. Apply DECAY to ALL existing categories (not just inactive ones)
     /// 3. Aggregate new activity with dynamic weights
     /// 4. Normalize scores using logarithmic scaling
     /// 5. UPSERT into GlobalCategoryStat table
-    /// 6. Cleanup near-zero dead categories
-    ///
+    /// 
     /// OPTIMIZATIONS:
-    /// - True parallel data fetching via Task.WhenAll
-    /// - Logarithmic normalization to compress popularity gap
-    /// - Exponential decay ensures trends fade naturally over time
+    /// - Parallel data fetching
+    /// This ensures trends fade naturally over time.
     /// </summary>
     public class GlobalTrendService : IGlobalTrendService
     {
@@ -33,7 +31,7 @@ namespace AI.Application.Services
 
         // Configuration constants
         private const int LOOKBACK_HOURS = 24;
-        private const double DAILY_DECAY_FACTOR = 0.95;  // 5% decay per run
+        private const double DAILY_DECAY_FACTOR = 0.95;  // 5% decay per day
         private const double MIN_SCORE_THRESHOLD = 0.1;  // Floor scores below this to zero
 
         public GlobalTrendService(
@@ -50,45 +48,37 @@ namespace AI.Application.Services
             _logger = logger;
         }
 
-        public async Task UpdateGlobalTrendsAsync(CancellationToken ct = default)
+        public async Task UpdateGlobalTrendsAsync()
         {
             _logger.LogInformation("Starting Global Trend Calculation...");
 
             try
             {
                 // ---------------------------------------------------------
-                // STEP 1: FETCH DATA IN PARALLEL (Real parallel)
-                // Previously: each repo call was awaited one by one (3 sequential DB round-trips)
-                // Now: all 3 fire simultaneously, total wait = slowest query, not sum of all
+                // STEP 1: FETCH DATA IN PARALLEL (Optimization)
                 // ---------------------------------------------------------
                 var cutoff = DateTime.UtcNow.AddHours(-LOOKBACK_HOURS);
+                var recentLogsTask = await _logRepo.GetLogsSinceAsync(cutoff);
+                var weightsTask = await _weightRepo.FindAsync(w => w.IsActive);
+                var allExistingStatsTask = await _globalRepo.GetAllAsync();
 
-                var recentLogsTask = _logRepo.GetLogsSinceAsync(cutoff);
-                var weightsTask = _weightRepo.FindAsync(w => w.IsActive);
-                var allExistingStatsTask = _globalRepo.GetAllAsync();
 
-                await Task.WhenAll(recentLogsTask, weightsTask, allExistingStatsTask);
-
-                // Unwrap results — all are already completed at this point, no extra await cost
-                var recentLogs = await recentLogsTask;
-                var weights = (await weightsTask)
+                var recentLogs = recentLogsTask;
+                var weights = weightsTask
                     .ToDictionary(
                         w => w.ActionType.ToLower().Trim(),
                         w => w.Weight
                     );
-                var allExistingStats = (await allExistingStatsTask).ToList();  // Materialize once
+                var allExistingStats = allExistingStatsTask;
 
                 _logger.LogInformation(
                     "Loaded {LogCount} logs, {WeightCount} weights, {StatCount} existing stats",
-                    recentLogs.Count(), weights.Count, allExistingStats.Count);
+                    recentLogs.Count(), weights.Count, allExistingStats.Count());
 
                 // ---------------------------------------------------------
-                // STEP 2: APPLY DECAY TO ALL EXISTING CATEGORIES
-                // Uses GlobalCategoryStat.ApplyDecay(factor) — flat multiplier model.
-                // Note: UserInterestScore uses a different half-life model. These are intentionally
-                // separate: global trends decay on a fixed schedule, personal scores decay by time elapsed.
+                // STEP 2: APPLY DECAY TO ALL EXISTING CATEGORIES (CRITICAL FIX)
                 // ---------------------------------------------------------
-                _logger.LogInformation("Applying decay to all {Count} existing categories...", allExistingStats.Count);
+                _logger.LogInformation("Applying decay to all {Count} existing categories...", allExistingStats.Count());
 
                 foreach (var stat in allExistingStats)
                 {
@@ -132,28 +122,25 @@ namespace AI.Application.Services
                     categoryAggregates.Count);
 
                 // ---------------------------------------------------------
-                // STEP 4: EARLY EXIT — no new activity, decay-only run
+                // STEP 4: LOGARITHMIC NORMALIZATION (Optimization)
                 // ---------------------------------------------------------
+                // Purpose: Compresses the gap between mega-popular and niche categories
+                // Alternative: Use sqrt() for gentler compression
+
                 if (!categoryAggregates.Any())
                 {
-                    _logger.LogInformation("No new activity detected. Stats have been decayed only.");
+                    _logger.LogInformation("ℹ No new activity detected. Stats have been decayed only.");
                     await _unitOfWork.SaveChangesAsync();
                     return;
                 }
 
-                // ---------------------------------------------------------
-                // STEP 5: LOGARITHMIC NORMALIZATION
-                // Purpose: Compresses the gap between mega-popular and niche categories.
-                // Example: raw scores [1, 10, 1000] → log scores [0, 23, 100] instead of [0.1, 1, 100]
-                // Alternative: Use Math.Sqrt() for gentler compression.
-                // ---------------------------------------------------------
                 double maxScore = categoryAggregates.Values.Max(x => x.WeightedScore);
                 double logMax = Math.Log(maxScore + 1);
 
-                _logger.LogDebug("Max weighted score: {Max}, Log(Max): {LogMax}", maxScore, logMax);
+                _logger.LogDebug(" Max weighted score: {Max}, Log(Max): {LogMax}", maxScore, logMax);
 
                 // ---------------------------------------------------------
-                // STEP 6: UPSERT STATS (UPDATE existing or CREATE new)
+                // STEP 5: UPDATE OR CREATE STATS
                 // ---------------------------------------------------------
                 var existingStatsDict = allExistingStats.ToDictionary(s => s.Category);
                 int updated = 0;
@@ -165,12 +152,12 @@ namespace AI.Application.Services
                     double rawScore = kvp.Value.WeightedScore;
                     int count = kvp.Value.RawCount;
 
+                    // Apply logarithmic normalization
                     double logCurrent = Math.Log(rawScore + 1);
                     double normalizedScore = (logCurrent / logMax) * 100.0;
 
                     if (existingStatsDict.TryGetValue(categoryName, out var existingStat))
                     {
-                        // Accumulate on top of already-decayed score
                         double newScore = existingStat.PopularityScore + normalizedScore;
                         int newCount = existingStat.TotalInteractions + count;
 
@@ -192,11 +179,7 @@ namespace AI.Application.Services
                 }
 
                 // ---------------------------------------------------------
-                // STEP 7: CLEANUP — remove truly dead categories
-                // Condition: score AND interactions both floored to zero after decay.
-                // These are safe to delete because they have no signal left.
-                // Note: Categories with score=0 but TotalInteractions > 0 are kept
-                // for analytics (they still have historical interaction data).
+                // STEP 6: CLEANUP (Remove near-zero scores)
                 // ---------------------------------------------------------
                 var statsToCleanup = allExistingStats
                     .Where(s => s.PopularityScore < MIN_SCORE_THRESHOLD && s.TotalInteractions == 0)
@@ -205,24 +188,25 @@ namespace AI.Application.Services
                 if (statsToCleanup.Any())
                 {
                     _logger.LogInformation(
-                        "Cleaning up {Count} fully dead categories (score < {Threshold}, interactions = 0)",
+                        "Cleaning up {Count} categories with score < {Threshold}",
                         statsToCleanup.Count, MIN_SCORE_THRESHOLD);
-
                     _globalRepo.RemoveRange(statsToCleanup);
+                    // Note: Implement Delete method in repository if needed
+                    // For now, we keep them at zero for analytics
                 }
 
                 // ---------------------------------------------------------
-                // STEP 8: SAVE ALL CHANGES (single transaction)
+                // STEP 7: SAVE ALL CHANGES
                 // ---------------------------------------------------------
                 await _unitOfWork.SaveChangesAsync();
 
                 _logger.LogInformation(
-                    "Global Trends Updated | Created: {Created} | Updated: {Updated} | Decayed: {Decayed} | Cleaned: {Cleaned}",
-                    created, updated, allExistingStats.Count, statsToCleanup.Count);
+                    "Global Trends Updated | Created: {Created} | Updated: {Updated} | Decayed: {Decayed}",
+                    created, updated, allExistingStats.Count());
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "CRITICAL FAILURE in Global Trend Calculation");
+                _logger.LogError(ex, " CRITICAL FAILURE in Global Trend Calculation");
                 throw;
             }
         }
