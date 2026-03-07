@@ -31,10 +31,5 @@ internal sealed class EventSessionConfiguration : IEntityTypeConfiguration<Event
             .WithOne(t => t.EventSession)
             .HasForeignKey(t => t.EventSessionId)
             .OnDelete(DeleteBehavior.Cascade);
-
-        builder.HasMany(e => e.SessionSeatStatuses)
-            .WithOne(s => s.EventSession)
-            .HasForeignKey(s => s.EventSessionId)
-            .OnDelete(DeleteBehavior.Cascade);
     }
 }

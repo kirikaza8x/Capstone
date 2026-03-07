@@ -10,6 +10,7 @@
 * **Database:** PostgreSQL (Multi-Schema approach).
 * **API Style:** Minimal API.
 * **ORM:** Entity Framework Core 9.
+* **Caching & Distributed Lock:** Redis (Used for locking seats and temporary session data).
 
 ## 3. Architecture: Modular Monolith
 The system is divided into strictly isolated modules.
@@ -24,20 +25,22 @@ The system is divided into strictly isolated modules.
 
 ### Module 1: Identity (Auth & Profiles)
 * **Responsibility:** Authentication, Authorization, User info.
-* **Entities:** `User`, `Role` (Admin, Staff, Organizer, Attendee), `UserRole`, `UserSession`, `RefreshToken`, `OrganizerProfile`, `Wallet`.
+* **Entities:** `User`, `Role` (Admin, Staff, Organizer, Attendee), `UserRole`, `UserSession`, `RefreshToken`, `OrganizerProfile`.
 
 ### Module 2: Event (Venue, Schedule & Catalog)
 * **Responsibility:** Event lifecycle, schedule (sessions), venue layout (areas/seats), and ticket pricing/types.
 * **Entities:**
   * **Core:** `Event`, `EventCategory`, `EventCategoryMapping`, `EventImage`, `EventActorImage`, `EventTag`, `EventStaff`.
-  * **Venue & Schedule:** `EventSession` (Suất diễn), `Area` (Khu vực: Zone A, Rạp 1...), `Seat` (Ghế vật lý A01, A02...).
-  * **Inventory (Quan trọng):** `SessionSeatStatus` (Lưu trạng thái ghế cho từng suất diễn: Available, Locked, Sold).
+  * **Venue & Schedule:** `EventSession` (Suất diễn), `Area` (Khu vực: Zone A, Rạp 1...), `Seat` (Ghế vật lý A01, A02...). 
+    * *Business Rule:* Nếu sự kiện có sơ đồ ghế nhưng không chia khu vực cụ thể, hệ thống sẽ tự động tạo một "Default Area" để map với các `Seat`.
   * **Sales Catalog:** `TicketType` (Loại vé bán ra: VIP, Thường. Có Enum Type: `0 = SEAT`, `1 = ZONE`).
+* **Architectural Note (Inventory):** `SessionSeatStatus` table is REMOVED. Inventory is calculated dynamically on-the-fly. Available seats = Total `Seat` (Module 2) - Sold `OrderTicket` (Module 3, via Interface) - Locked Seats (Redis).
 
 ### Module 3: Ticketing (Orders & Transactions)
 * **Responsibility:** Order processing, Ticket generation (QR Code), and Inventory deduction.
-* **Entities:** * `Order` (Đơn hàng tổng).
-  * `OrderTicket` (Vé vật lý/QR Code của user. Bắt buộc có `TicketTypeId`. Nếu là vé ngồi sẽ có thêm `SeatId`, nếu là vé Zone đứng thì `SeatId` = NULL).
+* **Entities:**
+  * `Order` (Đơn hàng tổng).
+  * `OrderTicket` (Vé vật lý/QR Code của user. Bắt buộc có `TicketTypeId`. Nếu là vé ngồi sẽ có thêm `SeatId`, nếu là vé Zone đứng thì `SeatId` = NULL. **This is the Single Source of Truth for sold seats**).
   * `OrderVoucher`, `Voucher`.
 
 ### Module 4: Payment (Finance)
@@ -62,7 +65,6 @@ The system is divided into strictly isolated modules.
 ### .NET 9 Specifics
 * Use **Primary Constructors** for dependency injection.
 * Use `collection expressions []`.
-
 
 ## 6. Instruction for AI Assistant
 * **Role:** Act as a Senior Software Architect and Lead Developer.

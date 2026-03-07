@@ -3,7 +3,6 @@ using Events.Application.Events.Queries.GetEvents;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Shared.Api.Extensions;
 using Shared.Api.Results;

@@ -1,4 +1,25 @@
 services:
+  # Backend API
+  backend-api:
+    image: capstone-backend:latest
+    build:
+      context: .
+      dockerfile: Backend/Api/Api/Dockerfile
+    container_name: AIPromo-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=AIPromo;Username=postgres;Password=AIPromo123
+      - Redis__Configuration=redis:6379,password=AIPromo123
+      - RabbitMQ__Host=rabbitmq
+    ports:
+      - "5000:8080"
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    networks:
+      - aipromo-network
+
   # PostgreSQL Database
   postgres:
     image: postgres:17-alpine

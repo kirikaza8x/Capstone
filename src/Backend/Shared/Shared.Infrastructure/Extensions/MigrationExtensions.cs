@@ -11,7 +11,7 @@ public static class MigrationExtensions
     {
         MigrateDatabaseAsync<TContext>(app.ApplicationServices).GetAwaiter().GetResult();
 
-        SeedDataAsync(app.ApplicationServices).GetAwaiter().GetResult();
+        //SeedDataAsync(app.ApplicationServices).GetAwaiter().GetResult();
 
         return app;
     }
