@@ -23,7 +23,7 @@ public class UnpublishEventEndpoint : ICarterModule
                 new UnpublishEventCommand(eventId),
                 cancellationToken);
 
-            return result.ToNoContent();
+            return result.ToOk("Unpublish event successfully.");
         })
         .WithTags(Constants.Tags.Events)
         .WithName("UnpublishEvent")

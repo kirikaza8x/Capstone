@@ -23,7 +23,7 @@ public class PublishEventEndpoint : ICarterModule
                 new PublishEventCommand(eventId),
                 cancellationToken);
 
-            return result.ToNoContent();
+            return result.ToOk("Event published successfully.");
         })
         .WithTags(Constants.Tags.Events)
         .WithName("PublishEvent")

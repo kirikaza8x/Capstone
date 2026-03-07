@@ -23,7 +23,7 @@ public class CancelEventEndpoint : ICarterModule
                 new CancelEventCommand(eventId),
                 cancellationToken);
 
-            return result.ToNoContent();
+            return result.ToOk("Cancel event successfully.");
         })
         .WithTags(Constants.Tags.Events)
         .WithName("CancelEvent")

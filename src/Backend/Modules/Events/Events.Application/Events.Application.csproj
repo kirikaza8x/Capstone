@@ -12,7 +12,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Events\Commands\PublishEvent\" />
     <Folder Include="Areas\" />
     <Folder Include="Categories\" />
     <Folder Include="Search\" />

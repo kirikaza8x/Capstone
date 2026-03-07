@@ -23,7 +23,7 @@ public class DeleteEventEndpoint : ICarterModule
                 new DeleteEventCommand(eventId),
                 cancellationToken);
 
-            return result.ToNoContent();
+            return result.ToOk("Delete event successfully.");
         })
         .WithTags(Constants.Tags.Events)
         .WithName("DeleteEvent")

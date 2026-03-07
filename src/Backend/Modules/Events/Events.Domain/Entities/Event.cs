@@ -132,7 +132,7 @@ public sealed class Event : AggregateRoot<Guid>
 
     public Result Publish()
     {
-        if (Status != EventStatus.Draft || Status != EventStatus.Pending)
+        if (Status is not (EventStatus.Draft or EventStatus.Pending))
             return Result.Failure(EventErrors.Event.CannotPublish(Status));
 
         Status = EventStatus.Published;
@@ -148,7 +148,7 @@ public sealed class Event : AggregateRoot<Guid>
         if (Status != EventStatus.Published)
             return Result.Failure(EventErrors.Event.CannotUnpublish(Status));
 
-        Status = EventStatus.Draft;
+        Status = EventStatus.Unpublished;
         ModifiedAt = DateTime.UtcNow;
 
         RaiseDomainEvent(new EventUnpublishedDomainEvent(Id));
