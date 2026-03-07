@@ -1,4 +1,4 @@
-using Shared.Application.EventBus;
+using Shared.Application.Abstractions.EventBus;
 
 namespace Users.IntegrationEvents;
 

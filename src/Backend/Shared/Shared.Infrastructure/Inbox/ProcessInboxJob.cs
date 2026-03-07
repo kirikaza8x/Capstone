@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Quartz;
-using Shared.Application.EventBus;
+using Shared.Application.Abstractions.EventBus;
 using System.Text.Json;
 
 namespace Shared.Infrastructure.Inbox;

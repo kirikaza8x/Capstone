@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using FluentValidation;
 using Shared.Application.Abstractions.Authentication;
-using Shared.Application.Messaging;
+using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
 using Users.Application.Features.Users.Commands.Records;
 using Users.Application.Features.Users.Dtos;

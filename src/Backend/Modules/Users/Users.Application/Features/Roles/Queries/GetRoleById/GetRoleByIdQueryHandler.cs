@@ -1,5 +1,5 @@
 using AutoMapper;
-using Shared.Application.Messaging;
+using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
 using Users.Application.Features.Roles.Dtos;
 using Users.Application.Features.Roles.Queries.GetRoleById;

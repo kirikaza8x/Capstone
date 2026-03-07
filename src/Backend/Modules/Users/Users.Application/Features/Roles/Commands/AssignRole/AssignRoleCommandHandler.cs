@@ -1,5 +1,5 @@
 using Roles.Domain.UOW;
-using Shared.Application.Messaging;
+using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
 using Users.Domain.Repositories;
 

@@ -132,7 +132,7 @@ public sealed class Event : AggregateRoot<Guid>
 
     public Result Publish()
     {
-        if (Status != EventStatus.Draft)
+        if (Status != EventStatus.Draft || Status != EventStatus.Pending)
             return Result.Failure(EventErrors.Event.CannotPublish(Status));
 
         Status = EventStatus.Published;
@@ -143,13 +143,36 @@ public sealed class Event : AggregateRoot<Guid>
         return Result.Success();
     }
 
-    public Result Close()
+    public Result Unpublish()
     {
         if (Status != EventStatus.Published)
-            return Result.Failure(EventErrors.Event.CannotClose(Status));
+            return Result.Failure(EventErrors.Event.CannotUnpublish(Status));
 
-        Status = EventStatus.Closed;
+        Status = EventStatus.Draft;
         ModifiedAt = DateTime.UtcNow;
+
+        RaiseDomainEvent(new EventUnpublishedDomainEvent(Id));
+
+        return Result.Success();
+    }
+
+    public Result Cancel()
+    {
+        if (Status is not (EventStatus.Draft or EventStatus.Published))
+            return Result.Failure(EventErrors.Event.CannotCancel(Status));
+
+        Status = EventStatus.Cancelled;
+        ModifiedAt = DateTime.UtcNow;
+
+        RaiseDomainEvent(new EventCancelledDomainEvent(Id));
+
+        return Result.Success();
+    }
+
+    public Result CanDelete()
+    {
+        if (Status != EventStatus.Draft)
+            return Result.Failure(EventErrors.Event.CannotDelete(Status));
 
         return Result.Success();
     }

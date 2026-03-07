@@ -1,5 +1,5 @@
 using Microsoft.Extensions.Logging;
-using Shared.Application.Messaging;
+using Shared.Application.Abstractions.Messaging;
 using Users.Domain.Entities;
 using Users.Domain.Events;
 using Users.Domain.Repositories;

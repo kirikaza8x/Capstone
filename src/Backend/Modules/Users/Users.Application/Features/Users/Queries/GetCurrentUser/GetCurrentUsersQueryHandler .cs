@@ -1,7 +1,7 @@
 using AutoMapper;
 using Shared.Application.Abstractions.Authentication;
+using Shared.Application.Abstractions.Messaging;
 using Shared.Application.DTOs;
-using Shared.Application.Messaging;
 using Shared.Domain.Abstractions;
 
 namespace Users.Application.Features.Users.Queries

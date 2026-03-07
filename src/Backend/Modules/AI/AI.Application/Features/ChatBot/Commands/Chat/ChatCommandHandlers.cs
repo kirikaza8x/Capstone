@@ -1,5 +1,5 @@
 using AI.Application.Abstractions;
-using Shared.Application.Messaging;
+using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
 
 namespace AI.Application.Features.ChatBot.Commands

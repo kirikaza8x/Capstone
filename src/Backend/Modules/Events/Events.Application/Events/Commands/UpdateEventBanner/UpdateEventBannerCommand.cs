@@ -1,4 +1,4 @@
-﻿using Shared.Application.Messaging;
+﻿using Shared.Application.Abstractions.Messaging;
 
 namespace Events.Application.Events.Commands.UpdateEventBanner;
 

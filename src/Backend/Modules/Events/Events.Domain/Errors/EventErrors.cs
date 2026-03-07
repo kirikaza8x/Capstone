@@ -17,11 +17,19 @@ public static class EventErrors
 
         public static Error CannotPublish(EventStatus currentStatus) => Error.Validation(
             "Event.CannotPublish",
-            $"Cannot publish event. Current status is '{currentStatus}'. Only draft events can be published.");
+            $"Cannot publish event. Current status is '{currentStatus}'. Only draft or pending events can be published.");
 
-        public static Error CannotClose(EventStatus currentStatus) => Error.Validation(
-            "Event.CannotClose",
-            $"Cannot close event. Current status is '{currentStatus}'. Only published events can be closed.");
+        public static Error CannotUnpublish(EventStatus currentStatus) => Error.Validation(
+            "Event.CannotUnpublish",
+            $"Cannot unpublish event. Current status is '{currentStatus}'. Only published events can be unpublished.");
+
+        public static Error CannotCancel(EventStatus currentStatus) => Error.Validation(
+            "Event.CannotCancel",
+            $"Cannot cancel event. Current status is '{currentStatus}'. Only draft or published events can be cancelled.");
+
+        public static Error CannotDelete(EventStatus currentStatus) => Error.Validation(
+            "Event.CannotDelete",
+            $"Cannot delete event. Current status is '{currentStatus}'. Only draft events can be deleted.");
 
         public static Error UrlPathTooShort() => Error.Validation(
             "Event.UrlPathTooShort",

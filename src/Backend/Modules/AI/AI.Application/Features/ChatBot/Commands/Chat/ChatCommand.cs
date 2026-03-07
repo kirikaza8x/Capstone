@@ -1,5 +1,5 @@
 
-using Shared.Application.Messaging;
+using Shared.Application.Abstractions.Messaging;
 
 public record ChatCommand(
     string UserPrompt

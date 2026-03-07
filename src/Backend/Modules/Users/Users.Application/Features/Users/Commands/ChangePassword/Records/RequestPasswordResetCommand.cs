@@ -1,5 +1,5 @@
 
-using Shared.Application.Messaging;
+using Shared.Application.Abstractions.Messaging;
 
 namespace Users.Application.Features.Users.Commands.Records;
 

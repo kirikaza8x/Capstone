@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
-using Shared.Application.EventBus;
-using Shared.Application.Messaging;
+using Shared.Application.Abstractions.EventBus;
+using Shared.Application.Abstractions.Messaging;
 using Users.Domain.Events;
 using Users.Domain.Repositories;
 using Users.IntegrationEvents;

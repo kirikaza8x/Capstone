@@ -1,4 +1,4 @@
-﻿namespace Shared.Application.Messaging;
+﻿namespace Shared.Application.Abstractions.Messaging;
 
 public interface ITransactionalCommand : ICommand { }
 

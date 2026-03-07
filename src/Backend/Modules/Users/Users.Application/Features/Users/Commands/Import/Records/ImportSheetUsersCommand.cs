@@ -1,5 +1,5 @@
+using Shared.Application.Abstractions.Messaging;
 using Shared.Application.Abstractions.Storage;
-using Shared.Application.Messaging;
 
 namespace Users.Application.Features.Users.Commands.Import.Records;
 

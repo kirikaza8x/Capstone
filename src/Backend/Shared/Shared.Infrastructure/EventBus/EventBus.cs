@@ -1,5 +1,5 @@
 ﻿using MassTransit;
-using Shared.Application.EventBus;
+using Shared.Application.Abstractions.EventBus;
 
 namespace Shared.Infrastructure.EventBus;
 

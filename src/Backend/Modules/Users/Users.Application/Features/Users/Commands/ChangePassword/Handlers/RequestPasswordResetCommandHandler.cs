@@ -1,4 +1,4 @@
-using Shared.Application.Messaging;
+using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
 using Users.Application.Features.Users.Commands.Records;
 using Users.Domain.Repositories;

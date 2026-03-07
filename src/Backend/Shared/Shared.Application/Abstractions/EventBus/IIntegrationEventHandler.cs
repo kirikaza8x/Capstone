@@ -1,4 +1,4 @@
-﻿namespace Shared.Application.EventBus;
+﻿namespace Shared.Application.Abstractions.EventBus;
 
 public interface IIntegrationEventHandler<in TIntegrationEvent>
     where TIntegrationEvent : IIntegrationEvent

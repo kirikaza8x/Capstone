@@ -1,6 +1,6 @@
 
+using Shared.Application.Abstractions.Messaging;
 using Shared.Application.Abstractions.Report;
-using Shared.Application.Messaging;
 using Shared.Domain.Abstractions;
 using Users.Domain.Entities;
 using Users.Domain.Repositories;

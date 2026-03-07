@@ -1,7 +1,7 @@
 ﻿using Events.Domain.Repositories;
 using Events.Domain.Uow;
+using Shared.Application.Abstractions.Messaging;
 using Shared.Application.Abstractions.Storage;
-using Shared.Application.Messaging;
 using Shared.Domain.Abstractions;
 using static Events.Domain.Errors.EventErrors;
 

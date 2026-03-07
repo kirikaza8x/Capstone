@@ -1,7 +1,7 @@
-using Shared.Application.Messaging;
 using Shared.Domain.Abstractions;
 using AI.Application.Services;
 using AI.Application.Features.Tracking.Commands;
+using Shared.Application.Abstractions.Messaging;
 
 namespace AI.Application.Features.Tracking.Handlers
 {

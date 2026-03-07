@@ -2,7 +2,7 @@
 using Events.Domain.Repositories;
 using Events.Domain.Uow;
 using FluentValidation;
-using Shared.Application.Messaging;
+using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
 
 namespace Events.Application.Events.Commands.CreateEvent;

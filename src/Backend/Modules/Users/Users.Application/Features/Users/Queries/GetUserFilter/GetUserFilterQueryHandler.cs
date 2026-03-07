@@ -1,6 +1,6 @@
 using System.Linq.Expressions;
 using AutoMapper;
-using Shared.Application.Messaging;
+using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
 using Shared.Domain.Pagination;
 using Users.Application.Features.Users.Dtos;

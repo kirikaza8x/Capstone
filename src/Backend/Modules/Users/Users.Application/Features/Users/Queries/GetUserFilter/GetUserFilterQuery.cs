@@ -1,4 +1,4 @@
-using Shared.Application.Messaging;
+using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Pagination;
 using Shared.Domain.Queries;
 using Users.Application.Features.Users.Dtos;

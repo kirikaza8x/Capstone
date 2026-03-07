@@ -1,4 +1,4 @@
-﻿namespace Shared.Application.EventBus;
+﻿namespace Shared.Application.Abstractions.EventBus;
 
 public abstract class IntegrationEventHandler<TIntegrationEvent> : IIntegrationEventHandler<TIntegrationEvent>
     where TIntegrationEvent : class, IIntegrationEvent

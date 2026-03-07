@@ -1,5 +1,5 @@
 using AI.Application.Features.Recommendations.DTOs;
-using Shared.Application.Messaging;
+using Shared.Application.Abstractions.Messaging;
 
 namespace AI.Application.Features.Recommendations.Queries
 {
