@@ -34,11 +34,14 @@ public class CreateEventSessionEndpoint : ICarterModule
                     request.EndTime),
                 cancellationToken);
 
+            if (result.IsFailure)
+                return result.ToProblem();
+
             return result.ToCreated(
                 $"/api/events/{eventId}/sessions/{result.Value}",
                 "Event session created successfully.");
         })
-        .WithTags(Constants.Tags.Events)
+        .WithTags(Constants.Tags.Sessions)
         .WithName("CreateEventSession")
         .WithSummary("Create a new event session")
         .WithDescription("Creates a new session for an event with specified time range.")

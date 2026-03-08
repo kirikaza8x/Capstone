@@ -42,11 +42,14 @@ public class CreateEventEndpoint : ICarterModule
                     request.Description),
                 cancellationToken);
 
+            if (result.IsFailure)
+                return result.ToProblem();
+
             return result.ToCreated(
                 $"{Constants.Routes.Events}/{result.Value}",
                 "Event created successfully.");
         })
-        .WithTags(Constants.Tags.Events)
+        .WithTags(Constants.Tags.TicketTypes)
         .WithName("CreateEvent")
         .WithSummary("Create a new event")
         .WithDescription("Creates a new event with basic information. The event will be created in Draft status.")

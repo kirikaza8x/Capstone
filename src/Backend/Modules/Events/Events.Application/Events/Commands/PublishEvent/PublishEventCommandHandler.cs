@@ -12,7 +12,7 @@ internal sealed class PublishEventCommandHandler(
 {
     public async Task<Result> Handle(PublishEventCommand command, CancellationToken cancellationToken)
     {
-        var @event = await eventRepository.GetByIdAsync(command.EventId, cancellationToken);
+        var @event = await eventRepository.GetByIdWithAllDetailsAsync(command.EventId, cancellationToken);
 
         if (@event is null)
             return Result.Failure(EventErrors.Event.NotFound(command.EventId));

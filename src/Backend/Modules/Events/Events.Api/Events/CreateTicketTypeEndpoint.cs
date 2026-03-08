@@ -38,6 +38,9 @@ public class CreateTicketTypeEndpoint : ICarterModule
                     request.AreaId),
                 cancellationToken);
 
+            if (result.IsFailure)
+                return result.ToProblem();
+
             return result.ToCreated(
                 $"/api/events/{eventId}/sessions/{sessionId}/ticket-types/{result.Value}",
                 "Ticket type created successfully.");

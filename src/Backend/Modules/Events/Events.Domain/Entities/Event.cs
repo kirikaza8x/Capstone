@@ -31,6 +31,8 @@ public sealed class Event : AggregateRoot<Guid>
     public bool IsEmailReminderEnabled { get; private set; } = false;
     public int? EventTypeId { get; private set; }
 
+    public string? CancellationReason { get; private set; }
+
     private readonly List<EventSession> _sessions = [];
     public IReadOnlyCollection<EventSession> Sessions => _sessions.AsReadOnly();
 
@@ -132,8 +134,20 @@ public sealed class Event : AggregateRoot<Guid>
 
     public Result Publish()
     {
-        if (Status is not (EventStatus.Draft or EventStatus.Pending))
+        if (Status is not (EventStatus.Draft or EventStatus.PendingReview))
             return Result.Failure(EventErrors.Event.CannotPublish(Status));
+
+        if (EventStartAt is null || EventEndAt is null || TicketSaleStartAt is null || TicketSaleEndAt is null)
+            return Result.Failure(EventErrors.Event.MissingSchedule);
+
+        if (TicketSaleEndAt >= EventEndAt)
+            return Result.Failure(EventErrors.Event.InvalidTicketSalePeriod);
+
+        if (_sessions.Count == 0)
+            return Result.Failure(EventErrors.Event.NoSessions);
+
+        if (_sessions.Any(s => s.TicketTypes.Count == 0))
+            return Result.Failure(EventErrors.Event.SessionHasNoTicketTypes);
 
         Status = EventStatus.Published;
         ModifiedAt = DateTime.UtcNow;
@@ -158,7 +172,7 @@ public sealed class Event : AggregateRoot<Guid>
 
     public Result Cancel()
     {
-        if (Status is not (EventStatus.Draft or EventStatus.Published))
+        if (Status is not (EventStatus.Draft or EventStatus.Published or EventStatus.Completed))
             return Result.Failure(EventErrors.Event.CannotCancel(Status));
 
         Status = EventStatus.Cancelled;
@@ -173,6 +187,21 @@ public sealed class Event : AggregateRoot<Guid>
     {
         if (Status != EventStatus.Draft)
             return Result.Failure(EventErrors.Event.CannotDelete(Status));
+
+        return Result.Success();
+    }
+
+    public Result RequestCancellation(string reason)
+    {
+        if (Status is not (EventStatus.Published or EventStatus.Unpublished))
+            return Result.Failure(EventErrors.Event.CannotRequestCancellation(Status));
+
+        if (EventStartAt.HasValue && EventStartAt.Value <= DateTime.UtcNow)
+            return Result.Failure(EventErrors.Event.AlreadyStarted);
+
+        Status = EventStatus.PendingCancellation;
+        CancellationReason = reason;
+        ModifiedAt = DateTime.UtcNow;
 
         return Result.Success();
     }

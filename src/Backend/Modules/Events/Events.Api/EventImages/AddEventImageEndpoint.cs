@@ -27,7 +27,7 @@ public class AddEventImageEndpoint : ICarterModule
                 $"/api/events/{eventId}/images/{result.Value}",
                 "Event image added successfully.");
         })
-        .WithTags(Constants.Tags.Events)
+        .WithTags(Constants.Tags.EventImages)
         .WithName("AddEventImage")
         .WithSummary("Add image to event")
         .WithDescription("Upload and add a new image to the specified event. Allowed types: JPEG, PNG, GIF, WebP. Max size: 10MB.")

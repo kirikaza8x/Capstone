@@ -29,12 +29,13 @@ internal sealed class EventRepository(EventsDbContext context)
     public async Task<Event?> GetByIdWithAllDetailsAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await _context.Events
-        .Include(e => e.Images)
-        .Include(e => e.Sessions)
-        .Include(e => e.EventHashtags)
-            .ThenInclude(eh => eh.Hashtag)
-        .AsSplitQuery()
-        .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
+            .Include(e => e.Images)
+            .Include(e => e.Sessions)
+                .ThenInclude(s => s.TicketTypes)
+            .Include(e => e.EventHashtags)
+                .ThenInclude(eh => eh.Hashtag)
+            .AsSplitQuery()
+            .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
     }
 
     public async Task<IReadOnlyList<Event>> GetByOrganizerIdAsync(Guid organizerId, CancellationToken cancellationToken = default)

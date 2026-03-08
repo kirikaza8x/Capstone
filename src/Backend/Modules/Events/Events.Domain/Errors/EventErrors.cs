@@ -19,6 +19,22 @@ public static class EventErrors
             "Event.CannotPublish",
             $"Cannot publish event. Current status is '{currentStatus}'. Only draft or pending events can be published.");
 
+        public static readonly Error NoSessions = Error.Validation(
+            "Event.NoSessions",
+            "Cannot publish event. At least one session is required.");
+
+        public static readonly Error SessionHasNoTicketTypes = Error.Validation(
+            "Event.SessionHasNoTicketTypes",
+            "Cannot publish event. Every session must have at least one ticket type.");
+
+        public static readonly Error MissingSchedule = Error.Validation(
+            "Event.MissingSchedule",
+            "Cannot publish event. Event schedule (start/end time, ticket sale period) is required.");
+
+        public static readonly Error InvalidTicketSalePeriod = Error.Validation(
+            "Event.InvalidTicketSalePeriod",
+            "Cannot publish event. Ticket sale end time must be before the event end time.");
+
         public static Error CannotUnpublish(EventStatus currentStatus) => Error.Validation(
             "Event.CannotUnpublish",
             $"Cannot unpublish event. Current status is '{currentStatus}'. Only published events can be unpublished.");
@@ -26,6 +42,10 @@ public static class EventErrors
         public static Error CannotCancel(EventStatus currentStatus) => Error.Validation(
             "Event.CannotCancel",
             $"Cannot cancel event. Current status is '{currentStatus}'. Only draft or published events can be cancelled.");
+
+        public static Error CannotRequestCancellation(EventStatus currentStatus) => Error.Validation(
+            "Event.CannotRequestCancellation",
+            $"Cannot request cancellation. Current status is '{currentStatus}'. Only published or unpublished events can request cancellation.");
 
         public static Error CannotDelete(EventStatus currentStatus) => Error.Validation(
             "Event.CannotDelete",
@@ -42,6 +62,18 @@ public static class EventErrors
         public static Error InvalidUrlPathFormat(string urlPath) => Error.Validation(
             "Event.InvalidUrlPathFormat",
             $"The URL path '{urlPath}' contains invalid characters. Only lowercase letters, numbers, and hyphens are allowed.");
+
+        public static readonly Error AlreadyStarted = Error.Validation(
+            "Event.AlreadyStarted",
+            "Cannot process request. The event has already started.");
+
+        public static readonly Error NotOwner = Error.Forbidden(
+            "Event.NotOwner",
+            "You are not the owner of this event.");
+
+        public static readonly Error HasPaidOrders = Error.Conflict(
+            "Event.HasPaidOrders",
+            "Cannot cancel event. There are paid orders associated with this event.");
     }
 
     public static class EventSession

@@ -3,9 +3,10 @@
 public enum EventStatus
 {
     Draft = 0,
-    Pending = 1,
-    Published = 2,
-    Unpublished = 3,
-    Cancelled = 4
-
+    PendingReview = 1,         
+    Published = 2,            
+    Unpublished = 3,          
+    PendingCancellation = 4,  
+    Cancelled = 5,      
+    Completed = 6 
 }

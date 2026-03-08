@@ -44,6 +44,7 @@ internal sealed class EventConfiguration : IEntityTypeConfiguration<Event>
         builder.Property(e => e.EventTypeId).IsRequired(false);
         builder.Property(e => e.EventCategoryId).IsRequired();
         builder.Property(e => e.IsEmailReminderEnabled).HasDefaultValue(false);
+        builder.Property(e => e.CancellationReason).HasColumnType("text");
 
         builder.HasIndex(e => e.OrganizerId);
         builder.HasIndex(e => e.Status);
