@@ -1,5 +1,5 @@
 ﻿using Carter;
-using Events.Application.Events.Commands.RequestCancelEvent;
+using Events.Application.Events.Commands.CancelEvent;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -9,34 +9,34 @@ using Shared.Api.Extensions;
 using Shared.Api.Results;
 using Users.PublicApi.Constants;
 
-namespace Events.Api.Events;
+namespace Events.Api.Events.Patch;
 
-public sealed record RequestCancelEventRequest(string Reason);
+public sealed record CancelEventRequest(string? Reason);
 
-public class RequestCancelEventEndpoint : ICarterModule
+public class CancelEventEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPatch($"{Constants.Routes.EventById}/request-cancellation", async (
+        app.MapPatch($"{Constants.Routes.EventById}/cancel", async (
             Guid eventId,
-            [FromBody] RequestCancelEventRequest request,
+            [FromBody] CancelEventRequest request,
             ISender sender,
             CancellationToken cancellationToken) =>
         {
             var result = await sender.Send(
-                new RequestCancelEventCommand(eventId, request.Reason),
+                new CancelEventCommand(eventId, request.Reason),
                 cancellationToken);
 
-            return result.ToNoContent();
+            return result.ToOk("Event cancelled successfully!");
         })
         .WithTags(Constants.Tags.Events)
-        .WithName("RequestCancelEvent")
-        .WithSummary("Request event cancellation")
-        .WithDescription("Organizer submits a cancellation request with a reason.")
+        .WithName("CancelEvent")
+        .WithSummary("Cancel an event")
+        .WithDescription("Admin or Staff cancels an event. Can be used to approve an organizer's cancellation request or force-cancel for policy violations.")
         .Produces(StatusCodes.Status204NoContent)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status403Forbidden)
         .ProducesProblem(StatusCodes.Status404NotFound)
-        .RequireRoles(Roles.Organizer);
+        .RequireRoles(Roles.AdminAndStaff);
     }
 }

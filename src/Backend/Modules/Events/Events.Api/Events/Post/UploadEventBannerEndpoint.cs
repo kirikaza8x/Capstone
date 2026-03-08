@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Shared.Application.Abstractions.Storage;
 
-namespace Events.Api.Events;
+namespace Events.Api.Events.Post;
 
 public sealed record UploadEventBannerResponse(
     string Url,

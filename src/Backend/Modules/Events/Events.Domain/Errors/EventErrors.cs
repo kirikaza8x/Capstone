@@ -41,7 +41,7 @@ public static class EventErrors
 
         public static Error CannotCancel(EventStatus currentStatus) => Error.Validation(
             "Event.CannotCancel",
-            $"Cannot cancel event. Current status is '{currentStatus}'. Only draft or published events can be cancelled.");
+            $"Cannot cancel event. Current status is '{currentStatus}'. Completed or already cancelled events cannot be cancelled.");
 
         public static Error CannotRequestCancellation(EventStatus currentStatus) => Error.Validation(
             "Event.CannotRequestCancellation",

@@ -1,5 +1,5 @@
 ﻿using Carter;
-using Events.Application.Events.Commands.PublishEvent;
+using Events.Application.Events.Commands.DeleteEvent;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -8,30 +8,30 @@ using Shared.Api.Extensions;
 using Shared.Api.Results;
 using Users.PublicApi.Constants;
 
-namespace Events.Api.Events;
+namespace Events.Api.Events.Delete;
 
-public class PublishEventEndpoint : ICarterModule
+public class DeleteEventEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPatch($"{Constants.Routes.EventById}/publish", async (
+        app.MapDelete(Constants.Routes.EventById, async (
             Guid eventId,
             ISender sender,
             CancellationToken cancellationToken) =>
         {
             var result = await sender.Send(
-                new PublishEventCommand(eventId),
+                new DeleteEventCommand(eventId),
                 cancellationToken);
 
-            return result.ToOk("Event published successfully.");
+            return result.ToOk("Delete event successfully.");
         })
         .WithTags(Constants.Tags.Events)
-        .WithName("PublishEvent")
-        .WithSummary("Publish an event")
-        .WithDescription("Changes the event status to Published.")
+        .WithName("DeleteEvent")
+        .WithSummary("Delete an event")
+        .WithDescription("Permanently deletes the event. Only draft events can be deleted.")
         .Produces(StatusCodes.Status204NoContent)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status404NotFound)
-        .RequireRoles(Roles.AdminAndStaff);
+        .RequireRoles(Roles.AllExceptAttendee);
     }
 }

@@ -9,7 +9,7 @@ using Shared.Api.Extensions;
 using Shared.Api.Results;
 using Users.PublicApi.Constants;
 
-namespace Events.Api.Events;
+namespace Events.Api.Events.Post;
 
 public sealed record CreateEventRequest(
     Guid OrganizerId,

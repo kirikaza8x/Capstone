@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Shared.Api.Results;
 
-namespace Events.Api.Events;
+namespace Events.Api.Events.Get;
 
 public class GetEventEndpoint : ICarterModule
 {

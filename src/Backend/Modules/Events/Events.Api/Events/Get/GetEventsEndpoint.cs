@@ -9,7 +9,7 @@ using Shared.Api.Results;
 using Shared.Domain.Pagination;
 using Users.PublicApi.Constants;
 
-namespace Events.Api.Events;
+namespace Events.Api.Events.Get;
 
 public class GetEventsEndpoint : ICarterModule
 {

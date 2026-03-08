@@ -170,12 +170,16 @@ public sealed class Event : AggregateRoot<Guid>
         return Result.Success();
     }
 
-    public Result Cancel()
+    public Result Cancel(string? reason = null)
     {
-        if (Status is not (EventStatus.Draft or EventStatus.Published or EventStatus.Completed))
+        if (Status is EventStatus.Cancelled or EventStatus.Completed)
             return Result.Failure(EventErrors.Event.CannotCancel(Status));
 
         Status = EventStatus.Cancelled;
+
+        if (!string.IsNullOrWhiteSpace(reason))
+            CancellationReason = reason;
+
         ModifiedAt = DateTime.UtcNow;
 
         RaiseDomainEvent(new EventCancelledDomainEvent(Id));
