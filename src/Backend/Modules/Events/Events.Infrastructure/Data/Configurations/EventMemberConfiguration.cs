@@ -4,11 +4,11 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Events.Infrastructure.Data.Configurations;
 
-internal sealed class EventStaffConfiguration : IEntityTypeConfiguration<EventStaff>
+internal sealed class EventMemberConfiguration : IEntityTypeConfiguration<EventMember>
 {
-    public void Configure(EntityTypeBuilder<EventStaff> builder)
+    public void Configure(EntityTypeBuilder<EventMember> builder)
     {
-        builder.ToTable("event_staffs");
+        builder.ToTable("event_members");
 
         builder.HasKey(e => e.Id);
         builder.Property(i => i.Id)

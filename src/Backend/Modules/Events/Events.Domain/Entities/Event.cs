@@ -41,8 +41,8 @@ public sealed class Event : AggregateRoot<Guid>
     private readonly List<EventCategoryMapping> _categoryMappings = [];
     public IReadOnlyCollection<EventCategoryMapping> CategoryMappings => _categoryMappings.AsReadOnly();
 
-    private readonly List<EventStaff> _staffs = [];
-    public IReadOnlyCollection<EventStaff> Staffs => _staffs.AsReadOnly();
+    private readonly List<EventMember> _members = [];
+    public IReadOnlyCollection<EventMember> Members => _members.AsReadOnly();
 
     private readonly List<Area> _areas = [];
     public IReadOnlyCollection<Area> Areas => _areas.AsReadOnly();
@@ -248,7 +248,7 @@ public sealed class Event : AggregateRoot<Guid>
 
     public void AddSession(EventSession session) => _sessions.Add(session);
     public void AddArea(Area area) => _areas.Add(area);
-    public void AddStaff(EventStaff staff) => _staffs.Add(staff);
+    public void AddMember(EventMember member) => _members.Add(member);
     public void AddActorImage(EventActorImage actorImage) => _actorImages.Add(actorImage);
     public void AddCategoryMapping(EventCategoryMapping mapping) => _categoryMappings.Add(mapping);
     public void AddHashtag(EventHashtag eventHashtag) => _eventHashtags.Add(eventHashtag);
