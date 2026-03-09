@@ -1,7 +1,9 @@
-﻿using Events.Domain.Repositories;
+﻿using Events.Application.Abstractions;
+using Events.Domain.Repositories;
 using Events.Domain.Uow;
 using Events.Infrastructure.Data;
 using Events.Infrastructure.Data.Repositories;
+using Events.Infrastructure.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -25,6 +27,7 @@ public static class EventModule
         //     .WithSingletonLifetime());
         services.TryAddScoped<IEventRepository, EventRepository>();
         services.TryAddScoped<IEventUnitOfWork, EventUnitOfWork>();
+        services.AddScoped<ISeatLockService, SeatLockService>();
         services.AddDbContext<EventsDbContext>((sp, options) =>
         {
             var dbConfig = sp.GetRequiredService<IOptions<DatabaseConfig>>().Value;

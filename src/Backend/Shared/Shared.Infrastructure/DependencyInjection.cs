@@ -10,6 +10,7 @@ using Shared.Infrastructure.Data.Interceptors;
 using Shared.Infrastructure.Extensions;
 using Shared.Infrastructure.Service.Authentication;
 using Shared.Infrastructure.Service.Caching;
+using StackExchange.Redis;
 using System.Reflection;
 using System.Text.Json.Serialization;
 
@@ -51,6 +52,8 @@ public static class IInfrastructureConfiguration
             options.InstanceName = redisConfig.InstanceName;
         });
 
+        services.AddSingleton<IConnectionMultiplexer>(
+            _ => ConnectionMultiplexer.Connect(redisConfig.ConnectionString));
         services.AddSingleton<ICacheService, CacheService>();
 
         services.AddScoped<ICurrentUserService, CurrentUserService>();
