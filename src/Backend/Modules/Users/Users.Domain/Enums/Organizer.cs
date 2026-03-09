@@ -11,7 +11,8 @@ namespace Users.Domain.Enums
         Draft,
         Pending,
         Verified,
-        Rejected
+        Rejected,
+        Suspended
     }
 
     public enum OrganizerType

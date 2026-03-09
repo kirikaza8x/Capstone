@@ -26,9 +26,9 @@ namespace Users.Infrastructure.Persistence.Configs
                    .HasColumnType("uuid")
                    .IsRequired();
 
-            builder.HasOne<User>()
-                   .WithMany()
-                   .HasForeignKey(op => op.UserId)
+            builder.HasOne(op => op.User)
+                   .WithOne(u => u.OrganizerProfile)
+                   .HasForeignKey<OrganizerProfile>(op => op.UserId)
                    .OnDelete(DeleteBehavior.Cascade);
 
             // --- Properties ---
@@ -134,6 +134,11 @@ namespace Users.Infrastructure.Persistence.Configs
 
             builder.HasIndex(op => op.CreatedAt)
                    .HasDatabaseName("ix_organizerprofile_created_at");
+
+            // --- 1-1 Constraint (Important) ---
+            builder.HasIndex(op => op.UserId)
+                   .IsUnique()
+                   .HasDatabaseName("ux_organizerprofile_user_id");
         }
     }
 }
