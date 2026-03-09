@@ -37,7 +37,6 @@ internal sealed class EventConfiguration : IEntityTypeConfiguration<Event>
         builder.Property(e => e.MapUrl).HasMaxLength(500);
         builder.Property(e => e.Policy).HasColumnType("text");
         builder.Property(e => e.Spec).HasColumnType("jsonb");
-        builder.Property(e => e.SeatmapImage).HasMaxLength(500);
         builder.HasIndex(e => e.UrlPath)
                 .IsUnique()
                 .HasFilter("\"url_path\" IS NOT NULL");

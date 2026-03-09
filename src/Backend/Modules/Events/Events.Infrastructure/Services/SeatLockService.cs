@@ -5,7 +5,6 @@ namespace Events.Infrastructure.Services;
 
 internal sealed class SeatLockService(IConnectionMultiplexer redis) : ISeatLockService
 {
-    // Key format: seat:lock:{eventId}:{sessionId}:{seatId}
     private const string EventLockPattern = "seat:lock:{0}:*";
     private const int ScanPageSize = 1000;
     private const int DeleteBatchSize = 500;

@@ -27,7 +27,6 @@ public sealed class Event : AggregateRoot<Guid>
 
     public string Policy { get; private set; } = string.Empty;
     public string? Spec { get; private set; }
-    public string? SeatmapImage { get; private set; }
     public bool IsEmailReminderEnabled { get; private set; } = false;
     public int? EventTypeId { get; private set; }
 
@@ -208,12 +207,6 @@ public sealed class Event : AggregateRoot<Guid>
         ModifiedAt = DateTime.UtcNow;
 
         return Result.Success();
-    }
-
-    public void SetSeatmapImage(string? seatmapImage)
-    {
-        SeatmapImage = seatmapImage;
-        ModifiedAt = DateTime.UtcNow;
     }
 
     public Result RemoveImage(Guid imageId)
