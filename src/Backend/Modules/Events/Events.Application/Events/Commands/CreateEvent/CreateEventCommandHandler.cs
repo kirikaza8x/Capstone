@@ -34,8 +34,8 @@ public sealed class CreateEventCommandValidator : AbstractValidator<CreateEventC
         RuleFor(x => x.HashtagIds)
             .NotEmpty().WithMessage("At least one hashtag is required");
 
-        RuleFor(x => x.EventCategoryId)
-            .GreaterThan(0).WithMessage("Event category is required");
+        RuleFor(x => x.CategoryIds)
+            .NotEmpty().WithMessage("At least one category is required");
 
         RuleFor(x => x.Location)
             .NotEmpty().WithMessage("Location is required")
@@ -62,14 +62,19 @@ internal sealed class CreateEventCommandHandler(
             bannerUrl: command.BannerUrl,
             location: command.Location,
             mapUrl: command.MapUrl,
-            description: command.Description,
-            eventCategoryId: command.EventCategoryId);
+            description: command.Description);
 
         // Add hashtags
         foreach (var hashtagId in command.HashtagIds)
         {
             var eventHashtag = EventHashtag.Create(@event.Id, hashtagId);
             @event.AddHashtag(eventHashtag);
+        }
+
+        foreach (var categoryId in command.CategoryIds)
+        {
+            var eventCategory = EventCategory.Create(@event.Id, categoryId);
+            @event.AddCategories(eventCategory);
         }
 
         foreach (var actor in command.ActorImages)

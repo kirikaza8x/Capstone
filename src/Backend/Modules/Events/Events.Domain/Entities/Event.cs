@@ -18,7 +18,6 @@ public sealed class Event : AggregateRoot<Guid>
     public string? MapUrl { get; private set; }
     public string Description { get; private set; } = string.Empty;
     public string? UrlPath { get; private set; }
-    public int EventCategoryId { get; private set; }
 
     public DateTime? TicketSaleStartAt { get; private set; }
     public DateTime? TicketSaleEndAt { get; private set; }
@@ -37,8 +36,8 @@ public sealed class Event : AggregateRoot<Guid>
     private readonly List<EventImage> _images = [];
     public IReadOnlyCollection<EventImage> Images => _images.AsReadOnly();
 
-    private readonly List<EventCategoryMapping> _categoryMappings = [];
-    public IReadOnlyCollection<EventCategoryMapping> CategoryMappings => _categoryMappings.AsReadOnly();
+    private readonly List<EventCategory> _eventCategories = [];
+    public IReadOnlyCollection<EventCategory> EventCategories => _eventCategories.AsReadOnly();
 
     private readonly List<EventMember> _members = [];
     public IReadOnlyCollection<EventMember> Members => _members.AsReadOnly();
@@ -60,8 +59,7 @@ public sealed class Event : AggregateRoot<Guid>
         string? bannerUrl,
         string location,
         string? mapUrl,
-        string description,
-        int eventCategoryId)
+        string description)
     {
         var @event = new Event
         {
@@ -73,7 +71,6 @@ public sealed class Event : AggregateRoot<Guid>
             Location = location,
             MapUrl = mapUrl,
             Description = description,
-            EventCategoryId = eventCategoryId,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -238,7 +235,7 @@ public sealed class Event : AggregateRoot<Guid>
     public void AddArea(Area area) => _areas.Add(area);
     public void AddMember(EventMember member) => _members.Add(member);
     public void AddActorImage(EventActorImage actorImage) => _actorImages.Add(actorImage);
-    public void AddCategoryMapping(EventCategoryMapping mapping) => _categoryMappings.Add(mapping);
+    public void AddCategories(EventCategory eventCategory) => _eventCategories.Add(eventCategory);
     public void AddHashtag(EventHashtag eventHashtag) => _eventHashtags.Add(eventHashtag);
 
     protected override void Apply(IDomainEvent @event)

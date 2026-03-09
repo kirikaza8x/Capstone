@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Events.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Events.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(EventsDbContext))]
-    partial class EventsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260309144943_RenameEventCategoryId")]
+    partial class RenameEventCategoryId
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -77,60 +80,6 @@ namespace Events.Infrastructure.Data.Migrations
                         .HasDatabaseName("ix_areas_event_id");
 
                     b.ToTable("areas", "events");
-                });
-
-            modelBuilder.Entity("Events.Domain.Entities.Category", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("code");
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("created_by");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("text")
-                        .HasColumnName("description");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_active");
-
-                    b.Property<DateTime?>("ModifiedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("modified_at");
-
-                    b.Property<string>("ModifiedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("modified_by");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("name");
-
-                    b.HasKey("Id")
-                        .HasName("pk_categories");
-
-                    b.HasIndex("Code")
-                        .HasDatabaseName("ix_categories_code");
-
-                    b.ToTable("categories", "events");
                 });
 
             modelBuilder.Entity("Events.Domain.Entities.Event", b =>
@@ -309,6 +258,60 @@ namespace Events.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Events.Domain.Entities.EventCategory", b =>
                 {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("code");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text")
+                        .HasColumnName("created_by");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<DateTime?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modified_at");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasColumnType("text")
+                        .HasColumnName("modified_by");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.HasKey("Id")
+                        .HasName("pk_event_categories");
+
+                    b.HasIndex("Code")
+                        .HasDatabaseName("ix_event_categories_code");
+
+                    b.ToTable("event_categories", "events");
+                });
+
+            modelBuilder.Entity("Events.Domain.Entities.EventCategoryMapping", b =>
+                {
                     b.Property<Guid>("EventId")
                         .HasColumnType("uuid")
                         .HasColumnName("event_id");
@@ -318,12 +321,12 @@ namespace Events.Infrastructure.Data.Migrations
                         .HasColumnName("category_id");
 
                     b.HasKey("EventId", "CategoryId")
-                        .HasName("pk_event_categories");
+                        .HasName("pk_event_category_mappings");
 
                     b.HasIndex("CategoryId")
-                        .HasDatabaseName("ix_event_categories_category_id");
+                        .HasDatabaseName("ix_event_category_mappings_category_id");
 
-                    b.ToTable("event_categories", "events");
+                    b.ToTable("event_category_mappings", "events");
                 });
 
             modelBuilder.Entity("Events.Domain.Entities.EventHashtag", b =>
@@ -743,21 +746,21 @@ namespace Events.Infrastructure.Data.Migrations
                     b.Navigation("Event");
                 });
 
-            modelBuilder.Entity("Events.Domain.Entities.EventCategory", b =>
+            modelBuilder.Entity("Events.Domain.Entities.EventCategoryMapping", b =>
                 {
-                    b.HasOne("Events.Domain.Entities.Category", "Category")
+                    b.HasOne("Events.Domain.Entities.EventCategory", "Category")
                         .WithMany()
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_event_categories_categories_category_id");
+                        .HasConstraintName("fk_event_category_mappings_event_categories_category_id");
 
                     b.HasOne("Events.Domain.Entities.Event", "Event")
-                        .WithMany("EventCategories")
+                        .WithMany("CategoryMappings")
                         .HasForeignKey("EventId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_event_categories_events_event_id");
+                        .HasConstraintName("fk_event_category_mappings_events_event_id");
 
                     b.Navigation("Category");
 
@@ -864,7 +867,7 @@ namespace Events.Infrastructure.Data.Migrations
 
                     b.Navigation("Areas");
 
-                    b.Navigation("EventCategories");
+                    b.Navigation("CategoryMappings");
 
                     b.Navigation("EventHashtags");
 

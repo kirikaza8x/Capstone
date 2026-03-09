@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using Events.Domain.Enums;
 using Events.Domain.Repositories;
 using Shared.Application.Abstractions.Caching;
 using Shared.Application.Abstractions.Messaging;
@@ -24,13 +23,9 @@ internal sealed class GetEventsQueryHandler(
 
         var pagedResult = await cacheService.GetOrCreateAsync(
             key: cacheKey,
-            factory: async (token) =>
+            factory: async token =>
             {
-                var pagedEvents = await eventRepository.GetAllWithPagingAsync(
-                    pagedQuery: request,
-                    predicate: e => e.Status == EventStatus.Published,
-                    cancellationToken: token
-                );
+                var pagedEvents = await eventRepository.GetPublishedWithCategoriesAsync(request, token);
 
                 var responseItems = mapper.Map<IReadOnlyList<EventResponse>>(pagedEvents.Items);
 
@@ -38,12 +33,10 @@ internal sealed class GetEventsQueryHandler(
                     responseItems,
                     pagedEvents.PageNumber,
                     pagedEvents.PageSize,
-                    pagedEvents.TotalCount
-                );
+                    pagedEvents.TotalCount);
             },
             expiration: TimeSpan.FromMinutes(5),
-            cancellationToken: cancellationToken
-        );
+            cancellationToken: cancellationToken);
 
         return pagedResult!;
     }

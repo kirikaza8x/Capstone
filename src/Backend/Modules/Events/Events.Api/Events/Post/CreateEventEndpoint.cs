@@ -5,9 +5,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
-using Shared.Api.Extensions;
 using Shared.Api.Results;
-using Users.PublicApi.Constants;
 
 namespace Events.Api.Events.Post;
 
@@ -21,11 +19,11 @@ public sealed record CreateEventRequest(
     string Title,
     string? BannerUrl,
     List<int> HashtagIds,
-    int EventCategoryId,
+    List<int> CategoryIds,
     string Location,
     string? MapUrl,
     string Description,
-    List<CreateActorImageRequest> ActorImages);
+    List<CreateActorImageRequest>? ActorImages);
 
 public class CreateEventEndpoint : ICarterModule
 {
@@ -36,19 +34,21 @@ public class CreateEventEndpoint : ICarterModule
             ISender sender,
             CancellationToken cancellationToken) =>
         {
+            var actorImages = request.ActorImages?
+                .Select(a => new CreateActorImageItem(a.Name, a.Major, a.Image))
+                .ToList() ?? [];
+
             var result = await sender.Send(
                 new CreateEventCommand(
                     request.OrganizerId,
                     request.Title,
                     request.BannerUrl,
                     request.HashtagIds,
-                    request.EventCategoryId,
+                    request.CategoryIds,
                     request.Location,
                     request.MapUrl,
                     request.Description,
-                    request.ActorImages
-                        .Select(a => new CreateActorImageItem(a.Name, a.Major, a.Image))
-                        .ToList()),
+                    actorImages),
                 cancellationToken);
 
             if (result.IsFailure)
@@ -65,6 +65,7 @@ public class CreateEventEndpoint : ICarterModule
         .Produces<Guid>(StatusCodes.Status201Created)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status409Conflict)
-        .RequireRoles(Roles.Organizer);
+        //.RequireRoles(Roles.Organizer)
+        ;
     }
 }

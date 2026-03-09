@@ -12,7 +12,7 @@ public sealed record CreateEventCommand(
     string Title,
     string? BannerUrl,
     List<int> HashtagIds,
-    int EventCategoryId,
+    List<int> CategoryIds,
     string Location,
     string? MapUrl,
     string Description,
