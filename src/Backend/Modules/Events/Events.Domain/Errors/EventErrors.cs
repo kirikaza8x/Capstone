@@ -74,6 +74,14 @@ public static class EventErrors
         public static readonly Error HasPaidOrders = Error.Conflict(
             "Event.HasPaidOrders",
             "Cannot cancel event. There are paid orders associated with this event.");
+
+        public static readonly Error InvalidSpec = Error.Validation(
+            "Event.InvalidSpec",
+            "The spec JSON is invalid or cannot be parsed.");
+
+        public static readonly Error SpecHasNoAreas = Error.Validation(
+            "Event.SpecHasNoAreas",
+            "The spec must contain at least one area.");
     }
 
     public static class EventSession

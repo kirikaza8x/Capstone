@@ -214,6 +214,18 @@ public sealed class Event : AggregateRoot<Guid>
         return image;
     }
 
+    public void UpdateSpec(string spec)
+    {
+        Spec = spec;
+        ModifiedAt = DateTime.UtcNow;
+    }
+
+    public void ClearAreasAndSeats()
+    {
+        _areas.Clear();
+        ModifiedAt = DateTime.UtcNow;
+    }
+
     public Result UpdateImage(Guid imageId, string newImageUrl)
     {
         var image = _images.FirstOrDefault(i => i.Id == imageId);
