@@ -2,6 +2,11 @@
 
 namespace Events.Application.Events.Commands.CreateEvent;
 
+public sealed record CreateActorImageItem(
+    string Name,
+    string? Major,
+    string? Image);
+
 public sealed record CreateEventCommand(
     Guid OrganizerId,
     string Title,
@@ -10,5 +15,5 @@ public sealed record CreateEventCommand(
     int EventCategoryId,
     string Location,
     string? MapUrl,
-    string Description
-) : ICommand<Guid>;
+    string Description,
+    List<CreateActorImageItem> ActorImages) : ICommand<Guid>;

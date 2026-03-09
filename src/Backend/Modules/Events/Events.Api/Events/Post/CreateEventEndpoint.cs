@@ -11,6 +11,11 @@ using Users.PublicApi.Constants;
 
 namespace Events.Api.Events.Post;
 
+public sealed record CreateActorImageRequest(
+    string Name,
+    string? Major,
+    string? Image);
+
 public sealed record CreateEventRequest(
     Guid OrganizerId,
     string Title,
@@ -19,7 +24,8 @@ public sealed record CreateEventRequest(
     int EventCategoryId,
     string Location,
     string? MapUrl,
-    string Description);
+    string Description,
+    List<CreateActorImageRequest> ActorImages);
 
 public class CreateEventEndpoint : ICarterModule
 {
@@ -39,7 +45,10 @@ public class CreateEventEndpoint : ICarterModule
                     request.EventCategoryId,
                     request.Location,
                     request.MapUrl,
-                    request.Description),
+                    request.Description,
+                    request.ActorImages
+                        .Select(a => new CreateActorImageItem(a.Name, a.Major, a.Image))
+                        .ToList()),
                 cancellationToken);
 
             if (result.IsFailure)
@@ -49,7 +58,7 @@ public class CreateEventEndpoint : ICarterModule
                 $"{Constants.Routes.Events}/{result.Value}",
                 "Event created successfully.");
         })
-        .WithTags(Constants.Tags.TicketTypes)
+        .WithTags(Constants.Tags.Events)
         .WithName("CreateEvent")
         .WithSummary("Create a new event")
         .WithDescription("Creates a new event with basic information. The event will be created in Draft status.")

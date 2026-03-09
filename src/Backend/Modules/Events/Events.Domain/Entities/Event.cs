@@ -28,7 +28,6 @@ public sealed class Event : AggregateRoot<Guid>
     public string Policy { get; private set; } = string.Empty;
     public string? Spec { get; private set; }
     public bool IsEmailReminderEnabled { get; private set; } = false;
-    public int? EventTypeId { get; private set; }
 
     public string? CancellationReason { get; private set; }
 
@@ -99,17 +98,6 @@ public sealed class Event : AggregateRoot<Guid>
         TicketSaleEndAt = ticketSaleEndAt;
         EventStartAt = eventStartAt;
         EventEndAt = eventEndAt;
-        ModifiedAt = DateTime.UtcNow;
-    }
-
-    public void UpdateAdditionalInfo(
-        string policy,
-        string? spec,
-        int? eventTypeId)
-    {
-        Policy = policy;
-        Spec = spec;
-        EventTypeId = eventTypeId;
         ModifiedAt = DateTime.UtcNow;
     }
 

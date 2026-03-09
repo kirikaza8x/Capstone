@@ -30,6 +30,7 @@ public sealed record GetEventResponse
     public IReadOnlyList<EventImageDto> Images { get; init; } = [];
     public IReadOnlyList<EventSessionDto> Sessions { get; init; } = [];
     public IReadOnlyList<EventHashtagDto> Hashtags { get; init; } = [];
+    public IReadOnlyList<EventActorImageDto> ActorImages { get; init; } = [];
 }
 
 public sealed record EventImageDto
@@ -51,4 +52,12 @@ public sealed record EventHashtagDto
 {
     public int Id { get; init; }
     public string Name { get; init; } = string.Empty;
+}
+
+public sealed record EventActorImageDto
+{
+    public Guid Id { get; init; }
+    public string Name { get; init; } = string.Empty;
+    public string? Major { get; init; }
+    public string? Image { get; init; }
 }
