@@ -8,13 +8,10 @@ using Shared.Domain.Abstractions;
 
 namespace Events.Application.EventSessions.Commands.CreateEventSession;
 
-public sealed class CreateEventSessionValidator : AbstractValidator<CreateEventSessionCommand>
+public sealed class CreateEventSessionItemValidator : AbstractValidator<CreateEventSessionItem>
 {
-    public CreateEventSessionValidator()
+    public CreateEventSessionItemValidator()
     {
-        RuleFor(x => x.EventId)
-            .NotEmpty().WithMessage("Event ID is required.");
-
         RuleFor(x => x.Title)
             .NotEmpty().WithMessage("Session title is required.")
             .MaximumLength(500).WithMessage("Session title must not exceed 500 characters.");
@@ -32,30 +29,45 @@ public sealed class CreateEventSessionValidator : AbstractValidator<CreateEventS
     }
 }
 
+public sealed class CreateEventSessionValidator : AbstractValidator<CreateEventSessionCommand>
+{
+    public CreateEventSessionValidator()
+    {
+        RuleFor(x => x.EventId)
+            .NotEmpty().WithMessage("Event ID is required.");
+
+        RuleFor(x => x.Sessions)
+            .NotEmpty().WithMessage("At least one session is required.");
+
+        RuleForEach(x => x.Sessions)
+            .SetValidator(new CreateEventSessionItemValidator());
+    }
+}
+
 internal sealed class CreateEventSessionCommandHandler(
     IEventRepository eventRepository,
-    IEventUnitOfWork unitOfWork) : ICommandHandler<CreateEventSessionCommand, Guid>
+    IEventUnitOfWork unitOfWork) : ICommandHandler<CreateEventSessionCommand, List<Guid>>
 {
-    public async Task<Result<Guid>> Handle(CreateEventSessionCommand command, CancellationToken cancellationToken)
+    public async Task<Result<List<Guid>>> Handle(CreateEventSessionCommand command, CancellationToken cancellationToken)
     {
-        // Check if event exists
         var @event = await eventRepository.GetByIdAsync(command.EventId, cancellationToken);
+
         if (@event is null)
-        {
-            return Result.Failure<Guid>(EventErrors.Event.NotFound(command.EventId));
-        }
+            return Result.Failure<List<Guid>>(EventErrors.Event.NotFound(command.EventId));
 
-        // Create session
-        var session = EventSession.Create(
-            command.EventId,
-            command.Title,
-            command.Description,
-            command.StartTime,
-            command.EndTime);
+        var sessions = command.Sessions
+            .Select(s => EventSession.Create(
+                command.EventId,
+                s.Title,
+                s.Description,
+                s.StartTime,
+                s.EndTime))
+            .ToList();
 
-        @event.AddSession(session);
+        sessions.ForEach(@event.AddSession);
+
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return Result.Success(session.Id);
+        return Result.Success(sessions.Select(s => s.Id).ToList());
     }
 }
