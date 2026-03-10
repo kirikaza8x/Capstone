@@ -32,12 +32,4 @@
 	<PackageReference Include="Microsoft.AspNetCore.Http" Version="2.3.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Categories\Commands\DeleteCategory\" />
-    <Folder Include="Categories\Queries\GetCategories\" />
-    <Folder Include="Categories\Queries\GetCategoryById\" />
-    <Folder Include="Hashtags\Commands\" />
-    <Folder Include="Hashtags\Queries\" />
-  </ItemGroup>
-
 </Project>
