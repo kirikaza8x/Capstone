@@ -45,5 +45,14 @@ public sealed class EventSession : Entity<Guid>
         ModifiedAt = DateTime.UtcNow;
     }
 
+    public TicketType? GetTicketType(Guid ticketTypeId)
+        => _ticketTypes.FirstOrDefault(t => t.Id == ticketTypeId);
+
+    public void RemoveTicketType(TicketType ticketType)
+    {
+        _ticketTypes.Remove(ticketType);
+        ModifiedAt = DateTime.UtcNow;
+    }
+
     public void AddTicketType(TicketType ticketType) => _ticketTypes.Add(ticketType);
 }

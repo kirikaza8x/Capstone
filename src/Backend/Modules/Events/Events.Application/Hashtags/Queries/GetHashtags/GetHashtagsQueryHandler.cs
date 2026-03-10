@@ -9,7 +9,9 @@ internal sealed class GetHashtagsQueryHandler(
 {
     public async Task<Result<IReadOnlyList<HashtagResponse>>> Handle(GetHashtagsQuery query, CancellationToken cancellationToken)
     {
-        var hashtags = await hashtagRepository.GetAllAsync(cancellationToken);
+        var hashtags = string.IsNullOrWhiteSpace(query.Name)
+            ? await hashtagRepository.GetAllAsync(cancellationToken)
+            : await hashtagRepository.SearchAsync(h => h.Name, query.Name, query.Take, cancellationToken);
 
         var response = hashtags
             .Select(h => new HashtagResponse(h.Id, h.Name, h.Slug, h.UsageCount))

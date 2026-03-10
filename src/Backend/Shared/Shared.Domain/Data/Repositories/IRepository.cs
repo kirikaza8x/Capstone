@@ -19,6 +19,12 @@ public partial interface IRepository<TEntity, TId>
         Expression<Func<TEntity, bool>> predicate,
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<TEntity>> SearchAsync(
+        Expression<Func<TEntity, string>> field,
+        string keyword,
+        int take = 20,
+        CancellationToken cancellationToken = default);
+
     Task<PagedResult<TEntity>> GetAllWithPagingAsync(
         PagedQuery pagedQuery,
         Expression<Func<TEntity, bool>>? predicate = null,

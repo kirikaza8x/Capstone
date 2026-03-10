@@ -1,0 +1,52 @@
+using Carter;
+using Events.Application.Events.Commands.UpdateTicketType;
+using MediatR;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
+using Shared.Api.Extensions;
+using Shared.Api.Results;
+using Users.PublicApi.Constants;
+
+namespace Events.Api.Events.Patch;
+
+public sealed record UpdateTicketTypeRequest(
+    string Name,
+    decimal Price,
+    int Quantity);
+
+public class UpdateTicketTypeEndpoint : ICarterModule
+{
+    public void AddRoutes(IEndpointRouteBuilder app)
+    {
+        app.MapPatch(Constants.Routes.TicketTypeById, async (
+            [FromRoute] Guid eventId,
+            [FromRoute] Guid sessionId,
+            [FromRoute] Guid ticketTypeId,
+            [FromBody] UpdateTicketTypeRequest request,
+            ISender sender,
+            CancellationToken cancellationToken) =>
+        {
+            var result = await sender.Send(
+                new UpdateTicketTypeCommand(
+                    sessionId,
+                    ticketTypeId,
+                    request.Name,
+                    request.Price,
+                    request.Quantity),
+                cancellationToken);
+
+            return result.ToOk("Ticket type updated successfully.");
+        })
+        .WithTags(Constants.Tags.TicketTypes)
+        .WithName("UpdateTicketType")
+        .WithSummary("Update ticket type")
+        .WithDescription("Update an existing ticket type of a session.")
+        .Produces(StatusCodes.Status200OK)
+        .ProducesProblem(StatusCodes.Status400BadRequest)
+        .ProducesProblem(StatusCodes.Status403Forbidden)
+        .ProducesProblem(StatusCodes.Status404NotFound)
+        .RequireRoles(Roles.Organizer);
+    }
+}

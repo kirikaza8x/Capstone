@@ -9,6 +9,7 @@ namespace Events.Domain.Repositories;
 public interface IEventRepository : IRepository<Event, Guid>
 {
     Task<Event?> GetByIdWithSessionsAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<Event?> GetByIdWithSessionsAndTicketTypesAsync(Guid id, CancellationToken cancellationToken = default);
     Task<Event?> GetByIdWithAreasAndSeatsAsync(Guid id, CancellationToken cancellationToken = default);
     Task<Event?> GetByIdWithAllDetailsAsync(Guid id, CancellationToken cancellationToken = default);
 
@@ -18,6 +19,7 @@ public interface IEventRepository : IRepository<Event, Guid>
     Task<bool> IsUrlPathExistsAsync(string urlPath, CancellationToken cancellationToken = default);
 
     Task<EventSession?> GetEventSessionByIdAsync(Guid sessionId, CancellationToken cancellationToken = default);
+    Task<EventSession?> GetEventSessionWithTicketTypesAsync(Guid sessionId, CancellationToken cancellationToken = default);
 
     Task<Event?> GetByIdWithImagesAsync(Guid id, CancellationToken cancellationToken = default);
 
