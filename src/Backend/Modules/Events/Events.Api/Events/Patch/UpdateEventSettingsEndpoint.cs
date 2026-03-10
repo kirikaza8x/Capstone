@@ -11,7 +11,11 @@ namespace Events.Api.Events.Patch;
 
 public sealed record UpdateEventSettingsRequest(
     bool IsEmailReminderEnabled,
-    string? UrlPath);
+    string? UrlPath,
+    DateTime? TicketSaleStartAt,
+    DateTime? TicketSaleEndAt,
+    DateTime? EventStartAt,
+    DateTime? EventEndAt);
 
 public class UpdateEventSettingsEndpoint : ICarterModule
 {
@@ -27,7 +31,11 @@ public class UpdateEventSettingsEndpoint : ICarterModule
                 new UpdateEventSettingsCommand(
                     eventId,
                     request.IsEmailReminderEnabled,
-                    request.UrlPath),
+                    request.UrlPath,
+                    request.TicketSaleStartAt,
+                    request.TicketSaleEndAt,
+                    request.EventStartAt,
+                    request.EventEndAt),
                 cancellationToken);
 
             return result.ToOk("Event settings updated successfully.");
@@ -35,7 +43,7 @@ public class UpdateEventSettingsEndpoint : ICarterModule
         .WithTags(Constants.Tags.Events)
         .WithName("UpdateEventSettings")
         .WithSummary("Update event settings")
-        .WithDescription("Update event settings including email reminder and custom URL path.")
+        .WithDescription("Update event settings including email reminder, custom URL path, and event schedule.")
         .Produces(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status404NotFound)

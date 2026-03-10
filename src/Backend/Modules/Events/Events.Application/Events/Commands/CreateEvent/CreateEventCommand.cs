@@ -8,7 +8,6 @@ public sealed record CreateActorImageItem(
     string? Image);
 
 public sealed record CreateEventCommand(
-    Guid OrganizerId,
     string Title,
     string? BannerUrl,
     List<int> HashtagIds,

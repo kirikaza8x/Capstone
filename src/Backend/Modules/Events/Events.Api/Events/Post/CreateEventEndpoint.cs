@@ -5,7 +5,9 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using Shared.Api.Extensions;
 using Shared.Api.Results;
+using Users.PublicApi.Constants;
 
 namespace Events.Api.Events.Post;
 
@@ -15,7 +17,6 @@ public sealed record CreateActorImageRequest(
     string? Image);
 
 public sealed record CreateEventRequest(
-    Guid OrganizerId,
     string Title,
     string? BannerUrl,
     List<int> HashtagIds,
@@ -40,7 +41,6 @@ public class CreateEventEndpoint : ICarterModule
 
             var result = await sender.Send(
                 new CreateEventCommand(
-                    request.OrganizerId,
                     request.Title,
                     request.BannerUrl,
                     request.HashtagIds,
@@ -65,7 +65,6 @@ public class CreateEventEndpoint : ICarterModule
         .Produces<Guid>(StatusCodes.Status201Created)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status409Conflict)
-        //.RequireRoles(Roles.Organizer)
-        ;
+        .RequireRoles(Roles.Organizer);
     }
 }

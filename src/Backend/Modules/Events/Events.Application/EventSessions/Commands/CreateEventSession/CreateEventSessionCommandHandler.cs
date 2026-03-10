@@ -3,6 +3,7 @@ using Events.Domain.Errors;
 using Events.Domain.Repositories;
 using Events.Domain.Uow;
 using FluentValidation;
+using Shared.Application.Abstractions.Authentication;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
 
@@ -46,7 +47,8 @@ public sealed class CreateEventSessionValidator : AbstractValidator<CreateEventS
 
 internal sealed class CreateEventSessionCommandHandler(
     IEventRepository eventRepository,
-    IEventUnitOfWork unitOfWork) : ICommandHandler<CreateEventSessionCommand, List<Guid>>
+    IEventUnitOfWork unitOfWork,
+    ICurrentUserService currentUserService) : ICommandHandler<CreateEventSessionCommand, List<Guid>>
 {
     public async Task<Result<List<Guid>>> Handle(CreateEventSessionCommand command, CancellationToken cancellationToken)
     {
@@ -54,6 +56,9 @@ internal sealed class CreateEventSessionCommandHandler(
 
         if (@event is null)
             return Result.Failure<List<Guid>>(EventErrors.Event.NotFound(command.EventId));
+
+        if (@event.OrganizerId != currentUserService.UserId)
+            return Result.Failure<List<Guid>>(EventErrors.Event.NotOwner);
 
         var sessions = command.Sessions
             .Select(s => EventSession.Create(

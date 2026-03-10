@@ -1,6 +1,7 @@
 ﻿using Events.Domain.Errors;
 using Events.Domain.Repositories;
 using Events.Domain.Uow;
+using Shared.Application.Abstractions.Authentication;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Application.Abstractions.Storage;
 using Shared.Domain.Abstractions;
@@ -11,6 +12,7 @@ namespace Events.Application.Events.Commands.UpdateEventImage;
 internal sealed class UpdateEventImageCommandHandler(
     IEventRepository eventRepository,
     IStorageService storageService,
+    ICurrentUserService currentUserService,
     IEventUnitOfWork unitOfWork) : ICommandHandler<UpdateEventImageCommand>
 {
     private static readonly string[] AllowedContentTypes =
@@ -30,12 +32,16 @@ internal sealed class UpdateEventImageCommandHandler(
         if (!AllowedContentTypes.Contains(command.File.ContentType.ToLowerInvariant()))
             return Result.Failure(EventImageErrors.InvalidFileType());
 
-        // Load Event aggregate with images
         var @event = await eventRepository.GetByIdWithImagesAsync(command.EventId, cancellationToken);
+
         if (@event is null)
             return Result.Failure(EventErrors.Event.NotFound(command.EventId));
 
-        // Get image through Aggregate Root
+        if (@event.OrganizerId != currentUserService.UserId)
+            return Result.Failure(EventErrors.Event.NotOwner);
+
+
+        // Get image
         var eventImage = @event.GetImage(command.ImageId);
         if (eventImage is null)
             return Result.Failure(EventImageErrors.NotFound(command.ImageId));

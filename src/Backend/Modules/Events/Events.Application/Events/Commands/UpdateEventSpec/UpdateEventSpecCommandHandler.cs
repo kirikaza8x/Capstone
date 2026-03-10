@@ -1,13 +1,13 @@
-﻿using System.Text.Json;
-using System.Text.Json.Serialization;
-using Events.Domain.Entities;
+﻿using Events.Domain.Entities;
 using Events.Domain.Enums;
 using Events.Domain.Errors;
 using Events.Domain.Repositories;
 using Events.Domain.Uow;
 using FluentValidation;
+using Shared.Application.Abstractions.Authentication;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
+using System.Text.Json;
 
 namespace Events.Application.Events.Commands.UpdateEventSpec;
 
@@ -25,12 +25,12 @@ public sealed class UpdateEventSpecCommandValidator : AbstractValidator<UpdateEv
 
 internal sealed class UpdateEventSpecCommandHandler(
     IEventRepository eventRepository,
+    ICurrentUserService currentUserService,
     IEventUnitOfWork unitOfWork) : ICommandHandler<UpdateEventSpecCommand>
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true,
-        // Không dùng JsonStringEnumConverter global vì status là string thô
     };
 
     public async Task<Result> Handle(UpdateEventSpecCommand command, CancellationToken cancellationToken)
@@ -39,6 +39,9 @@ internal sealed class UpdateEventSpecCommandHandler(
 
         if (@event is null)
             return Result.Failure(EventErrors.Event.NotFound(command.EventId));
+
+        if (@event.OrganizerId != currentUserService.UserId)
+            return Result.Failure(EventErrors.Event.NotOwner);
 
         var specJson = command.Spec.RootElement.GetRawText();
 

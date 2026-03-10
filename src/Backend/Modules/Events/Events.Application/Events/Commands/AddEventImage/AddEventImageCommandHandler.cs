@@ -2,6 +2,7 @@
 using Events.Domain.Errors;
 using Events.Domain.Repositories;
 using Events.Domain.Uow;
+using Shared.Application.Abstractions.Authentication;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Application.Abstractions.Storage;
 using Shared.Domain.Abstractions;
@@ -12,6 +13,7 @@ namespace Events.Application.Events.Commands.AddEventImage;
 internal sealed class AddEventImageCommandHandler(
     IEventRepository eventRepository,
     IStorageService storageService,
+    ICurrentUserService currentUserService,
     IEventUnitOfWork unitOfWork) : ICommandHandler<AddEventImageCommand, Guid>
 {
     private static readonly string[] AllowedContentTypes =
@@ -21,7 +23,6 @@ internal sealed class AddEventImageCommandHandler(
 
     public async Task<Result<Guid>> Handle(AddEventImageCommand command, CancellationToken cancellationToken)
     {
-        // Validate file
         if (command.File is null || command.File.Length == 0)
             return Result.Failure<Guid>(EventImageErrors.FileRequired());
 
@@ -31,12 +32,14 @@ internal sealed class AddEventImageCommandHandler(
         if (!AllowedContentTypes.Contains(command.File.ContentType.ToLowerInvariant()))
             return Result.Failure<Guid>(EventImageErrors.InvalidFileType());
 
-        // Check event exists
         var @event = await eventRepository.GetByIdWithImagesAsync(command.EventId, cancellationToken);
+
         if (@event is null)
             return Result.Failure<Guid>(EventErrors.Event.NotFound(command.EventId));
 
-        // Upload to storage
+        if (@event.OrganizerId != currentUserService.UserId)
+            return Result.Failure<Guid>(EventErrors.Event.NotOwner);
+
         await using var stream = command.File.OpenReadStream();
         var folder = $"{StorageFolders.EventImages}/{command.EventId}";
 
@@ -47,7 +50,6 @@ internal sealed class AddEventImageCommandHandler(
             folder,
             cancellationToken);
 
-        // Create and add image entity
         var eventImage = @event.AddImage(imageUrl);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);

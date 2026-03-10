@@ -34,7 +34,7 @@ public class UpdateEventSpecEndpoint : ICarterModule
         .WithDescription("Updates the seatmap spec JSON and automatically parses it into areas and seats.")
         .Produces(StatusCodes.Status204NoContent)
         .ProducesProblem(StatusCodes.Status400BadRequest)
-        .ProducesProblem(StatusCodes.Status404NotFound);
-        //.RequireRoles(Roles.Organizer);
+        .ProducesProblem(StatusCodes.Status404NotFound)
+        .RequireRoles(Roles.Organizer);
     }
 }

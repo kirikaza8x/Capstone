@@ -2,6 +2,7 @@
 using Events.Domain.Repositories;
 using Events.Domain.Uow;
 using FluentValidation;
+using Shared.Application.Abstractions.Authentication;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
 
@@ -24,9 +25,6 @@ public sealed class CreateEventCommandValidator : AbstractValidator<CreateEventC
 {
     public CreateEventCommandValidator()
     {
-        RuleFor(x => x.OrganizerId)
-            .NotEmpty().WithMessage("Organizer ID is required");
-
         RuleFor(x => x.Title)
             .NotEmpty().WithMessage("Event title is required")
             .MaximumLength(500).WithMessage("Event title must not exceed 500 characters");
@@ -51,13 +49,14 @@ public sealed class CreateEventCommandValidator : AbstractValidator<CreateEventC
 
 internal sealed class CreateEventCommandHandler(
     IEventRepository eventRepository,
+    ICurrentUserService currentUserService,
     IEventUnitOfWork unitOfWork) : ICommandHandler<CreateEventCommand, Guid>
 {
     public async Task<Result<Guid>> Handle(CreateEventCommand command, CancellationToken cancellationToken)
     {
         // Create event
         var @event = Event.Create(
-            organizerId: command.OrganizerId,
+            organizerId: currentUserService.UserId,
             title: command.Title,
             bannerUrl: command.BannerUrl,
             location: command.Location,
