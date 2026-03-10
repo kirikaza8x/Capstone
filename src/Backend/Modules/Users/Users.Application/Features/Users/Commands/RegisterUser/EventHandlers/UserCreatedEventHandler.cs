@@ -27,7 +27,7 @@ public class PublishUserCreatedIntegrationHandler(
             user.Roles.Select(r => r.Name).ToList(),
             DateTime.UtcNow
         );
-        
+
 
         await eventBus.PublishAsync(integrationEvent, cancellationToken);
         logger.LogInformation("Integration event published for User: {UserId}", user.Id);

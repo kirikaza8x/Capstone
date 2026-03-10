@@ -26,7 +26,7 @@ internal sealed class RequestPasswordResetCommandHandler(
         var otp = user.CreateOtp();
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        await notificationService.SendOtpAsync(user.Id,user.Email,otp.OtpCode);
+        await notificationService.SendOtpAsync(user.Id, user.Email, otp.OtpCode);
         return Result.Success(user.Id);
     }
 }

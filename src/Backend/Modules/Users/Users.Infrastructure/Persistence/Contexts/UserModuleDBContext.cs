@@ -16,7 +16,7 @@ public class UserModuleDbContext : DbContext
     {
         modelBuilder.HasDefaultSchema(Constants.SchemaName);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(UserModuleDbContext).Assembly);
-            modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration());
+        modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration());
         base.OnModelCreating(modelBuilder);
     }
 }

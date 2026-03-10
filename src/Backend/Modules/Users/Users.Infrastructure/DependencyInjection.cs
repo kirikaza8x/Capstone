@@ -135,7 +135,7 @@ namespace Users.Infrastructure
                 );
             });
 
-            services.AddScoped<IUserNotificationService,GmailNotificationService>();
+            services.AddScoped<IUserNotificationService, GmailNotificationService>();
             services.AddScoped<IUserUnitOfWork, UserUnitOfWork>();
             services.AddScoped<IRoleUnitOfWork, RoleUnitOfWork>();
             services.AddScoped<IGooglePayloadValidator, GooglePayloadValidatorService>();

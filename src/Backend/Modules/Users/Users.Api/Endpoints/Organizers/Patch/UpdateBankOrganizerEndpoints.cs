@@ -15,7 +15,7 @@ public class UpdateBankOrganizerEndpoints : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        
+
         app.MapPatch("api/organizers/bank", async (
             [FromBody] UpdateOrganizerBankRequestDto requestDto,
             ISender sender,

@@ -8,7 +8,7 @@ using Users.Domain.UOW;
 public class BindGoogleCommandHandler(
     IUserRepository userRepository,
     IGooglePayloadValidator googleValidator,
-    ICurrentUserService currentUserService, 
+    ICurrentUserService currentUserService,
     IUserUnitOfWork unitOfWork
 ) : ICommandHandler<BindGoogleCommand>
 {
@@ -28,7 +28,7 @@ public class BindGoogleCommandHandler(
         }
 
         user.BindExternalIdentity("Google", payload.Subject);
-        user.Verify(); 
+        user.Verify();
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return Result.Success();

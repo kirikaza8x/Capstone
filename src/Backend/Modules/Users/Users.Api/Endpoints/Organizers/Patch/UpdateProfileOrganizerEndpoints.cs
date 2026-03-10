@@ -15,7 +15,7 @@ public class UpdateProfileOrganizerEndpoints : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        
+
         // Update Organizer Profile
         app.MapPatch("api/organizers/profile", async (
             [FromBody] UpdateOrganizerProfileRequestDto requestDto,
