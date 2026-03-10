@@ -10,7 +10,7 @@ public class CreateOrganizerProfileCommandValidator : AbstractValidator<CreateOr
         RuleFor(x => x.Type)
             .IsInEnum()
             .WithMessage("Organizer type must be a valid value.")
-            .NotEmpty()
+            // .NotEmpty()
             .WithMessage("Organizer type is required.");
     }
 }
