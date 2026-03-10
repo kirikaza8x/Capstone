@@ -5,6 +5,7 @@ using Users.Domain.Enums;
 
 namespace Users.Application.Features.Users.Dtos;
 
+public record BindGoogleRequestDto(string IdToken);
 public class UserResponseDto : BaseDto<Guid>
 {
     public string? Email { get; set; }
