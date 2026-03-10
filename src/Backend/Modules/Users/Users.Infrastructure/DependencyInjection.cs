@@ -20,13 +20,14 @@ using Shared.Infrastructure.Service.Authentication;
 using Shared.Infrastructure.Service.Report;
 using System.Text;
 using Users.Application.Abstractions.Authentication;
+using Users.Application.Abstractions.Sms;
 using Users.Domain.Entities;
 using Users.Domain.UOW;
 using Users.Infrastructure.Data.UOW;
 using Users.Infrastructure.ImportExport;
 using Users.Infrastructure.Persistence.Contexts;
-using Users.Infrastructure.Persistence.Seeds;
 using Users.Infrastructure.Services.Authentication;
+using Users.Infrastructure.Services.Sms;
 
 namespace Users.Infrastructure
 {
@@ -134,6 +135,7 @@ namespace Users.Infrastructure
                 );
             });
 
+            services.AddScoped<IUserNotificationService, GmailNotificationService>();
             services.AddScoped<IUserUnitOfWork, UserUnitOfWork>();
             services.AddScoped<IRoleUnitOfWork, RoleUnitOfWork>();
             services.AddScoped<IGooglePayloadValidator, GooglePayloadValidatorService>();

@@ -7,6 +7,8 @@ namespace Users.Domain.Entities
         // --------------------
         // Auth
         // --------------------
+        public bool IsVerified { get; private set; } // General name for all providers
+
         public ICollection<Role> Roles { get; private set; } = new List<Role>();
         public ICollection<ExternalIdentity> ExternalIdentities { get; private set; } = new List<ExternalIdentity>();
 
@@ -39,6 +41,7 @@ namespace Users.Domain.Entities
             ExternalIdentities.Add(
                 ExternalIdentity.Create(Id, provider, providerKey)
             );
+            Verify();
         }
 
         public void UnbindExternalIdentity(string provider, string providerKey)
@@ -66,18 +69,19 @@ namespace Users.Domain.Entities
                 FirstName = firstName,
                 LastName = lastName,
                 PasswordHash = string.Empty,
+                IsVerified = true,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow
             };
 
-            // Bind the provider (e.g., "Google") and the unique subject ID
             user.BindExternalIdentity(provider, providerKey);
 
-            // You can also assign a default 'User' role here if needed
             user.RaiseDomainEvent(new UserCreatedEvent(user.Id, email, userName));
 
             return user;
         }
+
+        public void Verify() => IsVerified = true;
 
     }
 }

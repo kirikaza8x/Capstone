@@ -105,6 +105,46 @@ namespace Users.Infrastructure.Persistence.Migrations
                     b.ToTable("refresh_token", "users");
                 });
 
+            modelBuilder.Entity("Shared.Infrastructure.Outbox.OutboxMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("content");
+
+                    b.Property<string>("Error")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("error");
+
+                    b.Property<DateTime>("OccurredOnUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("occurred_on_utc");
+
+                    b.Property<DateTime?>("ProcessedOnUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("processed_on_utc");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("type");
+
+                    b.HasKey("Id")
+                        .HasName("pk_outbox_messages");
+
+                    b.HasIndex("ProcessedOnUtc")
+                        .HasDatabaseName("ix_outbox_messages_processed_on_utc");
+
+                    b.ToTable("outbox_messages", "users");
+                });
+
             modelBuilder.Entity("Users.Domain.Entities.ExternalIdentity", b =>
                 {
                     b.Property<Guid>("Id")
@@ -174,6 +214,149 @@ namespace Users.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_external_identity_provider_key");
 
                     b.ToTable("external_identity", "users");
+                });
+
+            modelBuilder.Entity("Users.Domain.Entities.OrganizerProfile", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<string>("AccountName")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("account_name");
+
+                    b.Property<string>("AccountNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("account_number");
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("address");
+
+                    b.Property<string>("BankCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("bank_code");
+
+                    b.Property<string>("Branch")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("branch");
+
+                    b.Property<string>("BusinessType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("business_type");
+
+                    b.Property<string>("CompanyName")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("company_name");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("created_by");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("description");
+
+                    b.Property<string>("DisplayName")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("display_name");
+
+                    b.Property<string>("IdentityNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("identity_number");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("Logo")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("logo");
+
+                    b.Property<DateTime?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modified_at");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("modified_by");
+
+                    b.Property<string>("SocialLink")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("social_link");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Draft")
+                        .HasColumnName("status");
+
+                    b.Property<string>("TaxCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("tax_code");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("type");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<DateTimeOffset?>("VerifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("verified_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_organizer_profile");
+
+                    b.HasIndex("BusinessType")
+                        .HasDatabaseName("ix_organizerprofile_business_type");
+
+                    b.HasIndex("CreatedAt")
+                        .HasDatabaseName("ix_organizerprofile_created_at");
+
+                    b.HasIndex("DisplayName")
+                        .HasDatabaseName("ix_organizerprofile_display_name");
+
+                    b.HasIndex("Status")
+                        .HasDatabaseName("ix_organizerprofile_status");
+
+                    b.HasIndex("UserId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_organizerprofile_user_id");
+
+                    b.ToTable("OrganizerProfile", "users");
                 });
 
             modelBuilder.Entity("Users.Domain.Entities.Otp", b =>
@@ -344,6 +527,12 @@ namespace Users.Infrastructure.Persistence.Migrations
                         .HasDefaultValue(true)
                         .HasColumnName("is_active");
 
+                    b.Property<bool>("IsVerified")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_verified");
+
                     b.Property<string>("LastName")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
@@ -404,6 +593,9 @@ namespace Users.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("IsActive")
                         .HasDatabaseName("ix_user_is_active");
+
+                    b.HasIndex("IsVerified")
+                        .HasDatabaseName("ix_user_is_verified");
 
                     b.HasIndex("Status")
                         .HasDatabaseName("ix_user_status");
@@ -669,6 +861,18 @@ namespace Users.Infrastructure.Persistence.Migrations
                         .HasConstraintName("fk_external_identity_users_user_id");
                 });
 
+            modelBuilder.Entity("Users.Domain.Entities.OrganizerProfile", b =>
+                {
+                    b.HasOne("Users.Domain.Entities.User", "User")
+                        .WithOne("OrganizerProfile")
+                        .HasForeignKey("Users.Domain.Entities.OrganizerProfile", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_organizer_profile_users_user_id");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Users.Domain.Entities.Otp", b =>
                 {
                     b.HasOne("Users.Domain.Entities.User", null)
@@ -721,6 +925,8 @@ namespace Users.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Users.Domain.Entities.User", b =>
                 {
                     b.Navigation("ExternalIdentities");
+
+                    b.Navigation("OrganizerProfile");
 
                     b.Navigation("Otps");
 

@@ -62,7 +62,7 @@ dotnet new classlib -n "$ModuleName.Application"    -o "$SrcDir/$ModuleName.Appl
 dotnet new classlib -n "$ModuleName.Domain"         -o "$SrcDir/$ModuleName.Domain"
 dotnet new classlib -n "$ModuleName.Infrastructure" -o "$SrcDir/$ModuleName.Infrastructure"
 dotnet new classlib -n "$ModuleName.IntegrationEvents" -o "$SrcDir/$ModuleName.IntegrationEvents"
-dotnet new webapi   -n "$ModuleName.PublicApi"        -o "$SrcDir/$ModuleName.PublicApi"
+dotnet new classlib -n "$ModuleName.PublicApi"        -o "$SrcDir/$ModuleName.PublicApi"
 
 # === Add references ===
 dotnet add "$SrcDir/$ModuleName.Infrastructure/$ModuleName.Infrastructure.csproj" reference "$SrcDir/$ModuleName.Application/$ModuleName.Application.csproj"

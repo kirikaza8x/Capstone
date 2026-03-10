@@ -77,11 +77,27 @@ namespace Users.Infrastructure.Persistence.Configs
                    .HasMaxLength(20)
                    .HasDefaultValue(UserStatus.Active);
 
+            builder.Property(u => u.IsVerified)
+                   .HasColumnName("is_verified")
+                   .HasDefaultValue(false);
+
             // --- Wallet Relationship ---
             builder.HasOne(u => u.Wallet)
                    .WithOne(w => w.User)
                    .HasForeignKey<Wallet>(w => w.UserId)
                    .OnDelete(DeleteBehavior.Cascade);
+
+            // ================================
+            // Organizer Profile Relationship (1-1)
+            // ================================
+            builder.HasOne(u => u.OrganizerProfile)
+                   .WithOne(op => op.User)
+                   .HasForeignKey<OrganizerProfile>(op => op.UserId)
+                   .OnDelete(DeleteBehavior.Cascade);
+
+            // Optional navigation configuration
+            builder.Navigation(u => u.OrganizerProfile)
+                   .AutoInclude(false);
 
             // --- Indexes ---
             builder.HasIndex(u => u.Email)
@@ -100,6 +116,9 @@ namespace Users.Infrastructure.Persistence.Configs
 
             builder.HasIndex(u => u.CreatedAt)
                    .HasDatabaseName("ix_user_created_at");
+
+            builder.HasIndex(u => u.IsVerified)
+                   .HasDatabaseName("ix_user_is_verified");
 
             // --- Auditing (from AggregateRoot) ---
             builder.Property(u => u.CreatedAt)

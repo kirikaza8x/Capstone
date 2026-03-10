@@ -1,10 +1,8 @@
-using AutoMapper;
 using FluentValidation;
 using Shared.Application.Abstractions.Authentication;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
 using Users.Application.Features.Users.Commands.Records;
-using Users.Application.Features.Users.Dtos;
 using Users.Domain.Entities;
 using Users.Domain.Repositories;
 using Users.Domain.UOW;
