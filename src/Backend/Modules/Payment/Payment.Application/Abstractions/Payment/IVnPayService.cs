@@ -9,10 +9,10 @@ public interface IVnPayService
     /// Creates a VNPay payment URL for checkout
     /// </summary>
     string CreatePaymentUrl(
-        decimal amount, 
-        string orderId, 
-        string orderDescription, 
-        string ipAddress, 
+        decimal amount,
+        string orderId,
+        string orderDescription,
+        string ipAddress,
         string? customReturnUrl = null);
 
     /// <summary>

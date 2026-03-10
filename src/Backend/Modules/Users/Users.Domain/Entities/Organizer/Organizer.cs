@@ -1,10 +1,11 @@
 using System;
 using Shared.Domain.DDD;
 using Users.Domain.Enums;
+using Users.Domain.ValueObjects;
 
 namespace Users.Domain.Entities
 {
-    public partial class OrganizerProfile : Entity<Guid>
+    public class OrganizerProfile : Entity<Guid>
     {
         // --------------------
         // Identity & Navigation
@@ -20,6 +21,7 @@ namespace Users.Domain.Entities
         public string? Description { get; private set; }
         public string? Address { get; private set; }
         public string? SocialLink { get; private set; }
+
         public BusinessType BusinessType { get; private set; }
 
         public string? TaxCode { get; private set; }
@@ -42,7 +44,7 @@ namespace Users.Domain.Entities
         public OrganizerType Type { get; private set; }
 
         // --------------------
-        // EF Constructor
+        // EF Core Constructor
         // --------------------
         private OrganizerProfile() { }
 
@@ -66,54 +68,49 @@ namespace Users.Domain.Entities
         // Domain Behaviors
         // --------------------
 
-        public void UpdateProfile(
-            string? logo,
-            string? displayName,
-            string? description,
-            string? address,
-            string? socialLink,
-            BusinessType? businessType,
-            string? taxCode,
-            string? identityNumber,
-            string? companyName)
+        public void UpdateProfile(OrganizerBusinessInfo info)
         {
-            if (Status == OrganizerStatus.Rejected)
-                throw new InvalidOperationException("Cannot update rejected organizer profile.");
+            if (Status != OrganizerStatus.Draft)
+                throw new InvalidOperationException(
+                    "Organizer profile can only be edited in draft state."
+                );
 
-            Logo = logo ?? Logo;
-            DisplayName = displayName ?? DisplayName;
-            Description = description ?? Description;
-            Address = address ?? Address;
-            SocialLink = socialLink ?? SocialLink;
+            Logo = info.Logo ?? Logo;
+            DisplayName = info.DisplayName ?? DisplayName;
+            Description = info.Description ?? Description;
+            Address = info.Address ?? Address;
+            SocialLink = info.SocialLink ?? SocialLink;
 
-            if (businessType.HasValue)
-                BusinessType = businessType.Value;
+            if (info.BusinessType.HasValue)
+                BusinessType = info.BusinessType.Value;
 
-            TaxCode = taxCode ?? TaxCode;
-            IdentityNumber = identityNumber ?? IdentityNumber;
-            CompanyName = companyName ?? CompanyName;
+            TaxCode = info.TaxCode ?? TaxCode;
+            IdentityNumber = info.IdentityNumber ?? IdentityNumber;
+            CompanyName = info.CompanyName ?? CompanyName;
 
             ModifiedAt = DateTime.UtcNow;
         }
 
-        public void UpdateBankInformation(
-            string? accountName,
-            string? accountNumber,
-            string? bankCode,
-            string? branch)
+        public void UpdateBankInformation(OrganizerBankInfo bankInfo)
         {
-            AccountName = accountName ?? AccountName;
-            AccountNumber = accountNumber ?? AccountNumber;
-            BankCode = bankCode ?? BankCode;
-            Branch = branch ?? Branch;
+            if (Status != OrganizerStatus.Draft)
+                throw new InvalidOperationException(
+                    "Bank information can only be updated in draft state."
+                );
 
-            ModifiedAt = DateTime.UtcNow;
+            AccountName = bankInfo.AccountName ?? AccountName;
+            AccountNumber = bankInfo.AccountNumber ?? AccountNumber;
+            BankCode = bankInfo.BankCode ?? BankCode;
+            Branch = bankInfo.Branch ?? Branch;
+
         }
 
         public void SubmitForVerification()
         {
             if (Status != OrganizerStatus.Draft)
-                throw new InvalidOperationException("Only draft organizers can be submitted.");
+                throw new InvalidOperationException(
+                    "Only draft organizers can be submitted for verification."
+                );
 
             Status = OrganizerStatus.Pending;
             ModifiedAt = DateTime.UtcNow;
@@ -122,20 +119,44 @@ namespace Users.Domain.Entities
         public void Verify()
         {
             if (Status != OrganizerStatus.Pending)
-                throw new InvalidOperationException("Organizer must be pending verification.");
+                throw new InvalidOperationException(
+                    "Organizer must be pending verification."
+                );
 
+            Status = OrganizerStatus.Verified;
             VerifiedAt = DateTimeOffset.UtcNow;
             ModifiedAt = DateTime.UtcNow;
         }
 
         public void Reject(string? reason = null)
         {
+            if (Status != OrganizerStatus.Pending)
+                throw new InvalidOperationException(
+                    "Only pending organizers can be rejected."
+                );
+
             Status = OrganizerStatus.Rejected;
+            ModifiedAt = DateTime.UtcNow;
+        }
+
+        public void RequestChanges()
+        {
+            if (Status != OrganizerStatus.Pending)
+                throw new InvalidOperationException(
+                    "Only pending organizers can request changes."
+                );
+
+            Status = OrganizerStatus.Draft;
             ModifiedAt = DateTime.UtcNow;
         }
 
         public void Deactivate()
         {
+            if (Status != OrganizerStatus.Verified)
+                throw new InvalidOperationException(
+                    "Only verified organizers can be suspended."
+                );
+
             Status = OrganizerStatus.Suspended;
             ModifiedAt = DateTime.UtcNow;
         }

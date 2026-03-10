@@ -1,0 +1,63 @@
+using FluentValidation;
+using Shared.Application.Abstractions.Authentication;
+using Shared.Application.Abstractions.Messaging;
+using Shared.Domain.Abstractions;
+using Users.Application.Features.Organizers.Commands;
+using Users.Domain.Repositories;
+using Users.Domain.UOW;
+
+namespace Users.Application.Features.Organizers.Handlers;
+
+public class CreateOrganizerProfileCommandHandler
+    : ICommandHandler<CreateOrganizerProfileCommand, Guid>
+{
+    private readonly IUserRepository _userRepository;
+    private readonly ICurrentUserService _currentUserService;
+    private readonly IUserUnitOfWork _unitOfWork;
+    private readonly IValidator<CreateOrganizerProfileCommand> _validator;
+
+    public CreateOrganizerProfileCommandHandler(
+        IUserRepository userRepository,
+        ICurrentUserService currentUserService,
+        IUserUnitOfWork unitOfWork,
+        IValidator<CreateOrganizerProfileCommand> validator)
+    {
+        _userRepository = userRepository;
+        _currentUserService = currentUserService;
+        _unitOfWork = unitOfWork;
+        _validator = validator;
+    }
+
+    public async Task<Result<Guid>> Handle(
+        CreateOrganizerProfileCommand command,
+        CancellationToken cancellationToken)
+    {
+        var validationResult = await _validator.ValidateAsync(command, cancellationToken);
+
+        if (!validationResult.IsValid)
+        {
+            var error = validationResult.Errors.First();
+
+            return Result.Failure<Guid>(
+                Error.Validation("Organizer.Create.Validation", error.ErrorMessage));
+        }
+
+        var userId = _currentUserService.UserId;
+
+        var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
+
+        if (user == null)
+        {
+            return Result.Failure<Guid>(
+                Error.NotFound("User.NotFound", "User not found"));
+        }
+
+        user.CreateOrganizerProfile(command.Type);
+
+        _userRepository.Update(user);
+
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return Result.Success(user.OrganizerProfile!.Id);
+    }
+}

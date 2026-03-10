@@ -54,7 +54,7 @@ public class VnPayService : IVnPayService
             ["vnp_Locale"] = "vn",
             ["vnp_OrderInfo"] = orderId,
             ["vnp_OrderType"] = "other",
-            ["vnp_ReturnUrl"] =  "https://pyridic-ambrose-overwarmed.ngrok-free.dev/checkout.html", //vnp_ReturnUrl?.Trim() ?? "",
+            ["vnp_ReturnUrl"] = "https://pyridic-ambrose-overwarmed.ngrok-free.dev/checkout.html", //vnp_ReturnUrl?.Trim() ?? "",
             ["vnp_TxnRef"] = Guid.NewGuid().ToString()
         };
         var sanitized = new SortedDictionary<string, string>(query

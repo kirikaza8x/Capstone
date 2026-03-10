@@ -77,6 +77,10 @@ namespace Users.Infrastructure.Persistence.Configs
                    .HasMaxLength(20)
                    .HasDefaultValue(UserStatus.Active);
 
+            builder.Property(u => u.IsVerified)
+                   .HasColumnName("is_verified")
+                   .HasDefaultValue(false);
+
             // --- Wallet Relationship ---
             builder.HasOne(u => u.Wallet)
                    .WithOne(w => w.User)
@@ -112,6 +116,9 @@ namespace Users.Infrastructure.Persistence.Configs
 
             builder.HasIndex(u => u.CreatedAt)
                    .HasDatabaseName("ix_user_created_at");
+
+            builder.HasIndex(u => u.IsVerified)
+                   .HasDatabaseName("ix_user_is_verified");
 
             // --- Auditing (from AggregateRoot) ---
             builder.Property(u => u.CreatedAt)

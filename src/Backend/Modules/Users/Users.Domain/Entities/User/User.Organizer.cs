@@ -1,4 +1,5 @@
 using Users.Domain.Enums;
+using Users.Domain.ValueObjects;
 
 namespace Users.Domain.Entities;
 
@@ -19,78 +20,50 @@ public partial class User
         if (OrganizerProfile != null)
             throw new InvalidOperationException("User already has an organizer profile.");
 
-        OrganizerProfile = OrganizerProfile.Create(this.Id, type);
+        OrganizerProfile = OrganizerProfile.Create(Id, type);
     }
 
     /// <summary>
     /// Update organizer business information.
     /// </summary>
-    public void UpdateOrganizerProfile(
-        string? logo,
-        string? displayName,
-        string? description,
-        string? address,
-        string? socialLink,
-        BusinessType? businessType,
-        string? taxCode,
-        string? identityNumber,
-        string? companyName)
+    public void UpdateOrganizerProfile(OrganizerBusinessInfo businessInfo)
     {
-        EnsureOrganizerExists();
+        var organizer = GetOrganizer();
 
-        OrganizerProfile!.UpdateProfile(
-            logo,
-            displayName,
-            description,
-            address,
-            socialLink,
-            businessType,
-            taxCode,
-            identityNumber,
-            companyName
-        );
+        organizer.UpdateProfile(businessInfo);
     }
 
     /// <summary>
     /// Update organizer bank information.
     /// </summary>
-    public void UpdateOrganizerBank(
-        string? accountName,
-        string? accountNumber,
-        string? bankCode,
-        string? branch)
+    public void UpdateOrganizerBank(OrganizerBankInfo bankInfo)
     {
-        EnsureOrganizerExists();
+        var organizer = GetOrganizer();
 
-        OrganizerProfile!.UpdateBankInformation(
-            accountName,
-            accountNumber,
-            bankCode,
-            branch
-        );
+        organizer.UpdateBankInformation(bankInfo);
     }
 
     /// <summary>
-    /// Submit organizer for verification.
+    /// Submit organizer profile for verification.
     /// </summary>
     public void SubmitOrganizerProfile()
     {
-        EnsureOrganizerExists();
+        var organizer = GetOrganizer();
 
-        OrganizerProfile!.SubmitForVerification();
+        organizer.SubmitForVerification();
     }
 
     /// <summary>
-    /// Admin verification step.
+    /// Admin verifies organizer.
     /// </summary>
     public void VerifyOrganizerProfile()
     {
-        EnsureOrganizerExists();
+        var organizer = GetOrganizer();
 
-        OrganizerProfile!.Verify();
+        organizer.Verify();
 
-        // Example Domain Event
-        // AddDomainEvent(new OrganizerProfileVerifiedEvent(this.Id, OrganizerProfile.Id));
+        // Domain Event example
+        // AddDomainEvent(new OrganizerProfileVerifiedEvent(Id, organizer.Id));
     }
 
     /// <summary>
@@ -98,11 +71,21 @@ public partial class User
     /// </summary>
     public void RejectOrganizerProfile(string? reason = null)
     {
-        EnsureOrganizerExists();
+        var organizer = GetOrganizer();
 
-        OrganizerProfile!.Reject(reason);
+        organizer.Reject(reason);
 
-        // AddDomainEvent(new OrganizerProfileRejectedEvent(this.Id, reason));
+        // AddDomainEvent(new OrganizerProfileRejectedEvent(Id, reason));
+    }
+
+    /// <summary>
+    /// Admin requests organizer changes.
+    /// </summary>
+    public void RequestOrganizerChanges()
+    {
+        var organizer = GetOrganizer();
+
+        organizer.RequestChanges();
     }
 
     /// <summary>
@@ -110,18 +93,20 @@ public partial class User
     /// </summary>
     public void SuspendOrganizer()
     {
-        EnsureOrganizerExists();
+        var organizer = GetOrganizer();
 
-        OrganizerProfile!.Deactivate();
+        organizer.Deactivate();
     }
 
     // --------------------
     // Helper
     // --------------------
 
-    private void EnsureOrganizerExists()
+    private OrganizerProfile GetOrganizer()
     {
         if (OrganizerProfile == null)
             throw new InvalidOperationException("User does not have an organizer profile.");
+
+        return OrganizerProfile;
     }
 }

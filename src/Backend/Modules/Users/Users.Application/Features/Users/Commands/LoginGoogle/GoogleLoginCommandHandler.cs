@@ -2,7 +2,6 @@ using Shared.Application.Abstractions.Authentication;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
 using Users.Application.Abstractions.Authentication;
-using Users.Application.Features.Users.Commands.Records;
 using Users.Application.Features.Users.Dtos;
 using Users.Domain.Entities;
 using Users.Domain.Repositories;
@@ -21,25 +20,40 @@ public class GoogleLoginCommandHandler(
 {
     public async Task<Result<LoginResponseDto>> Handle(GoogleLoginCommand command, CancellationToken cancellationToken)
     {
-        // 1. Validate Google Token
         var payloadResult = await googleValidator.ValidateAsync(command.IdToken);
         if (payloadResult.IsFailure) return Result.Failure<LoginResponseDto>(payloadResult.Error);
 
         var payload = payloadResult.Value;
 
-        // 2. Find or Register User
-        var user = await userRepository.GetByExternalIdentityAsync("Google", payload.Subject);
+        var user = await userRepository.GetByExternalIdentityAsync("Google", payload.Subject, cancellationToken);
+
         if (user == null)
         {
-            user = User.CreateExternal(
-                payload.Email,
-                payload.Email?.Split('@')[0] ?? Guid.NewGuid().ToString(),
-                "Google",
-                payload.Subject,
-                payload.GivenName,
-                payload.FamilyName
-            );
-            userRepository.Add(user);
+            user = await userRepository.GetByEmailAsync(payload.Email, cancellationToken);
+
+            if (user != null)
+            {
+                if (!user.IsVerified)
+                {
+                    return Result.Failure<LoginResponseDto>(Error.Conflict(
+                        "User.UnverifiedCollision",
+                        "An unverified account with this email exists. Please log in with your password to link Google."));
+                }
+
+                user.BindExternalIdentity("Google", payload.Subject);
+            }
+            else
+            {
+                user = User.CreateExternal(
+                    payload.Email,
+                    payload.Email?.Split('@')[0] ?? Guid.NewGuid().ToString(),
+                    "Google",
+                    payload.Subject,
+                    payload.GivenName,
+                    payload.FamilyName
+                );
+                userRepository.Add(user);
+            }
         }
 
         var deviceInfo = deviceDetectionService.GetDeviceInfo(

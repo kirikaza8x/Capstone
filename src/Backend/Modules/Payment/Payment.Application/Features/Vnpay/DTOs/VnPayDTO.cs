@@ -26,11 +26,11 @@ public record PaymentStatusQueryResult(
 );
 
 public class VnPayResultDto
-    {
-        public Guid ItemId { get; set; }                // ID of the cart
-        public bool PaymentSuccess { get; set; }        // Indicates if payment was successful
-        public string? PaymentMessage { get; set; }      // Message to display to user
-        public string? TransactionNo { get; set; }       // VNPay transaction number
-        public string? ResponseCode { get; set; }        // VNPay response code
-        public DateTime CheckedOutAt { get; set; }      // Timestamp of checkout
-    }
+{
+    public Guid ItemId { get; set; }                // ID of the cart
+    public bool PaymentSuccess { get; set; }        // Indicates if payment was successful
+    public string? PaymentMessage { get; set; }      // Message to display to user
+    public string? TransactionNo { get; set; }       // VNPay transaction number
+    public string? ResponseCode { get; set; }        // VNPay response code
+    public DateTime CheckedOutAt { get; set; }      // Timestamp of checkout
+}
