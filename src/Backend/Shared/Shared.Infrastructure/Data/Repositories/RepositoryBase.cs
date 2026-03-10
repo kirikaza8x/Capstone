@@ -42,6 +42,36 @@ public partial class RepositoryBase<TEntity, TId> : IRepository<TEntity, TId>
             .ToListAsync(cancellationToken);
     }
 
+    public virtual async Task<IReadOnlyList<TEntity>> SearchAsync(
+        Expression<Func<TEntity, string>> field,
+        string keyword,
+        int take = 20,
+        CancellationToken cancellationToken = default)
+    {
+        var parameter = field.Parameters[0];
+        var lowerField = Expression.Call(field.Body, typeof(string).GetMethod(nameof(string.ToLower), Type.EmptyTypes)!);
+        var lowerKeyword = Expression.Constant($"%{keyword.ToLowerInvariant()}%");
+
+        var likeMethod = typeof(DbFunctionsExtensions)
+            .GetMethod(nameof(DbFunctionsExtensions.Like),
+                [typeof(DbFunctions), typeof(string), typeof(string)])!;
+
+        var body = Expression.Call(
+            null,
+            likeMethod,
+            Expression.Constant(EF.Functions),
+            lowerField,
+            lowerKeyword);
+
+        var predicate = Expression.Lambda<Func<TEntity, bool>>(body, parameter);
+
+        return await DbSet
+            .AsNoTracking()
+            .Where(predicate)
+            .Take(take)
+            .ToListAsync(cancellationToken);
+    }
+
     public virtual async Task<Domain.Pagination.PagedResult<TEntity>> GetAllWithPagingAsync(
         PagedQuery pagedQuery,
         Expression<Func<TEntity, bool>>? predicate = null,

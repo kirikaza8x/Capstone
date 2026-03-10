@@ -9,7 +9,9 @@ internal sealed class GetCategoriesQueryHandler(
 {
     public async Task<Result<IReadOnlyList<CategoryResponse>>> Handle(GetCategoriesQuery query, CancellationToken cancellationToken)
     {
-        var categories = await categoryRepository.GetAllAsync(cancellationToken);
+        var categories = string.IsNullOrWhiteSpace(query.Name)
+            ? await categoryRepository.GetAllAsync(cancellationToken)
+            : await categoryRepository.SearchAsync(c => c.Name, query.Name, query.Take, cancellationToken);
 
         var response = categories
             .Select(c => new CategoryResponse(c.Id, c.Code, c.Name, c.Description, c.IsActive))
