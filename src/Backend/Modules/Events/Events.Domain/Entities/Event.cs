@@ -79,6 +79,15 @@ public sealed class Event : AggregateRoot<Guid>
         return @event;
     }
 
+    public void UpdateInfo(string title, string location, string? mapUrl, string description)
+    {
+        Title = title;
+        Location = location;
+        MapUrl = mapUrl;
+        Description = description;
+        ModifiedAt = DateTime.UtcNow;
+    }
+
     public void UpdateUrlPath(string urlPath)
     {
         UrlPath = urlPath;
@@ -113,6 +122,27 @@ public sealed class Event : AggregateRoot<Guid>
             UrlPath = urlPath.Trim().ToLowerInvariant();
         }
 
+        ModifiedAt = DateTime.UtcNow;
+    }
+
+    public void ReplaceHashtags(IEnumerable<EventHashtag> hashtags)
+    {
+        _eventHashtags.Clear();
+        _eventHashtags.AddRange(hashtags);
+        ModifiedAt = DateTime.UtcNow;
+    }
+
+    public void ReplaceCategories(IEnumerable<EventCategory> categories)
+    {
+        _eventCategories.Clear();
+        _eventCategories.AddRange(categories);
+        ModifiedAt = DateTime.UtcNow;
+    }
+
+    public void ReplaceActorImages(IEnumerable<EventActorImage> actorImages)
+    {
+        _actorImages.Clear();
+        _actorImages.AddRange(actorImages);
         ModifiedAt = DateTime.UtcNow;
     }
 

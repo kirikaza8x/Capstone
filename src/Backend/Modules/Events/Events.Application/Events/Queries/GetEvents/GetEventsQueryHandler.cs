@@ -14,30 +14,16 @@ internal sealed class GetEventsQueryHandler(
 {
     public async Task<Result<PagedResult<EventResponse>>> Handle(GetEventsQuery request, CancellationToken cancellationToken)
     {
-        string cacheKey = CacheKeys.Events.GetList(
-            request.PageNumber ?? 1,
-            request.PageSize ?? 10,
-            request.SortColumn,
-            request.SortOrder
-        );
+        var pagedEvents = await eventRepository.GetPublishedWithCategoriesAsync(request, cancellationToken);
 
-        var pagedResult = await cacheService.GetOrCreateAsync(
-            key: cacheKey,
-            factory: async token =>
-            {
-                var pagedEvents = await eventRepository.GetPublishedWithCategoriesAsync(request, token);
+        var responseItems = mapper.Map<IReadOnlyList<EventResponse>>(pagedEvents.Items);
 
-                var responseItems = mapper.Map<IReadOnlyList<EventResponse>>(pagedEvents.Items);
+        var result = PagedResult<EventResponse>.Create(
+            responseItems,
+            pagedEvents.PageNumber,
+            pagedEvents.PageSize,
+            pagedEvents.TotalCount);
 
-                return PagedResult<EventResponse>.Create(
-                    responseItems,
-                    pagedEvents.PageNumber,
-                    pagedEvents.PageSize,
-                    pagedEvents.TotalCount);
-            },
-            expiration: TimeSpan.FromMinutes(5),
-            cancellationToken: cancellationToken);
-
-        return pagedResult!;
+        return Result.Success(result);
     }
 }
