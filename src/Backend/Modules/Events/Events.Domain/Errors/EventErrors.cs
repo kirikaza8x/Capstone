@@ -84,14 +84,14 @@ public static class EventErrors
             "The spec must contain at least one area.");
     }
 
-    public static class EventSession
+    public static class EventSessionErrors
     {
         public static Error NotFound(Guid sessionId) => Error.NotFound(
             "EventSession.NotFound",
             $"The event session with ID '{sessionId}' was not found.");
     }
 
-    public static class TicketType
+    public static class TicketTypeErrors
     {
         public static Error NotFound(Guid ticketTypeId) => Error.NotFound(
             "TicketType.NotFound",

@@ -18,6 +18,7 @@ public interface IEventRepository : IRepository<Event, Guid>
     Task<bool> IsUrlPathExistsAsync(string urlPath, CancellationToken cancellationToken = default);
 
     Task<EventSession?> GetEventSessionByIdAsync(Guid sessionId, CancellationToken cancellationToken = default);
+    Task<EventSession?> GetEventSessionWithTicketTypesAsync(Guid sessionId, CancellationToken cancellationToken = default);
 
     Task<Event?> GetByIdWithImagesAsync(Guid id, CancellationToken cancellationToken = default);
 

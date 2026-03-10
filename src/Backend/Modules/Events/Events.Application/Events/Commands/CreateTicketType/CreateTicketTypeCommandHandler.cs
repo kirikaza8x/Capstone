@@ -7,6 +7,7 @@ using FluentValidation;
 using Shared.Application.Abstractions.Authentication;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
+using static Events.Domain.Errors.EventErrors;
 
 namespace Events.Application.Events.Commands.CreateTicketType;
 
@@ -47,9 +48,8 @@ internal sealed class CreateTicketTypeCommandHandler(
         var session = await eventRepository.GetEventSessionByIdAsync(command.EventSessionId, cancellationToken);
 
         if (session is null)
-            return Result.Failure<Guid>(EventErrors.EventSession.NotFound(command.EventSessionId));
+            return Result.Failure<Guid>(EventSessionErrors.NotFound(command.EventSessionId));
 
-        // Load event để check ownership
         var @event = await eventRepository.GetByIdAsync(session.EventId, cancellationToken);
 
         if (@event is null)

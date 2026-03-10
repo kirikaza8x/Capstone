@@ -236,6 +236,12 @@ public sealed class Event : AggregateRoot<Guid>
         return Result.Success();
     }
 
+    public void RemoveSession(EventSession session)
+    {
+        _sessions.Remove(session);
+        ModifiedAt = DateTime.UtcNow;
+    }
+
     public EventImage AddImage(string imageUrl)
     {
         var image = EventImage.Create(Id, imageUrl);
