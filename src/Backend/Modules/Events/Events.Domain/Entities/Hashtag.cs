@@ -25,6 +25,12 @@ public sealed class Hashtag : Entity<int>
         };
     }
 
+    public void UpdateName(string name)
+    {
+        Name = name;
+        ModifiedAt = DateTime.UtcNow;
+    }
+
     public void IncrementUsageCount()
     {
         UsageCount++;

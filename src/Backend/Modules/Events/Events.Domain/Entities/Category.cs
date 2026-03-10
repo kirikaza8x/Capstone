@@ -1,5 +1,4 @@
-﻿using Events.Domain.Enums;
-using Shared.Domain.DDD;
+﻿using Shared.Domain.DDD;
 
 namespace Events.Domain.Entities;
 
@@ -21,6 +20,13 @@ public sealed class Category : Entity<int>
             IsActive = true,
             CreatedAt = DateTime.UtcNow
         };
+    }
+
+    public void Update(string name, string? description)
+    {
+        Name = name;
+        Description = description;
+        ModifiedAt = DateTime.UtcNow;
     }
 
     public void Deactivate()

@@ -138,4 +138,26 @@ public static class EventErrors
             "EventImage.FileRequired",
             "File is required.");
     }
+
+    public static class CategoryErrors
+    {
+        public static Error NotFound(int categoryId) => Error.NotFound(
+            "Category.NotFound",
+            $"The category with ID '{categoryId}' was not found.");
+
+        public static Error CodeAlreadyExists(string code) => Error.Conflict(
+            "Category.CodeAlreadyExists",
+            $"A category with code '{code}' already exists.");
+    }
+
+    public static class HashtagErrors
+    {
+        public static Error NotFound(int hashtagId) => Error.NotFound(
+            "Hashtag.NotFound",
+            $"The hashtag with ID '{hashtagId}' was not found.");
+
+        public static Error SlugAlreadyExists(string slug) => Error.Conflict(
+            "Hashtag.SlugAlreadyExists",
+            $"A hashtag with slug '{slug}' already exists.");
+    }
 }

@@ -12,6 +12,7 @@ internal static class Constants
         public const string TicketTypes = "Ticket Types";
         public const string Staff = "Event Staff";
         public const string Categories = "Categories";
+        public const string Hashtags = "Hashtags";
         public const string Search = "Search & Discovery";
     }
 
@@ -50,6 +51,10 @@ internal static class Constants
         // Categories
         public const string Categories = $"{BaseApi}/categories";
         public const string CategoryById = $"{Categories}/{{categoryId:int}}";
+
+        // Hashtags
+        public const string Hashtags = $"{BaseApi}/hashtags";
+        public const string HashtagById = $"{Hashtags}/{{hashtagId:int}}";
 
         // Search
         public const string Search = $"{Events}/search";
