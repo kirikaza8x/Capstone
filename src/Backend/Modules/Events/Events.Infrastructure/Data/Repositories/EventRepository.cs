@@ -21,6 +21,15 @@ internal sealed class EventRepository(EventsDbContext context)
             .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
     }
 
+    public async Task<Event?> GetByIdWithSessionsAndTicketTypesAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await _context.Events
+            .Include(e => e.Sessions)
+                .ThenInclude(s => s.TicketTypes)
+            .AsSplitQuery()
+            .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
+    }
+
     public async Task<Event?> GetByIdWithAreasAndSeatsAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await _context.Events

@@ -21,8 +21,13 @@ public sealed class EventProfile : Profile
             .ForMember(dest => dest.Categories, opt => opt.MapFrom(src => src.EventCategories));
 
         CreateMap<EventImage, EventImageDto>();
-        CreateMap<EventSession, EventSessionDto>();
         CreateMap<EventActorImage, EventActorImageDto>();
+
+        CreateMap<TicketType, TicketTypeDto>()
+            .ForMember(dest => dest.Type, opt => opt.MapFrom(src => src.Type.ToString()));
+
+        CreateMap<EventSession, EventSessionDto>()
+            .ForMember(dest => dest.TicketTypes, opt => opt.MapFrom(src => src.TicketTypes));
 
         CreateMap<EventHashtag, EventHashtagDto>()
             .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.HashtagId))

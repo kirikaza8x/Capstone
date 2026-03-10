@@ -26,6 +26,18 @@ public sealed record EventImageDto
     public string? ImageUrl { get; init; }
 }
 
+public sealed record TicketTypeDto
+{
+    public Guid Id { get; init; }
+    public string Name { get; init; } = string.Empty;
+    public decimal Price { get; init; }
+    public int Quantity { get; init; }
+    public int SoldQuantity { get; init; }
+    public int AvailableQuantity { get; init; }
+    public string Type { get; init; } = string.Empty;
+    public Guid? AreaId { get; init; }
+}
+
 public sealed record EventSessionDto
 {
     public Guid Id { get; init; }
@@ -33,4 +45,5 @@ public sealed record EventSessionDto
     public string? Description { get; init; }
     public DateTime StartTime { get; init; }
     public DateTime EndTime { get; init; }
+    public IReadOnlyList<TicketTypeDto> TicketTypes { get; init; } = [];
 }
