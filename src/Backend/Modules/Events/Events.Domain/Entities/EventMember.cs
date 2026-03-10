@@ -2,9 +2,9 @@
 
 namespace Events.Domain.Entities;
 
-public sealed class EventStaff : Entity<Guid>
+public sealed class EventMember : Entity<Guid>
 {
-    private EventStaff() { }
+    private EventMember() { }
 
     public Guid EventId { get; private set; }
     public Guid UserId { get; private set; }
@@ -14,14 +14,14 @@ public sealed class EventStaff : Entity<Guid>
 
     public Event Event { get; private set; } = null!;
 
-    public static EventStaff Create(
+    public static EventMember Create(
         Guid eventId,
         Guid userId,
         List<string> permissions,
         string status,
         Guid assignedBy)
     {
-        return new EventStaff
+        return new EventMember
         {
             Id = Guid.NewGuid(),
             EventId = eventId,

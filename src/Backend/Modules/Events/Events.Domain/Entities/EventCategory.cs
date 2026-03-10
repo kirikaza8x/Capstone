@@ -1,37 +1,21 @@
-﻿using Events.Domain.Enums;
-using Shared.Domain.DDD;
+﻿namespace Events.Domain.Entities;
 
-namespace Events.Domain.Entities;
-
-public sealed class EventCategory : Entity<int>
+public sealed class EventCategory
 {
     private EventCategory() { }
 
-    public string Code { get; private set; } = string.Empty;
-    public string Name { get; private set; } = string.Empty;
-    public string? Description { get; private set; }
+    public Guid EventId { get; private set; }
+    public int CategoryId { get; private set; }
 
-    public static EventCategory Create(string code, string name, string? description)
+    public Event Event { get; private set; } = null!;
+    public Category Category { get; private set; } = null!;
+
+    public static EventCategory Create(Guid eventId, int categoryId)
     {
         return new EventCategory
         {
-            Code = code,
-            Name = name,
-            Description = description,
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow
+            EventId = eventId,
+            CategoryId = categoryId
         };
-    }
-
-    public void Deactivate()
-    {
-        IsActive = false;
-        ModifiedAt = DateTime.UtcNow;
-    }
-
-    public void Activate()
-    {
-        IsActive = true;
-        ModifiedAt = DateTime.UtcNow;
     }
 }

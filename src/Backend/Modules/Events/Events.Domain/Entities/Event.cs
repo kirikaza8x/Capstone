@@ -18,7 +18,6 @@ public sealed class Event : AggregateRoot<Guid>
     public string? MapUrl { get; private set; }
     public string Description { get; private set; } = string.Empty;
     public string? UrlPath { get; private set; }
-    public int EventCategoryId { get; private set; }
 
     public DateTime? TicketSaleStartAt { get; private set; }
     public DateTime? TicketSaleEndAt { get; private set; }
@@ -28,7 +27,6 @@ public sealed class Event : AggregateRoot<Guid>
     public string Policy { get; private set; } = string.Empty;
     public string? Spec { get; private set; }
     public bool IsEmailReminderEnabled { get; private set; } = false;
-    public int? EventTypeId { get; private set; }
 
     public string? CancellationReason { get; private set; }
 
@@ -38,11 +36,11 @@ public sealed class Event : AggregateRoot<Guid>
     private readonly List<EventImage> _images = [];
     public IReadOnlyCollection<EventImage> Images => _images.AsReadOnly();
 
-    private readonly List<EventCategoryMapping> _categoryMappings = [];
-    public IReadOnlyCollection<EventCategoryMapping> CategoryMappings => _categoryMappings.AsReadOnly();
+    private readonly List<EventCategory> _eventCategories = [];
+    public IReadOnlyCollection<EventCategory> EventCategories => _eventCategories.AsReadOnly();
 
-    private readonly List<EventStaff> _staffs = [];
-    public IReadOnlyCollection<EventStaff> Staffs => _staffs.AsReadOnly();
+    private readonly List<EventMember> _members = [];
+    public IReadOnlyCollection<EventMember> Members => _members.AsReadOnly();
 
     private readonly List<Area> _areas = [];
     public IReadOnlyCollection<Area> Areas => _areas.AsReadOnly();
@@ -61,8 +59,7 @@ public sealed class Event : AggregateRoot<Guid>
         string? bannerUrl,
         string location,
         string? mapUrl,
-        string description,
-        int eventCategoryId)
+        string description)
     {
         var @event = new Event
         {
@@ -74,13 +71,21 @@ public sealed class Event : AggregateRoot<Guid>
             Location = location,
             MapUrl = mapUrl,
             Description = description,
-            EventCategoryId = eventCategoryId,
             CreatedAt = DateTime.UtcNow
         };
 
         @event.RaiseDomainEvent(new EventCreatedDomainEvent(@event.Id, organizerId));
 
         return @event;
+    }
+
+    public void UpdateInfo(string title, string location, string? mapUrl, string description)
+    {
+        Title = title;
+        Location = location;
+        MapUrl = mapUrl;
+        Description = description;
+        ModifiedAt = DateTime.UtcNow;
     }
 
     public void UpdateUrlPath(string urlPath)
@@ -102,17 +107,6 @@ public sealed class Event : AggregateRoot<Guid>
         ModifiedAt = DateTime.UtcNow;
     }
 
-    public void UpdateAdditionalInfo(
-        string policy,
-        string? spec,
-        int? eventTypeId)
-    {
-        Policy = policy;
-        Spec = spec;
-        EventTypeId = eventTypeId;
-        ModifiedAt = DateTime.UtcNow;
-    }
-
     public void UpdateBannerUrl(string? bannerUrl)
     {
         BannerUrl = bannerUrl;
@@ -128,6 +122,27 @@ public sealed class Event : AggregateRoot<Guid>
             UrlPath = urlPath.Trim().ToLowerInvariant();
         }
 
+        ModifiedAt = DateTime.UtcNow;
+    }
+
+    public void ReplaceHashtags(IEnumerable<EventHashtag> hashtags)
+    {
+        _eventHashtags.Clear();
+        _eventHashtags.AddRange(hashtags);
+        ModifiedAt = DateTime.UtcNow;
+    }
+
+    public void ReplaceCategories(IEnumerable<EventCategory> categories)
+    {
+        _eventCategories.Clear();
+        _eventCategories.AddRange(categories);
+        ModifiedAt = DateTime.UtcNow;
+    }
+
+    public void ReplaceActorImages(IEnumerable<EventActorImage> actorImages)
+    {
+        _actorImages.Clear();
+        _actorImages.AddRange(actorImages);
         ModifiedAt = DateTime.UtcNow;
     }
 
@@ -229,6 +244,18 @@ public sealed class Event : AggregateRoot<Guid>
         return image;
     }
 
+    public void UpdateSpec(string spec)
+    {
+        Spec = spec;
+        ModifiedAt = DateTime.UtcNow;
+    }
+
+    public void ClearAreasAndSeats()
+    {
+        _areas.Clear();
+        ModifiedAt = DateTime.UtcNow;
+    }
+
     public Result UpdateImage(Guid imageId, string newImageUrl)
     {
         var image = _images.FirstOrDefault(i => i.Id == imageId);
@@ -248,9 +275,9 @@ public sealed class Event : AggregateRoot<Guid>
 
     public void AddSession(EventSession session) => _sessions.Add(session);
     public void AddArea(Area area) => _areas.Add(area);
-    public void AddStaff(EventStaff staff) => _staffs.Add(staff);
+    public void AddMember(EventMember member) => _members.Add(member);
     public void AddActorImage(EventActorImage actorImage) => _actorImages.Add(actorImage);
-    public void AddCategoryMapping(EventCategoryMapping mapping) => _categoryMappings.Add(mapping);
+    public void AddCategories(EventCategory eventCategory) => _eventCategories.Add(eventCategory);
     public void AddHashtag(EventHashtag eventHashtag) => _eventHashtags.Add(eventHashtag);
 
     protected override void Apply(IDomainEvent @event)

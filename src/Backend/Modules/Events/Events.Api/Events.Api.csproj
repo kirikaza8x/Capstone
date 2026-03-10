@@ -7,19 +7,28 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Areas\**" />
+    <Compile Remove="Search\**" />
+    <Compile Remove="Seats\**" />
+    <Compile Remove="Staff\**" />
+    <Compile Remove="TicketTypes\**" />
+    <EmbeddedResource Remove="Areas\**" />
+    <EmbeddedResource Remove="Search\**" />
+    <EmbeddedResource Remove="Seats\**" />
+    <EmbeddedResource Remove="Staff\**" />
+    <EmbeddedResource Remove="TicketTypes\**" />
+    <None Remove="Areas\**" />
+    <None Remove="Search\**" />
+    <None Remove="Seats\**" />
+    <None Remove="Staff\**" />
+    <None Remove="TicketTypes\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\..\Shared\Shared.Api\Shared.Api.csproj" />
     <ProjectReference Include="..\..\Users\Users.PublicApi\Users.PublicApi.csproj" />
     <ProjectReference Include="..\Events.Application\Events.Application.csproj" />
     <ProjectReference Include="..\Events.Infrastructure\Events.Infrastructure.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Areas\" />
-    <Folder Include="Categories\" />
-    <Folder Include="Search\" />
-    <Folder Include="Staff\" />
-    <Folder Include="TicketTypes\" />
-    <Folder Include="Seats\" />
   </ItemGroup>
 
 </Project>

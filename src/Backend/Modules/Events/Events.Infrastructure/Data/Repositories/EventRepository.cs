@@ -2,7 +2,10 @@
 using Events.Domain.Enums;
 using Events.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Shared.Domain.Pagination;
+using Shared.Domain.Queries;
 using Shared.Infrastructure.Data;
+using Shared.Infrastructure.Extensions;
 
 namespace Events.Infrastructure.Data.Repositories;
 
@@ -30,10 +33,13 @@ internal sealed class EventRepository(EventsDbContext context)
     {
         return await _context.Events
             .Include(e => e.Images)
+            .Include(e => e.ActorImages)
             .Include(e => e.Sessions)
                 .ThenInclude(s => s.TicketTypes)
             .Include(e => e.EventHashtags)
                 .ThenInclude(eh => eh.Hashtag)
+            .Include(e => e.EventCategories)
+                .ThenInclude(ec => ec.Category)
             .AsSplitQuery()
             .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
     }
@@ -77,8 +83,17 @@ internal sealed class EventRepository(EventsDbContext context)
                     .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
     }
 
-    public Task<(IReadOnlyList<Event> Events, int TotalCount)> GetPagedAsync(string? searchTerm = null, EventStatus? status = null, int? categoryId = null, Guid? organizerId = null, DateTime? fromDate = null, DateTime? toDate = null, int pageNumber = 1, int pageSize = 10, string? sortBy = null, bool isDescending = true, CancellationToken cancellationToken = default)
+    public async Task<PagedResult<Event>> GetPublishedWithCategoriesAsync(
+        PagedQuery pagedQuery,
+        CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var query = _context.Events
+            .AsNoTracking()
+            .Where(e => e.Status == EventStatus.Published)
+            .Include(e => e.EventCategories)
+                .ThenInclude(ec => ec.Category)
+            .AsSplitQuery();
+
+        return await query.ToPagedResultAsync(pagedQuery, cancellationToken);
     }
 }

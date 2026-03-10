@@ -1,6 +1,8 @@
 ﻿using Events.Domain.Entities;
 using Events.Domain.Enums;
 using Shared.Domain.Data;
+using Shared.Domain.Pagination;
+using Shared.Domain.Queries;
 
 namespace Events.Domain.Repositories;
 
@@ -19,16 +21,5 @@ public interface IEventRepository : IRepository<Event, Guid>
 
     Task<Event?> GetByIdWithImagesAsync(Guid id, CancellationToken cancellationToken = default);
 
-    Task<(IReadOnlyList<Event> Events, int TotalCount)> GetPagedAsync(
-        string? searchTerm = null,
-        EventStatus? status = null,
-        int? categoryId = null,
-        Guid? organizerId = null,
-        DateTime? fromDate = null,
-        DateTime? toDate = null,
-        int pageNumber = 1,
-        int pageSize = 10,
-        string? sortBy = null,
-        bool isDescending = true,
-        CancellationToken cancellationToken = default);
+    Task<PagedResult<Event>> GetPublishedWithCategoriesAsync(PagedQuery pagedQuery, CancellationToken cancellationToken = default);
 }

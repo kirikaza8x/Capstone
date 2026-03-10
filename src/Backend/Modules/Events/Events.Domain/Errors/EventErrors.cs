@@ -74,6 +74,14 @@ public static class EventErrors
         public static readonly Error HasPaidOrders = Error.Conflict(
             "Event.HasPaidOrders",
             "Cannot cancel event. There are paid orders associated with this event.");
+
+        public static readonly Error InvalidSpec = Error.Validation(
+            "Event.InvalidSpec",
+            "The spec JSON is invalid or cannot be parsed.");
+
+        public static readonly Error SpecHasNoAreas = Error.Validation(
+            "Event.SpecHasNoAreas",
+            "The spec must contain at least one area.");
     }
 
     public static class EventSession
@@ -129,5 +137,27 @@ public static class EventErrors
         public static Error FileRequired() => Error.Validation(
             "EventImage.FileRequired",
             "File is required.");
+    }
+
+    public static class CategoryErrors
+    {
+        public static Error NotFound(int categoryId) => Error.NotFound(
+            "Category.NotFound",
+            $"The category with ID '{categoryId}' was not found.");
+
+        public static Error CodeAlreadyExists(string code) => Error.Conflict(
+            "Category.CodeAlreadyExists",
+            $"A category with code '{code}' already exists.");
+    }
+
+    public static class HashtagErrors
+    {
+        public static Error NotFound(int hashtagId) => Error.NotFound(
+            "Hashtag.NotFound",
+            $"The hashtag with ID '{hashtagId}' was not found.");
+
+        public static Error SlugAlreadyExists(string slug) => Error.Conflict(
+            "Hashtag.SlugAlreadyExists",
+            $"A hashtag with slug '{slug}' already exists.");
     }
 }

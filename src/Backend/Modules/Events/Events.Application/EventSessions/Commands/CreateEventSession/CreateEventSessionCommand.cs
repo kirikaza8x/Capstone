@@ -2,10 +2,12 @@
 
 namespace Events.Application.EventSessions.Commands.CreateEventSession;
 
-public sealed record CreateEventSessionCommand(
-    Guid EventId,
+public sealed record CreateEventSessionItem(
     string Title,
     string? Description,
     DateTime StartTime,
-    DateTime EndTime
-) : ICommand<Guid>;
+    DateTime EndTime);
+
+public sealed record CreateEventSessionCommand(
+    Guid EventId,
+    List<CreateEventSessionItem> Sessions) : ICommand<List<Guid>>;

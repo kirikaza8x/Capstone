@@ -40,8 +40,6 @@ internal sealed class EventConfiguration : IEntityTypeConfiguration<Event>
         builder.HasIndex(e => e.UrlPath)
                 .IsUnique()
                 .HasFilter("\"url_path\" IS NOT NULL");
-        builder.Property(e => e.EventTypeId).IsRequired(false);
-        builder.Property(e => e.EventCategoryId).IsRequired();
         builder.Property(e => e.IsEmailReminderEnabled).HasDefaultValue(false);
         builder.Property(e => e.CancellationReason).HasColumnType("text");
 
@@ -59,7 +57,7 @@ internal sealed class EventConfiguration : IEntityTypeConfiguration<Event>
             .HasForeignKey(i => i.EventId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasMany(e => e.CategoryMappings)
+        builder.HasMany(e => e.EventCategories)
             .WithOne(cm => cm.Event)
             .HasForeignKey(cm => cm.EventId)
             .OnDelete(DeleteBehavior.Cascade);
@@ -68,7 +66,7 @@ internal sealed class EventConfiguration : IEntityTypeConfiguration<Event>
             .WithOne(eh => eh.Event)
             .HasForeignKey(eh => eh.EventId);
 
-        builder.HasMany(e => e.Staffs)
+        builder.HasMany(e => e.Members)
             .WithOne(s => s.Event)
             .HasForeignKey(s => s.EventId)
             .OnDelete(DeleteBehavior.Cascade);

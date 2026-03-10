@@ -1,10 +1,10 @@
-﻿
-using Events.Domain.Entities;
+﻿using Events.Domain.Entities;
 using Events.Domain.Enums;
 using Events.Domain.Errors;
 using Events.Domain.Repositories;
 using Events.Domain.Uow;
 using FluentValidation;
+using Shared.Application.Abstractions.Authentication;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
 
@@ -39,19 +39,25 @@ public sealed class CreateTicketTypeValidator : AbstractValidator<CreateTicketTy
 
 internal sealed class CreateTicketTypeCommandHandler(
     IEventRepository eventRepository,
-    IEventUnitOfWork unitOfWork) : ICommandHandler<CreateTicketTypeCommand, Guid>
+    IEventUnitOfWork unitOfWork,
+    ICurrentUserService currentUserService) : ICommandHandler<CreateTicketTypeCommand, Guid>
 {
     public async Task<Result<Guid>> Handle(CreateTicketTypeCommand command, CancellationToken cancellationToken)
     {
-        // Check if event session exists
         var session = await eventRepository.GetEventSessionByIdAsync(command.EventSessionId, cancellationToken);
 
         if (session is null)
-        {
             return Result.Failure<Guid>(EventErrors.EventSession.NotFound(command.EventSessionId));
-        }
 
-        // Create ticket type
+        // Load event để check ownership
+        var @event = await eventRepository.GetByIdAsync(session.EventId, cancellationToken);
+
+        if (@event is null)
+            return Result.Failure<Guid>(EventErrors.Event.NotFound(session.EventId));
+
+        if (@event.OrganizerId != currentUserService.UserId)
+            return Result.Failure<Guid>(EventErrors.Event.NotOwner);
+
         var ticketType = TicketType.Create(
             command.EventSessionId,
             command.Name,

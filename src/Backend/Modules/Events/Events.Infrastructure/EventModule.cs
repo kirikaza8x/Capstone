@@ -1,4 +1,5 @@
 ﻿using Events.Application.Abstractions;
+using Events.Application.Categories.Queries.GetCategories;
 using Events.Domain.Repositories;
 using Events.Domain.Uow;
 using Events.Infrastructure.Data;
@@ -20,12 +21,9 @@ public static class EventModule
 {
     public static IServiceCollection AddEventModule(this IServiceCollection services, IConfiguration configuration)
     {
-        // services.Scan(scan => scan
-        //     .FromAssemblyOf<EventModuleAssemblyReference>()
-        //     .AddClasses(classes => classes.AssignableTo<ConfigBase>())
-        //     .AsSelf()
-        //     .WithSingletonLifetime());
         services.TryAddScoped<IEventRepository, EventRepository>();
+        services.TryAddScoped<ICategoryRepository, CategoryRepository>();
+        services.TryAddScoped<IHashtagRepository, HashtagRepository>();
         services.TryAddScoped<IEventUnitOfWork, EventUnitOfWork>();
         services.AddScoped<ISeatLockService, SeatLockService>();
         services.AddDbContext<EventsDbContext>((sp, options) =>

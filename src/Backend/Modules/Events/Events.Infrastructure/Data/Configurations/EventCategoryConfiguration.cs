@@ -10,22 +10,11 @@ internal sealed class EventCategoryConfiguration : IEntityTypeConfiguration<Even
     {
         builder.ToTable("event_categories");
 
-        builder.HasKey(e => e.Id);
+        builder.HasKey(e => new { e.EventId, e.CategoryId });
 
-        builder.Property(e => e.Id)
-            .ValueGeneratedOnAdd();
-
-        builder.Property(e => e.Code)
-            .HasMaxLength(50)
-            .IsRequired();
-
-        builder.Property(e => e.Name)
-            .HasMaxLength(100)
-            .IsRequired();
-
-        builder.Property(e => e.Description)
-            .HasColumnType("text");
-
-        builder.HasIndex(e => e.Code);
+        builder.HasOne(e => e.Category)
+            .WithMany()
+            .HasForeignKey(e => e.CategoryId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
