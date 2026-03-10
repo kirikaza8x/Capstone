@@ -11,7 +11,7 @@ using Shared.Api.Results;
 using Shared.Application.Abstractions.Authentication;
 using Shared.Application.Abstractions.Report;
 using Shared.Domain.Abstractions;
-using Shared.Domain.Data;
+using Shared.Domain.Data.Repositories;
 using Shared.Infrastructure.Configs;
 using Shared.Infrastructure.Configs.Database;
 using Shared.Infrastructure.Data.Seeds;

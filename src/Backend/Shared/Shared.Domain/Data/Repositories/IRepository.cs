@@ -1,9 +1,9 @@
-﻿using Shared.Domain.Queries;
-using Shared.Domain.DDD;
+﻿using Shared.Domain.DDD;
 using Shared.Domain.Pagination;
+using Shared.Domain.Queries;
 using System.Linq.Expressions;
 
-namespace Shared.Domain.Data;
+namespace Shared.Domain.Data.Repositories;
 
 public partial interface IRepository<TEntity, TId>
     where TEntity : Entity<TId>

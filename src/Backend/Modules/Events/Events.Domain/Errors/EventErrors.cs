@@ -47,6 +47,10 @@ public static class EventErrors
             "Event.CannotRequestCancellation",
             $"Cannot request cancellation. Current status is '{currentStatus}'. Only published or unpublished events can request cancellation.");
 
+        public static Error CannotRequestPublish(EventStatus currentStatus) => Error.Validation(
+            "Event.CannotRequestPublish",
+            $"Cannot request publish. Current status is '{currentStatus}'. Only draft events can request publishing.");
+
         public static Error CannotDelete(EventStatus currentStatus) => Error.Validation(
             "Event.CannotDelete",
             $"Cannot delete event. Current status is '{currentStatus}'. Only draft events can be deleted.");

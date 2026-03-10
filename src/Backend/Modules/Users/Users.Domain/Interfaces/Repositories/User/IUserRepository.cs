@@ -1,5 +1,5 @@
 using Users.Domain.Entities;
-using Shared.Domain.Data;
+using Shared.Domain.Data.Repositories;
 
 namespace Users.Domain.Repositories
 {

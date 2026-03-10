@@ -1,6 +1,6 @@
 using Shared.Domain.DDD;
 
-namespace Shared.Domain.Data;
+namespace Shared.Domain.Data.Repositories;
 
 public partial interface IRepository<TEntity, TId>
     where TEntity : Entity<TId>

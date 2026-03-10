@@ -1,10 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Shared.Domain.Data;
 using Shared.Domain.Queries;
 using Shared.Domain.DDD;
 using System.Linq.Expressions;
 using Shared.Infrastructure.Extensions;
 using System.Linq.Dynamic.Core;
+using Shared.Domain.Data.Repositories;
 
 namespace Shared.Infrastructure.Data;
 
