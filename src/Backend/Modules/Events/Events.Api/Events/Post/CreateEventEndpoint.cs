@@ -24,7 +24,8 @@ public sealed record CreateEventRequest(
     string Location,
     string? MapUrl,
     string Description,
-    List<CreateActorImageRequest>? ActorImages);
+    List<CreateActorImageRequest>? ActorImages,
+    List<string>? ImageUrls);
 
 public class CreateEventEndpoint : ICarterModule
 {
@@ -35,21 +36,24 @@ public class CreateEventEndpoint : ICarterModule
             ISender sender,
             CancellationToken cancellationToken) =>
         {
-            var actorImages = request.ActorImages?
+            List<CreateActorImageItem> actorImages = request.ActorImages?
                 .Select(a => new CreateActorImageItem(a.Name, a.Major, a.Image))
                 .ToList() ?? [];
 
-            var result = await sender.Send(
-                new CreateEventCommand(
-                    request.Title,
-                    request.BannerUrl,
-                    request.HashtagIds,
-                    request.CategoryIds,
-                    request.Location,
-                    request.MapUrl,
-                    request.Description,
-                    actorImages),
-                cancellationToken);
+            List<string> imageUrls = request.ImageUrls ?? [];
+
+            var command = new CreateEventCommand(
+                request.Title,
+                request.BannerUrl,
+                request.HashtagIds,
+                request.CategoryIds,
+                request.Location,
+                request.MapUrl,
+                request.Description,
+                actorImages,
+                imageUrls);
+
+            var result = await sender.Send(command, cancellationToken);
 
             if (result.IsFailure)
                 return result.ToProblem();

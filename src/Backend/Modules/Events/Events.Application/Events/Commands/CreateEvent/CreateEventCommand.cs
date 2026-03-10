@@ -15,4 +15,5 @@ public sealed record CreateEventCommand(
     string Location,
     string? MapUrl,
     string Description,
-    List<CreateActorImageItem> ActorImages) : ICommand<Guid>;
+    List<CreateActorImageItem> ActorImages,
+    List<string> ImageUrls) : ICommand<Guid>;

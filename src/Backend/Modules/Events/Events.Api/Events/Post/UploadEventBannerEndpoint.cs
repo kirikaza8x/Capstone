@@ -2,65 +2,65 @@
 using Events.Application;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Shared.Application.Abstractions.Storage;
 
 namespace Events.Api.Events.Post;
 
-public sealed record UploadEventBannerResponse(
-    string Url,
-    string FileName,
-    long Size,
-    string ContentType);
+public sealed record UploadImageResponse(string Url);
 
-public class UploadEventBannerEndpoint : ICarterModule
+public class UploadImageEndpoint : ICarterModule
 {
     private static readonly string[] AllowedContentTypes =
         ["image/jpeg", "image/png", "image/gif", "image/webp"];
+
+    private static readonly string[] AllowedFolders =
+    [
+        StorageFolders.EventBanners,
+        StorageFolders.EventImages,
+        StorageFolders.EventActors,
+        StorageFolders.EventSeatmaps
+    ];
 
     private const long MaxFileSize = 10 * 1024 * 1024; // 10MB
 
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPost(Constants.Routes.Events + "/banners/upload", async (
+        app.MapPost(Constants.Routes.Events + "/upload", async (
             IFormFile file,
+            string? folder,
             IStorageService storageService,
             CancellationToken cancellationToken) =>
         {
-            // Validate file
             if (file is null || file.Length == 0)
-            {
-                return Results.BadRequest(new { error = "File is required" });
-            }
+                return Results.BadRequest(new { error = "File is required." });
 
             if (file.Length > MaxFileSize)
-            {
-                return Results.BadRequest(new { error = "File size exceeds 10MB limit" });
-            }
+                return Results.BadRequest(new { error = "File size exceeds 10MB limit." });
 
             if (!AllowedContentTypes.Contains(file.ContentType.ToLowerInvariant()))
-            {
-                return Results.BadRequest(new { error = "Invalid file type. Allowed: JPEG, PNG, GIF, WebP" });
-            }
+                return Results.BadRequest(new { error = "Invalid file type. Allowed: JPEG, PNG, GIF, WebP." });
 
-            // Upload to events/banners folder
+            var targetFolder = AllowedFolders.Contains(folder)
+                ? folder
+                : StorageFolders.Events;
+
             await using var stream = file.OpenReadStream();
             var url = await storageService.UploadAsync(
                 stream,
                 file.FileName,
                 file.ContentType,
-                StorageFolders.EventBanners,
+                targetFolder,
                 cancellationToken);
 
-            return Results.Ok(new UploadEventBannerResponse(url, file.FileName, file.Length, file.ContentType));
+            return Results.Ok(new UploadImageResponse(url));
         })
         .WithTags(Constants.Tags.Events)
-        .WithName("UploadEventBanner")
-        .WithSummary("Upload event banner image")
-        .WithDescription("Upload banner image and get URL.")
+        .WithName("UploadImage")
+        .WithSummary("Upload image")
+        .WithDescription("Upload an image file and receive a URL. Optionally specify a folder: events/banners, events/images, events/actors, events/seatmaps.")
         .DisableAntiforgery()
-        .Produces<UploadEventBannerResponse>(StatusCodes.Status200OK)
+        .Produces<UploadImageResponse>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status400BadRequest);
     }
 }

@@ -44,6 +44,9 @@ public sealed class CreateEventCommandValidator : AbstractValidator<CreateEventC
 
         RuleForEach(x => x.ActorImages)
             .SetValidator(new CreateActorImageItemValidator());
+
+        RuleForEach(x => x.ImageUrls)
+            .NotEmpty().WithMessage("Image URL must not be empty.");
     }
 }
 
@@ -54,7 +57,6 @@ internal sealed class CreateEventCommandHandler(
 {
     public async Task<Result<Guid>> Handle(CreateEventCommand command, CancellationToken cancellationToken)
     {
-        // Create event
         var @event = Event.Create(
             organizerId: currentUserService.UserId,
             title: command.Title,
@@ -63,23 +65,17 @@ internal sealed class CreateEventCommandHandler(
             mapUrl: command.MapUrl,
             description: command.Description);
 
-        // Add hashtags
         foreach (var hashtagId in command.HashtagIds)
-        {
-            var eventHashtag = EventHashtag.Create(@event.Id, hashtagId);
-            @event.AddHashtag(eventHashtag);
-        }
+            @event.AddHashtag(EventHashtag.Create(@event.Id, hashtagId));
 
         foreach (var categoryId in command.CategoryIds)
-        {
-            var eventCategory = EventCategory.Create(@event.Id, categoryId);
-            @event.AddCategories(eventCategory);
-        }
+            @event.AddCategories(EventCategory.Create(@event.Id, categoryId));
 
         foreach (var actor in command.ActorImages)
-        {
             @event.AddActorImage(EventActorImage.Create(@event.Id, actor.Name, actor.Major, actor.Image));
-        }
+
+        foreach (var imageUrl in command.ImageUrls)
+            @event.AddImage(imageUrl);
 
         eventRepository.Add(@event);
         await unitOfWork.SaveChangesAsync(cancellationToken);
