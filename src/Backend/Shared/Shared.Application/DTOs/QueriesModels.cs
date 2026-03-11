@@ -43,3 +43,17 @@ public record SortRequestDto
     [DefaultValue("desc")]
     public string Dir { get; init; } = "asc";
 }
+
+public record PagedBaseRequestDto
+{
+    [DefaultValue(1)]
+    public int PageNumber { get; init; } = 1;
+
+    [DefaultValue(10)]
+    public int PageSize { get; init; } = 10;
+
+    public string? SortColumn { get; init; } = "CreatedAt";
+    
+    [DefaultValue("desc")]
+    public string Dir { get; init; } = "asc";
+}

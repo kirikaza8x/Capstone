@@ -15,15 +15,14 @@ public class GetUsersSimpleEndpoint : ICarterModule
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         app.MapGet("api/users", async (
-            [AsParameters] UserFilterRequestDto request,
+            [AsParameters] UserBaseRequestDto request,
             ISender sender,
             CancellationToken cancellationToken) =>
         {
-            var query = new GetUsersQuery
+            var query = new GetUsersPageQuery
             {
                 PageNumber = request.PageNumber,
                 PageSize = request.PageSize,
-                SearchTerm = request.SearchTerm,
                 Email = request.Email,
                 UserName = request.UserName,
                 Status = request.Status
