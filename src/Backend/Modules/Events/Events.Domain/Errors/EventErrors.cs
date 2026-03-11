@@ -17,11 +17,19 @@ public static class EventErrors
 
         public static Error CannotPublish(EventStatus currentStatus) => Error.Validation(
             "Event.CannotPublish",
-            $"Cannot publish event. Current status is '{currentStatus}'. Only draft or pending events can be published.");
+            $"Cannot publish event. Current status is '{currentStatus}'.");
 
         public static readonly Error NoSessions = Error.Validation(
             "Event.NoSessions",
             "Cannot publish event. At least one session is required.");
+
+        public static readonly Error NoTicketTypes = Error.Validation(
+            "Event.NoTicketTypes",
+            "Cannot publish event. At least one ticket type is required.");
+
+        public static readonly Error TicketTypeNotAssignedToArea = Error.Validation(
+            "Event.TicketTypeNotAssignedToArea",
+            "Cannot publish event. All ticket types must be assigned to an area.");
 
         public static readonly Error SessionHasNoTicketTypes = Error.Validation(
             "Event.SessionHasNoTicketTypes",
@@ -37,23 +45,23 @@ public static class EventErrors
 
         public static Error CannotUnpublish(EventStatus currentStatus) => Error.Validation(
             "Event.CannotUnpublish",
-            $"Cannot unpublish event. Current status is '{currentStatus}'. Only published events can be unpublished.");
+            $"Cannot unpublish event. Current status is '{currentStatus}'.");
 
         public static Error CannotCancel(EventStatus currentStatus) => Error.Validation(
             "Event.CannotCancel",
-            $"Cannot cancel event. Current status is '{currentStatus}'. Completed or already cancelled events cannot be cancelled.");
+            $"Cannot cancel event. Current status is '{currentStatus}'.");
 
         public static Error CannotRequestCancellation(EventStatus currentStatus) => Error.Validation(
             "Event.CannotRequestCancellation",
-            $"Cannot request cancellation. Current status is '{currentStatus}'. Only published or unpublished events can request cancellation.");
+            $"Cannot request cancellation. Current status is '{currentStatus}'.");
 
         public static Error CannotRequestPublish(EventStatus currentStatus) => Error.Validation(
             "Event.CannotRequestPublish",
-            $"Cannot request publish. Current status is '{currentStatus}'. Only draft events can request publishing.");
+            $"Cannot request publish. Current status is '{currentStatus}'.");
 
         public static Error CannotDelete(EventStatus currentStatus) => Error.Validation(
             "Event.CannotDelete",
-            $"Cannot delete event. Current status is '{currentStatus}'. Only draft events can be deleted.");
+            $"Cannot delete event. Current status is '{currentStatus}'.");
 
         public static Error UrlPathTooShort() => Error.Validation(
             "Event.UrlPathTooShort",
@@ -65,7 +73,7 @@ public static class EventErrors
 
         public static Error InvalidUrlPathFormat(string urlPath) => Error.Validation(
             "Event.InvalidUrlPathFormat",
-            $"The URL path '{urlPath}' contains invalid characters. Only lowercase letters, numbers, and hyphens are allowed.");
+            $"The URL path '{urlPath}' contains invalid characters.");
 
         public static readonly Error AlreadyStarted = Error.Validation(
             "Event.AlreadyStarted",
@@ -101,6 +109,10 @@ public static class EventErrors
             "TicketType.NotFound",
             $"The ticket type with ID '{ticketTypeId}' was not found.");
 
+        public static Error AreaNotBelongToEvent(Guid areaId, Guid eventId) => Error.Validation(
+            "TicketType.AreaNotBelongToEvent",
+            $"Area '{areaId}' does not belong to event '{eventId}'.");
+
         public static readonly Error SoldOut = Error.Conflict(
             "TicketType.SoldOut",
             "The ticket type is sold out.");
@@ -108,6 +120,17 @@ public static class EventErrors
         public static Error NotEnoughTickets(int requested, int available) => Error.Validation(
             "TicketType.NotEnoughTickets",
             $"Requested {requested} tickets but only {available} available.");
+    }
+
+    public static class SessionTicketQuotaErrors
+    {
+        public static Error NotFound(Guid sessionId, Guid ticketTypeId) => Error.NotFound(
+            "SessionTicketQuota.NotFound",
+            $"No quota found for session '{sessionId}' and ticket type '{ticketTypeId}'.");
+
+        public static Error TicketTypeNotZone() => Error.Validation(
+            "SessionTicketQuota.TicketTypeNotZone",
+            "Session ticket quota only applies to zone-type areas.");
     }
 
     public static class Area

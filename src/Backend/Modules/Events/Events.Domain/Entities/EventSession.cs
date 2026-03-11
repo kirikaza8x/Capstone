@@ -4,8 +4,6 @@ namespace Events.Domain.Entities;
 
 public sealed class EventSession : Entity<Guid>
 {
-    private readonly List<TicketType> _ticketTypes = [];
-
     private EventSession() { }
 
     public Guid EventId { get; private set; }
@@ -15,7 +13,6 @@ public sealed class EventSession : Entity<Guid>
     public DateTime EndTime { get; private set; }
 
     public Event Event { get; private set; } = null!;
-    public IReadOnlyCollection<TicketType> TicketTypes => _ticketTypes.AsReadOnly();
 
     public static EventSession Create(
         Guid eventId,
@@ -44,15 +41,4 @@ public sealed class EventSession : Entity<Guid>
         EndTime = endTime;
         ModifiedAt = DateTime.UtcNow;
     }
-
-    public TicketType? GetTicketType(Guid ticketTypeId)
-        => _ticketTypes.FirstOrDefault(t => t.Id == ticketTypeId);
-
-    public void RemoveTicketType(TicketType ticketType)
-    {
-        _ticketTypes.Remove(ticketType);
-        ModifiedAt = DateTime.UtcNow;
-    }
-
-    public void AddTicketType(TicketType ticketType) => _ticketTypes.Add(ticketType);
 }

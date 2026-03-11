@@ -21,12 +21,11 @@ internal sealed class EventRepository(EventsDbContext context)
             .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
     }
 
-    public async Task<Event?> GetByIdWithSessionsAndTicketTypesAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<Event?> GetByIdWithTicketTypesAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await _context.Events
-            .Include(e => e.Sessions)
-                .ThenInclude(s => s.TicketTypes)
-            .AsSplitQuery()
+            .Include(e => e.TicketTypes)
+                .ThenInclude(t => t.Area)
             .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
     }
 
@@ -35,6 +34,7 @@ internal sealed class EventRepository(EventsDbContext context)
         return await _context.Events
             .Include(e => e.Areas)
                 .ThenInclude(a => a.Seats)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
     }
 
@@ -44,7 +44,8 @@ internal sealed class EventRepository(EventsDbContext context)
             .Include(e => e.Images)
             .Include(e => e.ActorImages)
             .Include(e => e.Sessions)
-                .ThenInclude(s => s.TicketTypes)
+            .Include(e => e.TicketTypes)
+                .ThenInclude(t => t.Area)
             .Include(e => e.EventHashtags)
                 .ThenInclude(eh => eh.Hashtag)
             .Include(e => e.EventCategories)
@@ -85,13 +86,6 @@ internal sealed class EventRepository(EventsDbContext context)
             .FirstOrDefaultAsync(s => s.Id == sessionId, cancellationToken);
     }
 
-    public async Task<EventSession?> GetEventSessionWithTicketTypesAsync(Guid sessionId, CancellationToken cancellationToken = default)
-    {
-        return await _context.EventSessions
-            .Include(s => s.TicketTypes)
-            .FirstOrDefaultAsync(s => s.Id == sessionId, cancellationToken);
-    }
-
     public async Task<Event?> GetByIdWithImagesAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await _context.Events
@@ -111,5 +105,38 @@ internal sealed class EventRepository(EventsDbContext context)
             .AsSplitQuery();
 
         return await query.ToPagedResultAsync(pagedQuery, cancellationToken);
+    }
+
+    public async Task<PagedResult<Event>> GetByOrganizerPagedAsync(
+        Guid organizerId,
+        EventStatus? status,
+        PagedQuery pagedQuery,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _context.Events
+            .AsNoTracking()
+            .Where(e => e.OrganizerId == organizerId)
+            .Where(e => status == null || e.Status == status)
+            .Include(e => e.EventCategories)
+                .ThenInclude(ec => ec.Category)
+            .AsSplitQuery();
+
+        if (string.IsNullOrWhiteSpace(pagedQuery.SortColumn))
+        {
+            query = query
+                .OrderByDescending(e => e.Status == EventStatus.Published)
+                .ThenByDescending(e => e.CreatedAt);
+        }
+
+        return await query.ToPagedResultAsync(pagedQuery, cancellationToken);
+    }
+
+    public async Task<Event?> GetByIdWithTicketTypesAndAreasAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await _context.Events
+            .Include(e => e.TicketTypes)
+            .Include(e => e.Areas)
+            .AsSplitQuery()
+            .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
     }
 }

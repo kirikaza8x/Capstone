@@ -30,5 +30,4 @@ public sealed record GetEventResponse
     public IReadOnlyList<EventSessionDto> Sessions { get; init; } = [];
     public IReadOnlyList<EventHashtagDto> Hashtags { get; init; } = [];
     public IReadOnlyList<EventActorImageDto> ActorImages { get; init; } = [];
-
 }

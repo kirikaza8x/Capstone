@@ -3,7 +3,6 @@ using Events.Domain.Enums;
 using Events.Domain.Errors;
 using Shared.Domain.Abstractions;
 using Shared.Domain.DDD;
-using static Events.Domain.Errors.EventErrors;
 
 namespace Events.Domain.Entities;
 
@@ -12,26 +11,25 @@ public sealed class Event : AggregateRoot<Guid>
     public Guid OrganizerId { get; private set; }
     public string Title { get; private set; } = string.Empty;
     public EventStatus Status { get; private set; }
-
     public string? BannerUrl { get; private set; }
     public string Location { get; private set; } = string.Empty;
     public string? MapUrl { get; private set; }
     public string Description { get; private set; } = string.Empty;
     public string? UrlPath { get; private set; }
-
     public DateTime? TicketSaleStartAt { get; private set; }
     public DateTime? TicketSaleEndAt { get; private set; }
     public DateTime? EventStartAt { get; private set; }
     public DateTime? EventEndAt { get; private set; }
-
     public string Policy { get; private set; } = string.Empty;
     public string? Spec { get; private set; }
     public bool IsEmailReminderEnabled { get; private set; } = false;
-
     public string? CancellationReason { get; private set; }
 
     private readonly List<EventSession> _sessions = [];
     public IReadOnlyCollection<EventSession> Sessions => _sessions.AsReadOnly();
+
+    private readonly List<TicketType> _ticketTypes = [];
+    public IReadOnlyCollection<TicketType> TicketTypes => _ticketTypes.AsReadOnly();
 
     private readonly List<EventImage> _images = [];
     public IReadOnlyCollection<EventImage> Images => _images.AsReadOnly();
@@ -75,7 +73,6 @@ public sealed class Event : AggregateRoot<Guid>
         };
 
         @event.RaiseDomainEvent(new EventCreatedDomainEvent(@event.Id, organizerId));
-
         return @event;
     }
 
@@ -116,12 +113,8 @@ public sealed class Event : AggregateRoot<Guid>
     public void UpdateSettings(bool isEmailReminderEnabled, string? urlPath)
     {
         IsEmailReminderEnabled = isEmailReminderEnabled;
-
         if (!string.IsNullOrWhiteSpace(urlPath))
-        {
             UrlPath = urlPath.Trim().ToLowerInvariant();
-        }
-
         ModifiedAt = DateTime.UtcNow;
     }
 
@@ -160,14 +153,16 @@ public sealed class Event : AggregateRoot<Guid>
         if (_sessions.Count == 0)
             return Result.Failure(EventErrors.Event.NoSessions);
 
-        if (_sessions.Any(s => s.TicketTypes.Count == 0))
-            return Result.Failure(EventErrors.Event.SessionHasNoTicketTypes);
+        if (_ticketTypes.Count == 0)
+            return Result.Failure(EventErrors.Event.NoTicketTypes);
+
+        if (_ticketTypes.Any(t => t.AreaId is null))
+            return Result.Failure(EventErrors.Event.TicketTypeNotAssignedToArea);
 
         Status = EventStatus.Published;
         ModifiedAt = DateTime.UtcNow;
 
         RaiseDomainEvent(new EventPublishedDomainEvent(Id));
-
         return Result.Success();
     }
 
@@ -178,9 +173,7 @@ public sealed class Event : AggregateRoot<Guid>
 
         Status = EventStatus.Unpublished;
         ModifiedAt = DateTime.UtcNow;
-
         RaiseDomainEvent(new EventUnpublishedDomainEvent(Id));
-
         return Result.Success();
     }
 
@@ -190,14 +183,10 @@ public sealed class Event : AggregateRoot<Guid>
             return Result.Failure(EventErrors.Event.CannotCancel(Status));
 
         Status = EventStatus.Cancelled;
-
         if (!string.IsNullOrWhiteSpace(reason))
             CancellationReason = reason;
-
         ModifiedAt = DateTime.UtcNow;
-
         RaiseDomainEvent(new EventCancelledDomainEvent(Id));
-
         return Result.Success();
     }
 
@@ -205,7 +194,6 @@ public sealed class Event : AggregateRoot<Guid>
     {
         if (Status != EventStatus.Draft)
             return Result.Failure(EventErrors.Event.CannotDelete(Status));
-
         return Result.Success();
     }
 
@@ -220,7 +208,6 @@ public sealed class Event : AggregateRoot<Guid>
         Status = EventStatus.PendingCancellation;
         CancellationReason = reason;
         ModifiedAt = DateTime.UtcNow;
-
         return Result.Success();
     }
 
@@ -231,7 +218,6 @@ public sealed class Event : AggregateRoot<Guid>
 
         Status = EventStatus.PendingReview;
         ModifiedAt = DateTime.UtcNow;
-
         return Result.Success();
     }
 
@@ -239,13 +225,25 @@ public sealed class Event : AggregateRoot<Guid>
     {
         var image = _images.FirstOrDefault(i => i.Id == imageId);
         if (image is null)
-            return Result.Failure(EventImageErrors.NotFound(imageId));
+            return Result.Failure(EventErrors.EventImageErrors.NotFound(imageId));
 
         _images.Remove(image);
         ModifiedAt = DateTime.UtcNow;
-
         return Result.Success();
     }
+
+    public Result UpdateImage(Guid imageId, string newImageUrl)
+    {
+        var image = _images.FirstOrDefault(i => i.Id == imageId);
+        if (image is null)
+            return Result.Failure(EventErrors.EventImageErrors.NotFound(imageId));
+
+        image.UpdateImageUrl(newImageUrl);
+        ModifiedAt = DateTime.UtcNow;
+        return Result.Success();
+    }
+
+    public EventImage? GetImage(Guid imageId) => _images.FirstOrDefault(i => i.Id == imageId);
 
     public void RemoveSession(EventSession session)
     {
@@ -273,30 +271,18 @@ public sealed class Event : AggregateRoot<Guid>
         ModifiedAt = DateTime.UtcNow;
     }
 
-    public Result UpdateImage(Guid imageId, string newImageUrl)
-    {
-        var image = _images.FirstOrDefault(i => i.Id == imageId);
-        if (image is null)
-            return Result.Failure(EventImageErrors.NotFound(imageId));
-
-        image.UpdateImageUrl(newImageUrl);
-        ModifiedAt = DateTime.UtcNow;
-
-        return Result.Success();
-    }
-
-    public EventImage? GetImage(Guid imageId)
-    {
-        return _images.FirstOrDefault(i => i.Id == imageId);
-    }
-
     public void AddSession(EventSession session) => _sessions.Add(session);
+    public void AddTicketType(TicketType ticketType) => _ticketTypes.Add(ticketType);
     public void AddArea(Area area) => _areas.Add(area);
     public void AddMember(EventMember member) => _members.Add(member);
     public void AddActorImage(EventActorImage actorImage) => _actorImages.Add(actorImage);
     public void AddCategories(EventCategory eventCategory) => _eventCategories.Add(eventCategory);
     public void AddHashtag(EventHashtag eventHashtag) => _eventHashtags.Add(eventHashtag);
+    public void RemoveTicketType(TicketType ticketType)
+    {
+        _ticketTypes.Remove(ticketType);
+        ModifiedAt = DateTime.UtcNow;
+    }
 
-    protected override void Apply(IDomainEvent @event)
-    { }
+    protected override void Apply(IDomainEvent @event) { }
 }

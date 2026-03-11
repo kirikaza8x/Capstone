@@ -5,7 +5,6 @@ using FluentValidation;
 using Shared.Application.Abstractions.Authentication;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
-using static Events.Domain.Errors.EventErrors;
 
 namespace Events.Application.Events.Commands.UpdateTicketType;
 
@@ -19,9 +18,6 @@ public sealed class UpdateTicketTypeCommandValidator : AbstractValidator<UpdateT
 
         RuleFor(x => x.Price)
             .GreaterThanOrEqualTo(0).WithMessage("Price must be greater than or equal to 0.");
-
-        RuleFor(x => x.Quantity)
-            .GreaterThan(0).WithMessage("Quantity must be greater than 0.");
     }
 }
 
@@ -32,26 +28,20 @@ internal sealed class UpdateTicketTypeCommandHandler(
 {
     public async Task<Result> Handle(UpdateTicketTypeCommand command, CancellationToken cancellationToken)
     {
-        var session = await eventRepository.GetEventSessionWithTicketTypesAsync(command.SessionId, cancellationToken);
-
-        if (session is null)
-            return Result.Failure(EventSessionErrors.NotFound(command.SessionId));
-
-        var @event = await eventRepository.GetByIdAsync(session.EventId, cancellationToken);
+        var @event = await eventRepository.GetByIdWithTicketTypesAsync(command.EventId, cancellationToken);
 
         if (@event is null)
-            return Result.Failure(EventErrors.Event.NotFound(session.EventId));
+            return Result.Failure(EventErrors.Event.NotFound(command.EventId));
 
         if (@event.OrganizerId != currentUserService.UserId)
             return Result.Failure(EventErrors.Event.NotOwner);
 
-        var ticketType = session.GetTicketType(command.TicketTypeId);
+        var ticketType = @event.TicketTypes.FirstOrDefault(t => t.Id == command.TicketTypeId);
 
         if (ticketType is null)
-            return Result.Failure(TicketTypeErrors.NotFound(command.TicketTypeId));
+            return Result.Failure(EventErrors.TicketTypeErrors.NotFound(command.TicketTypeId));
 
-        ticketType.Update(command.Name, command.Price, command.Quantity);
-
+        ticketType.Update(command.Name, command.Price);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Success();

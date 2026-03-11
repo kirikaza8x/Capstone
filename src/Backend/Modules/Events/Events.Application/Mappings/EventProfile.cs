@@ -24,10 +24,10 @@ public sealed class EventProfile : Profile
         CreateMap<EventActorImage, EventActorImageDto>();
 
         CreateMap<TicketType, TicketTypeDto>()
-            .ForMember(dest => dest.Type, opt => opt.MapFrom(src => src.Type.ToString()));
+            .ForMember(dest => dest.AreaName, opt => opt.MapFrom(src => src.Area != null ? src.Area.Name : null))
+            .ForMember(dest => dest.AreaType, opt => opt.MapFrom(src => src.Area != null ? src.Area.Type.ToString() : null));
 
-        CreateMap<EventSession, EventSessionDto>()
-            .ForMember(dest => dest.TicketTypes, opt => opt.MapFrom(src => src.TicketTypes));
+        CreateMap<EventSession, EventSessionDto>();
 
         CreateMap<EventHashtag, EventHashtagDto>()
             .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.HashtagId))

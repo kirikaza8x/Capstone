@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Events.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Events.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(EventsDbContext))]
-    partial class EventsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260311125115_UpdateTicketTypeTableDeleteColumnType")]
+    partial class UpdateTicketTypeTableDeleteColumnType
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -647,11 +650,15 @@ namespace Events.Infrastructure.Data.Migrations
                     b.ToTable("seats", "events");
                 });
 
-            modelBuilder.Entity("Events.Domain.Entities.SessionTicketQuota", b =>
+            modelBuilder.Entity("Events.Domain.Entities.TicketType", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
                         .HasColumnName("id");
+
+                    b.Property<Guid?>("AreaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("area_id");
 
                     b.Property<DateTime?>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -677,61 +684,6 @@ namespace Events.Infrastructure.Data.Migrations
                         .HasColumnType("text")
                         .HasColumnName("modified_by");
 
-                    b.Property<int>("Quantity")
-                        .HasColumnType("integer")
-                        .HasColumnName("quantity");
-
-                    b.Property<Guid>("TicketTypeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("ticket_type_id");
-
-                    b.HasKey("Id")
-                        .HasName("pk_session_ticket_quotas");
-
-                    b.HasIndex("TicketTypeId")
-                        .HasDatabaseName("ix_session_ticket_quotas_ticket_type_id");
-
-                    b.HasIndex("EventSessionId", "TicketTypeId")
-                        .IsUnique()
-                        .HasDatabaseName("ix_session_ticket_quota_session_tickettype");
-
-                    b.ToTable("session_ticket_quotas", "events");
-                });
-
-            modelBuilder.Entity("Events.Domain.Entities.TicketType", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<Guid?>("AreaId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("area_id");
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("created_by");
-
-                    b.Property<Guid>("EventId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("event_id");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_active");
-
-                    b.Property<DateTime?>("ModifiedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("modified_at");
-
-                    b.Property<string>("ModifiedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("modified_by");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -742,14 +694,24 @@ namespace Events.Infrastructure.Data.Migrations
                         .HasColumnType("decimal(18,2)")
                         .HasColumnName("price");
 
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer")
+                        .HasColumnName("quantity");
+
+                    b.Property<int>("SoldQuantity")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("sold_quantity");
+
                     b.HasKey("Id")
                         .HasName("pk_ticket_types");
 
                     b.HasIndex("AreaId")
                         .HasDatabaseName("ix_ticket_types_area_id");
 
-                    b.HasIndex("EventId")
-                        .HasDatabaseName("ix_ticket_types_event_id");
+                    b.HasIndex("EventSessionId")
+                        .HasDatabaseName("ix_ticket_types_event_session_id");
 
                     b.ToTable("ticket_types", "events");
                 });
@@ -908,27 +870,6 @@ namespace Events.Infrastructure.Data.Migrations
                     b.Navigation("Area");
                 });
 
-            modelBuilder.Entity("Events.Domain.Entities.SessionTicketQuota", b =>
-                {
-                    b.HasOne("Events.Domain.Entities.EventSession", "EventSession")
-                        .WithMany()
-                        .HasForeignKey("EventSessionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_session_ticket_quotas_event_sessions_event_session_id");
-
-                    b.HasOne("Events.Domain.Entities.TicketType", "TicketType")
-                        .WithMany()
-                        .HasForeignKey("TicketTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_session_ticket_quotas_ticket_types_ticket_type_id");
-
-                    b.Navigation("EventSession");
-
-                    b.Navigation("TicketType");
-                });
-
             modelBuilder.Entity("Events.Domain.Entities.TicketType", b =>
                 {
                     b.HasOne("Events.Domain.Entities.Area", "Area")
@@ -937,16 +878,16 @@ namespace Events.Infrastructure.Data.Migrations
                         .OnDelete(DeleteBehavior.SetNull)
                         .HasConstraintName("fk_ticket_types_areas_area_id");
 
-                    b.HasOne("Events.Domain.Entities.Event", "Event")
+                    b.HasOne("Events.Domain.Entities.EventSession", "EventSession")
                         .WithMany("TicketTypes")
-                        .HasForeignKey("EventId")
+                        .HasForeignKey("EventSessionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_ticket_types_events_event_id");
+                        .HasConstraintName("fk_ticket_types_event_sessions_event_session_id");
 
                     b.Navigation("Area");
 
-                    b.Navigation("Event");
+                    b.Navigation("EventSession");
                 });
 
             modelBuilder.Entity("Events.Domain.Entities.Area", b =>
@@ -969,7 +910,10 @@ namespace Events.Infrastructure.Data.Migrations
                     b.Navigation("Members");
 
                     b.Navigation("Sessions");
+                });
 
+            modelBuilder.Entity("Events.Domain.Entities.EventSession", b =>
+                {
                     b.Navigation("TicketTypes");
                 });
 
