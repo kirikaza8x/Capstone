@@ -16,7 +16,11 @@ internal sealed class UpdateHashtagCommandHandler(
         if (hashtag is null)
             return Result.Failure(EventErrors.HashtagErrors.NotFound(command.HashtagId));
 
-        hashtag.UpdateName(command.Name);
+        var slugExists = await hashtagRepository.IsSlugExistsAsync(command.Slug, cancellationToken);
+        if (slugExists && hashtag.Slug != command.Slug)
+            return Result.Failure(EventErrors.HashtagErrors.SlugAlreadyExists(command.Slug));
+
+        hashtag.Update(command.Name, command.Slug);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 

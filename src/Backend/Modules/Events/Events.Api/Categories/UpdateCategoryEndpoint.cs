@@ -11,7 +11,7 @@ using Users.PublicApi.Constants;
 
 namespace Events.Api.Categories;
 
-public sealed record UpdateCategoryRequest(string Name, string? Description);
+public sealed record UpdateCategoryRequest(string Code, string Name, string? Description);
 
 public class UpdateCategoryEndpoint : ICarterModule
 {
@@ -24,7 +24,7 @@ public class UpdateCategoryEndpoint : ICarterModule
             CancellationToken cancellationToken) =>
         {
             var result = await sender.Send(
-                new UpdateCategoryCommand(categoryId, request.Name, request.Description),
+                new UpdateCategoryCommand(categoryId, request.Code, request.Name, request.Description),
                 cancellationToken);
 
             return result.ToOk("Category updated successfully.");

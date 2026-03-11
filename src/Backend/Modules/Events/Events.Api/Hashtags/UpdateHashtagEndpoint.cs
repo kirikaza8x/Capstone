@@ -11,7 +11,7 @@ using Users.PublicApi.Constants;
 
 namespace Events.Api.Hashtags;
 
-public sealed record UpdateHashtagRequest(string Name);
+public sealed record UpdateHashtagRequest(string Name, string Slug);
 
 public class UpdateHashtagEndpoint : ICarterModule
 {
@@ -24,7 +24,7 @@ public class UpdateHashtagEndpoint : ICarterModule
             CancellationToken cancellationToken) =>
         {
             var result = await sender.Send(
-                new UpdateHashtagCommand(hashtagId, request.Name),
+                new UpdateHashtagCommand(hashtagId, request.Name, request.Slug),
                 cancellationToken);
 
             return result.ToOk("Hashtag updated successfully.");
@@ -32,9 +32,10 @@ public class UpdateHashtagEndpoint : ICarterModule
         .WithTags(Constants.Tags.Hashtags)
         .WithName("UpdateHashtag")
         .WithSummary("Update hashtag")
-        .WithDescription("Update an existing hashtag's name.")
+        .WithDescription("Update an existing hashtag's name and slug.")
         .Produces(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status404NotFound)
+        .ProducesProblem(StatusCodes.Status409Conflict)
         .RequireRoles(Roles.AllExceptAttendee);
     }
 }

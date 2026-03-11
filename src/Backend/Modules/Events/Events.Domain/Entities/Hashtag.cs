@@ -25,9 +25,10 @@ public sealed class Hashtag : Entity<int>
         };
     }
 
-    public void UpdateName(string name)
+    public void Update(string name, string slug)
     {
         Name = name;
+        Slug = slug;
         ModifiedAt = DateTime.UtcNow;
     }
 

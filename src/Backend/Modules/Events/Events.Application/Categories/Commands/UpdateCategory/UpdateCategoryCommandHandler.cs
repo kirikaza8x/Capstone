@@ -1,8 +1,10 @@
 ﻿using Events.Domain.Errors;
+using Events.Domain.Entities;
 using Events.Domain.Repositories;
 using Events.Domain.Uow;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
+
 
 namespace Events.Application.Categories.Commands.UpdateCategory;
 
@@ -16,7 +18,11 @@ internal sealed class UpdateCategoryCommandHandler(
         if (category is null)
             return Result.Failure(EventErrors.CategoryErrors.NotFound(command.CategoryId));
 
-        category.Update(command.Name, command.Description);
+        var codeExists = await categoryRepository.IsCodeExistsAsync(command.Code, cancellationToken);
+        if (codeExists && category.Code != command.Code)
+            return Result.Failure(EventErrors.CategoryErrors.CodeAlreadyExists(command.Code));
+
+        category.Update(command.Code, command.Name, command.Description);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
