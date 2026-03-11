@@ -1,3 +1,4 @@
+using Shared.Application.Dtos.Queries;
 using Users.Domain.Enums;
 
 namespace Users.Application.Features.Organizers.Dtos
@@ -33,4 +34,10 @@ namespace Users.Application.Features.Organizers.Dtos
         public Guid UserId { get; set; }
         public string Reason { get; set; } = default!;
     }
+
+    public sealed record GetOrganizerAdminListRequestDto(
+        OrganizerStatus? Status,
+        BusinessType? BusinessType,
+        string? Search
+    ) : PagedBaseRequestDto;
 }
