@@ -1,5 +1,6 @@
 ﻿using Events.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Shared.Infrastructure.Outbox;
 
 namespace Events.Infrastructure.Data;
 
@@ -17,11 +18,13 @@ public sealed class EventsDbContext(DbContextOptions<EventsDbContext> options) :
     public DbSet<EventMember> EventStaffs => Set<EventMember>();
     public DbSet<Hashtag> Hashtags => Set<Hashtag>();
     public DbSet<EventHashtag> EventHashtags => Set<EventHashtag>();
+    public DbSet<OutboxMessage> OutboxMessages { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(Constants.SchemaName);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(EventsDbContext).Assembly);
+        modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration());
         base.OnModelCreating(modelBuilder);
     }
 }
