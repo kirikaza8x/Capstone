@@ -14,7 +14,7 @@ public class GetCurrentUserEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapGet("api/users/current", async (
+        app.MapGet("api/user/current", async (
             ISender sender,
             CancellationToken cancellationToken) =>
         {

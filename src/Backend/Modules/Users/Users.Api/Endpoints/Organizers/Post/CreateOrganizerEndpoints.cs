@@ -15,7 +15,6 @@ public class CreateOrganizerEndpoints : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        // Create Organizer Profile
         app.MapPost("api/organizers/profile", async (
             [FromBody] CreateOrganizerProfileRequestDto requestDto,
             ISender sender,

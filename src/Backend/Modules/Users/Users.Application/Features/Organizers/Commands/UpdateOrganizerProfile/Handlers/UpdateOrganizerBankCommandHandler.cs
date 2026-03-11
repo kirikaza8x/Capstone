@@ -6,6 +6,8 @@ using Users.Domain.Repositories;
 using Users.Domain.UOW;
 using Users.Domain.ValueObjects;
 
+namespace Users.Application.Features.Organizers.Handlers;
+
 public class UpdateOrganizerBankCommandHandler
     : ICommandHandler<UpdateOrganizerBankCommand>
 {
@@ -27,8 +29,10 @@ public class UpdateOrganizerBankCommandHandler
         UpdateOrganizerBankCommand command,
         CancellationToken cancellationToken)
     {
+        var userId = _currentUserService.UserId;
+
         var user = await _userRepository.GetByIdAsync(
-            _currentUserService.UserId,
+            userId,
             cancellationToken);
 
         if (user == null)
@@ -37,10 +41,13 @@ public class UpdateOrganizerBankCommandHandler
                 Error.NotFound("User.NotFound", "User not found"));
         }
 
-        if (user.OrganizerProfile == null)
+        // Get editable organizer profile
+        var profile = user.DraftProfile ?? user.PendingProfile;
+
+        if (profile == null)
         {
             return Result.Failure(
-                Error.NotFound("Organizer.NotFound", "Organizer profile not found"));
+                Error.NotFound("Organizer.NotFound", "No editable organizer profile found"));
         }
 
         var bankInfo = new OrganizerBankInfo(

@@ -5,108 +5,109 @@ namespace Users.Domain.Entities;
 
 public partial class User
 {
+    private readonly List<OrganizerProfile> _organizerProfiles = new();
+
     // --------------------
-    // Organizer Profile
+    // Organizer Profiles
+    // --------------------
+    public virtual IReadOnlyCollection<OrganizerProfile> OrganizerProfiles
+        => _organizerProfiles.AsReadOnly();
+
+    // --------------------
+    // Query Helpers
     // --------------------
 
-    public virtual OrganizerProfile? OrganizerProfile { get; private set; }
+    // Current live public profile
+    public OrganizerProfile? PublishedProfile =>
+        _organizerProfiles
+            .Where(p => p.Status == OrganizerStatus.Verified)
+            .OrderByDescending(p => p.VersionNumber)
+            .FirstOrDefault();
 
-    /// <summary>
-    /// Create organizer profile for the user.
-    /// Aggregate Root controls entity creation.
-    /// </summary>
+    // Profile currently being edited
+    public OrganizerProfile? DraftProfile =>
+        _organizerProfiles.FirstOrDefault(p => p.Status == OrganizerStatus.Draft);
+
+    // Profile waiting admin approval
+    public OrganizerProfile? PendingProfile =>
+        _organizerProfiles.FirstOrDefault(p => p.Status == OrganizerStatus.Pending);
+
+    // --------------------
+    // Creation
+    // --------------------
+
     public void CreateOrganizerProfile(OrganizerType type)
     {
-        if (OrganizerProfile != null)
+        if (_organizerProfiles.Any())
             throw new InvalidOperationException("User already has an organizer profile.");
 
-        OrganizerProfile = OrganizerProfile.Create(Id, type);
+        var profile = OrganizerProfile.Create(Id, type, 1);
+        _organizerProfiles.Add(profile);
     }
 
-    /// <summary>
-    /// Update organizer business information.
-    /// </summary>
+    // --------------------
+    // Update Workflow
+    // --------------------
+
+    public void BeginProfileUpdate()
+    {
+        if (DraftProfile != null || PendingProfile != null)
+            throw new InvalidOperationException("A profile update is already in progress.");
+
+        var current = PublishedProfile
+            ?? throw new InvalidOperationException("No verified profile exists to update.");
+
+        int nextVersion = _organizerProfiles.Max(p => p.VersionNumber) + 1;
+
+        var newVersion = OrganizerProfile.CreateNewVersion(current, nextVersion);
+
+        _organizerProfiles.Add(newVersion);
+    }
+
     public void UpdateOrganizerProfile(OrganizerBusinessInfo businessInfo)
     {
-        var organizer = GetOrganizer();
-
-        organizer.UpdateProfile(businessInfo);
+        GetDraft().UpdateProfile(businessInfo);
     }
 
-    /// <summary>
-    /// Update organizer bank information.
-    /// </summary>
     public void UpdateOrganizerBank(OrganizerBankInfo bankInfo)
     {
-        var organizer = GetOrganizer();
-
-        organizer.UpdateBankInformation(bankInfo);
+        GetDraft().UpdateBankInformation(bankInfo);
     }
 
-    /// <summary>
-    /// Submit organizer profile for verification.
-    /// </summary>
     public void SubmitOrganizerProfile()
     {
-        var organizer = GetOrganizer();
-
-        organizer.SubmitForVerification();
+        GetDraft().SubmitForVerification();
     }
 
-    /// <summary>
-    /// Admin verifies organizer.
-    /// </summary>
+    // --------------------
+    // Moderation
+    // --------------------
+
     public void VerifyOrganizerProfile()
     {
-        var organizer = GetOrganizer();
+        var pending = GetPending();
 
-        organizer.Verify();
+        // Archive the current verified version
+        PublishedProfile?.Archive();
 
-        // Domain Event example
-        // AddDomainEvent(new OrganizerProfileVerifiedEvent(Id, organizer.Id));
+        // Approve new version
+        pending.Verify();
     }
 
-    /// <summary>
-    /// Admin rejects organizer.
-    /// </summary>
     public void RejectOrganizerProfile(string? reason = null)
     {
-        var organizer = GetOrganizer();
-
-        organizer.Reject(reason);
-
-        // AddDomainEvent(new OrganizerProfileRejectedEvent(Id, reason));
-    }
-
-    /// <summary>
-    /// Admin requests organizer changes.
-    /// </summary>
-    public void RequestOrganizerChanges()
-    {
-        var organizer = GetOrganizer();
-
-        organizer.RequestChanges();
-    }
-
-    /// <summary>
-    /// Suspend organizer account.
-    /// </summary>
-    public void SuspendOrganizer()
-    {
-        var organizer = GetOrganizer();
-
-        organizer.Deactivate();
+        GetPending().Reject(reason);
     }
 
     // --------------------
-    // Helper
+    // Helpers
     // --------------------
 
-    private OrganizerProfile GetOrganizer()
-    {
-        if (OrganizerProfile == null)
-            throw new InvalidOperationException("User does not have an organizer profile.");
+    private OrganizerProfile GetDraft() =>
+        DraftProfile ?? throw new InvalidOperationException(
+            "No draft profile. Call BeginProfileUpdate first.");
 
-        return OrganizerProfile;
-    }
+    private OrganizerProfile GetPending() =>
+        PendingProfile ?? throw new InvalidOperationException(
+            "No pending profile available.");
 }

@@ -8,13 +8,18 @@ namespace Users.Domain.Entities
     public class OrganizerProfile : Entity<Guid>
     {
         // --------------------
-        // Identity & Navigation
+        // Identity
         // --------------------
         public Guid UserId { get; private set; }
         public virtual User User { get; private set; } = null!;
 
         // --------------------
-        // Profile & Business Info
+        // Versioning
+        // --------------------
+        public int VersionNumber { get; private set; }
+
+        // --------------------
+        // Profile Info
         // --------------------
         public string? Logo { get; private set; }
         public string? DisplayName { get; private set; }
@@ -23,13 +28,14 @@ namespace Users.Domain.Entities
         public string? SocialLink { get; private set; }
 
         public BusinessType BusinessType { get; private set; }
-
         public string? TaxCode { get; private set; }
         public string? IdentityNumber { get; private set; }
         public string? CompanyName { get; private set; }
 
+        public string? RejectionReason { get; private set; }
+
         // --------------------
-        // Bank Information
+        // Bank
         // --------------------
         public string? AccountName { get; private set; }
         public string? AccountNumber { get; private set; }
@@ -37,43 +43,63 @@ namespace Users.Domain.Entities
         public string? Branch { get; private set; }
 
         // --------------------
-        // Status & Type
+        // Status
         // --------------------
         public OrganizerStatus Status { get; private set; }
         public DateTimeOffset? VerifiedAt { get; private set; }
+
         public OrganizerType Type { get; private set; }
 
-        // --------------------
-        // EF Core Constructor
-        // --------------------
         private OrganizerProfile() { }
 
         // --------------------
-        // Factory (DDD)
+        // Factory
         // --------------------
-        internal static OrganizerProfile Create(Guid userId, OrganizerType type)
+
+        internal static OrganizerProfile Create(Guid userId, OrganizerType type, int version)
         {
             return new OrganizerProfile
             {
                 Id = Guid.NewGuid(),
                 UserId = userId,
                 Type = type,
+                VersionNumber = version,
                 Status = OrganizerStatus.Draft,
                 CreatedAt = DateTime.UtcNow,
                 IsActive = true
             };
         }
 
+        internal static OrganizerProfile CreateNewVersion(OrganizerProfile current, int nextVersion)
+        {
+            var profile = Create(current.UserId, current.Type, nextVersion);
+
+            profile.Logo = current.Logo;
+            profile.DisplayName = current.DisplayName;
+            profile.Description = current.Description;
+            profile.Address = current.Address;
+            profile.SocialLink = current.SocialLink;
+
+            profile.BusinessType = current.BusinessType;
+            profile.TaxCode = current.TaxCode;
+            profile.IdentityNumber = current.IdentityNumber;
+            profile.CompanyName = current.CompanyName;
+
+            profile.AccountName = current.AccountName;
+            profile.AccountNumber = current.AccountNumber;
+            profile.BankCode = current.BankCode;
+            profile.Branch = current.Branch;
+
+            return profile;
+        }
+
         // --------------------
-        // Domain Behaviors
+        // Behaviors
         // --------------------
 
         public void UpdateProfile(OrganizerBusinessInfo info)
         {
-            if (Status != OrganizerStatus.Draft)
-                throw new InvalidOperationException(
-                    "Organizer profile can only be edited in draft state."
-                );
+            EnsureDraft();
 
             Logo = info.Logo ?? Logo;
             DisplayName = info.DisplayName ?? DisplayName;
@@ -88,82 +114,64 @@ namespace Users.Domain.Entities
             IdentityNumber = info.IdentityNumber ?? IdentityNumber;
             CompanyName = info.CompanyName ?? CompanyName;
 
-            ModifiedAt = DateTime.UtcNow;
         }
 
-        public void UpdateBankInformation(OrganizerBankInfo bankInfo)
+        public void UpdateBankInformation(OrganizerBankInfo bank)
         {
-            if (Status != OrganizerStatus.Draft)
-                throw new InvalidOperationException(
-                    "Bank information can only be updated in draft state."
-                );
+            EnsureDraft();
 
-            AccountName = bankInfo.AccountName ?? AccountName;
-            AccountNumber = bankInfo.AccountNumber ?? AccountNumber;
-            BankCode = bankInfo.BankCode ?? BankCode;
-            Branch = bankInfo.Branch ?? Branch;
+            AccountName = bank.AccountName ?? AccountName;
+            AccountNumber = bank.AccountNumber ?? AccountNumber;
+            BankCode = bank.BankCode ?? BankCode;
+            Branch = bank.Branch ?? Branch;
 
         }
 
         public void SubmitForVerification()
         {
-            if (Status != OrganizerStatus.Draft)
-                throw new InvalidOperationException(
-                    "Only draft organizers can be submitted for verification."
-                );
+            EnsureDraft();
+            // if (string.IsNullOrWhiteSpace(DisplayName))
+            //     throw new InvalidOperationException("Display name required.");
+
+            // if (string.IsNullOrWhiteSpace(AccountNumber))
+            //     throw new InvalidOperationException("Bank account required.");
 
             Status = OrganizerStatus.Pending;
-            ModifiedAt = DateTime.UtcNow;
         }
 
         public void Verify()
         {
             if (Status != OrganizerStatus.Pending)
-                throw new InvalidOperationException(
-                    "Organizer must be pending verification."
-                );
+                throw new InvalidOperationException("Profile must be pending.");
 
             Status = OrganizerStatus.Verified;
             VerifiedAt = DateTimeOffset.UtcNow;
-            ModifiedAt = DateTime.UtcNow;
+            RejectionReason = null;
+
         }
 
-        public void Reject(string? reason = null)
+        public void Reject(string? reason)
         {
             if (Status != OrganizerStatus.Pending)
-                throw new InvalidOperationException(
-                    "Only pending organizers can be rejected."
-                );
+                throw new InvalidOperationException("Only pending profiles can be rejected.");
 
             Status = OrganizerStatus.Rejected;
-            ModifiedAt = DateTime.UtcNow;
+            RejectionReason = reason;
+
         }
 
-        public void RequestChanges()
-        {
-            if (Status != OrganizerStatus.Pending)
-                throw new InvalidOperationException(
-                    "Only pending organizers can request changes."
-                );
-
-            Status = OrganizerStatus.Draft;
-            ModifiedAt = DateTime.UtcNow;
-        }
-
-        public void Deactivate()
+        public void Archive()
         {
             if (Status != OrganizerStatus.Verified)
-                throw new InvalidOperationException(
-                    "Only verified organizers can be suspended."
-                );
+                throw new InvalidOperationException("Only verified profiles can be archived.");
 
-            Status = OrganizerStatus.Suspended;
-            ModifiedAt = DateTime.UtcNow;
+            Status = OrganizerStatus.Archived;
         }
 
-        public bool IsVerified()
+        private void EnsureDraft()
         {
-            return Status == OrganizerStatus.Verified;
+            if (Status != OrganizerStatus.Draft)
+                throw new InvalidOperationException("Changes allowed only in Draft.");
         }
     }
 }

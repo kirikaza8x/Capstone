@@ -1,3 +1,4 @@
+using Shared.Application.Dtos.Queries;
 using Users.Domain.Enums;
 
 namespace Users.Application.Features.Organizers.Dtos
@@ -22,4 +23,21 @@ namespace Users.Application.Features.Organizers.Dtos
         string BankCode,
         string? Branch
     );
+
+    public sealed class VerifyOrganizerProfileRequestDto
+    {
+        public Guid UserId { get; set; }
+    }
+
+    public sealed class RejectOrganizerProfileRequestDto
+    {
+        public Guid UserId { get; set; }
+        public string Reason { get; set; } = default!;
+    }
+
+    public sealed record GetOrganizerAdminListRequestDto(
+        OrganizerStatus? Status,
+        BusinessType? BusinessType,
+        string? Search
+    ) : PagedBaseRequestDto;
 }

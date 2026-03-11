@@ -9,7 +9,7 @@ namespace Users.Infrastructure.Persistence.Configs
     {
         public void Configure(EntityTypeBuilder<OrganizerProfile> builder)
         {
-            builder.ToTable("OrganizerProfile");
+            builder.ToTable("organizer_profile");
 
             // --- Primary Key ---
             builder.HasKey(op => op.Id);
@@ -27,9 +27,14 @@ namespace Users.Infrastructure.Persistence.Configs
                    .IsRequired();
 
             builder.HasOne(op => op.User)
-                   .WithOne(u => u.OrganizerProfile)
-                   .HasForeignKey<OrganizerProfile>(op => op.UserId)
+                   .WithMany(u => u.OrganizerProfiles)
+                   .HasForeignKey(op => op.UserId)
                    .OnDelete(DeleteBehavior.Cascade);
+
+            // --- Versioning ---
+            builder.Property(op => op.VersionNumber)
+                   .HasColumnName("version_number")
+                   .IsRequired();
 
             // --- Properties ---
             builder.Property(op => op.Logo)
@@ -100,6 +105,11 @@ namespace Users.Infrastructure.Persistence.Configs
                    .HasConversion<string>()
                    .HasMaxLength(20);
 
+            builder.Property(op => op.RejectionReason)
+                   .HasColumnName("reject_reason")
+                   .HasColumnType("text")
+                   .IsRequired(false);
+
             // --- Auditing ---
             builder.Property(op => op.CreatedAt)
                    .HasColumnName("created_at")
@@ -135,10 +145,12 @@ namespace Users.Infrastructure.Persistence.Configs
             builder.HasIndex(op => op.CreatedAt)
                    .HasDatabaseName("ix_organizerprofile_created_at");
 
-            // --- 1-1 Constraint (Important) ---
-            builder.HasIndex(op => op.UserId)
-                   .IsUnique()
-                   .HasDatabaseName("ux_organizerprofile_user_id");
+            // --- Versioning Index (Important) ---
+            builder.HasIndex(op => new { op.UserId, op.VersionNumber })
+                   .HasDatabaseName("ix_organizerprofile_user_version");
+
+            builder.HasIndex(op => new { op.UserId, op.Status })
+                   .HasDatabaseName("ix_organizerprofile_user_status");
         }
     }
 }

@@ -6,6 +6,8 @@ using Users.Domain.Repositories;
 using Users.Domain.UOW;
 using Users.Domain.ValueObjects;
 
+namespace Users.Application.Features.Organizers.Handlers;
+
 public class UpdateOrganizerProfileCommandHandler
     : ICommandHandler<UpdateOrganizerProfileCommand>
 {
@@ -27,9 +29,9 @@ public class UpdateOrganizerProfileCommandHandler
         UpdateOrganizerProfileCommand command,
         CancellationToken cancellationToken)
     {
-        var user = await _userRepository.GetByIdAsync(
-            _currentUserService.UserId,
-            cancellationToken);
+        var userId = _currentUserService.UserId;
+
+        var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
 
         if (user == null)
         {
@@ -37,23 +39,30 @@ public class UpdateOrganizerProfileCommandHandler
                 Error.NotFound("User.NotFound", "User not found"));
         }
 
-        if (user.OrganizerProfile == null)
+        if (user.DraftProfile == null && user.PublishedProfile != null)
+        {
+            user.BeginProfileUpdate();
+        }
+
+        var profile = user.DraftProfile;
+
+        if (profile == null)
         {
             return Result.Failure(
-                Error.NotFound("Organizer.NotFound", "Organizer profile not found"));
+                Error.Conflict("Organizer.NoDraft", "No draft profile available for editing"));
         }
 
         var businessInfo = new OrganizerBusinessInfo(
-    command.Logo,
-    command.DisplayName,
-    command.Description,
-    command.Address,
-    command.SocialLink,
-    command.BusinessType,
-    command.TaxCode,
-    command.IdentityNumber,
-    command.CompanyName
-);
+            command.Logo,
+            command.DisplayName,
+            command.Description,
+            command.Address,
+            command.SocialLink,
+            command.BusinessType,
+            command.TaxCode,
+            command.IdentityNumber,
+            command.CompanyName
+        );
 
         user.UpdateOrganizerProfile(businessInfo);
 

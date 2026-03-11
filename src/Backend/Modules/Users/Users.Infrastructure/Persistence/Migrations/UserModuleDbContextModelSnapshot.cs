@@ -305,6 +305,10 @@ namespace Users.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("modified_by");
 
+                    b.Property<string>("RejectionReason")
+                        .HasColumnType("text")
+                        .HasColumnName("reject_reason");
+
                     b.Property<string>("SocialLink")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
@@ -337,6 +341,10 @@ namespace Users.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("verified_at");
 
+                    b.Property<int>("VersionNumber")
+                        .HasColumnType("integer")
+                        .HasColumnName("version_number");
+
                     b.HasKey("Id")
                         .HasName("pk_organizer_profile");
 
@@ -352,11 +360,13 @@ namespace Users.Infrastructure.Persistence.Migrations
                     b.HasIndex("Status")
                         .HasDatabaseName("ix_organizerprofile_status");
 
-                    b.HasIndex("UserId")
-                        .IsUnique()
-                        .HasDatabaseName("ux_organizerprofile_user_id");
+                    b.HasIndex("UserId", "Status")
+                        .HasDatabaseName("ix_organizerprofile_user_status");
 
-                    b.ToTable("OrganizerProfile", "users");
+                    b.HasIndex("UserId", "VersionNumber")
+                        .HasDatabaseName("ix_organizerprofile_user_version");
+
+                    b.ToTable("organizer_profile", "users");
                 });
 
             modelBuilder.Entity("Users.Domain.Entities.Otp", b =>
@@ -864,8 +874,8 @@ namespace Users.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Users.Domain.Entities.OrganizerProfile", b =>
                 {
                     b.HasOne("Users.Domain.Entities.User", "User")
-                        .WithOne("OrganizerProfile")
-                        .HasForeignKey("Users.Domain.Entities.OrganizerProfile", "UserId")
+                        .WithMany("OrganizerProfiles")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_organizer_profile_users_user_id");
@@ -926,7 +936,7 @@ namespace Users.Infrastructure.Persistence.Migrations
                 {
                     b.Navigation("ExternalIdentities");
 
-                    b.Navigation("OrganizerProfile");
+                    b.Navigation("OrganizerProfiles");
 
                     b.Navigation("Otps");
 

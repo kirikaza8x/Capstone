@@ -14,7 +14,7 @@ public class GetCurrentDeviceInfoEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapGet("api/users/device-info", async (
+        app.MapGet("api/user/device-info", async (
             HttpContext httpContext,
             ISender sender,
             CancellationToken cancellationToken) =>
