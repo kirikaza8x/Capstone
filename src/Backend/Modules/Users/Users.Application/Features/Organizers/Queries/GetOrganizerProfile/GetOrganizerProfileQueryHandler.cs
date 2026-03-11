@@ -2,6 +2,7 @@ using AutoMapper;
 using Shared.Application.Abstractions.Authentication;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
+using Users.Application.Features.Organizers.Dtos;
 using Users.Domain.Repositories;
 
 namespace Users.Application.Features.Organizers.Queries.GetOrganizerProfile;
@@ -9,9 +10,9 @@ namespace Users.Application.Features.Organizers.Queries.GetOrganizerProfile;
 internal sealed class GetOrganizerProfileQueryHandler(
     IUserRepository userRepository,
     ICurrentUserService currentUserService,
-    IMapper mapper) : IQueryHandler<GetOrganizerProfileQuery, OrganizerProfileResponse>
+    IMapper mapper) : IQueryHandler<GetOrganizerProfileQuery, OrganizerProfileResponseDto>
 {
-    public async Task<Result<OrganizerProfileResponse>> Handle(
+    public async Task<Result<OrganizerProfileResponseDto>> Handle(
         GetOrganizerProfileQuery query,
         CancellationToken cancellationToken)
     {
@@ -20,13 +21,13 @@ internal sealed class GetOrganizerProfileQueryHandler(
             cancellationToken);
 
         if (user is null)
-            return Result.Failure<OrganizerProfileResponse>(
+            return Result.Failure<OrganizerProfileResponseDto>(
                 Error.NotFound("User.NotFound", "User not found."));
 
         if (user.OrganizerProfiles is null)
-            return Result.Failure<OrganizerProfileResponse>(
+            return Result.Failure<OrganizerProfileResponseDto>(
                 Error.NotFound("Organizer.NotFound", "Organizer profile not found."));
 
-        return Result.Success(mapper.Map<OrganizerProfileResponse>(user.OrganizerProfiles));
+        return Result.Success(mapper.Map<OrganizerProfileResponseDto>(user.OrganizerProfiles));
     }
 }

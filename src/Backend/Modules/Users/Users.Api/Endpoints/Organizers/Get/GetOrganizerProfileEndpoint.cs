@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Shared.Api.Results;
+using Users.Application.Features.Organizers.Dtos;
 using Users.Application.Features.Organizers.Queries.GetOrganizerProfile;
 
 namespace Users.Api.Endpoints.Organizers.Get;
@@ -23,7 +24,7 @@ public class GetOrganizerProfileEndpoint : ICarterModule
         .WithName("GetOrganizerProfile")
         .WithSummary("Get organizer profile")
         .WithDescription("Retrieve the organizer profile of the current user.")
-        .Produces<OrganizerProfileResponse>(StatusCodes.Status200OK)
+        .Produces<OrganizerProfileResponseDto>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status404NotFound)
         .RequireAuthorization();
     }

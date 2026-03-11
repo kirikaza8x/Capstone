@@ -75,3 +75,23 @@ public sealed class OrganizerAdminListItemDto
 
     public DateTime? CreatedAt { get; init; }
 }
+
+public sealed record OrganizerProfileResponseDto(
+    Guid Id,
+    Guid UserId,
+    string? Logo,
+    string? DisplayName,
+    string? Description,
+    string? Address,
+    string? SocialLink,
+    string BusinessType,
+    string? TaxCode,
+    string? IdentityNumber,
+    string? CompanyName,
+    string? AccountName,
+    string? AccountNumber,
+    string? BankCode,
+    string? Branch,
+    string Status,
+    string Type,
+    DateTimeOffset? VerifiedAt);
