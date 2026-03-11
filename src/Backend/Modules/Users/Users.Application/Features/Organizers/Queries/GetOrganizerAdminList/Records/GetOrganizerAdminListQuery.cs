@@ -16,8 +16,8 @@ using Users.Domain.Enums;
 
 public sealed record GetOrganizerAdminListQuery : PagedQuery, IQuery<PagedResult<OrganizerAdminListItemDto>>
 {
-    public OrganizerStatus? Status {get ; init;}
-    public BusinessType? BusinessType {get ; init;}
-    public string? Search {get ; init;}
+    public OrganizerStatus? Status { get; init; }
+    public BusinessType? BusinessType { get; init; }
+    public string? Search { get; init; }
 }
 

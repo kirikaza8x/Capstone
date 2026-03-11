@@ -2,7 +2,7 @@ using FluentValidation;
 
 namespace Users.Application.Features.Organizers.Validators;
 
-public class SubmitOrganizerProfileCommandValidator 
+public class SubmitOrganizerProfileCommandValidator
     : AbstractValidator<SubmitOrganizerProfileCommand>
 {
     public SubmitOrganizerProfileCommandValidator()

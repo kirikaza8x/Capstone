@@ -10,7 +10,7 @@ public partial class User
     // --------------------
     // Organizer Profiles
     // --------------------
-    public virtual IReadOnlyCollection<OrganizerProfile> OrganizerProfiles 
+    public virtual IReadOnlyCollection<OrganizerProfile> OrganizerProfiles
         => _organizerProfiles.AsReadOnly();
 
     // --------------------
@@ -54,7 +54,7 @@ public partial class User
         if (DraftProfile != null || PendingProfile != null)
             throw new InvalidOperationException("A profile update is already in progress.");
 
-        var current = PublishedProfile 
+        var current = PublishedProfile
             ?? throw new InvalidOperationException("No verified profile exists to update.");
 
         int nextVersion = _organizerProfiles.Max(p => p.VersionNumber) + 1;

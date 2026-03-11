@@ -46,13 +46,13 @@ namespace Users.Application.Features.Users.Queries
                     (!query.Gender.HasValue || u.Gender == query.Gender.Value) &&
                     (string.IsNullOrWhiteSpace(query.PhoneNumber) ||
                      (u.PhoneNumber != null && u.PhoneNumber.Contains(query.PhoneNumber))) &&
-                    (!query.Status.HasValue || u.Status == query.Status.Value) 
-                    // &&
-                    // (string.IsNullOrWhiteSpace(query.SearchTerm) ||
-                    //  (u.Email != null && u.Email.Contains(query.SearchTerm)) ||
-                    //  (u.UserName != null && u.UserName.Contains(query.SearchTerm)) ||
-                    //  (u.FirstName != null && u.FirstName.Contains(query.SearchTerm)) ||
-                    //  (u.LastName != null && u.LastName.Contains(query.SearchTerm)))
+                    (!query.Status.HasValue || u.Status == query.Status.Value)
+                     // &&
+                     // (string.IsNullOrWhiteSpace(query.SearchTerm) ||
+                     //  (u.Email != null && u.Email.Contains(query.SearchTerm)) ||
+                     //  (u.UserName != null && u.UserName.Contains(query.SearchTerm)) ||
+                     //  (u.FirstName != null && u.FirstName.Contains(query.SearchTerm)) ||
+                     //  (u.LastName != null && u.LastName.Contains(query.SearchTerm)))
                      ,
                 includes: new Expression<Func<User, object>>[]
                     {

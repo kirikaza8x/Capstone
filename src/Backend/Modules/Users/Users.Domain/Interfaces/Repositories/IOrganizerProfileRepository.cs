@@ -1,7 +1,7 @@
 using Shared.Domain.Data.Repositories;
 using Users.Domain.Entities;
 
-public interface IOrganizerProfileRepository : IRepository<OrganizerProfile,Guid>
+public interface IOrganizerProfileRepository : IRepository<OrganizerProfile, Guid>
 {
     // Task<OrganizerProfile?> GetByUserIdAsync(
     //     Guid userId,

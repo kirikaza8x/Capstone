@@ -17,6 +17,6 @@ namespace Users.Infrastructure.Data.Repositories
             _dbSet = context.Set<OrganizerProfile>();
         }
 
-       
+
     }
 }

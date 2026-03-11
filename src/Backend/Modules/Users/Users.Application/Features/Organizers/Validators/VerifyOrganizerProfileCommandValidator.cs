@@ -3,7 +3,7 @@ using Users.Application.Features.Organizers.Commands;
 
 namespace Users.Application.Features.Organizers.Validators;
 
-public class VerifyOrganizerProfileCommandValidator 
+public class VerifyOrganizerProfileCommandValidator
     : AbstractValidator<VerifyOrganizerProfileCommand>
 {
     public VerifyOrganizerProfileCommandValidator()

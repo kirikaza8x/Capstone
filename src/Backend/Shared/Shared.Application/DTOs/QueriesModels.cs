@@ -53,7 +53,7 @@ public record PagedBaseRequestDto
     public int PageSize { get; init; } = 10;
 
     public string? SortColumn { get; init; } = "CreatedAt";
-    
+
     [DefaultValue("desc")]
     public string Dir { get; init; } = "asc";
 }

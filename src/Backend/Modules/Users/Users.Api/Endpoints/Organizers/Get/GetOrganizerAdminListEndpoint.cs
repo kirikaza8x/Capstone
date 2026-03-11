@@ -25,9 +25,9 @@ public class GetOrganizerAdminListEndpoint : ICarterModule
                 PageNumber = request.PageNumber,
                 PageSize = request.PageSize,
                 SortColumn = request.SortColumn,
-                Status=request.Status,
-                BusinessType=request.BusinessType,
-                Search=request.Search
+                Status = request.Status,
+                BusinessType = request.BusinessType,
+                Search = request.Search
             };
 
             var result = await sender.Send(query, cancellationToken);
