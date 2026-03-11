@@ -1,34 +1,35 @@
-using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Shared.Api.Results;
 using Shared.Domain.Abstractions;
-using Shared.Application.DTOs;
+using Users.Application.Features.Users.Dtos;
 using Users.Application.Features.Users.Queries;
 using Carter;
+using MediatR;
 
 namespace Users.Api.Users.Get;
 
-public class GetCurrentUserEndpoint : ICarterModule
+public class GetUserByIdEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapGet("api/user/current", async (
+        app.MapGet("api/user/{id:guid}", async (
+            Guid id,
             ISender sender,
             CancellationToken cancellationToken) =>
         {
-            Result<CurrentUserDto> result = await sender.Send(
-                new GetCurrentUserQuery(),
+            Result<UserResponseDto> result = await sender.Send(
+                new GetUserByIdQuery(id),
                 cancellationToken);
 
             return result.ToOk();
         })
         .WithTags("Users")
-        .WithName("GetCurrentUser")
-        .WithSummary("Get current user info")
-        .WithDescription("Returns information about the currently authenticated user")
-        .Produces<CurrentUserDto>(StatusCodes.Status200OK)
+        .WithName("GetUserById")
+        .WithSummary("Get user by ID")
+        .WithDescription("Returns information about a user by their unique identifier")
+        .Produces<UserResponseDto>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status404NotFound);
     }
 }

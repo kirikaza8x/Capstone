@@ -26,7 +26,6 @@ public class GetUsersFilterEndpoint : ICarterModule
 
             var result = await sender.Send(query, cancellationToken);
 
-            // 3. Return the PagedResult using your Result extension
             return result.ToOk();
         })
         .WithTags("Users")
