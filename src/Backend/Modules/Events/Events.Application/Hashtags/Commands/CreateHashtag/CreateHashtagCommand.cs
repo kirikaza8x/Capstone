@@ -2,4 +2,4 @@
 
 namespace Events.Application.Hashtags.Commands.CreateHashtag;
 
-public sealed record CreateHashtagCommand(string Name, string Slug) : ICommand<int>;
+public sealed record CreateHashtagCommand(string Name) : ICommand<int>;

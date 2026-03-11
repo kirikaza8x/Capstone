@@ -2,6 +2,7 @@
 using Events.Domain.Repositories;
 using Events.Domain.Uow;
 using Shared.Application.Abstractions.Messaging;
+using Shared.Application.Helpers;
 using Shared.Domain.Abstractions;
 
 namespace Events.Application.Hashtags.Commands.UpdateHashtag;
@@ -16,11 +17,13 @@ internal sealed class UpdateHashtagCommandHandler(
         if (hashtag is null)
             return Result.Failure(EventErrors.HashtagErrors.NotFound(command.HashtagId));
 
-        var slugExists = await hashtagRepository.IsSlugExistsAsync(command.Slug, cancellationToken);
-        if (slugExists && hashtag.Slug != command.Slug)
-            return Result.Failure(EventErrors.HashtagErrors.SlugAlreadyExists(command.Slug));
+        var slug = SlugHelper.Generate(command.Name);
 
-        hashtag.Update(command.Name, command.Slug);
+        var slugExists = await hashtagRepository.IsSlugExistsAsync(slug, cancellationToken);
+        if (slugExists && hashtag.Slug != slug)
+            return Result.Failure(EventErrors.HashtagErrors.SlugAlreadyExists(slug));
+
+        hashtag.Update(command.Name, slug);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 

@@ -10,7 +10,7 @@ using Users.PublicApi.Constants;
 
 namespace Events.Api.Hashtags;
 
-public sealed record CreateHashtagRequest(string Name, string Slug);
+public sealed record CreateHashtagRequest(string Name);
 
 public class CreateHashtagEndpoint : ICarterModule
 {
@@ -22,7 +22,7 @@ public class CreateHashtagEndpoint : ICarterModule
             CancellationToken cancellationToken) =>
         {
             var result = await sender.Send(
-                new CreateHashtagCommand(request.Name, request.Slug),
+                new CreateHashtagCommand(request.Name),
                 cancellationToken);
 
             return result.ToCreated("GetHashtagById", id => new { hashtagId = id });
