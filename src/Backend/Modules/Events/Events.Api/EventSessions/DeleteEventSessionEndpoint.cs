@@ -9,7 +9,7 @@ using Shared.Api.Extensions;
 using Shared.Api.Results;
 using Users.PublicApi.Constants;
 
-namespace Events.Api.Events.Delete;
+namespace Events.Api.EventSessions;
 
 public class DeleteEventSessionEndpoint : ICarterModule
 {

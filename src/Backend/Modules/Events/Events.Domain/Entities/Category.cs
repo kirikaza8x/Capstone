@@ -22,8 +22,9 @@ public sealed class Category : Entity<int>
         };
     }
 
-    public void Update(string name, string? description)
+    public void Update(string code, string name, string? description)
     {
+        Code = code;
         Name = name;
         Description = description;
         ModifiedAt = DateTime.UtcNow;

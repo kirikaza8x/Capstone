@@ -32,9 +32,10 @@ public class UpdateHashtagEndpoint : ICarterModule
         .WithTags(Constants.Tags.Hashtags)
         .WithName("UpdateHashtag")
         .WithSummary("Update hashtag")
-        .WithDescription("Update an existing hashtag's name.")
+        .WithDescription("Update an existing hashtag.")
         .Produces(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status404NotFound)
-        .RequireRoles(Roles.AdminAndStaff);
+        .ProducesProblem(StatusCodes.Status409Conflict)
+        .RequireRoles(Roles.AllExceptAttendee);
     }
 }

@@ -1,4 +1,5 @@
-﻿using Shared.Domain.DDD;
+﻿using Shared.Domain.Data.Repositories;
+using Shared.Domain.DDD;
 
 namespace Shared.Domain.Data;
 

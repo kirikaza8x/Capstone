@@ -1,4 +1,4 @@
-using Shared.Domain.Data;
+using Shared.Domain.Data.Repositories;
 using Users.Domain.Entities;
 
 namespace Users.Domain.Repositories

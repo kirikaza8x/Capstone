@@ -1,5 +1,4 @@
-
-using Shared.Domain.Data;
+using Shared.Domain.Data.Repositories;
 
 namespace Shared.Infrastructure.Data;
 

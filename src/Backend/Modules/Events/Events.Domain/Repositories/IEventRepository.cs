@@ -1,6 +1,6 @@
 ﻿using Events.Domain.Entities;
 using Events.Domain.Enums;
-using Shared.Domain.Data;
+using Shared.Domain.Data.Repositories;
 using Shared.Domain.Pagination;
 using Shared.Domain.Queries;
 

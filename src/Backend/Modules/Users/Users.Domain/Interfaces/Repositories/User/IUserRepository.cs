@@ -1,5 +1,5 @@
 using Users.Domain.Entities;
-using Shared.Domain.Data;
+using Shared.Domain.Data.Repositories;
 
 namespace Users.Domain.Repositories
 {
@@ -15,5 +15,6 @@ namespace Users.Domain.Repositories
         Task<User> RegisterAsync(User user, Role role, CancellationToken cancellationToken = default);
         Task<User?> GetByExternalIdentityAsync(string provider, string providerKey, CancellationToken cancellationToken = default);
         Task<User?> GetByEmailOtpAsync(string email, CancellationToken cancellationToken = default);
+        Task<User?> GetByIdWithOrganizerProfileAsync(Guid userId, CancellationToken cancellationToken = default);
     }
 }

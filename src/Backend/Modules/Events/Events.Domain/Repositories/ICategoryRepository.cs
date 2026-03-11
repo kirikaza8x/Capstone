@@ -1,5 +1,5 @@
 ﻿using Events.Domain.Entities;
-using Shared.Domain.Data;
+using Shared.Domain.Data.Repositories;
 
 namespace Events.Domain.Repositories;
 

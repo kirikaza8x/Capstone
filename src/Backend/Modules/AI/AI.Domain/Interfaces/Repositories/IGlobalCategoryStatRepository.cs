@@ -1,5 +1,5 @@
 using AI.Domain.ReadModels;
-using Shared.Domain.Data;
+using Shared.Domain.Data.Repositories;
 
 namespace AI.Domain.Repositories
 {

@@ -13,6 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Npgsql;
 using Shared.Domain.Data;
+using Shared.Domain.Data.Repositories;
 using Shared.Infrastructure.Configs;
 using Shared.Infrastructure.Configs.Database;
 using Shared.Infrastructure.Data.Seeds;

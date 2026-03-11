@@ -224,6 +224,17 @@ public sealed class Event : AggregateRoot<Guid>
         return Result.Success();
     }
 
+    public Result RequestPublish()
+    {
+        if (Status != EventStatus.Draft)
+            return Result.Failure(EventErrors.Event.CannotRequestPublish(Status));
+
+        Status = EventStatus.PendingReview;
+        ModifiedAt = DateTime.UtcNow;
+
+        return Result.Success();
+    }
+
     public Result RemoveImage(Guid imageId)
     {
         var image = _images.FirstOrDefault(i => i.Id == imageId);

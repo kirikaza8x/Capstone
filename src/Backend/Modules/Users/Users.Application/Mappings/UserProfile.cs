@@ -1,6 +1,7 @@
 using AutoMapper;
 using Shared.Application.Dtos.Queries;
 using Shared.Domain.Queries;
+using Users.Application.Features.Organizers.Queries.GetOrganizerProfile;
 using Users.Application.Features.Users.Dtos;
 using Users.Application.Features.Users.Queries;
 using Users.Domain.Entities;
@@ -49,6 +50,13 @@ namespace Users.Application.Mappings
                 .ForMember(dest => dest.Roles,
                     opt => opt.MapFrom(src => src.Roles.Select(r => r.Name).ToList()))
                 .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.Id));
+
+            // Organizer Profile Mapping
+            CreateMap<OrganizerProfile, OrganizerProfileResponse>()
+                .ForMember(dest => dest.BusinessType, opt => opt.MapFrom(src => src.BusinessType.ToString()))
+                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
+                .ForMember(dest => dest.Type, opt => opt.MapFrom(src => src.Type.ToString()));
+
         }
     }
 }
