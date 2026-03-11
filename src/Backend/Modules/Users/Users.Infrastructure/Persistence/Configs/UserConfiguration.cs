@@ -88,16 +88,15 @@ namespace Users.Infrastructure.Persistence.Configs
                    .OnDelete(DeleteBehavior.Cascade);
 
             // ================================
-            // Organizer Profile Relationship (1-1)
+            // Organizer Profiles Relationship (Versioned)
             // ================================
-            builder.HasOne(u => u.OrganizerProfile)
+            builder.HasMany(u => u.OrganizerProfiles)
                    .WithOne(op => op.User)
-                   .HasForeignKey<OrganizerProfile>(op => op.UserId)
+                   .HasForeignKey(op => op.UserId)
                    .OnDelete(DeleteBehavior.Cascade);
 
-            // Optional navigation configuration
-            builder.Navigation(u => u.OrganizerProfile)
-                   .AutoInclude(false);
+            builder.Navigation(u => u.OrganizerProfiles)
+                   .UsePropertyAccessMode(PropertyAccessMode.Field);
 
             // --- Indexes ---
             builder.HasIndex(u => u.Email)
@@ -142,9 +141,7 @@ namespace Users.Infrastructure.Persistence.Configs
                    .HasColumnName("is_active")
                    .HasDefaultValue(true);
 
-            // --- Relationships ---
-
-            // Roles (Many-to-Many)
+            // --- Roles (Many-to-Many) ---
             builder.HasMany(u => u.Roles)
                    .WithMany()
                    .UsingEntity<Dictionary<string, object>>(

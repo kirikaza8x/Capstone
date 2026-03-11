@@ -1,21 +1,17 @@
 using Shared.Application.Abstractions.Authentication;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
-using Users.Application.Features.Organizers.Commands;
 using Users.Domain.Repositories;
 using Users.Domain.UOW;
-using Users.Domain.ValueObjects;
 
-namespace Users.Application.Features.Organizers.Handlers;
-
-public class UpdateOrganizerBankCommandHandler
-    : ICommandHandler<UpdateOrganizerBankCommand>
+public class BeginOrganizerProfileUpdateCommandHandler
+    : ICommandHandler<BeginOrganizerProfileUpdateCommand>
 {
     private readonly IUserRepository _userRepository;
     private readonly ICurrentUserService _currentUserService;
     private readonly IUserUnitOfWork _unitOfWork;
 
-    public UpdateOrganizerBankCommandHandler(
+    public BeginOrganizerProfileUpdateCommandHandler(
         IUserRepository userRepository,
         ICurrentUserService currentUserService,
         IUserUnitOfWork unitOfWork)
@@ -26,13 +22,11 @@ public class UpdateOrganizerBankCommandHandler
     }
 
     public async Task<Result> Handle(
-        UpdateOrganizerBankCommand command,
+        BeginOrganizerProfileUpdateCommand command,
         CancellationToken cancellationToken)
     {
-        var userId = _currentUserService.UserId;
-
         var user = await _userRepository.GetByIdAsync(
-            userId,
+            _currentUserService.UserId,
             cancellationToken);
 
         if (user == null)
@@ -41,23 +35,7 @@ public class UpdateOrganizerBankCommandHandler
                 Error.NotFound("User.NotFound", "User not found"));
         }
 
-        // Get editable organizer profile
-        var profile = user.DraftProfile ?? user.PendingProfile;
-
-        if (profile == null)
-        {
-            return Result.Failure(
-                Error.NotFound("Organizer.NotFound", "No editable organizer profile found"));
-        }
-
-        var bankInfo = new OrganizerBankInfo(
-            command.AccountName,
-            command.AccountNumber,
-            command.BankCode,
-            command.Branch
-        );
-
-        user.UpdateOrganizerBank(bankInfo);
+        user.BeginProfileUpdate();
 
         _userRepository.Update(user);
 

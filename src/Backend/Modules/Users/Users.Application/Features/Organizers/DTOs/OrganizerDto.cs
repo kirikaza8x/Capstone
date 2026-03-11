@@ -22,4 +22,15 @@ namespace Users.Application.Features.Organizers.Dtos
         string BankCode,
         string? Branch
     );
+
+    public sealed class VerifyOrganizerProfileRequestDto
+    {
+        public Guid UserId { get; set; }
+    }
+
+    public sealed class RejectOrganizerProfileRequestDto
+    {
+        public Guid UserId { get; set; }
+        public string Reason { get; set; } = default!;
+    }
 }

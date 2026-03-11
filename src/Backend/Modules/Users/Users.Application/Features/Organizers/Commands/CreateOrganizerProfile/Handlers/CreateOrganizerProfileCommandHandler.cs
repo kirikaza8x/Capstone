@@ -32,6 +32,7 @@ public class CreateOrganizerProfileCommandHandler
         CreateOrganizerProfileCommand command,
         CancellationToken cancellationToken)
     {
+        // Validate request
         var validationResult = await _validator.ValidateAsync(command, cancellationToken);
 
         if (!validationResult.IsValid)
@@ -42,6 +43,7 @@ public class CreateOrganizerProfileCommandHandler
                 Error.Validation("Organizer.Create.Validation", error.ErrorMessage));
         }
 
+        // Get current user
         var userId = _currentUserService.UserId;
 
         var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
@@ -58,6 +60,15 @@ public class CreateOrganizerProfileCommandHandler
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return Result.Success(user.OrganizerProfile!.Id);
+        // Get the newly created draft profile
+        var draftProfile = user.PendingProfile;
+
+        if (draftProfile == null)
+        {
+            return Result.Failure<Guid>(
+                Error.Failure("Organizer.Create.Failed", "Failed to create organizer profile."));
+        }
+
+        return Result.Success(draftProfile.Id);
     }
 }

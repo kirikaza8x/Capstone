@@ -31,7 +31,13 @@ public class RejectOrganizerProfileCommandHandler
                 Error.NotFound("User.NotFound", "User not found"));
         }
 
-        user.RejectOrganizerProfile();
+        if (user.OrganizerProfiles == null)
+        {
+            return Result.Failure(
+                Error.NotFound("Organizer.NotFound", "Organizer profile not found"));
+        }
+
+        user.RejectOrganizerProfile(command.Reason);
 
         _userRepository.Update(user);
 

@@ -32,6 +32,12 @@ public class VerifyOrganizerProfileCommandHandler
                 Error.NotFound("User.NotFound", "User not found"));
         }
 
+        if (user.OrganizerProfiles == null)
+        {
+            return Result.Failure(
+                Error.NotFound("Organizer.NotFound", "Organizer profile not found"));
+        }
+
         user.VerifyOrganizerProfile();
 
         _userRepository.Update(user);
