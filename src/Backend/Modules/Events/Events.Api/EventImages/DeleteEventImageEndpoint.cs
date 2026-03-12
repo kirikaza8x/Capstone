@@ -1,5 +1,5 @@
 ﻿using Carter;
-using Events.Application.Events.Commands.DeleteEventImage;
+using Events.Application.EventImages.DeleteEventImage;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;

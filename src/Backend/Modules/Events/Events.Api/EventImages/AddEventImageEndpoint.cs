@@ -1,5 +1,5 @@
 ﻿using Carter;
-using Events.Application.Events.Commands.AddEventImage;
+using Events.Application.EventImages.AddEventImage;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
