@@ -12,7 +12,7 @@ public interface IEventRepository : IRepository<Event, Guid>
     Task<Event?> GetByIdWithTicketTypesAsync(Guid id, CancellationToken cancellationToken = default);
     Task<Event?> GetByIdWithTicketTypesAndAreasAsync(Guid id, CancellationToken cancellationToken = default);
     Task<Event?> GetByIdWithAreasAndSeatsAsync(Guid id, CancellationToken cancellationToken = default);
-    Task<Event?> GetByIdWithAllDetailsAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<Event?> GetDetailsByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<Event>> GetByOrganizerIdAsync(Guid organizerId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Event>> GetByStatusAsync(EventStatus status, CancellationToken cancellationToken = default);

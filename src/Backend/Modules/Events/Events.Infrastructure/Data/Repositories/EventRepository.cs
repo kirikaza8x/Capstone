@@ -38,7 +38,7 @@ internal sealed class EventRepository(EventsDbContext context)
             .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
     }
 
-    public async Task<Event?> GetByIdWithAllDetailsAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<Event?> GetDetailsByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await _context.Events
             .Include(e => e.Images)

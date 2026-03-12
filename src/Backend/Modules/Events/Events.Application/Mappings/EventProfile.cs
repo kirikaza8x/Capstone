@@ -14,7 +14,8 @@ public sealed class EventProfile : Profile
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
             .ForMember(dest => dest.Hashtags, opt => opt.MapFrom(src => src.EventHashtags))
             .ForMember(dest => dest.Categories, opt => opt.MapFrom(src => src.EventCategories))
-            .ForMember(dest => dest.ActorImages, opt => opt.MapFrom(src => src.ActorImages));
+            .ForMember(dest => dest.ActorImages, opt => opt.MapFrom(src => src.ActorImages))
+            .ForMember(dest => dest.TicketTypes, opt => opt.MapFrom(src => src.TicketTypes));
 
         CreateMap<Event, EventResponse>()
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))

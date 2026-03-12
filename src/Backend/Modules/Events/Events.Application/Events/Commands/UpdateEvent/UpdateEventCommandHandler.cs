@@ -73,7 +73,7 @@ internal sealed class UpdateEventCommandHandler(
 {
     public async Task<Result> Handle(UpdateEventCommand command, CancellationToken cancellationToken)
     {
-        var @event = await eventRepository.GetByIdWithAllDetailsAsync(command.EventId, cancellationToken);
+        var @event = await eventRepository.GetDetailsByIdAsync(command.EventId, cancellationToken);
 
         if (@event is null)
             return Result.Failure(EventErrors.Event.NotFound(command.EventId));
