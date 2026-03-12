@@ -96,6 +96,25 @@ public static class EventErrors
             "The spec must contain at least one area.");
     }
 
+    public static class EventMemberErrors
+    {
+        public static Error NotFound(Guid memberId) => Error.NotFound(
+            "EventMember.NotFound",
+            $"The event member with ID '{memberId}' was not found.");
+
+        public static Error AlreadyExists(string email) => Error.Conflict(
+            "EventMember.AlreadyExists",
+            $"User '{email}' is already a member of this event.");
+
+        public static readonly Error UserNotEligible = Error.Validation(
+            "EventMember.UserNotEligible",
+            "Only users with Attendee role can be added as event members.");
+
+        public static Error UserNotFound(string email) => Error.NotFound(
+            "EventMember.UserNotFound",
+            $"No registered user found with email '{email}'.");
+    }
+
     public static class EventSessionErrors
     {
         public static Error NotFound(Guid sessionId) => Error.NotFound(

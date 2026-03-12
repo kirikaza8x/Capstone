@@ -139,4 +139,11 @@ internal sealed class EventRepository(EventsDbContext context)
             .AsSplitQuery()
             .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
     }
+
+    public async Task<Event?> GetByIdWithMembersAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await _context.Events
+            .Include(e => e.Members)
+            .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
+    }
 }

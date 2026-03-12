@@ -32,7 +32,7 @@ internal sealed class GetEventsByOrganizerQueryHandler(
                 (statuses.Count == 0 || statuses.Contains(e.Status)) &&
                 (string.IsNullOrWhiteSpace(query.Title) ||
                  e.Title.Contains(query.Title)),
-            includes: [e => e.EventCategories],
+            includes: [],
             cancellationToken: cancellationToken);
 
         var responseItems = mapper.Map<IReadOnlyList<EventsByOrganizerResponse>>(pagedEvents.Items);

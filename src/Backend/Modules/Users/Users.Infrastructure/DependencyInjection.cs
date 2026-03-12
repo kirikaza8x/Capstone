@@ -26,8 +26,10 @@ using Users.Domain.UOW;
 using Users.Infrastructure.Data.UOW;
 using Users.Infrastructure.ImportExport;
 using Users.Infrastructure.Persistence.Contexts;
+using Users.Infrastructure.PublicApi;
 using Users.Infrastructure.Services.Authentication;
 using Users.Infrastructure.Services.Sms;
+using Users.PublicApi.Services;
 
 namespace Users.Infrastructure
 {
@@ -144,6 +146,8 @@ namespace Users.Infrastructure
             services.AddScoped<IRefreshTokenService, RefreshTokenService>();
             services.AddScoped<IDeviceDetectionService, DeviceDetectionService>();
 
+            // Public Api
+            services.AddScoped<IUserPublicApi, UserPublicApi>();
             return services;
         }
 

@@ -1,4 +1,5 @@
-﻿using Shared.Domain.DDD;
+﻿
+using Shared.Domain.DDD;
 
 namespace Events.Domain.Entities;
 
@@ -14,12 +15,7 @@ public sealed class EventMember : Entity<Guid>
 
     public Event Event { get; private set; } = null!;
 
-    public static EventMember Create(
-        Guid eventId,
-        Guid userId,
-        List<string> permissions,
-        string status,
-        Guid assignedBy)
+    public static EventMember Create(Guid eventId, Guid userId, List<string> permissions, Guid assignedBy)
     {
         return new EventMember
         {
@@ -27,7 +23,7 @@ public sealed class EventMember : Entity<Guid>
             EventId = eventId,
             UserId = userId,
             Permissions = permissions,
-            Status = status,
+            Status = "Active",
             AssignedBy = assignedBy,
             CreatedAt = DateTime.UtcNow
         };
@@ -39,9 +35,9 @@ public sealed class EventMember : Entity<Guid>
         ModifiedAt = DateTime.UtcNow;
     }
 
-    public void UpdateStatus(string status)
+    public void Deactivate()
     {
-        Status = status;
+        Status = "Inactive";
         ModifiedAt = DateTime.UtcNow;
     }
 }
