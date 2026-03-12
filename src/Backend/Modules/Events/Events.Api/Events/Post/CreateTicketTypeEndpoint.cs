@@ -1,21 +1,17 @@
 ﻿using Carter;
 using Events.Application.Events.Commands.CreateTicketType;
-using Events.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using Shared.Api.Extensions;
 using Shared.Api.Results;
+using Users.PublicApi.Constants;
 
 namespace Events.Api.Events.Post;
 
-public sealed record CreateTicketTypeRequest(
-    string Name,
-    decimal Price,
-    int Quantity,
-    AreaType Type,
-    Guid? AreaId);
+public sealed record CreateTicketTypeRequest(string Name, decimal Price);
 
 public class CreateTicketTypeEndpoint : ICarterModule
 {
@@ -23,34 +19,28 @@ public class CreateTicketTypeEndpoint : ICarterModule
     {
         app.MapPost(Constants.Routes.TicketTypes, async (
             [FromRoute] Guid eventId,
-            [FromRoute] Guid sessionId,
             [FromBody] CreateTicketTypeRequest request,
             ISender sender,
             CancellationToken cancellationToken) =>
         {
             var result = await sender.Send(
-                new CreateTicketTypeCommand(
-                    sessionId,
-                    request.Name,
-                    request.Price,
-                    request.Quantity,
-                    request.Type,
-                    request.AreaId),
+                new CreateTicketTypeCommand(eventId, request.Name, request.Price),
                 cancellationToken);
 
             if (result.IsFailure)
                 return result.ToProblem();
 
             return result.ToCreated(
-                $"/api/events/{eventId}/sessions/{sessionId}/ticket-types/{result.Value}",
+                $"/api/events/{eventId}/ticket-types/{result.Value}",
                 "Ticket type created successfully.");
         })
         .WithTags(Constants.Tags.TicketTypes)
         .WithName("CreateTicketType")
         .WithSummary("Create a new ticket type")
-        .WithDescription("Creates a new ticket type for a session.")
+        .WithDescription("Creates a new ticket type for an event. Assign area separately after seatmap is created.")
         .Produces<Guid>(StatusCodes.Status201Created)
         .ProducesProblem(StatusCodes.Status400BadRequest)
-        .ProducesProblem(StatusCodes.Status404NotFound);
+        .ProducesProblem(StatusCodes.Status404NotFound)
+        .RequireRoles(Roles.Organizer);
     }
 }

@@ -33,7 +33,7 @@ internal static class Constants
         public const string SessionById = $"{Sessions}/{{sessionId:guid}}";
 
         // Ticket Types
-        public const string TicketTypes = $"{SessionById}/ticket-types";
+        public const string TicketTypes = $"{EventById}/ticket-types";
         public const string TicketTypeById = $"{TicketTypes}/{{ticketTypeId:guid}}";
 
         // Areas

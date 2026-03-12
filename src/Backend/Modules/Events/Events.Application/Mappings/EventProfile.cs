@@ -14,7 +14,8 @@ public sealed class EventProfile : Profile
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
             .ForMember(dest => dest.Hashtags, opt => opt.MapFrom(src => src.EventHashtags))
             .ForMember(dest => dest.Categories, opt => opt.MapFrom(src => src.EventCategories))
-            .ForMember(dest => dest.ActorImages, opt => opt.MapFrom(src => src.ActorImages));
+            .ForMember(dest => dest.ActorImages, opt => opt.MapFrom(src => src.ActorImages))
+            .ForMember(dest => dest.TicketTypes, opt => opt.MapFrom(src => src.TicketTypes));
 
         CreateMap<Event, EventResponse>()
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
@@ -24,10 +25,10 @@ public sealed class EventProfile : Profile
         CreateMap<EventActorImage, EventActorImageDto>();
 
         CreateMap<TicketType, TicketTypeDto>()
-            .ForMember(dest => dest.Type, opt => opt.MapFrom(src => src.Type.ToString()));
+            .ForMember(dest => dest.AreaName, opt => opt.MapFrom(src => src.Area != null ? src.Area.Name : null))
+            .ForMember(dest => dest.AreaType, opt => opt.MapFrom(src => src.Area != null ? src.Area.Type.ToString() : null));
 
-        CreateMap<EventSession, EventSessionDto>()
-            .ForMember(dest => dest.TicketTypes, opt => opt.MapFrom(src => src.TicketTypes));
+        CreateMap<EventSession, EventSessionDto>();
 
         CreateMap<EventHashtag, EventHashtagDto>()
             .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.HashtagId))

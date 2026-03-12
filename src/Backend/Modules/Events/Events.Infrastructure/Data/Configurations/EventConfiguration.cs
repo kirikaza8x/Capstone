@@ -12,12 +12,9 @@ internal sealed class EventConfiguration : IEntityTypeConfiguration<Event>
         builder.ToTable("events");
 
         builder.HasKey(e => e.Id);
-
         builder.Property(e => e.OrganizerId).IsRequired();
 
-        builder.Property(e => e.Title)
-            .HasMaxLength(500)
-            .IsRequired();
+        builder.Property(e => e.Title).HasMaxLength(500).IsRequired();
 
         builder.Property(e => e.Status)
             .HasConversion(
@@ -37,19 +34,23 @@ internal sealed class EventConfiguration : IEntityTypeConfiguration<Event>
         builder.Property(e => e.MapUrl).HasMaxLength(500);
         builder.Property(e => e.Policy).HasColumnType("text");
         builder.Property(e => e.Spec).HasColumnType("jsonb");
-        builder.HasIndex(e => e.UrlPath)
-                .IsUnique()
-                .HasFilter("\"url_path\" IS NOT NULL");
         builder.Property(e => e.IsEmailReminderEnabled).HasDefaultValue(false);
         builder.Property(e => e.CancellationReason).HasColumnType("text");
 
+        builder.HasIndex(e => e.UrlPath)
+            .IsUnique()
+            .HasFilter("\"url_path\" IS NOT NULL");
         builder.HasIndex(e => e.OrganizerId);
         builder.HasIndex(e => e.Status);
 
-        // Relationships
         builder.HasMany(e => e.Sessions)
             .WithOne(s => s.Event)
             .HasForeignKey(s => s.EventId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(e => e.TicketTypes)
+            .WithOne(t => t.Event)
+            .HasForeignKey(t => t.EventId)
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasMany(e => e.Images)

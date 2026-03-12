@@ -1,5 +1,4 @@
 ﻿using Events.Domain.Entities;
-using Events.Domain.Enums;
 using Events.Domain.Errors;
 using Events.Domain.Repositories;
 using Events.Domain.Uow;
@@ -7,7 +6,6 @@ using FluentValidation;
 using Shared.Application.Abstractions.Authentication;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
-using static Events.Domain.Errors.EventErrors;
 
 namespace Events.Application.Events.Commands.CreateTicketType;
 
@@ -15,8 +13,8 @@ public sealed class CreateTicketTypeValidator : AbstractValidator<CreateTicketTy
 {
     public CreateTicketTypeValidator()
     {
-        RuleFor(x => x.EventSessionId)
-            .NotEmpty().WithMessage("Event session ID is required.");
+        RuleFor(x => x.EventId)
+            .NotEmpty().WithMessage("Event ID is required.");
 
         RuleFor(x => x.Name)
             .NotEmpty().WithMessage("Ticket type name is required.")
@@ -24,49 +22,27 @@ public sealed class CreateTicketTypeValidator : AbstractValidator<CreateTicketTy
 
         RuleFor(x => x.Price)
             .GreaterThanOrEqualTo(0).WithMessage("Price must be greater than or equal to 0.");
-
-        RuleFor(x => x.Quantity)
-            .GreaterThan(0).WithMessage("Quantity must be greater than 0.");
-
-        RuleFor(x => x.Type)
-            .IsInEnum().WithMessage("Invalid ticket allocation type.");
-
-        RuleFor(x => x.AreaId)
-            .NotEmpty()
-            .When(x => x.Type == AreaType.Seat)
-            .WithMessage("Area ID is required when ticket type is Seat.");
     }
 }
 
 internal sealed class CreateTicketTypeCommandHandler(
     IEventRepository eventRepository,
-    IEventUnitOfWork unitOfWork,
-    ICurrentUserService currentUserService) : ICommandHandler<CreateTicketTypeCommand, Guid>
+    ICurrentUserService currentUserService,
+    IEventUnitOfWork unitOfWork) : ICommandHandler<CreateTicketTypeCommand, Guid>
 {
     public async Task<Result<Guid>> Handle(CreateTicketTypeCommand command, CancellationToken cancellationToken)
     {
-        var session = await eventRepository.GetEventSessionByIdAsync(command.EventSessionId, cancellationToken);
-
-        if (session is null)
-            return Result.Failure<Guid>(EventSessionErrors.NotFound(command.EventSessionId));
-
-        var @event = await eventRepository.GetByIdAsync(session.EventId, cancellationToken);
+        var @event = await eventRepository.GetByIdWithTicketTypesAsync(command.EventId, cancellationToken);
 
         if (@event is null)
-            return Result.Failure<Guid>(EventErrors.Event.NotFound(session.EventId));
+            return Result.Failure<Guid>(EventErrors.Event.NotFound(command.EventId));
 
         if (@event.OrganizerId != currentUserService.UserId)
             return Result.Failure<Guid>(EventErrors.Event.NotOwner);
 
-        var ticketType = TicketType.Create(
-            command.EventSessionId,
-            command.Name,
-            command.Price,
-            command.Quantity,
-            command.Type,
-            command.AreaId);
+        var ticketType = TicketType.Create(command.EventId, command.Name, command.Price);
 
-        session.AddTicketType(ticketType);
+        @event.AddTicketType(ticketType);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Success(ticketType.Id);

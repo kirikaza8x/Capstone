@@ -19,13 +19,13 @@ internal sealed class GetEventQueryHandler(
     {
         string cacheKey = CacheKeys.Events.GetById(query.EventId);
 
-        var @event = await eventRepository.GetByIdWithAllDetailsAsync(query.EventId, cancellationToken);
+        var @event = await eventRepository.GetDetailsByIdAsync(query.EventId, cancellationToken);
 
         var eventResponse = await cacheService.GetOrCreateAsync(
             key: cacheKey,
             factory: async (token) =>
             {
-                var @event = await eventRepository.GetByIdWithAllDetailsAsync(query.EventId, token);
+                var @event = await eventRepository.GetDetailsByIdAsync(query.EventId, token);
 
                 if (@event is null)
                     return null;

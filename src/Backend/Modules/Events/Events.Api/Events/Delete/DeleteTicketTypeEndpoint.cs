@@ -17,13 +17,12 @@ public class DeleteTicketTypeEndpoint : ICarterModule
     {
         app.MapDelete(Constants.Routes.TicketTypeById, async (
             [FromRoute] Guid eventId,
-            [FromRoute] Guid sessionId,
             [FromRoute] Guid ticketTypeId,
             ISender sender,
             CancellationToken cancellationToken) =>
         {
             var result = await sender.Send(
-                new DeleteTicketTypeCommand(sessionId, ticketTypeId),
+                new DeleteTicketTypeCommand(eventId, ticketTypeId),
                 cancellationToken);
 
             return result.ToOk("Ticket type deleted successfully.");
@@ -31,7 +30,7 @@ public class DeleteTicketTypeEndpoint : ICarterModule
         .WithTags(Constants.Tags.TicketTypes)
         .WithName("DeleteTicketType")
         .WithSummary("Delete ticket type")
-        .WithDescription("Delete a ticket type from a session.")
+        .WithDescription("Delete a ticket type from an event.")
         .Produces(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status403Forbidden)
         .ProducesProblem(StatusCodes.Status404NotFound)

@@ -15,7 +15,7 @@ internal sealed class GetEventSessionsQueryHandler(
         GetEventSessionsQuery query,
         CancellationToken cancellationToken)
     {
-        var @event = await eventRepository.GetByIdWithSessionsAndTicketTypesAsync(query.EventId, cancellationToken);
+        var @event = await eventRepository.GetByIdWithSessionsAsync(query.EventId, cancellationToken);
 
         if (@event is null)
             return Result.Failure<IReadOnlyList<EventSessionDto>>(EventErrors.Event.NotFound(query.EventId));

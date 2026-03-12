@@ -1,13 +1,8 @@
-﻿using Events.Domain.Enums;
-using Shared.Application.Abstractions.Messaging;
+﻿using Shared.Application.Abstractions.Messaging;
 
 namespace Events.Application.Events.Commands.CreateTicketType;
 
 public sealed record CreateTicketTypeCommand(
-    Guid EventSessionId,
+    Guid EventId,
     string Name,
-    decimal Price,
-    int Quantity,
-    AreaType Type,
-    Guid? AreaId
-) : ICommand<Guid>;
+    decimal Price) : ICommand<Guid>;

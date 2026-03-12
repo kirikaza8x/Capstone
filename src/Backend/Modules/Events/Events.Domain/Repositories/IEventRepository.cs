@@ -9,9 +9,10 @@ namespace Events.Domain.Repositories;
 public interface IEventRepository : IRepository<Event, Guid>
 {
     Task<Event?> GetByIdWithSessionsAsync(Guid id, CancellationToken cancellationToken = default);
-    Task<Event?> GetByIdWithSessionsAndTicketTypesAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<Event?> GetByIdWithTicketTypesAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<Event?> GetByIdWithTicketTypesAndAreasAsync(Guid id, CancellationToken cancellationToken = default);
     Task<Event?> GetByIdWithAreasAndSeatsAsync(Guid id, CancellationToken cancellationToken = default);
-    Task<Event?> GetByIdWithAllDetailsAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<Event?> GetDetailsByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<Event>> GetByOrganizerIdAsync(Guid organizerId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Event>> GetByStatusAsync(EventStatus status, CancellationToken cancellationToken = default);
@@ -19,9 +20,8 @@ public interface IEventRepository : IRepository<Event, Guid>
     Task<bool> IsUrlPathExistsAsync(string urlPath, CancellationToken cancellationToken = default);
 
     Task<EventSession?> GetEventSessionByIdAsync(Guid sessionId, CancellationToken cancellationToken = default);
-    Task<EventSession?> GetEventSessionWithTicketTypesAsync(Guid sessionId, CancellationToken cancellationToken = default);
 
     Task<Event?> GetByIdWithImagesAsync(Guid id, CancellationToken cancellationToken = default);
-
     Task<PagedResult<Event>> GetPublishedWithCategoriesAsync(PagedQuery pagedQuery, CancellationToken cancellationToken = default);
+    Task<PagedResult<Event>> GetByOrganizerPagedAsync(Guid organizerId, EventStatus? status, PagedQuery pagedQuery, CancellationToken cancellationToken = default);
 }
