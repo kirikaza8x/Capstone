@@ -1,5 +1,4 @@
 using AutoMapper;
-using Events.Application.Events.Queries.GetEvents;
 using Events.Domain.Enums;
 using Events.Domain.Repositories;
 using Shared.Application.Abstractions.Authentication;
@@ -14,9 +13,9 @@ internal sealed class GetEventsByOrganizerQueryHandler(
     IEventRepository eventRepository,
     ICurrentUserService currentUserService,
     IMapper mapper)
-    : IQueryHandler<GetEventsByOrganizerQuery, PagedResult<EventResponse>>
+    : IQueryHandler<GetEventsByOrganizerQuery, PagedResult<EventsByOrganizerResponse>>
 {
-    public async Task<Result<PagedResult<EventResponse>>> Handle(
+    public async Task<Result<PagedResult<EventsByOrganizerResponse>>> Handle(
         GetEventsByOrganizerQuery query,
         CancellationToken cancellationToken)
     {
@@ -36,9 +35,9 @@ internal sealed class GetEventsByOrganizerQueryHandler(
             includes: [e => e.EventCategories],
             cancellationToken: cancellationToken);
 
-        var responseItems = mapper.Map<IReadOnlyList<EventResponse>>(pagedEvents.Items);
+        var responseItems = mapper.Map<IReadOnlyList<EventsByOrganizerResponse>>(pagedEvents.Items);
 
-        var result = PagedResult<EventResponse>.Create(
+        var result = PagedResult<EventsByOrganizerResponse>.Create(
             responseItems,
             pagedEvents.PageNumber,
             pagedEvents.PageSize,
