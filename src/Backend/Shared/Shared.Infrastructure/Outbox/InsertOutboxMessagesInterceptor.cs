@@ -30,13 +30,10 @@ public sealed class InsertOutboxMessagesInterceptor : SaveChangesInterceptor
             .Select(entry => entry.Entity)
             .ToList();
 
+        // Collect events without clearing - DispatchDomainEventInterceptor will clear after publishing
         var domainEvents = aggregates
-            .SelectMany(aggregate =>
-            {
-                var events = aggregate.DomainEvents.ToList();
-                aggregate.ClearDomainEvents();
-                return events;
-            })
+            .SelectMany(aggregate => aggregate.DomainEvents)
+            .Distinct()
             .ToList();
 
         if (!domainEvents.Any())

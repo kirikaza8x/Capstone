@@ -1,4 +1,3 @@
-// AI.Infrastructure/ExternalServices/OpenRouterImageService.cs
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -17,8 +16,8 @@ public sealed class OpenRouterImageService : IImageGenerationService
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
-        PropertyNamingPolicy        = JsonNamingPolicy.SnakeCaseLower,
-        DefaultIgnoreCondition      = JsonIgnoreCondition.WhenWritingNull,
+        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         PropertyNameCaseInsensitive = true
     };
 
@@ -31,7 +30,7 @@ public sealed class OpenRouterImageService : IImageGenerationService
         IOptions<OpenRouterConfig> options,
         ILogger<OpenRouterImageService> logger)
     {
-        _http   = http;
+        _http = http;
         _config = options.Value;
         _logger = logger;
     }
@@ -43,12 +42,12 @@ public sealed class OpenRouterImageService : IImageGenerationService
         // Mirror of the JS SDK: openrouter.chat.send({ model, messages, modalities })
         var payload = new OpenRouterRequest
         {
-            Model      = _config.Model,
-            Messages   = [new() { Role = "user", Content = request.Prompt }],
+            Model = _config.Model,
+            Messages = [new() { Role = "user", Content = request.Prompt }],
             Modalities = ["image"]
         };
 
-        var json    = JsonSerializer.Serialize(payload, JsonOptions);
+        var json = JsonSerializer.Serialize(payload, JsonOptions);
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, Endpoint)
@@ -106,20 +105,16 @@ public sealed class OpenRouterImageService : IImageGenerationService
         return images;
     }
 
-    // -------------------------------------------------------------------------
-    // Typed request/response DTOs — map 1:1 with the OpenRouter API shape
-    // -------------------------------------------------------------------------
-
     private sealed class OpenRouterRequest
     {
-        public string         Model      { get; set; } = default!;
-        public List<Message>  Messages   { get; set; } = [];
-        public List<string>   Modalities { get; set; } = [];
+        public string Model { get; set; } = default!;
+        public List<Message> Messages { get; set; } = [];
+        public List<string> Modalities { get; set; } = [];
     }
 
     private sealed class Message
     {
-        public string Role    { get; set; } = default!;
+        public string Role { get; set; } = default!;
         public string Content { get; set; } = default!;
     }
 
@@ -138,9 +133,9 @@ public sealed class OpenRouterImageService : IImageGenerationService
     // result.choices[i].message
     private sealed class AssistantMessage
     {
-        public string?       Role    { get; set; }
-        public string?       Content { get; set; }
-        public List<Image>?  Images  { get; set; }  // message.images[]
+        public string? Role { get; set; }
+        public string? Content { get; set; }
+        public List<Image>? Images { get; set; }  // message.images[]
     }
 
     // result.choices[i].message.images[j]
