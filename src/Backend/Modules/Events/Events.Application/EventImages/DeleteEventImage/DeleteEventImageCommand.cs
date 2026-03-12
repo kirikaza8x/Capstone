@@ -1,6 +1,6 @@
 ﻿using Shared.Application.Abstractions.Messaging;
 
-namespace Events.Application.Events.Commands.DeleteEventImage;
+namespace Events.Application.EventImages.DeleteEventImage;
 
 public sealed record DeleteEventImageCommand(
     Guid EventId,

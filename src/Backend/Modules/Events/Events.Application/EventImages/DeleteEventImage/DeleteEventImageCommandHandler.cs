@@ -5,7 +5,7 @@ using Shared.Application.Abstractions.Storage;
 using Shared.Domain.Abstractions;
 using static Events.Domain.Errors.EventErrors;
 
-namespace Events.Application.Events.Commands.DeleteEventImage;
+namespace Events.Application.EventImages.DeleteEventImage;
 
 internal sealed class DeleteEventImageCommandHandler(
     IEventRepository eventRepository,

@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Shared.Application.Abstractions.Messaging;
 
-namespace Events.Application.Events.Commands.UpdateEventImage;
+namespace Events.Application.EventImages.UpdateEventImage;
 
 public sealed record UpdateEventImageCommand(
     Guid EventId,

@@ -7,7 +7,7 @@ using Shared.Application.Abstractions.Storage;
 using Shared.Domain.Abstractions;
 using static Events.Domain.Errors.EventErrors;
 
-namespace Events.Application.Events.Commands.UpdateEventImage;
+namespace Events.Application.EventImages.UpdateEventImage;
 
 internal sealed class UpdateEventImageCommandHandler(
     IEventRepository eventRepository,
@@ -35,10 +35,10 @@ internal sealed class UpdateEventImageCommandHandler(
         var @event = await eventRepository.GetByIdWithImagesAsync(command.EventId, cancellationToken);
 
         if (@event is null)
-            return Result.Failure(EventErrors.Event.NotFound(command.EventId));
+            return Result.Failure(Event.NotFound(command.EventId));
 
         if (@event.OrganizerId != currentUserService.UserId)
-            return Result.Failure(EventErrors.Event.NotOwner);
+            return Result.Failure(Event.NotOwner);
 
 
         // Get image

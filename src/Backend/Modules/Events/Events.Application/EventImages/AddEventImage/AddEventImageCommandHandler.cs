@@ -8,7 +8,7 @@ using Shared.Application.Abstractions.Storage;
 using Shared.Domain.Abstractions;
 using static Events.Domain.Errors.EventErrors;
 
-namespace Events.Application.Events.Commands.AddEventImage;
+namespace Events.Application.EventImages.AddEventImage;
 
 internal sealed class AddEventImageCommandHandler(
     IEventRepository eventRepository,
