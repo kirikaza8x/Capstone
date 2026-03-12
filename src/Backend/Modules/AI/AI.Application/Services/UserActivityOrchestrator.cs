@@ -53,7 +53,7 @@ namespace AI.Application.Abstractions
             string actionType,
             string targetId,
             string targetType,
-            Dictionary<string, string>? metadata)
+            IReadOnlyDictionary<string, string>? metadata)
         {
             _logger.LogInformation(
                 "Tracking Started | User: {UserId} | Action: {ActionType} | Target: {TargetId} ({TargetType})",

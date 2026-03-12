@@ -5,7 +5,7 @@ namespace Users.IntegrationEvents
     /// <summary>
     /// Integration event published when a new user is created.
     /// </summary>
-    public sealed class UserIntegrationCreatedEvent : IntegrationEvent
+    public sealed record UserIntegrationCreatedEvent : IntegrationEvent
     {
         public Guid UserId { get; init; }
         public string Email { get; init; } = default!;

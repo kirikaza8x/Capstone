@@ -1,8 +1,10 @@
 using FluentValidation;
 using Shared.Application.Abstractions.Authentication;
+using Shared.Application.Abstractions.EventBus;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Application.DTOs;
 using Shared.Domain.Abstractions;
+using Shared.IntegrationEvents.AI;
 using Users.Application.Features.Users.Commands.Records;
 using Users.Application.Features.Users.Dtos;
 using Users.Domain.Entities;
@@ -21,7 +23,8 @@ public class LoginUserCommandHandler
     private readonly ICurrentUserService _currentUserService;
     private readonly IDeviceDetectionService _deviceDetectionService;
     private readonly IUserUnitOfWork _unitOfWork;
-    private readonly IValidator<LoginUserCommand> _validator;
+
+    private readonly IEventBus _bus;
 
     public LoginUserCommandHandler(
         IUserRepository userRepository,
@@ -31,7 +34,7 @@ public class LoginUserCommandHandler
         ICurrentUserService currentUserService,
         IDeviceDetectionService deviceDetectionService,
         IUserUnitOfWork unitOfWork,
-        IValidator<LoginUserCommand> validator)
+        IEventBus bus)
     {
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
@@ -40,7 +43,7 @@ public class LoginUserCommandHandler
         _currentUserService = currentUserService;
         _deviceDetectionService = deviceDetectionService;
         _unitOfWork = unitOfWork;
-        _validator = validator;
+        _bus = bus;
     }
 
     // ============================================================
@@ -50,9 +53,7 @@ public class LoginUserCommandHandler
         LoginUserCommand command,
         CancellationToken cancellationToken)
     {
-        var validation = await ValidateAsync(command, cancellationToken);
-        if (validation.IsFailure)
-            return validation;
+
 
         var user = await GetUserAsync(command, cancellationToken);
         if (user is null)
@@ -74,6 +75,20 @@ public class LoginUserCommandHandler
 
         var accessToken = CreateAccessToken(user, roles);
 
+        _ = _bus.PublishAsync(new TrackUserActivityIntegrationEvent(
+       Id: Guid.NewGuid(),
+       OccurredOnUtc: DateTime.UtcNow,
+       UserId: user.Id,
+       ActionType: "login",
+       TargetId: user.Id.ToString(),
+       TargetType: "user",
+       Metadata: new Dictionary<string, string>
+       {
+            { "Device", deviceInfo.DeviceType ?? "Unknown" },
+            { "IpAddress", _currentUserService.IpAddress ?? "Unknown" }
+       }
+   ), cancellationToken);
+
         return Result.Success(
             BuildResponse(
                 user,
@@ -83,24 +98,6 @@ public class LoginUserCommandHandler
                 deviceInfo));
     }
 
-    // ============================================================
-    // Validation
-    // ============================================================
-    private async Task<Result<LoginResponseDto>> ValidateAsync(
-        LoginUserCommand command,
-        CancellationToken cancellationToken)
-    {
-        var result = await _validator.ValidateAsync(command, cancellationToken);
-
-        if (!result.IsValid)
-        {
-            var error = result.Errors.First();
-            return Result.Failure<LoginResponseDto>(
-                Error.Validation("Login.Validation", error.ErrorMessage));
-        }
-
-        return Result.Success<LoginResponseDto>(default!);
-    }
 
     // ============================================================
     // User & Credentials

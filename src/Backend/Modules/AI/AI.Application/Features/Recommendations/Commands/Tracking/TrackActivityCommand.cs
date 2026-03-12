@@ -7,6 +7,6 @@ namespace AI.Application.Features.Tracking.Commands
         string ActionType, // "click", "view", "purchase"
         string TargetId,   // "product-123"
         string TargetType, // "product"
-        Dictionary<string, string>? Metadata
+        IReadOnlyDictionary<string, string>? Metadata
     ) : ICommand<bool>;
 }

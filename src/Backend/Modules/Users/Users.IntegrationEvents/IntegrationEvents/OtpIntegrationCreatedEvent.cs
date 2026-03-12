@@ -5,7 +5,7 @@ namespace Users.IntegrationEvents;
 /// <summary>
 /// Integration event published when an OTP is generated for password reset.
 /// </summary>
-public sealed class OtpIntegrationCreatedEvent : IntegrationEvent
+public sealed record OtpIntegrationCreatedEvent : IntegrationEvent
 {
     public Guid UserId { get; init; }
     public string OtpCode { get; init; } = default!;

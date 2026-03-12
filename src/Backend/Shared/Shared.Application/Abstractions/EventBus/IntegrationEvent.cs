@@ -1,6 +1,6 @@
 ﻿namespace Shared.Application.Abstractions.EventBus;
 
-public abstract class IntegrationEvent : IIntegrationEvent
+public abstract record IntegrationEvent : IIntegrationEvent
 {
     public Guid Id { get; }
     public DateTime OccurredOnUtc { get; }

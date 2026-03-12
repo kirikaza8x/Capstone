@@ -1,3 +1,4 @@
+using AI.Domain.Event;
 using Shared.Domain.DDD;
 
 namespace AI.Domain.Entities
@@ -36,7 +37,7 @@ namespace AI.Domain.Entities
             string actionType,
             string targetId,
             string targetType,
-            Dictionary<string, string>? metadata = null,
+            IReadOnlyDictionary<string, string>? metadata = null,
             string? sessionId = null,
             string? deviceType = null)
         {
@@ -53,7 +54,9 @@ namespace AI.Domain.Entities
             if (string.IsNullOrWhiteSpace(targetType))
                 throw new ArgumentException("TargetType is required.", nameof(targetType));
 
-            return new UserBehaviorLog
+
+
+            var log = new UserBehaviorLog
             {
                 Id = Guid.NewGuid(),
                 UserId = userId,
@@ -61,10 +64,14 @@ namespace AI.Domain.Entities
                 TargetId = targetId.Trim(),
                 TargetType = targetType.Trim().ToLowerInvariant(),
                 OccurredAt = DateTime.UtcNow,
-                _metadata = metadata ?? new Dictionary<string, string>(),
+                _metadata = metadata != null
+                    ? new Dictionary<string, string>(metadata)
+                    : new Dictionary<string, string>(),               
                 // SessionId = sessionId,
                 // DeviceType = deviceType?.ToLowerInvariant()
             };
+            log.RaiseDomainEvent(new CreateLogEvent(userId, actionType, targetId, targetType, metadata));
+            return log;
         }
 
         // ===== DOMAIN HELPERS =====

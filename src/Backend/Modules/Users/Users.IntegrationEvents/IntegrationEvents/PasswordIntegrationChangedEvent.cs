@@ -6,7 +6,7 @@ namespace Users.IntegrationEvents
     /// <summary>
     /// Integration event published when a user’s password is changed.
     /// </summary>
-    public sealed class PasswordIntegrationChangedEvent : IntegrationEvent
+    public sealed record PasswordIntegrationChangedEvent : IntegrationEvent
     {
         public Guid UserId { get; init; }
         public DateTime ChangedAt { get; init; }

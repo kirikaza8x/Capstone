@@ -2,7 +2,7 @@
 
 namespace Events.IntegrationEvents.IntegrationEvents;
 
-public sealed class EventCancelledIntegrationEvent : IntegrationEvent
+public sealed record EventCancelledIntegrationEvent : IntegrationEvent
 {
     public Guid EventId { get; init; }
     public string? CancellationReason { get; init; }
