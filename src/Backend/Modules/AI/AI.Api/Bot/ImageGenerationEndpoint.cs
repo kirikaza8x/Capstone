@@ -15,24 +15,19 @@ public class ImageGenerationEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPost("api/image-generation", async (
+        app.MapPost("api/bot/image-generation", async (
             ImageGenerationRequestDto dto,
             ISender sender,
             CancellationToken cancellationToken) =>
         {
-            var command = new GenerateImageCommand(
-                dto.Prompt
-                // ,
-                // dto.AspectRatio,
-                // dto.ImageSize
-            );
+            var command = new GenerateImageCommand(dto.Prompt);
 
             Result<IReadOnlyList<GenerateImageResponse>> result =
                 await sender.Send(command, cancellationToken);
 
             return result.ToOk();
         })
-        .WithTags("ImageGeneration")
+        .WithTags("Bot")
         .WithName("GenerateImage")
         .WithSummary("Generate images from a text prompt")
         .WithDescription("Generates images using OpenRouter text-to-image models based on the provided prompt")

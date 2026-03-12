@@ -12,16 +12,16 @@ public class ChatEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPost("api/chat", async (
-            ChatCommand command,
-            ISender sender,
-            CancellationToken cancellationToken) =>
+        app.MapPost("api/bot/chat", async (
+        ChatCommand command,
+        ISender sender,
+        CancellationToken cancellationToken) =>
         {
             Result<string> result = await sender.Send(command, cancellationToken);
 
             return result.ToOk();
         })
-        .WithTags("ChatBot")
+        .WithTags("Bot")
         .WithName("Chat")
         .WithSummary("Send a prompt to Gemini")
         .WithDescription("Generates a response from Gemini based on the user prompt")
