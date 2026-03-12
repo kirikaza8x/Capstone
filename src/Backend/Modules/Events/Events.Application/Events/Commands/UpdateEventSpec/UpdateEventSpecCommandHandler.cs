@@ -1,27 +1,14 @@
-﻿using Events.Domain.Entities;
+﻿using System.Text.Json;
+using Events.Domain.Entities;
 using Events.Domain.Enums;
 using Events.Domain.Errors;
 using Events.Domain.Repositories;
 using Events.Domain.Uow;
-using FluentValidation;
 using Shared.Application.Abstractions.Authentication;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
-using System.Text.Json;
 
 namespace Events.Application.Events.Commands.UpdateEventSpec;
-
-public sealed class UpdateEventSpecCommandValidator : AbstractValidator<UpdateEventSpecCommand>
-{
-    public UpdateEventSpecCommandValidator()
-    {
-        RuleFor(x => x.EventId)
-            .NotEmpty().WithMessage("Event ID is required.");
-
-        RuleFor(x => x.Spec)
-            .NotNull().WithMessage("Spec is required.");
-    }
-}
 
 internal sealed class UpdateEventSpecCommandHandler(
     IEventRepository eventRepository,
@@ -31,6 +18,7 @@ internal sealed class UpdateEventSpecCommandHandler(
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true,
+        WriteIndented = false
     };
 
     public async Task<Result> Handle(UpdateEventSpecCommand command, CancellationToken cancellationToken)
@@ -58,7 +46,6 @@ internal sealed class UpdateEventSpecCommandHandler(
         if (seatMap?.Areas is null || seatMap.Areas.Count == 0)
             return Result.Failure(EventErrors.Event.SpecHasNoAreas);
 
-        @event.UpdateSpec(specJson);
         @event.ClearAreasAndSeats();
 
         foreach (var specArea in seatMap.Areas)
@@ -72,6 +59,9 @@ internal sealed class UpdateEventSpecCommandHandler(
                 name: specArea.Name,
                 capacity: capacity,
                 type: areaType);
+
+            // Record the generated Area ID back to the spec model
+            specArea.Id = area.Id.ToString();
 
             if (hasSeats)
             {
@@ -88,12 +78,19 @@ internal sealed class UpdateEventSpecCommandHandler(
                     if (specSeat.ParsedStatus == SeatMapSeatStatus.blocked)
                         seat.Deactivate();
 
+                    // Record the generated Seat ID back to the spec model
+                    specSeat.Id = seat.Id.ToString();
+
                     area.AddSeat(seat);
                 }
             }
 
             @event.AddArea(area);
         }
+
+        // Serialize spec when we have enriched it with UUIDs
+        var enrichedSpecJson = JsonSerializer.Serialize(seatMap, JsonOptions);
+        @event.UpdateSpec(enrichedSpecJson);
 
         eventRepository.Update(@event);
         await unitOfWork.SaveChangesAsync(cancellationToken);
