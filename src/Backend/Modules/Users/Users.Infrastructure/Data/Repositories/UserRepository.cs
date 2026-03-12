@@ -159,5 +159,15 @@ namespace Users.Infrastructure.Data.Repositories
                 .Include(u => u.OrganizerProfiles)
                 .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
         }
+
+        public async Task<User?> GetByIdWithTokenAsync(Guid userId, CancellationToken cancellationToken = default)
+        {
+            return await DbSet
+                .Include(u => u.RefreshTokens)
+                .Include(u => u.Roles)
+                .AsSplitQuery()
+                .AsTracking()
+                .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+        }
     }
 }

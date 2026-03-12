@@ -17,7 +17,6 @@ namespace Users.Application.Features.Users.Handlers.RefreshTokenCommandHandler
         private readonly IRefreshTokenService _refreshTokenService;
         private readonly ICurrentUserService _currentUserService;
         private readonly IDeviceDetectionService _deviceDetectionService;
-        private readonly IValidator<RefreshTokenCommand> _validator;
         private readonly IUserUnitOfWork _unitOfWork;
 
         public RefreshTokenCommandHandler(
@@ -26,7 +25,6 @@ namespace Users.Application.Features.Users.Handlers.RefreshTokenCommandHandler
             IRefreshTokenService refreshTokenService,
             ICurrentUserService currentUserService,
             IDeviceDetectionService deviceDetectionService,
-            IValidator<RefreshTokenCommand> validator,
             IUserUnitOfWork unitOfWork)
         {
             _userRepository = userRepository;
@@ -34,7 +32,6 @@ namespace Users.Application.Features.Users.Handlers.RefreshTokenCommandHandler
             _refreshTokenService = refreshTokenService;
             _currentUserService = currentUserService;
             _deviceDetectionService = deviceDetectionService;
-            _validator = validator;
             _unitOfWork = unitOfWork;
         }
 
@@ -42,16 +39,8 @@ namespace Users.Application.Features.Users.Handlers.RefreshTokenCommandHandler
     RefreshTokenCommand command,
     CancellationToken cancellationToken)
         {
-            var validationResult = await _validator.ValidateAsync(command, cancellationToken);
-            if (!validationResult.IsValid)
-            {
-                var firstError = validationResult.Errors.First();
-                return Result.Failure<LoginResponseDto>(
-                    Error.Validation("RefreshToken.Validation", firstError.ErrorMessage)
-                );
-            }
 
-            // 1️⃣ Validate access token (expired allowed)
+
             var principal = _jwtTokenService.ValidateToken(
                 command.AccessToken,
                 allowExpired: true
@@ -68,7 +57,7 @@ namespace Users.Application.Features.Users.Handlers.RefreshTokenCommandHandler
                 principal.FindFirst(ClaimTypes.NameIdentifier)!.Value
             );
 
-            var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
+            var user = await _userRepository.GetByIdWithTokenAsync(userId, cancellationToken);
             if (user == null)
             {
                 return Result.Failure<LoginResponseDto>(

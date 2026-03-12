@@ -24,7 +24,7 @@ public class RefreshTokenEndpoint : ICarterModule
                 new RefreshTokenCommand(
                     request.AccessToken,
                     request.RefreshToken,
-                    null,
+                    request.DeviceId,
                     null,
                     null,
                     null),

@@ -32,9 +32,9 @@ public class RefreshTokenRequestDto
     public string AccessToken { get; set; } = default!;
     public string RefreshToken { get; set; } = default!;
     public string? DeviceId { get; set; }  // Device identifier
-    public string? DeviceName { get; set; }  // Optional friendly name
-    public string? IpAddress { get; set; }  // Optional IP address
-    public string? UserAgent { get; set; }  // Optional User-Agent string
+    // public string? DeviceName { get; set; }  // Optional friendly name
+    // public string? IpAddress { get; set; }  // Optional IP address
+    // public string? UserAgent { get; set; }  // Optional User-Agent string
 }
 
 public record UserSessionDto(
