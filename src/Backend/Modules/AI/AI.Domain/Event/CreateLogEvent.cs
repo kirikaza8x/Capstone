@@ -1,4 +1,4 @@
-using Shared.Domain.DDD; 
+using Shared.Domain.DDD;
 
 namespace AI.Domain.Event;
 

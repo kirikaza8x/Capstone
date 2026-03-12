@@ -81,7 +81,7 @@ namespace AI.Infrastructure
             });
 
             // Register services
-            services.AddHttpClient<IImageGenerationService,OpenRouterImageService>();
+            services.AddHttpClient<IImageGenerationService, OpenRouterImageService>();
             services.AddScoped<IGlobalTrendService, GlobalTrendService>();
             services.AddScoped<IUserActivityOrchestrator, UserActivityOrchestrator>();
             services.AddScoped<InteractionWeightCalculator>();

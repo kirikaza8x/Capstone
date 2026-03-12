@@ -2,10 +2,10 @@ namespace AI.Application.Features.ImageGeneration;
 
 public sealed class ImageGenerationRequestDto
 {
-    public string Prompt      { get; init; } = default!;
+    public string Prompt { get; init; } = default!;
     // public string AspectRatio { get; init; } = "1:1";
     // public string ImageSize   { get; init; } = "1K";
-    
+
 }
 
 public sealed class ImageGenerationResult

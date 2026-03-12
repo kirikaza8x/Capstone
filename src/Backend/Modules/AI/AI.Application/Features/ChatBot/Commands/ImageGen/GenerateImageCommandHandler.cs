@@ -27,7 +27,7 @@ public sealed class GenerateImageCommandHandler
 
         var request = new ImageGenerationRequestDto
         {
-            Prompt      = command.Prompt,
+            Prompt = command.Prompt,
             // AspectRatio = command.AspectRatio,
             // ImageSize   = command.ImageSize
         };

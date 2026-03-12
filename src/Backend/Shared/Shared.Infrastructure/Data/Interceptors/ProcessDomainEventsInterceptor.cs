@@ -2,7 +2,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Shared.Domain.DDD;
-using Shared.Infrastructure.Outbox; 
+using Shared.Infrastructure.Outbox;
 using System.Text.Json;
 
 namespace Shared.Infrastructure.Data.Interceptors;
@@ -36,7 +36,7 @@ public sealed class ProcessDomainEventsInterceptor(IMediator mediator) : SaveCha
 
             if (!aggregates.Any())
             {
-                break; 
+                break;
             }
 
             // 1. Collect and CLEAR the events so they don't fire twice

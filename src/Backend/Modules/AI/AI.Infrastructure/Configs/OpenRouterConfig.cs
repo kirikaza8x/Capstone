@@ -6,5 +6,5 @@ public class OpenRouterConfig : ConfigBase
 {
     public override string SectionName => "OpenRouter";
     public string ApiKey { get; set; } = default!;
-    public string Model  { get; set; } = default!;
+    public string Model { get; set; } = default!;
 }

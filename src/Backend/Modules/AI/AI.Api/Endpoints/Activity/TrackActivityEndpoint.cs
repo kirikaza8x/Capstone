@@ -11,7 +11,7 @@ using AI.Application.Features.Tracking.Commands;
 
 namespace AI.Api.Features.Activity
 {
-    public class  TrackActivityEndpoint : ICarterModule
+    public class TrackActivityEndpoint : ICarterModule
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {

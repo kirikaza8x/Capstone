@@ -66,7 +66,7 @@ namespace AI.Domain.Entities
                 OccurredAt = DateTime.UtcNow,
                 _metadata = metadata != null
                     ? new Dictionary<string, string>(metadata)
-                    : new Dictionary<string, string>(),               
+                    : new Dictionary<string, string>(),
                 // SessionId = sessionId,
                 // DeviceType = deviceType?.ToLowerInvariant()
             };
