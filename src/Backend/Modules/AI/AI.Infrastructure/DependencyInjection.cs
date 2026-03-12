@@ -81,14 +81,13 @@ namespace AI.Infrastructure
             });
 
             // Register services
-
+            services.AddHttpClient<IImageGenerationService,OpenRouterImageService>();
             services.AddScoped<IGlobalTrendService, GlobalTrendService>();
             services.AddScoped<IUserActivityOrchestrator, UserActivityOrchestrator>();
             services.AddScoped<InteractionWeightCalculator>();
             services.AddScoped<IRecommendationService, RecommendationService>();
             services.AddScoped<IGeminiService, GeminiService>();
             services.AddHostedService<GlobalTrendWorker>();
-            services.AddHttpContextAccessor();
 
             return services;
         }

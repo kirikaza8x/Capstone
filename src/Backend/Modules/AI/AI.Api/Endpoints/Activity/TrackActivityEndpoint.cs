@@ -4,22 +4,23 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using Shared.Api.Results;
 using Shared.Domain.Abstractions;
-using AI.Application.Features.Tracking.Commands;
 using AI.Application.Features.Recommendations.DTOs;
+using AI.Application.Features.Tracking.Commands;
 
-namespace AI.Api.Features.Tracking
+namespace AI.Api.Features.Activity
 {
-    public class TrackActivityEndpoint : ICarterModule
+    public class  TrackActivityEndpoint : ICarterModule
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapPost("api/ai/tracking", async (
+
+            app.MapPost("api/activity/tracking", async (
                 [FromBody] TrackActivityRequestDto request,
                 ISender sender,
                 CancellationToken cancellationToken) =>
             {
-                // 1. Map DTO to Command
                 var command = new TrackActivityCommand(
                     request.UserId,
                     request.ActionType,
@@ -29,15 +30,15 @@ namespace AI.Api.Features.Tracking
                 );
 
                 Result<bool> result = await sender.Send(command, cancellationToken);
-
-                return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
+                return result.ToOk();
             })
-            .WithTags("AI Tracking")
-            .WithName("TrackUserActivity")
-            .WithSummary("Tracks a user interaction")
-            .WithDescription("Logs user behavior (clicks, views) to update personal recommendations.")
+            .WithTags("Activity")
+            .WithName("TrackActivity")
+            .WithSummary("Track a user interaction")
+            .WithDescription("Logs user behavior (clicks, views) to improve recommendations.")
             .Produces<bool>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest);
         }
     }
+
 }

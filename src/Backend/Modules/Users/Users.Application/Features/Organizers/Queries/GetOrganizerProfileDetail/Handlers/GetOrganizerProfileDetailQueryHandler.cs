@@ -1,48 +1,43 @@
 using AutoMapper;
-using Shared.Application.Abstractions.Authentication;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
 using Users.Application.Features.Organizers.Dtos;
 using Users.Domain.Repositories;
 
-public sealed class GetMyOrganizerProfileQueryHandler
-    : IQueryHandler<GetMyOrganizerProfileQuery, OrganizerProfileDto>
+public sealed class GetOrganizerProfileDetailQueryHandler
+    : IQueryHandler<GetOrganizerProfileDetailQuery, OrganizerProfileResponseDto>
 {
     private readonly IUserRepository _userRepository;
-    private readonly ICurrentUserService _currentUserService;
     private readonly IMapper _mapper;
 
-    public GetMyOrganizerProfileQueryHandler(
+    public GetOrganizerProfileDetailQueryHandler(
         IUserRepository userRepository,
-        ICurrentUserService currentUserService,
         IMapper mapper)
     {
         _userRepository = userRepository;
-        _currentUserService = currentUserService;
         _mapper = mapper;
     }
 
-    public async Task<Result<OrganizerProfileDto>> Handle(
-        GetMyOrganizerProfileQuery query,
+    public async Task<Result<OrganizerProfileResponseDto>> Handle(
+        GetOrganizerProfileDetailQuery query,
         CancellationToken cancellationToken)
     {
         var user = await _userRepository.FirstOrDefaultAsync(
-            u => u.Id == _currentUserService.UserId,
+            u => u.Id == query.UserId,
             cancellationToken);
 
         if (user == null)
         {
-            return Result.Failure<OrganizerProfileDto>(
+            return Result.Failure<OrganizerProfileResponseDto>(
                 Error.NotFound("User.NotFound", "User not found"));
         }
 
         if (user.OrganizerProfiles == null)
         {
-            return Result.Failure<OrganizerProfileDto>(
+            return Result.Failure<OrganizerProfileResponseDto>(
                 Error.NotFound("Organizer.NotFound", "Organizer profile not found"));
         }
-
-        var dto = _mapper.Map<OrganizerProfileDto>(user.OrganizerProfiles);
+        var dto = _mapper.Map<OrganizerProfileResponseDto>(user.OrganizerProfiles);
 
         return Result.Success(dto);
     }
