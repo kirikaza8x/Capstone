@@ -271,6 +271,12 @@ public sealed class Event : AggregateRoot<Guid>
         ModifiedAt = DateTime.UtcNow;
     }
 
+    public void RemoveMember(EventMember member)
+    {
+        _members.Remove(member);
+        ModifiedAt = DateTime.UtcNow;
+    }
+
     public void AddSession(EventSession session) => _sessions.Add(session);
     public void AddTicketType(TicketType ticketType) => _ticketTypes.Add(ticketType);
     public void AddArea(Area area) => _areas.Add(area);
