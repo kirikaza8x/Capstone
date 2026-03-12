@@ -26,6 +26,7 @@ public static class EventModule
         services.TryAddScoped<IHashtagRepository, HashtagRepository>();
         services.TryAddScoped<IEventUnitOfWork, EventUnitOfWork>();
         services.AddScoped<ISeatLockService, SeatLockService>();
+        services.TryAddScoped<ISessionTicketQuotaRepository, SessionTicketQuotaRepository>();
         services.AddDbContext<EventsDbContext>((sp, options) =>
         {
             var dbConfig = sp.GetRequiredService<IOptions<DatabaseConfig>>().Value;

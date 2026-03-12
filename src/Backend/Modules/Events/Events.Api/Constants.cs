@@ -10,6 +10,7 @@ internal static class Constants
         public const string Areas = "Areas";
         public const string Seats = "Seats";
         public const string TicketTypes = "Ticket Types";
+        public const string Quotas = "Session Ticket Quotas";
         public const string Staff = "Event Staff";
         public const string Categories = "Categories";
         public const string Hashtags = "Hashtags";
@@ -43,6 +44,10 @@ internal static class Constants
         // Seats
         public const string Seats = $"{AreaById}/seats";
         public const string SeatById = $"{Seats}/{{seatId:guid}}";
+
+        // Session Ticket Quotas
+        public const string Quotas = $"{SessionById}/quotas";
+        public const string QuotaByTicketType = $"{Quotas}/{{ticketTypeId:guid}}";
 
         // Staff
         public const string Staff = $"{EventById}/staff";
