@@ -5,6 +5,9 @@ internal static class Constants
     internal static class Tags
     {
         public const string Events = "Events";
+        public const string EventForStaff = "Events - Staff";
+        public const string EventForAdmin = "Events - Admin";
+
         public const string EventImages = "Event Images";
         public const string Sessions = "Sessions";
         public const string Areas = "Areas";

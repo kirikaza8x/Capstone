@@ -29,7 +29,7 @@ public class CancelEventEndpoint : ICarterModule
 
             return result.ToOk("Event cancelled successfully!");
         })
-        .WithTags(Constants.Tags.Events)
+        .WithTags(Constants.Tags.EventForStaff)
         .WithName("CancelEvent")
         .WithSummary("Cancel an event")
         .WithDescription("Admin or Staff cancels an event. Can be used to approve an organizer's cancellation request or force-cancel for policy violations.")

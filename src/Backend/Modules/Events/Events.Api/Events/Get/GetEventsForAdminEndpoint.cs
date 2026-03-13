@@ -23,7 +23,7 @@ public class GetEventsForAdminEndpoint : ICarterModule
             var result = await sender.Send(query, cancellationToken);
             return result.ToOk();
         })
-        .WithTags(Constants.Tags.Events)
+        .WithTags(Constants.Tags.EventForAdmin)
         .WithName("GetEventsForAdmin")
         .WithSummary("Get all events for administration")
         .WithDescription("Retrieve all events except Drafts. Can filter by organizerId, statuses, and title.")

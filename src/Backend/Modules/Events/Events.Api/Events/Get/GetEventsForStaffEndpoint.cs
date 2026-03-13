@@ -23,7 +23,7 @@ public class GetEventsForStaffEndpoint : ICarterModule
             var result = await sender.Send(query, cancellationToken);
             return result.ToOk();
         })
-        .WithTags(Constants.Tags.Events)
+        .WithTags(Constants.Tags.EventForStaff)
         .WithName("GetEventsForStaff")
         .WithSummary("Get events that need staff attention")
         .WithDescription("Retrieve events with status PendingReview or PendingRequest.")

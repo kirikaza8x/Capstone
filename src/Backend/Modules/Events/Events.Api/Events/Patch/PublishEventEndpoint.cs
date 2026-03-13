@@ -25,7 +25,7 @@ public class PublishEventEndpoint : ICarterModule
 
             return result.ToOk("Event published successfully.");
         })
-        .WithTags(Constants.Tags.Events)
+        .WithTags(Constants.Tags.EventForStaff)
         .WithName("PublishEvent")
         .WithSummary("Publish an event")
         .WithDescription("Changes the event status to Published.")
