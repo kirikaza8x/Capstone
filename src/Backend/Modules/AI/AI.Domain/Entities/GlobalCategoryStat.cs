@@ -1,55 +1,52 @@
+// using Shared.Domain.DDD;
+
 using Shared.Domain.DDD;
 
-namespace AI.Domain.ReadModels
+namespace AI.Domain.Entities
 {
     /// <summary>
-    /// Represents global popularity statistics for a category across all users.
-    /// PURPOSE: Powers cold-start recommendations and Bayesian smoothing.
-    /// LIFECYCLE: Updated by background job every N hours with decay applied.
+    /// Global popularity statistics for a category, computed across all users.
+    ///
+    /// MOVED FROM ReadModels: this aggregate has mutable behaviour (decay, update, reset)
+    /// so it belongs in Entities, not ReadModels. A separate flat DTO can serve the read side.
+    ///
+    /// PURPOSE:
+    ///   - Cold-start recommendations for new users
+    ///   - Bayesian smoothing (blend personal score with global popularity)
+    ///   - Trending category detection
+    ///
+    /// LIFECYCLE: Updated by a background job on a fixed schedule.
+    /// ApplyDecay() is called on every record each run — not just inactive ones.
     /// </summary>
     public class GlobalCategoryStat : AggregateRoot<Guid>
     {
         public string Category { get; private set; } = default!;
-
-        /// <summary>
-        /// Normalized popularity score (0-100 scale by default, but can use other ranges)
-        /// Higher = more popular across platform
-        /// </summary>
         public double PopularityScore { get; private set; }
-
-        /// <summary>
-        /// Total interaction count (used for Bayesian confidence calculation)
-        /// Higher count = more reliable statistic
-        /// </summary>
         public int TotalInteractions { get; private set; }
-
-        /// <summary>
-        /// When this stat was last recalculated (audit trail)
-        /// </summary>
         public DateTime LastCalculated { get; private set; }
-
-        /// <summary>
-        /// First time this category appeared in the system (analytics)
-        /// </summary>
         public DateTime FirstSeen { get; private set; }
+        public double RawWeightedScore { get; private set; }
 
         /// <summary>
-        /// Weighted score used internally before normalization
-        /// (Helps debug why a category has a certain popularity)
+        /// Tracks interactions since the last background job run.
+        /// Reset to 0 after each job cycle so recency signals stay clean.
         /// </summary>
-        public double RawWeightedScore { get; private set; }
+        public int RecentInteractions { get; private set; }
+
+        private const double ScoreFloor = 0.1;
 
         private GlobalCategoryStat() { }
 
-        // ===== FACTORY METHOD =====
-        public static GlobalCategoryStat Create(string category, double score, int count, double rawScore = 0)
+        public static GlobalCategoryStat Create(
+            string category,
+            double score = 0,
+            int count = 0,
+            double rawScore = 0)
         {
             if (string.IsNullOrWhiteSpace(category))
                 throw new ArgumentException("Category cannot be empty.", nameof(category));
-
             if (score < 0)
                 throw new ArgumentException("Score cannot be negative.", nameof(score));
-
             if (count < 0)
                 throw new ArgumentException("Count cannot be negative.", nameof(count));
 
@@ -61,49 +58,50 @@ namespace AI.Domain.ReadModels
                 Category = category.ToLowerInvariant().Trim(),
                 PopularityScore = score,
                 TotalInteractions = count,
+                RecentInteractions = 0,
                 RawWeightedScore = rawScore > 0 ? rawScore : score,
                 LastCalculated = now,
-                FirstSeen = now
+                FirstSeen = now,
+                CreatedAt = now
             };
         }
 
-        // ===== UPDATE METHODS =====
+        // ── Update methods ────────────────────────────────────────────────────
 
         /// <summary>
-        /// Updates statistics with new data from the background job.
-        /// This REPLACES the old values (not adds to them).
+        /// Replaces computed stats after a full recalculation pass.
+        /// Also resets RecentInteractions since the new score already includes them.
         /// </summary>
         public void UpdateStats(double newScore, int newTotalCount, double? newRawScore = null)
         {
             if (newScore < 0)
                 throw new ArgumentException("Score cannot be negative.", nameof(newScore));
-
             if (newTotalCount < 0)
                 throw new ArgumentException("Count cannot be negative.", nameof(newTotalCount));
 
             PopularityScore = newScore;
             TotalInteractions = newTotalCount;
             RawWeightedScore = newRawScore ?? newScore;
+            RecentInteractions = 0;
             LastCalculated = DateTime.UtcNow;
         }
 
         /// <summary>
-        /// Applies exponential decay to the popularity score.
-        /// CRITICAL: This should be applied to ALL categories in the background job,
-        /// not just inactive ones, to ensure fair recency weighting.
+        /// Exponential decay on popularity. Apply to ALL categories each job run —
+        /// not just inactive ones — to maintain fair recency weighting.
+        ///
+        /// decayFactor: value in (0, 1]. 0.95 = 5% reduction per run.
         /// </summary>
-        /// <param name="decayFactor">Multiplier (0.0 - 1.0). Example: 0.9 = 10% reduction</param>
         public void ApplyDecay(double decayFactor)
         {
-            if (decayFactor < 0 || decayFactor > 1)
-                throw new ArgumentException("Decay factor must be between 0 and 1.", nameof(decayFactor));
+            if (decayFactor is <= 0 or > 1)
+                throw new ArgumentException(
+                    "Decay factor must be in range (0, 1].", nameof(decayFactor));
 
             PopularityScore *= decayFactor;
             RawWeightedScore *= decayFactor;
 
-            // ===== OPTIMIZATION: Floor to zero if too small =====
-            // Prevents floating point accumulation and improves query performance
-            if (PopularityScore < 0.1)
+            if (PopularityScore < ScoreFloor)
             {
                 PopularityScore = 0;
                 RawWeightedScore = 0;
@@ -113,48 +111,48 @@ namespace AI.Domain.ReadModels
         }
 
         /// <summary>
-        /// Adds new activity on top of the current (already decayed) score.
-        /// This is used when incrementally updating stats rather than recalculating from scratch.
+        /// Accumulates incremental activity between full recalculation runs.
+        /// Also updates RecentInteractions so IsStale() can use it.
         /// </summary>
         public void AddActivity(double scoreIncrement, int interactionIncrement)
         {
             if (scoreIncrement < 0)
-                throw new ArgumentException("Score increment cannot be negative.", nameof(scoreIncrement));
-
+                throw new ArgumentException(
+                    "Score increment cannot be negative.", nameof(scoreIncrement));
             if (interactionIncrement < 0)
-                throw new ArgumentException("Interaction increment cannot be negative.", nameof(interactionIncrement));
+                throw new ArgumentException(
+                    "Interaction increment cannot be negative.", nameof(interactionIncrement));
 
             PopularityScore += scoreIncrement;
             RawWeightedScore += scoreIncrement;
             TotalInteractions += interactionIncrement;
+            RecentInteractions += interactionIncrement;
             LastCalculated = DateTime.UtcNow;
         }
 
-        /// <summary>
-        /// Resets the stat to zero (useful for testing or category cleanup)
-        /// </summary>
         public void Reset()
         {
             PopularityScore = 0;
             RawWeightedScore = 0;
             TotalInteractions = 0;
+            RecentInteractions = 0;
             LastCalculated = DateTime.UtcNow;
         }
 
         /// <summary>
-        /// Returns true if this category is "dead" and should be archived
+        /// A category is stale when it has had no recent activity AND its score has decayed
+        /// below the floor. Uses RecentInteractions (not cumulative TotalInteractions) so
+        /// historically popular-but-inactive categories are correctly flagged.
         /// </summary>
-        public bool IsStale(int daysThreshold = 90)
-        {
-            return (DateTime.UtcNow - LastCalculated).TotalDays > daysThreshold
-                && PopularityScore < 1.0
-                && TotalInteractions == 0;
-        }
+        public bool IsStale(int daysThreshold = 90) =>
+            (DateTime.UtcNow - LastCalculated).TotalDays > daysThreshold
+            && PopularityScore < 1.0
+            && RecentInteractions == 0;
 
         protected override void Apply(IDomainEvent @event)
         {
-            // Implement event sourcing logic if needed
-            // Example: GlobalCategoryStatUpdated, GlobalCategoryStatDecayed events
+            // No domain events raised here yet — GlobalCategoryStat is updated
+            // by background jobs, not by user-facing commands.
         }
     }
 }

@@ -10,4 +10,8 @@
     <ProjectReference Include="..\..\..\Shared\Shared.Domain\Shared.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Pgvector" Version="0.3.2" />
+  </ItemGroup>
+
 </Project>

@@ -15,14 +15,13 @@ namespace AI.Infrastructure.Repositories
             _aiDbContext = dbContext;
         }
 
-        // Implementation of the interface method you provided
+        /// <summary>
+        /// Fetches the user's full weight profile.
+        /// CustomWeights is stored as a JSON blob — the specific actionType lookup
+        /// happens in the calling service after materialising the entity, not in SQL.
+        /// </summary>
         public async Task<UserWeightProfile?> GetAsync(Guid userId, string actionType)
         {
-            // NOTE: Even though the interface asks for 'actionType', 
-            // we fetch the whole profile because 'CustomWeights' is stored as a JSON blob.
-            // The logic to find the specific "click" or "view" weight happens in C# memory
-            // inside your Calculator service, not in this SQL query.
-
             return await _aiDbContext.UserWeightProfiles
                 .FirstOrDefaultAsync(x => x.UserId == userId);
         }

@@ -1,8 +1,7 @@
 using AI.Application.Abstractions;
-using AI.Application.Services;
-using AI.Domain.Services;
 using AI.Infrastructure.BackgroundJobs;
 using AI.Infrastructure.Data;
+using AI.Infrastructure.Embeddings;
 using AI.Infrastructure.ExternalServices;
 using AI.Infrastructure.Services;
 using Microsoft.AspNetCore.Builder;
@@ -12,6 +11,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Npgsql;
+using Pgvector;
+using Quartz;
 using Shared.Domain.Data;
 using Shared.Domain.Data.Repositories;
 using Shared.Infrastructure.Configs;
@@ -24,20 +25,19 @@ namespace AI.Infrastructure
     {
         public static IServiceCollection AddAiInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
+            // 1. Configuration & Repository Scanning
             services.Scan(scan => scan
                 .FromAssemblyOf<AiInfrastructureAssemblyReference>()
                 .AddClasses(classes => classes.AssignableTo<ConfigBase>())
                 .AsSelf()
                 .WithSingletonLifetime());
 
-            // Register repositories
             services.Scan(scan => scan
                 .FromAssemblyOf<AiInfrastructureAssemblyReference>()
                 .AddClasses(classes => classes.AssignableTo(typeof(IRepository<,>)))
                 .AsImplementedInterfaces()
                 .WithScopedLifetime());
 
-            // Register Unit of Work
             services.Scan(scan => scan
                 .FromAssemblyOf<AiInfrastructureAssemblyReference>()
                 .AddClasses(classes => classes.AssignableTo(typeof(IUnitOfWork)))
@@ -50,14 +50,14 @@ namespace AI.Infrastructure
                .AsImplementedInterfaces()
                .WithScopedLifetime());
 
-
+            // 2. Npgsql DataSource Setup (Driver Level)
             services.AddSingleton<NpgsqlDataSource>(sp =>
             {
                 var dbConfig = sp.GetRequiredService<IOptions<DatabaseConfig>>().Value;
-
                 var dataSourceBuilder = new NpgsqlDataSourceBuilder(dbConfig.ConnectionString);
 
                 dataSourceBuilder.EnableDynamicJson();
+                dataSourceBuilder.UseVector(); // Registers Pgvector types with the driver
 
                 return dataSourceBuilder.Build();
             });
@@ -69,7 +69,10 @@ namespace AI.Infrastructure
 
                 options.UseNpgsql(dataSource, npgsqlOptions =>
                 {
+                    npgsqlOptions.UseVector();
+
                     npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", Constants.SchemaName);
+
                     if (dbConfig.MaxRetryCount > 0)
                         npgsqlOptions.EnableRetryOnFailure(dbConfig.MaxRetryCount);
 
@@ -80,14 +83,16 @@ namespace AI.Infrastructure
                 .AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
             });
 
-            // Register services
             services.AddHttpClient<IImageGenerationService, OpenRouterImageService>();
-            services.AddScoped<IGlobalTrendService, GlobalTrendService>();
-            services.AddScoped<IUserActivityOrchestrator, UserActivityOrchestrator>();
-            services.AddScoped<InteractionWeightCalculator>();
-            services.AddScoped<IRecommendationService, RecommendationService>();
+
+
             services.AddScoped<IGeminiService, GeminiService>();
-            services.AddHostedService<GlobalTrendWorker>();
+
+            // Register embedding services
+            services.AddSingleton<IEmbeddingModel, EmbeddingModel>();
+            services.AddScoped<IUserEmbeddingBuilder, UserEmbeddingBuilder>();
+            services.AddScoped<CategoryEmbeddingBuilder>();
+            services.AddScoped<UserEmbeddingRebuildJob>();
 
             return services;
         }
@@ -95,6 +100,40 @@ namespace AI.Infrastructure
         public static IApplicationBuilder UseUserInfrastructure(this IApplicationBuilder app)
         {
             return app;
+        }
+
+        /// <summary>
+        /// Configures Quartz.NET jobs for the AI module.
+        /// Call this after AddAiInfrastructure in your host project.
+        /// </summary>
+        public static IServiceCollection AddAiBackgroundJobs(this IServiceCollection services)
+        {
+            services.AddQuartz(quartz =>
+            {
+                // Job for rebuilding stale user embeddings
+                var jobKey = new JobKey("RebuildUserEmbeddingsJob");
+
+                quartz.AddJob<RebuildUserEmbeddingsJob>(opts => opts.WithIdentity(jobKey));
+
+                quartz.AddTrigger(opts => opts
+                    .ForJob(jobKey)
+                    .WithIdentity("RebuildUserEmbeddingsJob-Trigger")
+                    .WithCronSchedule("0 */5 * * * ?")); // Every 5 minutes
+
+                // Optional: Job for recalculating category statistics
+                // quartz.AddJob<RecalculateCategoryStatsJob>(opts => opts.WithIdentity("RecalculateCategoryStatsJob"));
+                // quartz.AddTrigger(opts => opts
+                //     .ForJob("RecalculateCategoryStatsJob")
+                //     .WithIdentity("RecalculateCategoryStatsJob-Trigger")
+                //     .WithCronSchedule("0 0 */1 * * ?")); // Every hour
+            });
+
+            services.AddQuartzHostedService(options =>
+            {
+                options.WaitForJobsToComplete = true;
+            });
+
+            return services;
         }
     }
 }

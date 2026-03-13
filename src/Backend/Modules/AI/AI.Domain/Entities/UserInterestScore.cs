@@ -3,9 +3,13 @@ using Shared.Domain.DDD;
 namespace AI.Domain.Entities
 {
     /// <summary>
-    /// Represents a user's interest level in a specific category.
-    /// THREAD-SAFE: Designed to be updated via repository UPSERT pattern.
-    /// DECAY MODEL: Exponential time-based decay to prioritize recent interactions.
+    /// Tracks a user's interest level in a specific category using exponential time decay.
+    ///
+    /// CALL ORDER CONTRACT (enforced by callers, documented here):
+    ///   1. ApplyDecay(halfLifeInDays)   — shrink stale score first
+    ///   2. AddScore(points)             — stack new interaction points on top
+    ///
+    /// Never call AddScore without ApplyDecay first, or recency weighting breaks.
     /// </summary>
     public class UserInterestScore : AggregateRoot<Guid>
     {
@@ -15,16 +19,16 @@ namespace AI.Domain.Entities
         public int TotalInteractions { get; private set; }
         public DateTime LastUpdated { get; private set; }
 
+        private const double ScoreFloor = 0.01;
+
         private UserInterestScore() { }
 
-        public static UserInterestScore Create(Guid userId, string category, double initialScore)
+        public static UserInterestScore Create(Guid userId, string category, double initialScore = 0)
         {
             if (userId == Guid.Empty)
                 throw new ArgumentException("UserId cannot be empty.", nameof(userId));
-
             if (string.IsNullOrWhiteSpace(category))
                 throw new ArgumentException("Category cannot be empty.", nameof(category));
-
             if (initialScore < 0)
                 throw new ArgumentException("Initial score cannot be negative.", nameof(initialScore));
 
@@ -36,59 +40,72 @@ namespace AI.Domain.Entities
                 UserId = userId,
                 Category = category.ToLowerInvariant().Trim(),
                 Score = initialScore,
-                TotalInteractions = 1,
+                TotalInteractions = 0,
                 LastUpdated = now,
                 CreatedAt = now
             };
         }
 
         /// <summary>
-        /// Applies exponential time decay to the score.
-        /// Formula: NewScore = OldScore * (0.5 ^ (DaysElapsed / HalfLifeInDays))
-        /// 
-        /// IMPORTANT: This should be called BEFORE adding new points to ensure
-        /// the score reflects the true recency-weighted value.
+        /// Applies exponential half-life decay: Score *= 0.5 ^ (daysElapsed / halfLifeInDays).
+        /// Floors to zero when Score drops below 0.01 to avoid floating-point accumulation.
+        ///
+        /// NOTE: Does NOT update LastUpdated — that timestamp tracks the last interaction,
+        /// not the last time decay ran. This ensures idempotent decay regardless of job frequency.
         /// </summary>
-        /// <param name="halfLifeInDays">Number of days for score to decay to 50%</param>
         public void ApplyDecay(double halfLifeInDays)
         {
             if (halfLifeInDays <= 0)
                 throw new ArgumentException("Half-life must be positive.", nameof(halfLifeInDays));
 
-            double daysElapsed = (DateTime.UtcNow - LastUpdated).TotalDays;
+            if (Score <= 0) return;
 
-            // No time has passed - no decay needed
+            double daysElapsed = (DateTime.UtcNow - LastUpdated).TotalDays;
             if (daysElapsed <= 0) return;
 
-            // Exponential decay formula
             double decayFactor = Math.Pow(0.5, daysElapsed / halfLifeInDays);
-
             Score *= decayFactor;
 
-            // ===== OPTIMIZATION: Floor very small scores to zero =====
-            // Prevents floating point accumulation and improves query performance
-            if (Score < 0.01) Score = 0;
-
-            // NOTE: We do NOT update LastUpdated here - that happens in AddScore()
+            if (Score < ScoreFloor)
+                Score = 0;
         }
 
         /// <summary>
-        /// Adds new interaction points to the score.
-        /// This should be called AFTER ApplyDecay() in the orchestrator.
+        /// Adds interaction points and bumps LastUpdated.
+        /// Always call ApplyDecay() before this.
         /// </summary>
-        /// <param name="points">Points to add (must be non-negative)</param>
         public void AddScore(double points)
         {
             if (points < 0)
                 throw new ArgumentException("Cannot add negative points.", nameof(points));
 
+            double previous = Score;
+
             Score += points;
             TotalInteractions++;
             LastUpdated = DateTime.UtcNow;
+
+            // RaiseDomainEvent(new InterestScoreUpdatedEvent(
+            //     ScoreId:       Id,
+            //     UserId:        UserId,
+            //     Category:      Category,
+            //     PreviousScore: previous,
+            //     NewScore:      Score,
+            //     UpdatedAt:     LastUpdated));
         }
 
         /// <summary>
-        /// Resets the score to zero (useful for data cleanup or user privacy requests)
+        /// Convenience method that applies decay then adds points in the correct order.
+        /// Use this in application services to prevent call-order mistakes.
+        /// </summary>
+        public void DecayAndAdd(double points, double halfLifeInDays)
+        {
+            ApplyDecay(halfLifeInDays);
+            AddScore(points);
+        }
+
+        /// <summary>
+        /// Resets score to zero (privacy requests, data cleanup).
         /// </summary>
         public void Reset()
         {
@@ -98,17 +115,22 @@ namespace AI.Domain.Entities
         }
 
         /// <summary>
-        /// Returns true if this score is "stale" and can be archived/deleted
+        /// True when score is negligible and the row hasn't been touched recently.
+        /// Safe to archive or delete when this returns true.
         /// </summary>
-        public bool IsStale(int daysThreshold = 90)
-        {
-            return (DateTime.UtcNow - LastUpdated).TotalDays > daysThreshold && Score < 1.0;
-        }
+        public bool IsStale(int daysThreshold = 90) =>
+            (DateTime.UtcNow - LastUpdated).TotalDays > daysThreshold && Score < 1.0;
 
         protected override void Apply(IDomainEvent @event)
         {
-            // Implement event sourcing logic if needed
-            // Example: UserInterestScoreUpdated, UserInterestScoreDecayed events
+            // switch (@event)
+            // {
+            //     case InterestScoreUpdatedEvent e:
+            //         Score             = e.NewScore;
+            //         LastUpdated       = e.UpdatedAt;
+            //         TotalInteractions++;
+            //         break;
+            // }
         }
     }
 }

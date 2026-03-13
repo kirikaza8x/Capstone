@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using AI.Domain.Entities;
-using AI.Domain.ReadModels;
 using Shared.Infrastructure.Outbox;
 
 namespace AI.Infrastructure.Data
@@ -14,8 +13,10 @@ namespace AI.Infrastructure.Data
         public DbSet<GlobalCategoryStat> GlobalCategoryStats { get; set; }
         public DbSet<InteractionWeight> InteractionWeights { get; set; }
         public DbSet<UserWeightProfile> UserWeightProfiles { get; set; }
+        public DbSet<UserEmbedding> UserEmbeddings { get; set; }
+        public DbSet<CategoryEmbedding> CategoryEmbeddings { get; set; }
+        public DbSet<CategoryCoOccurrence> CategoryCoOccurrences { get; set; }
         public DbSet<OutboxMessage> OutboxMessages { get; set; } = null!;
-
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -23,14 +24,9 @@ namespace AI.Infrastructure.Data
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(AIModuleDbContext).Assembly);
             modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration());
 
-            base.OnModelCreating(modelBuilder);
-            // Apply configurations if you have separate configuration files
-            // modelBuilder.ApplyConfigurationsFromAssembly(typeof(AIDbContext).Assembly);
+            modelBuilder.HasPostgresExtension("vector");
 
-            // Or simple fluent API here:
-            // modelBuilder.Entity<UserInterestScore>()
-            //     .HasIndex(x => new { x.UserId, x.Category }) // Speed up lookups!
-            //     .IsUnique();
+            base.OnModelCreating(modelBuilder);
         }
     }
 }

@@ -5,13 +5,17 @@ using Shared.IntegrationEvents.AI;
 
 namespace AI.Application.Features.Tracking.Consumers;
 
-public sealed class TrackingActivityIngestHandler : IntegrationEventHandler<TrackUserActivityIntegrationEvent>
+public sealed class TrackingActivityIngestHandler
+    : IntegrationEventHandler<TrackUserActivityIntegrationEvent>
 {
     private readonly ISender _mediator;
-
-    public TrackingActivityIngestHandler(ISender mediator) => _mediator = mediator;
-
-    public override async Task Handle(TrackUserActivityIntegrationEvent @event, CancellationToken ct)
+    public TrackingActivityIngestHandler(ISender mediator)
+    {
+        _mediator = mediator;
+    }
+    public override async Task Handle(
+        TrackUserActivityIntegrationEvent @event,
+        CancellationToken ct)
     {
         var command = new TrackActivityCommand(
             @event.UserId,

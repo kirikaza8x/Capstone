@@ -3,28 +3,59 @@ using Shared.Domain.Data.Repositories;
 
 namespace AI.Domain.Repositories
 {
-
     /// <summary>
-    /// Repository interface for managing InteractionWeight entities.
-    /// ex: global weights for different user actions (click, view, purchase).
-    /// ps: These weights influence AI recommendation algorithms.
-    /// CONFIGURATION: Read-Heavy, Cacheable
-    /// ps:"Get me the global weight for a 'click'"
+    /// Repository for InteractionWeight.
+    /// Weights are read far more often than they are written — implementations
+    /// should cache the active weight set aggressively (e.g. in-memory with a short TTL).
     /// </summary>
     public interface IInteractionWeightRepository : IRepository<InteractionWeight, Guid>
     {
-        Task<InteractionWeight?> GetByActionTypeAsync(string actionType);
-        Task<List<InteractionWeight>> GetActiveWeightsAsync();
+
+        /// <summary>
+        /// Returns the active weight for a given action type and version.
+        /// Returns null if no active weight exists — callers should fall back to a default.
+        /// </summary>
+        Task<InteractionWeight?> GetActiveAsync(
+            string actionType,
+            string version = "default",
+            CancellationToken cancellationToken = default);
+
+        // ===== BULK READ (hot path) =====
+
+        /// <summary>
+        /// Returns all active weights as a lookup dictionary keyed by ActionType.
+        /// This is the primary read path — called on every behavior log processed.
+        /// Implementations should cache this result.
+        /// </summary>
+        Task<Dictionary<string, double>> GetAllActiveWeightsAsync(
+            string version = "default",
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Returns all weight records for a given action type across all versions.
+        /// Used by the A/B test management UI to show version history.
+        /// </summary>
+        Task<List<InteractionWeight>> GetAllVersionsAsync(
+            string actionType,
+            CancellationToken cancellationToken = default);
+
+        // ===== VERSION MANAGEMENT =====
+
+        /// <summary>
+        /// Returns all active weights for a specific version label.
+        /// Used to preview a new weight set before making it the default.
+        /// </summary>
+        Task<List<InteractionWeight>> GetByVersionAsync(
+            string version,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Deactivates all currently active weights for the given version.
+        /// Call before activating a replacement to prevent duplicate active weights.
+        /// Returns the number of records deactivated.
+        /// </summary>
+        Task<int> DeactivateVersionAsync(
+            string version,
+            CancellationToken cancellationToken = default);
     }
-
-    // /// <summary>
-    // /// Repository interface for managing UserWeightProfile entities.
-    // /// ex: personalized weights for different user actions per user.
-    // /// ex: User A's weight for "click" might be 0.5, while User B's is 2.0.
-    // /// </summary>
-    // public interface IUserWeightProfileRepository : IRepository<UserWeightProfile,Guid>
-    // {
-    //     Task<UserWeightProfile?> GetAsync(Guid userId, string actionType);
-    // }
-
 }
