@@ -3,6 +3,8 @@ using Events.Application.Events.DTOs;
 using Events.Application.Events.Queries.GetEventById;
 using Events.Application.Events.Queries.GetEvents;
 using Events.Application.Events.Queries.GetEventsByOrganizer;
+using Events.Application.Events.Queries.GetEventsForAdmin;
+using Events.Application.Events.Queries.GetEventsForStaff;
 using Events.Domain.Entities;
 
 namespace Events.Application.Mappings;
@@ -24,6 +26,10 @@ public sealed class EventProfile : Profile
 
         CreateMap<Event, EventsByOrganizerResponse>()
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()));
+        CreateMap<Event, EventsForAdminResponse>()
+            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString())); ;
+        CreateMap<Event, EventsForStaffResponse>()
+             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString())); ;
 
         CreateMap<EventImage, EventImageDto>();
         CreateMap<EventActorImage, EventActorImageDto>();
