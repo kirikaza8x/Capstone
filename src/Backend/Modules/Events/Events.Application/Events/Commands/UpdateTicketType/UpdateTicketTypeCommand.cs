@@ -6,4 +6,5 @@ public sealed record UpdateTicketTypeCommand(
     Guid EventId,
     Guid TicketTypeId,
     string Name,
+    int Quantity,
     decimal Price) : ICommand;

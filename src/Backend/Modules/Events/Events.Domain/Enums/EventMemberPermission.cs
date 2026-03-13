@@ -3,7 +3,7 @@
 public enum EventMemberPermission
 {
     CheckIn,
-    ManageTickets,
+    CheckOut,
     ViewReports,
-    ManageStaff
+    ManageMembers
 }

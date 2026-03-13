@@ -17,6 +17,8 @@ internal sealed class TicketTypeConfiguration : IEntityTypeConfiguration<TicketT
             .HasMaxLength(200)
             .IsRequired();
 
+        builder.Property(e => e.Quantity).IsRequired();
+
         builder.Property(e => e.Price)
             .HasColumnType("decimal(18,2)")
             .IsRequired();

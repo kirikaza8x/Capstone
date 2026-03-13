@@ -11,7 +11,7 @@ using Users.PublicApi.Constants;
 
 namespace Events.Api.Events.Post;
 
-public sealed record CreateTicketTypeRequest(string Name, decimal Price);
+public sealed record CreateTicketTypeRequest(string Name, int Quantity, decimal Price);
 
 public class CreateTicketTypeEndpoint : ICarterModule
 {
@@ -24,7 +24,7 @@ public class CreateTicketTypeEndpoint : ICarterModule
             CancellationToken cancellationToken) =>
         {
             var result = await sender.Send(
-                new CreateTicketTypeCommand(eventId, request.Name, request.Price),
+                new CreateTicketTypeCommand(eventId, request.Name, request.Quantity, request.Price),
                 cancellationToken);
 
             if (result.IsFailure)

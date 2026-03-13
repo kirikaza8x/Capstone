@@ -41,7 +41,7 @@ internal sealed class UpdateTicketTypeCommandHandler(
         if (ticketType is null)
             return Result.Failure(EventErrors.TicketTypeErrors.NotFound(command.TicketTypeId));
 
-        ticketType.Update(command.Name, command.Price);
+        ticketType.Update(command.Name, command.Quantity, command.Price);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Success();

@@ -9,7 +9,6 @@ public sealed class EventsDbContext(DbContextOptions<EventsDbContext> options) :
     public DbSet<Event> Events => Set<Event>();
     public DbSet<EventSession> EventSessions => Set<EventSession>();
     public DbSet<TicketType> TicketTypes => Set<TicketType>();
-    public DbSet<SessionTicketQuota> SessionTicketQuotas => Set<SessionTicketQuota>();
     public DbSet<Area> Areas => Set<Area>();
     public DbSet<Seat> Seats => Set<Seat>();
     public DbSet<Category> EventCategories => Set<Category>();

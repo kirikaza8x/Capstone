@@ -11,7 +11,7 @@ using Users.PublicApi.Constants;
 
 namespace Events.Api.Events.Patch;
 
-public sealed record UpdateTicketTypeRequest(string Name, decimal Price);
+public sealed record UpdateTicketTypeRequest(string Name, int Quantity, decimal Price);
 
 public class UpdateTicketTypeEndpoint : ICarterModule
 {
@@ -25,7 +25,7 @@ public class UpdateTicketTypeEndpoint : ICarterModule
             CancellationToken cancellationToken) =>
         {
             var result = await sender.Send(
-                new UpdateTicketTypeCommand(eventId, ticketTypeId, request.Name, request.Price),
+                new UpdateTicketTypeCommand(eventId, ticketTypeId, request.Name, request.Quantity, request.Price),
                 cancellationToken);
 
             return result.ToOk("Ticket type updated successfully.");

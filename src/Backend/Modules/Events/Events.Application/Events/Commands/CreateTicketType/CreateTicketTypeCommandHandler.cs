@@ -40,7 +40,7 @@ internal sealed class CreateTicketTypeCommandHandler(
         if (@event.OrganizerId != currentUserService.UserId)
             return Result.Failure<Guid>(EventErrors.Event.NotOwner);
 
-        var ticketType = TicketType.Create(command.EventId, command.Name, command.Price);
+        var ticketType = TicketType.Create(command.EventId, command.Name, command.Quantity, command.Price);
 
         @event.AddTicketType(ticketType);
         await unitOfWork.SaveChangesAsync(cancellationToken);
