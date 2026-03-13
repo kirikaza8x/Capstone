@@ -34,10 +34,10 @@ public class AddEventMemberEndpoint : ICarterModule
                 $"/api/events/{eventId}/staff/{result.Value}",
                 "Member added successfully.");
         })
-        .WithTags(Constants.Tags.Staff)
+        .WithTags(Constants.Tags.Member)
         .WithName("AddEventMember")
         .WithSummary("Add event member")
-        .WithDescription("Add a registered Attendee as event staff member by email.")
+        .WithDescription("Add a registered Attendee as event member by email.")
         .Produces<Guid>(StatusCodes.Status201Created)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status403Forbidden)

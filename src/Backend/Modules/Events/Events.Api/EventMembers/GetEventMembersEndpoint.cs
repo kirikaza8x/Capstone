@@ -23,10 +23,10 @@ public class GetEventMembersEndpoint : ICarterModule
             var result = await sender.Send(new GetEventMembersQuery(eventId), cancellationToken);
             return result.ToOk();
         })
-        .WithTags(Constants.Tags.Staff)
+        .WithTags(Constants.Tags.Member)
         .WithName("GetEventMembers")
         .WithSummary("Get event members")
-        .WithDescription("Retrieve all staff members of an event.")
+        .WithDescription("Retrieve all event members of an event.")
         .Produces<IReadOnlyList<EventMemberResponse>>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status403Forbidden)
         .ProducesProblem(StatusCodes.Status404NotFound)

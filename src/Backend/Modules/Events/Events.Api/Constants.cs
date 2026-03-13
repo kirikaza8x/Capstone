@@ -14,7 +14,7 @@ internal static class Constants
         public const string Seats = "Seats";
         public const string TicketTypes = "Ticket Types";
         public const string Quotas = "Session Ticket Quotas";
-        public const string Staff = "Event Staff";
+        public const string Member = "Event Member";
         public const string Categories = "Categories";
         public const string Hashtags = "Hashtags";
         public const string Search = "Search & Discovery";

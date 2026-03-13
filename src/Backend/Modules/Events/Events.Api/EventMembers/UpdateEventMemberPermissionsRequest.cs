@@ -30,10 +30,10 @@ public class UpdateEventMemberPermissionsEndpoint : ICarterModule
 
             return result.ToOk("Permissions updated successfully.");
         })
-        .WithTags(Constants.Tags.Staff)
+        .WithTags(Constants.Tags.Member)
         .WithName("UpdateEventMemberPermissions")
         .WithSummary("Update member permissions")
-        .WithDescription("Update permissions of an event staff member.")
+        .WithDescription("Update permissions of an event member.")
         .Produces(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status403Forbidden)
         .ProducesProblem(StatusCodes.Status404NotFound)
