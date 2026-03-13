@@ -1,4 +1,5 @@
 ﻿using Events.Domain.Entities;
+using Events.Domain.Enums;
 using Events.Domain.Errors;
 using Events.Domain.Repositories;
 using Events.Domain.Uow;
@@ -80,6 +81,9 @@ internal sealed class UpdateEventCommandHandler(
 
         if (@event.OrganizerId != currentUserService.UserId)
             return Result.Failure(EventErrors.Event.NotOwner);
+
+        if (@event.Status != EventStatus.Draft)
+            return Result.Failure(EventErrors.Event.CannotUpdate(@event.Status));
 
         if (command.Title is not null || command.Location is not null || command.Description is not null)
         {

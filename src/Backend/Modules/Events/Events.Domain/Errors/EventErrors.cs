@@ -79,6 +79,10 @@ public static class EventErrors
             "Event.AlreadyStarted",
             "Cannot process request. The event has already started.");
 
+        public static Error CannotUpdate(EventStatus currentStatus) => Error.Validation(
+            "Event.CannotUpdate",
+            $"Cannot update event. Current status is '{currentStatus}'. Only draft events can be updated.");
+
         public static readonly Error NotOwner = Error.Forbidden(
             "Event.NotOwner",
             "You are not the owner of this event.");
