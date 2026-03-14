@@ -1,95 +1,198 @@
-// AI.Infrastructure/Services/Embedding/EmbeddingService.cs
 using AI.Application.Abstractions;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
-using Microsoft.ML.Tokenizers;
+using FastBertTokenizer;  // ✅ Correct namespace for FastBertTokenizer v1.0.28
+using Microsoft.Extensions.Logging;
 
 namespace AI.Infrastructure.Services.Embedding
 {
+    /// <summary>
+    /// Generates embeddings using ONNX Runtime with all-MiniLM-L6-v2.
+    /// Uses FastBertTokenizer for efficient tokenization.
+    /// </summary>
     public sealed class EmbeddingService : IEmbeddingService, IDisposable
     {
         private readonly InferenceSession _session;
-        private readonly BertTokenizer _tokenizer;
+        private readonly BertTokenizer _tokenizer;  
+        private readonly ILogger<EmbeddingService> _logger;
+
         private const int MaxTokens = 128;
         private const int Dimension = 384;
+        private bool _disposed;
 
-        public EmbeddingService(string modelPath, string vocabPath)
+        public string ModelName => "all-MiniLM-L6-v2";
+        public int ModelDimension => Dimension;
+
+        public EmbeddingService(
+            string modelPath,
+            string vocabPath,
+            ILogger<EmbeddingService> logger)
         {
-            _session = new InferenceSession(modelPath, new SessionOptions
-            {
-                EnableMemoryPattern = true,
-                ExecutionMode = ExecutionMode.ORT_SEQUENTIAL
-            });
+            _logger = logger;
 
-            _tokenizer = BertTokenizer.Create(vocabPath);
+            try
+            {
+                // Configure ONNX Runtime session
+                var sessionOptions = new SessionOptions
+                {
+                    EnableMemoryPattern = true,
+                    ExecutionMode = ExecutionMode.ORT_SEQUENTIAL,
+                    InterOpNumThreads = 1,
+                    IntraOpNumThreads = Environment.ProcessorCount,
+                    GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL
+                };
+
+                // Try CUDA, fall back to CPU
+                try
+                {
+                    sessionOptions.AppendExecutionProvider_CUDA(0);
+                    _logger.LogInformation("ONNX: Using CUDA execution provider");
+                }
+                catch
+                {
+                    _logger.LogInformation("ONNX: CUDA not available, using CPU");
+                }
+
+                _session = new InferenceSession(modelPath, sessionOptions);
+                _logger.LogInformation("ONNX session created: {ModelPath}", modelPath);
+                _tokenizer = new BertTokenizer();
+                _tokenizer.LoadVocabularyAsync(vocabPath, true).GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to initialize EmbeddingService");
+                throw;
+            }
         }
 
-        public Task<float[]> GenerateAsync(string text, CancellationToken ct = default)
+        public async Task<float[]> GenerateAsync(string text, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(text))
-                return Task.FromResult(new float[Dimension]);
+                return Array.Empty<float>();
 
-            // Encode and truncate to MaxTokens
-            var encoded = _tokenizer.EncodeToIds(text, MaxTokens, out _, out _);
-            int seqLen = encoded.Count;
-
-            var inputIds      = new DenseTensor<long>(new[] { 1, seqLen });
-            var attentionMask = new DenseTensor<long>(new[] { 1, seqLen });
-            var tokenTypeIds  = new DenseTensor<long>(new[] { 1, seqLen });
-
-            for (int i = 0; i < seqLen; i++)
+            return await Task.Run(() =>
             {
-                inputIds[0, i]      = encoded[i];
-                attentionMask[0, i] = 1;
-                tokenTypeIds[0, i]  = 0;
-            }
+                try
+                {
+                    ct.ThrowIfCancellationRequested();
 
-            var inputs = new List<NamedOnnxValue>
-            {
-                NamedOnnxValue.CreateFromTensor("input_ids",      inputIds),
-                NamedOnnxValue.CreateFromTensor("attention_mask", attentionMask),
-                NamedOnnxValue.CreateFromTensor("token_type_ids", tokenTypeIds),
-            };
+                    var encoding = _tokenizer.Encode(text, MaxTokens);
+                    int seqLen = encoding.InputIds.Length;
 
-            using var results = _session.Run(inputs);
+                    if (seqLen == 0)
+                        return Array.Empty<float>();
 
-            var lastHiddenState = results
-                .First(r => r.Name == "last_hidden_state")
-                .AsEnumerable<float>()
-                .ToArray();
+                    // ✅ Create tensors with VALUES + DIMENSIONS
+                    var inputIds = new DenseTensor<long>(encoding.InputIds, new[] { 1, seqLen });
+                    var attentionMask = new DenseTensor<long>(encoding.AttentionMask, new[] { 1, seqLen });
+                    var tokenTypeIds = new DenseTensor<long>(encoding.TokenTypeIds, new[] { 1, seqLen });
 
-            var pooled = MeanPool(lastHiddenState, seqLen);
-            return Task.FromResult(L2Normalise(pooled));
+                    // Prepare ONNX inputs
+                    var inputs = new List<NamedOnnxValue>
+                    {
+                        NamedOnnxValue.CreateFromTensor("input_ids", inputIds),
+                        NamedOnnxValue.CreateFromTensor("attention_mask", attentionMask),
+                        NamedOnnxValue.CreateFromTensor("token_type_ids", tokenTypeIds),
+                    };
+
+                    // Run inference
+                    using var results = _session.Run(inputs);
+
+                    // Extract last_hidden_state: shape [1, seqLen, 384]
+                    var output = results.FirstOrDefault(r => r.Name == "last_hidden_state")
+                        ?? throw new InvalidOperationException("Output 'last_hidden_state' not found");
+
+                    var tensor = output.AsTensor<float>();
+
+                    // Mean pooling over sequence dimension
+                    var pooled = MeanPool(tensor, seqLen);
+
+                    // L2 normalize for cosine similarity
+                    return L2Normalize(pooled);
+                }
+                catch (OperationCanceledException)
+                {
+                    _logger.LogWarning("Embedding generation cancelled for text: {Text}", text);
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Embedding generation failed for text: {Text}", text);
+                    throw new InvalidOperationException("Failed to generate embedding", ex);
+                }
+            }, ct);
         }
 
-        private static float[] MeanPool(float[] hiddenState, int seqLen)
+        /// <summary>
+        /// Mean pooling over sequence dimension of last_hidden_state.
+        /// Input tensor shape: [batch=1, seqLen, hiddenSize=384]
+        /// </summary>
+        private static float[] MeanPool(Microsoft.ML.OnnxRuntime.Tensors.Tensor<float> tensor, int seqLen)
         {
             var result = new float[Dimension];
 
+            // tensor[batch, sequence_position, hidden_dimension]
             for (int t = 0; t < seqLen; t++)
             {
-                int offset = t * Dimension;
                 for (int d = 0; d < Dimension; d++)
-                    result[d] += hiddenState[offset + d];
+                {
+                    result[d] += tensor[0, t, d];
+                }
             }
 
+            // Average
             for (int d = 0; d < Dimension; d++)
+            {
                 result[d] /= seqLen;
+            }
 
             return result;
         }
 
-        private static float[] L2Normalise(float[] vector)
+        /// <summary>
+        /// L2 normalize vector to unit length (enables cosine similarity via dot product)
+        /// </summary>
+        private static float[] L2Normalize(float[] vector)
         {
             double norm = Math.Sqrt(vector.Sum(x => (double)x * x));
-            if (norm == 0) return vector;
+
+            if (norm < 1e-8)
+                return vector;  // Avoid division by zero
 
             var result = new float[Dimension];
             for (int d = 0; d < Dimension; d++)
+            {
                 result[d] = (float)(vector[d] / norm);
+            }
             return result;
         }
 
-        public void Dispose() => _session.Dispose();
+        /// <summary>
+        /// Generate embeddings for multiple texts (sequential for now)
+        /// </summary>
+        public async Task<List<float[]>> GenerateBatchAsync(
+            IEnumerable<string> texts,
+            CancellationToken ct = default)
+        {
+            var textList = texts.Where(t => !string.IsNullOrWhiteSpace(t)).ToList();
+            if (!textList.Any())
+                return new List<float[]>();
+
+            var results = new List<float[]>(textList.Count);
+            foreach (var text in textList)
+            {
+                results.Add(await GenerateAsync(text, ct));
+            }
+            return results;
+        }
+
+        public void Dispose()
+        {
+            if (!_disposed)
+            {
+                _session?.Dispose();
+                _disposed = true;
+            }
+        }
     }
 }
