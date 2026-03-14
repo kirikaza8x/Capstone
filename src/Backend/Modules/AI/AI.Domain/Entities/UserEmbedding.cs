@@ -142,6 +142,35 @@ namespace AI.Domain.Entities
         }
 
         /// <summary>
+        /// Updates this instance's state from another UserEmbedding.
+        /// Used by repositories for upsert scenarios.
+        /// Respects encapsulation: only the entity can set its private properties.
+        /// </summary>
+        /// <param name="source">The source embedding to copy state from.</param>
+        public void UpdateFrom(UserEmbedding source)
+        {
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            if (source.UserId != this.UserId)
+                throw new ArgumentException("Cannot update from embedding with different UserId", nameof(source));
+
+            // Update vector (uses existing public method)
+            UpdateEmbedding(source.Embedding);
+
+            // Update other properties (allowed: we're inside the class)
+            InteractionCount = source.InteractionCount;
+            Confidence = source.Confidence;
+            LastCalculated = source.LastCalculated;
+            IsStale = source.IsStale;
+
+            // Update categories
+            _contributingCategories.Clear();
+            foreach (var cat in source.ContributingCategories)
+            {
+                _contributingCategories.Add(cat);
+            }
+        }
+
+        /// <summary>
         /// Adds a contributing category to the embedding.
         /// Used when rebuilding embeddings incrementally.
         /// </summary>
