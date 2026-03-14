@@ -19,17 +19,18 @@ namespace AI.Application.Features.Tracking.EventHandlers
             BehaviorLogCreatedEvent notification,
             CancellationToken ct)
         {
-            var integrationEvent =
-                new TrackUserActivityIntegrationEvent(
-                    notification.LogId,
-                    notification.OccurredAt,
-                    notification.UserId,
-                    notification.ActionType,
-                    notification.TargetId,
-                    notification.TargetType,
-                    notification.Metadata);
-
-            await _eventBus.PublishAsync(integrationEvent, ct);
+           var outboundEvent = new BehaviorLogPublishedIntegrationEvent(
+            Id: Guid.NewGuid(),
+            OccurredOnUtc: DateTime.UtcNow,
+            LogId: notification.LogId,
+            UserId: notification.UserId,
+            ActionType: notification.ActionType,
+            TargetId: notification.TargetId,
+            TargetType: notification.TargetType,
+            Metadata: notification.Metadata,
+            CorrelationId: Guid.NewGuid().ToString()
+        );
+            await _eventBus.PublishAsync(outboundEvent, ct);
         }
     }
 }
