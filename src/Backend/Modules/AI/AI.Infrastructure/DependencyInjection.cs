@@ -1,10 +1,7 @@
 using AI.Application.Abstractions;
 using AI.Application.Services;
-using AI.Domain.Services;
-using AI.Infrastructure.BackgroundJobs;
 using AI.Infrastructure.Data;
 using AI.Infrastructure.ExternalServices;
-using AI.Infrastructure.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -82,12 +79,7 @@ namespace AI.Infrastructure
 
             // Register services
             services.AddHttpClient<IImageGenerationService, OpenRouterImageService>();
-            services.AddScoped<IGlobalTrendService, GlobalTrendService>();
-            services.AddScoped<IUserActivityOrchestrator, UserActivityOrchestrator>();
-            services.AddScoped<InteractionWeightCalculator>();
-            services.AddScoped<IRecommendationService, RecommendationService>();
             services.AddScoped<IGeminiService, GeminiService>();
-            services.AddHostedService<GlobalTrendWorker>();
 
             return services;
         }

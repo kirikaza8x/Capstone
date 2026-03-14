@@ -13,7 +13,6 @@ namespace AI.Infrastructure.Data
         public DbSet<UserInterestScore> UserInterestScores { get; set; }
         public DbSet<GlobalCategoryStat> GlobalCategoryStats { get; set; }
         public DbSet<InteractionWeight> InteractionWeights { get; set; }
-        public DbSet<UserWeightProfile> UserWeightProfiles { get; set; }
         public DbSet<OutboxMessage> OutboxMessages { get; set; } = null!;
 
 
