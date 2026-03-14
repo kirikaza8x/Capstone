@@ -27,4 +27,6 @@ public interface IEventRepository : IRepository<Event, Guid>
 
     Task<Event?> GetByIdWithMembersAsync(Guid id, CancellationToken cancellationToken = default);
 
+    Task<bool> HasPermissionAsync(Guid eventId, Guid userId, string permission,  CancellationToken cancellationToken = default);
+
 }

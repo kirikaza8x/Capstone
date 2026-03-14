@@ -146,4 +146,13 @@ internal sealed class EventRepository(EventsDbContext context)
             .Include(e => e.Members)
             .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
     }
+
+    public async Task<bool> HasPermissionAsync(Guid eventId, Guid userId, string permission, CancellationToken cancellationToken = default)
+    {
+        return await _context.EventMembers
+            .AnyAsync(m =>
+                m.EventId == eventId &&
+                m.UserId == userId &&
+                m.Permissions.Contains(permission));
+    }
 }
