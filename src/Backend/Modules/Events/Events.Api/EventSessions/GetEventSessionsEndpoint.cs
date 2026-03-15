@@ -26,7 +26,7 @@ public class GetEventSessionsEndpoint : ICarterModule
         .WithName("GetEventSessions")
         .WithSummary("Get event sessions")
         .WithDescription("Retrieve all sessions with ticket types for an event.")
-        .Produces<IReadOnlyList<EventSessionDto>>(StatusCodes.Status200OK)
+        .Produces<ApiResult<IReadOnlyList<EventSessionDto>>>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status404NotFound);
     }
 }

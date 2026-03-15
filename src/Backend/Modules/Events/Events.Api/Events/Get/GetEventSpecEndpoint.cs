@@ -25,7 +25,7 @@ public class GetEventSpecEndpoint : ICarterModule
         .WithName("GetEventSpec")
         .WithSummary("Get event spec")
         .WithDescription("Retrieve the seatmap spec JSON of an event.")
-        .Produces<GetEventSpecResponse>(StatusCodes.Status200OK)
+        .Produces<ApiResult<GetEventSpecResponse>>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status404NotFound);
     }
 }

@@ -27,7 +27,7 @@ public class GetEventsForAdminEndpoint : ICarterModule
         .WithName("GetEventsForAdmin")
         .WithSummary("Get all events for administration")
         .WithDescription("Retrieve all events except Drafts. Can filter by organizerId, statuses, and title.")
-        .Produces<PagedResult<EventsForAdminResponse>>(StatusCodes.Status200OK)
+        .Produces<ApiResult<PagedResult<EventsForAdminResponse>>>(StatusCodes.Status200OK)
         .RequireRoles(Roles.Admin);
     }
 }

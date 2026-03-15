@@ -28,7 +28,7 @@ public class GetEventEndpoint : ICarterModule
         .WithName("GetEvent")
         .WithSummary("Get event details")
         .WithDescription("Get detailed information about an event.")
-        .Produces<GetEventResponse>(StatusCodes.Status200OK)
+        .Produces<ApiResult<GetEventResponse>>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status404NotFound);
     }
 }

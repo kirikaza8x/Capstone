@@ -25,6 +25,6 @@ public class GetHashtagsEndpoint : ICarterModule
         .WithName("GetHashtags")
         .WithSummary("Get all hashtags")
         .WithDescription("Retrieve hashtags. Supports search-as-you-type via `name` query param. Use `take` to limit results.")
-        .Produces<IReadOnlyList<HashtagResponse>>(StatusCodes.Status200OK);
+        .Produces<ApiResult<IReadOnlyList<HashtagResponse>>>(StatusCodes.Status200OK);
     }
 }

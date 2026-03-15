@@ -26,7 +26,7 @@ public class GetHashtagByIdEndpoint : ICarterModule
         .WithName("GetHashtagById")
         .WithSummary("Get hashtag by ID")
         .WithDescription("Retrieve a single hashtag by its ID.")
-        .Produces<HashtagResponse>(StatusCodes.Status200OK)
+        .Produces<ApiResult<HashtagResponse>>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status404NotFound);
     }
 }

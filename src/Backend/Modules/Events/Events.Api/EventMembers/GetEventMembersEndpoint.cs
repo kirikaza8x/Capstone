@@ -27,7 +27,7 @@ public class GetEventMembersEndpoint : ICarterModule
         .WithName("GetEventMembers")
         .WithSummary("Get event members")
         .WithDescription("Retrieve all event members of an event.")
-        .Produces<IReadOnlyList<EventMemberResponse>>(StatusCodes.Status200OK)
+        .Produces<ApiResult<IReadOnlyList<EventMemberResponse>>>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status403Forbidden)
         .ProducesProblem(StatusCodes.Status404NotFound)
         .RequireRoles(Roles.Organizer);

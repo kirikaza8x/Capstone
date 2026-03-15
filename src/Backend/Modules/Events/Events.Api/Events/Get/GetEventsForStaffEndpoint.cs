@@ -27,7 +27,7 @@ public class GetEventsForStaffEndpoint : ICarterModule
         .WithName("GetEventsForStaff")
         .WithSummary("Get events that need staff attention")
         .WithDescription("Retrieve events with status PendingReview or PendingRequest.")
-        .Produces<PagedResult<EventsForStaffResponse>>(StatusCodes.Status200OK)
+        .Produces<ApiResult<PagedResult<EventsForStaffResponse>>>(StatusCodes.Status200OK)
         .RequireRoles(Roles.Staff);
     }
 }

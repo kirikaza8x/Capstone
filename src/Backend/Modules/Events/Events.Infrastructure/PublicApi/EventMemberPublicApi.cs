@@ -19,7 +19,23 @@ internal class EventMemberPublicApi(
 
         var cacheKey = BuildCacheKey(eventId, userId, permission);
 
-        return await eventRepository.HasPermissionAsync(eventId, userId, permission, cancellationToken);
+        var cachedValue = await distributedCache.GetStringAsync(cacheKey, cancellationToken);
+        if (cachedValue is not null)
+            return cachedValue == bool.TrueString;
+
+
+        var hasPermission = await eventRepository.HasPermissionAsync(eventId, userId, permission, cancellationToken);
+
+        await distributedCache.SetStringAsync(
+            cacheKey,
+            hasPermission.ToString(),
+            new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = PermissionCacheTtl
+            },
+            cancellationToken);
+
+        return hasPermission;
     }
 
     private static string BuildCacheKey(Guid eventId, Guid userId, string permission)

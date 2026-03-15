@@ -26,7 +26,7 @@ public class GetTicketTypesEndpoint : ICarterModule
         .WithName("GetTicketTypes")
         .WithSummary("Get ticket types")
         .WithDescription("Retrieve all ticket types of an event.")
-        .Produces<IReadOnlyList<TicketTypeDto>>(StatusCodes.Status200OK)
+        .Produces<ApiResult<IReadOnlyList<TicketTypeDto>>>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status404NotFound);
     }
 }
