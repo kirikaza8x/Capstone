@@ -1,3 +1,4 @@
+using Events.Application.Events.DTOs;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Pagination;
 using Shared.Domain.Queries;
@@ -22,4 +23,7 @@ public sealed record EventsForStaffResponse
     public DateTime? EventStartAt { get; init; }
     public DateTime? EventEndAt { get; init; }
     public DateTime CreatedAt { get; init; }
+
+
+    public IReadOnlyList<EventCategoryDto> Categories { get; init; } = [];
 }
