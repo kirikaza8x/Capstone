@@ -28,7 +28,7 @@ public class GetEventsEndpoint : ICarterModule
         .WithName("GetEvents")
         .WithSummary("Get all events")
         .WithDescription("Get all events with pagination.")
-        .Produces<PagedResult<EventResponse>>(StatusCodes.Status200OK)
+        .Produces<ApiResult<PagedResult<EventResponse>>>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status400BadRequest);
     }
 }

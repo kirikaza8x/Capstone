@@ -28,7 +28,7 @@ public class GetEventsByOrganizerEndpoint : ICarterModule
         .WithName("GetMyEvents")
         .WithSummary("Get my events")
         .WithDescription("Retrieve all events of the current organizer with pagination. Filter by `title` and `statuses` (e.g. `?statuses=draft,published`).")
-        .Produces<PagedResult<EventResponse>>(StatusCodes.Status200OK)
+        .Produces<ApiResult<PagedResult<EventResponse>>>(StatusCodes.Status200OK)
         .RequireRoles(Roles.Organizer);
     }
 }

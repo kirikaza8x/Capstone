@@ -1,10 +1,14 @@
 ﻿using Events.Application.Abstractions;
+using Events.Application.Abstractions.Caching;
 using Events.Application.Categories.Queries.GetCategories;
 using Events.Domain.Repositories;
 using Events.Domain.Uow;
+using Events.Infrastructure.Caching;
 using Events.Infrastructure.Data;
 using Events.Infrastructure.Data.Repositories;
+using Events.Infrastructure.PublicApi;
 using Events.Infrastructure.Services;
+using Events.PublicApi.PublicApi;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -26,6 +30,10 @@ public static class EventModule
         services.TryAddScoped<IHashtagRepository, HashtagRepository>();
         services.TryAddScoped<IEventUnitOfWork, EventUnitOfWork>();
         services.AddScoped<ISeatLockService, SeatLockService>();
+
+        services.AddScoped<IEventMemberPublicApi, EventMemberPublicApi>();
+        services.AddScoped<IEventMemberPermissionCacheInvalidator, EventMemberPermissionCacheInvalidator>();
+
         services.AddDbContext<EventsDbContext>((sp, options) =>
         {
             var dbConfig = sp.GetRequiredService<IOptions<DatabaseConfig>>().Value;

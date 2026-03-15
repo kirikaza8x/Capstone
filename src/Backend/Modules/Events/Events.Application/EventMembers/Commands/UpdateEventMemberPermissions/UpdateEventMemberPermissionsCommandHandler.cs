@@ -1,4 +1,5 @@
-﻿using Events.Domain.Errors;
+﻿using Events.Application.Abstractions.Caching;
+using Events.Domain.Errors;
 using Events.Domain.Repositories;
 using Events.Domain.Uow;
 using Shared.Application.Abstractions.Authentication;
@@ -10,7 +11,8 @@ namespace Events.Application.EventMembers.Commands.UpdateEventMemberPermissions;
 internal sealed class UpdateEventMemberPermissionsCommandHandler(
     IEventRepository eventRepository,
     ICurrentUserService currentUserService,
-    IEventUnitOfWork unitOfWork) : ICommandHandler<UpdateEventMemberPermissionsCommand>
+    IEventUnitOfWork unitOfWork,
+    IEventMemberPermissionCacheInvalidator permissionCacheInvalidator) : ICommandHandler<UpdateEventMemberPermissionsCommand>
 {
     public async Task<Result> Handle(UpdateEventMemberPermissionsCommand command, CancellationToken cancellationToken)
     {
@@ -28,6 +30,8 @@ internal sealed class UpdateEventMemberPermissionsCommandHandler(
 
         member.UpdatePermissions(command.Permissions);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        await permissionCacheInvalidator.InvalidateAsync(command.EventId, member.UserId, cancellationToken);
 
         return Result.Success();
     }

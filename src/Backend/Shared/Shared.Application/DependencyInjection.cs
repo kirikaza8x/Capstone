@@ -12,7 +12,7 @@ public static class ApplicationConfiguration
         Assembly[] moduleAssemblies)
     {
         services.AddMediatRWithAssemblies(moduleAssemblies);
-        services.AddAutoMapper(moduleAssemblies);
+        services.AddAutoMapper(_ => { }, moduleAssemblies);
         services.AddValidatorsFromAssemblies(
              moduleAssemblies,
              includeInternalTypes: true);

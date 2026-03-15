@@ -25,6 +25,6 @@ public class GetCategoriesEndpoint : ICarterModule
         .WithName("GetCategories")
         .WithSummary("Get all categories")
         .WithDescription("Retrieve categories. Supports search-as-you-type via `name` query param. Use `take` to limit results.")
-        .Produces<IReadOnlyList<CategoryResponse>>(StatusCodes.Status200OK);
+        .Produces<ApiResult<IReadOnlyList<CategoryResponse>>>(StatusCodes.Status200OK);
     }
 }

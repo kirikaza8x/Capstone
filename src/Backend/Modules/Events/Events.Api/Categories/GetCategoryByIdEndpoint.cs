@@ -26,7 +26,7 @@ public class GetCategoryByIdEndpoint : ICarterModule
         .WithName("GetCategoryById")
         .WithSummary("Get category by ID")
         .WithDescription("Retrieve a single category by its ID.")
-        .Produces<CategoryResponse>(StatusCodes.Status200OK)
+        .Produces<ApiResult<CategoryResponse>>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status404NotFound);
     }
 }

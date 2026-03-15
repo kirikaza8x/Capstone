@@ -1,4 +1,5 @@
-﻿using Events.Domain.Entities;
+﻿using Events.Application.Abstractions.Caching;
+using Events.Domain.Entities;
 using Events.Domain.Errors;
 using Events.Domain.Repositories;
 using Events.Domain.Uow;
@@ -14,7 +15,8 @@ internal sealed class AddEventMemberCommandHandler(
     IEventRepository eventRepository,
     IUserPublicApi userPublicApi,
     ICurrentUserService currentUserService,
-    IEventUnitOfWork unitOfWork) : ICommandHandler<AddEventMemberCommand, Guid>
+    IEventUnitOfWork unitOfWork,
+    IEventMemberPermissionCacheInvalidator permissionCacheInvalidator) : ICommandHandler<AddEventMemberCommand, Guid>
 {
     public async Task<Result<Guid>> Handle(AddEventMemberCommand command, CancellationToken cancellationToken)
     {
@@ -46,6 +48,8 @@ internal sealed class AddEventMemberCommandHandler(
 
         @event.AddMember(member);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        await permissionCacheInvalidator.InvalidateAsync(command.EventId, userInfo.Id, cancellationToken);
 
         return Result.Success(member.Id);
     }

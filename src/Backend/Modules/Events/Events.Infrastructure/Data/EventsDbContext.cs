@@ -15,7 +15,7 @@ public sealed class EventsDbContext(DbContextOptions<EventsDbContext> options) :
     public DbSet<EventCategory> EventCategoryMappings => Set<EventCategory>();
     public DbSet<EventImage> EventImages => Set<EventImage>();
     public DbSet<EventActorImage> EventActorImages => Set<EventActorImage>();
-    public DbSet<EventMember> EventStaffs => Set<EventMember>();
+    public DbSet<EventMember> EventMembers => Set<EventMember>();
     public DbSet<Hashtag> Hashtags => Set<Hashtag>();
     public DbSet<EventHashtag> EventHashtags => Set<EventHashtag>();
     public DbSet<OutboxMessage> OutboxMessages { get; set; } = null!;
