@@ -1,4 +1,5 @@
-﻿using Events.Domain.Errors;
+﻿using Events.Application.Abstractions.Caching;
+using Events.Domain.Errors;
 using Events.Domain.Repositories;
 using Events.Domain.Uow;
 using Shared.Application.Abstractions.Authentication;
@@ -10,7 +11,8 @@ namespace Events.Application.EventMembers.Commands.RemoveEventMember;
 internal sealed class RemoveEventMemberCommandHandler(
     IEventRepository eventRepository,
     ICurrentUserService currentUserService,
-    IEventUnitOfWork unitOfWork) : ICommandHandler<RemoveEventMemberCommand>
+    IEventUnitOfWork unitOfWork,
+    IEventMemberPermissionCacheInvalidator permissionCacheInvalidator) : ICommandHandler<RemoveEventMemberCommand>
 {
     public async Task<Result> Handle(RemoveEventMemberCommand command, CancellationToken cancellationToken)
     {
@@ -26,8 +28,12 @@ internal sealed class RemoveEventMemberCommandHandler(
         if (member is null)
             return Result.Failure(EventErrors.EventMemberErrors.NotFound(command.MemberId));
 
+        var memberUserId = member.UserId;
+
         @event.RemoveMember(member);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        await permissionCacheInvalidator.InvalidateAsync(command.EventId, memberUserId, cancellationToken);
 
         return Result.Success();
     }
