@@ -48,8 +48,33 @@ internal sealed class UpdateEventSpecCommandHandler(
 
         @event.ClearAreasAndSeats();
 
+        var usedAreaIds = new HashSet<Guid>();
+
         foreach (var specArea in seatMap.Areas)
         {
+            Guid areaId;
+
+            if (!string.IsNullOrWhiteSpace(specArea.Id))
+            {
+                if (!Guid.TryParse(specArea.Id, out areaId))
+                {
+                    return Result.Failure(Error.Validation(
+                        "Event.InvalidSpec",
+                        $"Invalid area id '{specArea.Id}'. Area id must be a valid GUID."));
+                }
+            }
+            else
+            {
+                areaId = Guid.NewGuid();
+            }
+
+            if (!usedAreaIds.Add(areaId))
+            {
+                return Result.Failure(Error.Validation(
+                    "Event.InvalidSpec",
+                    $"Duplicate area id '{areaId}' in spec."));
+            }
+
             var hasSeats = specArea.Seats is { Count: > 0 };
             var areaType = hasSeats ? AreaType.Seat : AreaType.Zone;
             var capacity = hasSeats ? specArea.Seats!.Count : 0;
@@ -58,9 +83,9 @@ internal sealed class UpdateEventSpecCommandHandler(
                 eventId: @event.Id,
                 name: specArea.Name,
                 capacity: capacity,
-                type: areaType);
+                type: areaType,
+                id: areaId);
 
-            // Record the generated Area ID back to the spec model
             specArea.Id = area.Id.ToString();
 
             if (hasSeats)
@@ -78,9 +103,7 @@ internal sealed class UpdateEventSpecCommandHandler(
                     if (specSeat.ParsedStatus == SeatMapSeatStatus.blocked)
                         seat.Deactivate();
 
-                    // Record the generated Seat ID back to the spec model
                     specSeat.Id = seat.Id.ToString();
-
                     area.AddSeat(seat);
                 }
             }
@@ -88,7 +111,6 @@ internal sealed class UpdateEventSpecCommandHandler(
             @event.AddArea(area);
         }
 
-        // Serialize spec when we have enriched it with UUIDs
         var enrichedSpecJson = JsonSerializer.Serialize(seatMap, JsonOptions);
         @event.UpdateSpec(enrichedSpecJson);
 

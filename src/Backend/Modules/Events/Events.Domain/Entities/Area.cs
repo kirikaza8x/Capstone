@@ -18,14 +18,15 @@ public sealed class Area : Entity<Guid>
     public IReadOnlyCollection<Seat> Seats => _seats.AsReadOnly();
 
     public static Area Create(
-        Guid eventId,
-        string name,
-        int capacity,
-        AreaType type)
+            Guid eventId,
+            string name,
+            int capacity,
+            AreaType type,
+            Guid? id = null)
     {
         return new Area
         {
-            Id = Guid.NewGuid(),
+            Id = id ?? Guid.NewGuid(),
             EventId = eventId,
             Name = name,
             Capacity = capacity,
