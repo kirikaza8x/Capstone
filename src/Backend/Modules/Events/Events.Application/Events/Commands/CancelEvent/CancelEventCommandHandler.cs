@@ -2,13 +2,11 @@
 using Events.Domain.Errors;
 using Events.Domain.Repositories;
 using Events.Domain.Uow;
-using Events.IntegrationEvents.IntegrationEvents;
+using Events.IntegrationEvents;
 using FluentValidation;
-using Shared.Application.Abstractions.Authentication;
 using Shared.Application.Abstractions.EventBus;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
-using Users.PublicApi.Constants;
 
 namespace Events.Application.Events.Commands.CancelEvent;
 
@@ -49,14 +47,6 @@ internal sealed class CancelEventCommandHandler(
         await seatLockService.ReleaseAllLocksForEventAsync(command.EventId, cancellationToken);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
-
-        // Publish event
-        await eventBus.PublishAsync(
-            new EventCancelledIntegrationEvent(
-                @event.Id,
-                @event.CancellationReason,
-                DateTime.UtcNow),
-            cancellationToken);
 
         return Result.Success();
     }

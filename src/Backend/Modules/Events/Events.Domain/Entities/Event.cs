@@ -183,10 +183,12 @@ public sealed class Event : AggregateRoot<Guid>
             return Result.Failure(EventErrors.Event.CannotCancel(Status));
 
         Status = EventStatus.Cancelled;
+
         if (!string.IsNullOrWhiteSpace(reason))
             CancellationReason = reason;
+
         ModifiedAt = DateTime.UtcNow;
-        RaiseDomainEvent(new EventCancelledDomainEvent(Id));
+        RaiseDomainEvent(new EventCancelledDomainEvent(Id, CancellationReason));
         return Result.Success();
     }
 
@@ -288,6 +290,23 @@ public sealed class Event : AggregateRoot<Guid>
     {
         _ticketTypes.Remove(ticketType);
         ModifiedAt = DateTime.UtcNow;
+    }
+
+    public Result Complete(DateTime? utcNow = null)
+    {
+        var now = utcNow ?? DateTime.UtcNow;
+
+        if (Status != EventStatus.Published)
+            return Result.Failure(EventErrors.Event.CannotComplete(Status));
+
+        if (EventEndAt is null || EventEndAt > now)
+            return Result.Failure(EventErrors.Event.CannotCompleteBeforeEnd);
+
+        Status = EventStatus.Completed;
+        ModifiedAt = now;
+
+        RaiseDomainEvent(new EventCompletedDomainEvent(Id));
+        return Result.Success();
     }
 
     protected override void Apply(IDomainEvent @event) { }

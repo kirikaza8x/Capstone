@@ -2,4 +2,4 @@
 
 namespace Events.Domain.DomainEvents;
 
-public sealed record EventCancelledDomainEvent(Guid EventId) : DomainEvent;
+public sealed record EventCancelledDomainEvent(Guid EventId, string? CancellationReason) : DomainEvent;

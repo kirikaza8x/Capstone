@@ -162,4 +162,19 @@ internal sealed class EventRepository(EventsDbContext context)
                 m.Permissions.Contains(permission),
                 cancellationToken);
     }
+
+    public async Task<IReadOnlyList<Event>> GetPublishedEndedEventsAsync(
+        DateTime utcNow,
+        int take,
+        CancellationToken cancellationToken = default)
+    {
+        return await _context.Events
+            .Where(e =>
+                e.Status == EventStatus.Published &&
+                e.EventEndAt.HasValue &&
+                e.EventEndAt <= utcNow)
+            .OrderBy(e => e.EventEndAt)
+            .Take(take)
+            .ToListAsync(cancellationToken);
+    }
 }

@@ -98,7 +98,15 @@ public static class EventErrors
         public static readonly Error SpecHasNoAreas = Error.Validation(
             "Event.SpecHasNoAreas",
             "The spec must contain at least one area.");
-    }
+
+        public static Error CannotComplete(EventStatus currentStatus) => Error.Validation(
+            "Event.CannotComplete",
+            $"Cannot complete event. Current status is '{currentStatus}'.");
+
+        public static readonly Error CannotCompleteBeforeEnd = Error.Validation(
+            "Event.CannotCompleteBeforeEnd",
+            "Cannot complete event before event end time.");
+        }
 
     public static class EventMemberErrors
     {
