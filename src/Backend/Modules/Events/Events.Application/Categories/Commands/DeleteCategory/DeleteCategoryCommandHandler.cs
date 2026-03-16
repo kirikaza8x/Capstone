@@ -16,6 +16,10 @@ internal sealed class DeleteCategoryCommandHandler(
         if (category is null)
             return Result.Failure(EventErrors.CategoryErrors.NotFound(command.CategoryId));
 
+        var isInUse = await categoryRepository.IsInUseAsync(command.CategoryId, cancellationToken);
+        if (isInUse)
+            return Result.Failure(EventErrors.CategoryErrors.InUse(command.CategoryId));
+
         categoryRepository.Remove(category);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 

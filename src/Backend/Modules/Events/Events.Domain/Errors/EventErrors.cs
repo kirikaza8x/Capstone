@@ -231,6 +231,10 @@ public static class EventErrors
         public static Error CodeAlreadyExists(string code) => Error.Conflict(
             "Category.CodeAlreadyExists",
             $"A category with code '{code}' already exists.");
+
+        public static Error InUse(int categoryId) => Error.Validation(
+            "Category.InUse",
+            $"Cannot delete category '{categoryId}' because it is being used by one or more events.");
     }
 
     public static class HashtagErrors
