@@ -1,5 +1,4 @@
-// AI.Application/Abstractions/IEmbeddingService.cs
-namespace AI.Application.Abstractions
+namespace Shared.Application.Abstractions.Embbeding
 {
     public interface IEmbeddingService
     {
