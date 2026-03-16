@@ -118,6 +118,18 @@ public static class EventErrors
         public static readonly Error ReminderNotDue = Error.Validation(
             "Event.ReminderNotDue",
             "Reminder is not due yet.");
+
+        public static Error CannotRejectPublishRequest(EventStatus currentStatus) => Error.Validation(
+            "Event.CannotRejectPublishRequest",
+            $"Cannot reject publish request. Current status is '{currentStatus}'.");
+
+        public static Error CannotRejectCancellationRequest(EventStatus currentStatus) => Error.Validation(
+            "Event.CannotRejectCancellationRequest",
+            $"Cannot reject cancellation request. Current status is '{currentStatus}'.");
+
+        public static readonly Error RejectReasonRequired = Error.Validation(
+            "Event.RejectReasonRequired",
+            "Reject reason is required.");
     }
 
 
