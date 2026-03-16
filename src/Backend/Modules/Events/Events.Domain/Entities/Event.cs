@@ -94,6 +94,12 @@ public sealed class Event : AggregateRoot<Guid>
         ModifiedAt = DateTime.UtcNow;
     }
 
+    public void UpdatePolicy(string policy)
+    {
+        Policy = policy;
+        ModifiedAt = DateTime.UtcNow;
+    }
+
     public void UpdateSchedule(
         DateTime ticketSaleStartAt,
         DateTime ticketSaleEndAt,
