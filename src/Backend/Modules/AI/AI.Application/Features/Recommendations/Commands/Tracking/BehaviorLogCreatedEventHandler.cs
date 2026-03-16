@@ -28,7 +28,7 @@ public class BehaviorLogCreatedEventHandler : IDomainEventHandler<BehaviorLogCre
     // private readonly IUserEmbeddingRepository _userEmbeddingRepo;
     private readonly IInteractionWeightRepository _weightRepo;
 
-    private readonly IEventSnapshotRepository _eventSnapshotRepo;
+    // private readonly IEventSnapshotRepository _eventSnapshotRepo;
     private readonly IAiUnitOfWork _unitOfWork;
     private readonly ILogger<BehaviorLogCreatedEventHandler> _logger;
 

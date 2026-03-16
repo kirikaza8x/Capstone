@@ -1,7 +1,9 @@
 using AI.Infrastructure;
+using AI.Infrastructure.Data;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Shared.Infrastructure.Extensions;
 using Users.Application;
 
 public static class AiModule
