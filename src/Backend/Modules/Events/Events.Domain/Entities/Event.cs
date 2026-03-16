@@ -25,6 +25,8 @@ public sealed class Event : AggregateRoot<Guid>
     public bool IsEmailReminderEnabled { get; private set; } = false;
     public DateTime? ReminderTriggeredAt { get; private set; }
     public string? CancellationReason { get; private set; }
+    public string? PublishRejectionReason { get; private set; }
+    public string? CancellationRejectionReason { get; private set; }
 
     private readonly List<EventSession> _sessions = [];
     public IReadOnlyCollection<EventSession> Sessions => _sessions.AsReadOnly();
@@ -209,7 +211,8 @@ public sealed class Event : AggregateRoot<Guid>
             return Result.Failure(EventErrors.Event.AlreadyStarted);
 
         Status = EventStatus.PendingCancellation;
-        CancellationReason = reason;
+        CancellationReason = reason; // reason organizer request cancel
+        CancellationRejectionReason = null;
         ModifiedAt = DateTime.UtcNow;
         return Result.Success();
     }
@@ -220,6 +223,7 @@ public sealed class Event : AggregateRoot<Guid>
             return Result.Failure(EventErrors.Event.CannotRequestPublish(Status));
 
         Status = EventStatus.PendingReview;
+        PublishRejectionReason = null;
         ModifiedAt = DateTime.UtcNow;
         return Result.Success();
     }
@@ -352,6 +356,7 @@ public sealed class Event : AggregateRoot<Guid>
             return Result.Failure(EventErrors.Event.RejectReasonRequired);
 
         Status = EventStatus.Draft;
+        PublishRejectionReason = reason.Trim();
         ModifiedAt = DateTime.UtcNow;
         return Result.Success();
     }
@@ -365,6 +370,7 @@ public sealed class Event : AggregateRoot<Guid>
             return Result.Failure(EventErrors.Event.RejectReasonRequired);
 
         Status = EventStatus.Published;
+        CancellationRejectionReason = reason.Trim();
         ModifiedAt = DateTime.UtcNow;
         return Result.Success();
     }
