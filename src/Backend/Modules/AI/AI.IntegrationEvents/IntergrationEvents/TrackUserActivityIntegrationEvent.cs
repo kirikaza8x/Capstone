@@ -11,3 +11,15 @@ public sealed record TrackUserActivityIntegrationEvent(
     string TargetType,
     IReadOnlyDictionary<string, string>? Metadata
 ) : IntegrationEvent(Id, OccurredOnUtc);
+
+public record BehaviorLogPublishedIntegrationEvent(
+    Guid Id,
+    DateTime OccurredOnUtc,
+    Guid LogId,
+    Guid UserId,
+    string ActionType,
+    string TargetId,
+    string TargetType,
+    IReadOnlyDictionary<string, string>? Metadata,
+    string CorrelationId  
+) : IntegrationEvent(Id, OccurredOnUtc);

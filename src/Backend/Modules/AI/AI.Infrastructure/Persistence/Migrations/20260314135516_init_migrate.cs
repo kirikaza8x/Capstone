@@ -1,19 +1,66 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Pgvector;
 
 #nullable disable
 
 namespace AI.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class init : Migration
+    public partial class init_migrate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.EnsureSchema(
                 name: "ai");
+
+            migrationBuilder.AlterDatabase()
+                .Annotation("Npgsql:PostgresExtension:vector", ",,");
+
+            migrationBuilder.CreateTable(
+                name: "event_embeddings",
+                schema: "ai",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    event_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    embedding = table.Column<Vector>(type: "vector(384)", nullable: false),
+                    model_name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    embedded_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true, defaultValueSql: "NOW()"),
+                    created_by = table.Column<string>(type: "text", nullable: true),
+                    modified_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    modified_by = table.Column<string>(type: "text", nullable: true),
+                    is_active = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_event_embeddings", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "event_snapshots",
+                schema: "ai",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    title = table.Column<string>(type: "varchar(500)", nullable: false),
+                    description = table.Column<string>(type: "text", nullable: true),
+                    snapshot_updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    categories = table.Column<string>(type: "jsonb", nullable: false),
+                    hashtags = table.Column<string>(type: "jsonb", nullable: false),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true, defaultValueSql: "NOW()"),
+                    created_by = table.Column<string>(type: "text", nullable: true),
+                    modified_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    modified_by = table.Column<string>(type: "text", nullable: true),
+                    is_active = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_event_snapshots", x => x.id);
+                });
 
             migrationBuilder.CreateTable(
                 name: "global_category_stat",
@@ -87,6 +134,8 @@ namespace AI.Infrastructure.Persistence.Migrations
                     action_type = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     target_id = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
                     target_type = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    session_id = table.Column<string>(type: "text", nullable: true),
+                    device_type = table.Column<string>(type: "text", nullable: true),
                     occurred_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     metadata = table.Column<Dictionary<string, string>>(type: "jsonb", nullable: false),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true, defaultValueSql: "NOW()"),
@@ -98,6 +147,31 @@ namespace AI.Infrastructure.Persistence.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("pk_user_behavior_log", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "user_embedding",
+                schema: "ai",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    user_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    embedding = table.Column<Vector>(type: "vector(384)", nullable: false),
+                    dimension = table.Column<int>(type: "integer", nullable: false),
+                    interaction_count = table.Column<int>(type: "integer", nullable: false),
+                    confidence = table.Column<double>(type: "double precision", nullable: false),
+                    last_calculated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    is_stale = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    contributing_categories = table.Column<string>(type: "jsonb", nullable: false),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true, defaultValueSql: "NOW()"),
+                    created_by = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    modified_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    modified_by = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    is_active = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_user_embedding", x => x.id);
                 });
 
             migrationBuilder.CreateTable(
@@ -122,26 +196,62 @@ namespace AI.Infrastructure.Persistence.Migrations
                     table.PrimaryKey("pk_user_interest_score", x => x.id);
                 });
 
-            migrationBuilder.CreateTable(
-                name: "user_weight_profile",
+            migrationBuilder.CreateIndex(
+                name: "ix_event_embeddings_embedding",
                 schema: "ai",
-                columns: table => new
-                {
-                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
-                    user_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    action_type = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    personalized_weight = table.Column<double>(type: "double precision", nullable: false),
-                    confidence_count = table.Column<int>(type: "integer", nullable: false),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true, defaultValueSql: "NOW()"),
-                    created_by = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    modified_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    modified_by = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    is_active = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_user_weight_profile", x => x.id);
-                });
+                table: "event_embeddings",
+                column: "embedding")
+                .Annotation("Npgsql:IndexMethod", "hnsw")
+                .Annotation("Npgsql:IndexOperators", new[] { "vector_cosine_ops" })
+                .Annotation("Npgsql:StorageParameter:ef_construction", 64)
+                .Annotation("Npgsql:StorageParameter:m", 16);
+
+            migrationBuilder.CreateIndex(
+                name: "ix_event_embeddings_event_id",
+                schema: "ai",
+                table: "event_embeddings",
+                column: "event_id",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "ix_event_snapshots_active_updated",
+                schema: "ai",
+                table: "event_snapshots",
+                columns: new[] { "is_active", "snapshot_updated_at" });
+
+            migrationBuilder.CreateIndex(
+                name: "ix_event_snapshots_categories_gin",
+                schema: "ai",
+                table: "event_snapshots",
+                column: "categories")
+                .Annotation("Npgsql:IndexMethod", "gin")
+                .Annotation("Npgsql:IndexOperators", new[] { "jsonb_path_ops" });
+
+            migrationBuilder.CreateIndex(
+                name: "ix_event_snapshots_hashtags_gin",
+                schema: "ai",
+                table: "event_snapshots",
+                column: "hashtags")
+                .Annotation("Npgsql:IndexMethod", "gin")
+                .Annotation("Npgsql:IndexOperators", new[] { "jsonb_path_ops" });
+
+            migrationBuilder.CreateIndex(
+                name: "ix_event_snapshots_is_active",
+                schema: "ai",
+                table: "event_snapshots",
+                column: "is_active");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_event_snapshots_title",
+                schema: "ai",
+                table: "event_snapshots",
+                column: "title");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_event_snapshots_updated_at",
+                schema: "ai",
+                table: "event_snapshots",
+                column: "snapshot_updated_at");
 
             migrationBuilder.CreateIndex(
                 name: "ux_global_category_stat_category",
@@ -182,6 +292,28 @@ namespace AI.Infrastructure.Persistence.Migrations
                 columns: new[] { "user_id", "action_type" });
 
             migrationBuilder.CreateIndex(
+                name: "ix_user_embedding_embedding",
+                schema: "ai",
+                table: "user_embedding",
+                column: "embedding")
+                .Annotation("Npgsql:IndexMethod", "hnsw")
+                .Annotation("Npgsql:IndexOperators", new[] { "vector_cosine_ops" })
+                .Annotation("Npgsql:StorageParameter:ef_construction", 64)
+                .Annotation("Npgsql:StorageParameter:m", 16);
+
+            migrationBuilder.CreateIndex(
+                name: "ix_user_embedding_is_stale",
+                schema: "ai",
+                table: "user_embedding",
+                column: "is_stale");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_user_embedding_user_id",
+                schema: "ai",
+                table: "user_embedding",
+                column: "user_id");
+
+            migrationBuilder.CreateIndex(
                 name: "ux_user_interest_score_user_category",
                 schema: "ai",
                 table: "user_interest_score",
@@ -192,6 +324,14 @@ namespace AI.Infrastructure.Persistence.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "event_embeddings",
+                schema: "ai");
+
+            migrationBuilder.DropTable(
+                name: "event_snapshots",
+                schema: "ai");
+
             migrationBuilder.DropTable(
                 name: "global_category_stat",
                 schema: "ai");
@@ -209,11 +349,11 @@ namespace AI.Infrastructure.Persistence.Migrations
                 schema: "ai");
 
             migrationBuilder.DropTable(
-                name: "user_interest_score",
+                name: "user_embedding",
                 schema: "ai");
 
             migrationBuilder.DropTable(
-                name: "user_weight_profile",
+                name: "user_interest_score",
                 schema: "ai");
         }
     }

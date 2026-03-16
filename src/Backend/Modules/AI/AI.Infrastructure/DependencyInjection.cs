@@ -1,17 +1,14 @@
 using AI.Application.Abstractions;
-using AI.Application.Services;
-using AI.Domain.Services;
-using AI.Infrastructure.BackgroundJobs;
 using AI.Infrastructure.Data;
 using AI.Infrastructure.ExternalServices;
-using AI.Infrastructure.Services;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Npgsql;
+using Pgvector;
+using Quartz;
 using Shared.Domain.Data;
 using Shared.Domain.Data.Repositories;
 using Shared.Infrastructure.Configs;
@@ -24,20 +21,19 @@ namespace AI.Infrastructure
     {
         public static IServiceCollection AddAiInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
+            // 1. Configuration & Repository Scanning
             services.Scan(scan => scan
                 .FromAssemblyOf<AiInfrastructureAssemblyReference>()
                 .AddClasses(classes => classes.AssignableTo<ConfigBase>())
                 .AsSelf()
                 .WithSingletonLifetime());
 
-            // Register repositories
             services.Scan(scan => scan
                 .FromAssemblyOf<AiInfrastructureAssemblyReference>()
                 .AddClasses(classes => classes.AssignableTo(typeof(IRepository<,>)))
                 .AsImplementedInterfaces()
                 .WithScopedLifetime());
 
-            // Register Unit of Work
             services.Scan(scan => scan
                 .FromAssemblyOf<AiInfrastructureAssemblyReference>()
                 .AddClasses(classes => classes.AssignableTo(typeof(IUnitOfWork)))
@@ -50,14 +46,14 @@ namespace AI.Infrastructure
                .AsImplementedInterfaces()
                .WithScopedLifetime());
 
-
+            // 2. Npgsql DataSource Setup (Driver Level)
             services.AddSingleton<NpgsqlDataSource>(sp =>
             {
                 var dbConfig = sp.GetRequiredService<IOptions<DatabaseConfig>>().Value;
-
                 var dataSourceBuilder = new NpgsqlDataSourceBuilder(dbConfig.ConnectionString);
 
                 dataSourceBuilder.EnableDynamicJson();
+                dataSourceBuilder.UseVector(); 
 
                 return dataSourceBuilder.Build();
             });
@@ -69,7 +65,10 @@ namespace AI.Infrastructure
 
                 options.UseNpgsql(dataSource, npgsqlOptions =>
                 {
+                    npgsqlOptions.UseVector();
+
                     npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", Constants.SchemaName);
+
                     if (dbConfig.MaxRetryCount > 0)
                         npgsqlOptions.EnableRetryOnFailure(dbConfig.MaxRetryCount);
 
@@ -80,21 +79,16 @@ namespace AI.Infrastructure
                 .AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
             });
 
-            // Register services
             services.AddHttpClient<IImageGenerationService, OpenRouterImageService>();
-            services.AddScoped<IGlobalTrendService, GlobalTrendService>();
-            services.AddScoped<IUserActivityOrchestrator, UserActivityOrchestrator>();
-            services.AddScoped<InteractionWeightCalculator>();
-            services.AddScoped<IRecommendationService, RecommendationService>();
-            services.AddScoped<IGeminiService, GeminiService>();
-            services.AddHostedService<GlobalTrendWorker>();
 
+
+            services.AddScoped<IGeminiService, GeminiService>();
+           
             return services;
         }
 
-        public static IApplicationBuilder UseUserInfrastructure(this IApplicationBuilder app)
-        {
-            return app;
-        }
+
+
+
     }
 }

@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+using Pgvector;
 
 #nullable disable
 
@@ -22,7 +23,160 @@ namespace AI.Infrastructure.Persistence.Migrations
                 .HasAnnotation("ProductVersion", "9.0.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
+            NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "vector");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("AI.Domain.Entities.EventEmbedding", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime>("EmbeddedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("embedded_at");
+
+                    b.Property<Vector>("Embedding")
+                        .IsRequired()
+                        .HasColumnType("vector(384)")
+                        .HasColumnName("embedding");
+
+                    b.Property<Guid>("EventId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("event_id");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("ModelName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("model_name");
+
+                    b.Property<DateTime?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modified_at");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasColumnType("text")
+                        .HasColumnName("modified_by");
+
+                    b.HasKey("Id")
+                        .HasName("pk_event_embeddings");
+
+                    b.HasIndex("Embedding")
+                        .HasDatabaseName("ix_event_embeddings_embedding")
+                        .HasAnnotation("Npgsql:StorageParameter:ef_construction", 64)
+                        .HasAnnotation("Npgsql:StorageParameter:m", 16);
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Embedding"), "hnsw");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("Embedding"), new[] { "vector_cosine_ops" });
+
+                    b.HasIndex("EventId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_event_embeddings_event_id");
+
+                    b.ToTable("event_embeddings", "ai");
+                });
+
+            modelBuilder.Entity("AI.Domain.Entities.EventSnapshot", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Categories")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("categories");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text")
+                        .HasColumnName("created_by");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<string>("Hashtags")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("hashtags");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
+
+                    b.Property<DateTime?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modified_at");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasColumnType("text")
+                        .HasColumnName("modified_by");
+
+                    b.Property<DateTime>("SnapshotUpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("snapshot_updated_at");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("varchar(500)")
+                        .HasColumnName("title");
+
+                    b.HasKey("Id")
+                        .HasName("pk_event_snapshots");
+
+                    b.HasIndex("Categories")
+                        .HasDatabaseName("ix_event_snapshots_categories_gin");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Categories"), "gin");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("Categories"), new[] { "jsonb_path_ops" });
+
+                    b.HasIndex("Hashtags")
+                        .HasDatabaseName("ix_event_snapshots_hashtags_gin");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Hashtags"), "gin");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("Hashtags"), new[] { "jsonb_path_ops" });
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("ix_event_snapshots_is_active");
+
+                    b.HasIndex("SnapshotUpdatedAt")
+                        .HasDatabaseName("ix_event_snapshots_updated_at");
+
+                    b.HasIndex("Title")
+                        .HasDatabaseName("ix_event_snapshots_title");
+
+                    b.HasIndex("IsActive", "SnapshotUpdatedAt")
+                        .HasDatabaseName("ix_event_snapshots_active_updated");
+
+                    b.ToTable("event_snapshots", "ai");
+                });
 
             modelBuilder.Entity("AI.Domain.Entities.InteractionWeight", b =>
                 {
@@ -120,6 +274,10 @@ namespace AI.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("created_by");
 
+                    b.Property<string>("DeviceType")
+                        .HasColumnType("text")
+                        .HasColumnName("device_type");
+
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
@@ -138,6 +296,10 @@ namespace AI.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("OccurredAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("occurred_at");
+
+                    b.Property<string>("SessionId")
+                        .HasColumnType("text")
+                        .HasColumnName("session_id");
 
                     b.Property<string>("TargetId")
                         .IsRequired()
@@ -173,6 +335,96 @@ namespace AI.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_user_behavior_log_user_action");
 
                     b.ToTable("user_behavior_log", "ai");
+                });
+
+            modelBuilder.Entity("AI.Domain.Entities.UserEmbedding", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<double>("Confidence")
+                        .HasColumnType("double precision")
+                        .HasColumnName("confidence");
+
+                    b.Property<string>("ContributingCategories")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("contributing_categories");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("created_by");
+
+                    b.Property<int>("Dimension")
+                        .HasColumnType("integer")
+                        .HasColumnName("dimension");
+
+                    b.Property<Vector>("Embedding")
+                        .IsRequired()
+                        .HasColumnType("vector(384)")
+                        .HasColumnName("embedding");
+
+                    b.Property<int>("InteractionCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("interaction_count");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
+
+                    b.Property<bool>("IsStale")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_stale");
+
+                    b.Property<DateTime>("LastCalculated")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_calculated");
+
+                    b.Property<DateTime?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modified_at");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("modified_by");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_user_embedding");
+
+                    b.HasIndex("Embedding")
+                        .HasDatabaseName("ix_user_embedding_embedding")
+                        .HasAnnotation("Npgsql:StorageParameter:ef_construction", 64)
+                        .HasAnnotation("Npgsql:StorageParameter:m", 16);
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Embedding"), "hnsw");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("Embedding"), new[] { "vector_cosine_ops" });
+
+                    b.HasIndex("IsStale")
+                        .HasDatabaseName("ix_user_embedding_is_stale");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_user_embedding_user_id");
+
+                    b.ToTable("user_embedding", "ai");
                 });
 
             modelBuilder.Entity("AI.Domain.Entities.UserInterestScore", b =>
@@ -239,64 +491,6 @@ namespace AI.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ux_user_interest_score_user_category");
 
                     b.ToTable("user_interest_score", "ai");
-                });
-
-            modelBuilder.Entity("AI.Domain.Entities.UserWeightProfile", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
-
-                    b.Property<string>("ActionType")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("action_type");
-
-                    b.Property<int>("ConfidenceCount")
-                        .HasColumnType("integer")
-                        .HasColumnName("confidence_count");
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at")
-                        .HasDefaultValueSql("NOW()");
-
-                    b.Property<string>("CreatedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("created_by");
-
-                    b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(true)
-                        .HasColumnName("is_active");
-
-                    b.Property<DateTime?>("ModifiedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("modified_at");
-
-                    b.Property<string>("ModifiedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("modified_by");
-
-                    b.Property<double>("PersonalizedWeight")
-                        .HasColumnType("double precision")
-                        .HasColumnName("personalized_weight");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id")
-                        .HasName("pk_user_weight_profile");
-
-                    b.ToTable("user_weight_profile", "ai");
                 });
 
             modelBuilder.Entity("AI.Domain.ReadModels.GlobalCategoryStat", b =>
