@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\Shared\Shared.Application\Shared.Application.csproj" />
+    <ProjectReference Include="..\..\Events\Events.PublicApi\Events.PublicApi.csproj" />
     <ProjectReference Include="..\AI.Domain\AI.Domain.csproj" />
     <ProjectReference Include="..\AI.IntegrationEvents\AI.IntegrationEvents.csproj" />
   </ItemGroup>

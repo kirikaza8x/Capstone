@@ -2,6 +2,7 @@
 using Events.Infrastructure.Caching;
 using Events.PublicApi.Constants;
 using Events.PublicApi.PublicApi;
+using Events.PublicApi.Records;
 using Microsoft.Extensions.Caching.Distributed;
 
 namespace Events.Infrastructure.PublicApi;
@@ -37,4 +38,34 @@ internal class EventMemberPublicApi(
 
         return hasPermission;
     }
+
+    public async Task<IReadOnlyList<EventRecommendationFeature>> GetEventsByCategoriesOrHashtagsAsync(
+        IEnumerable<string> categoryNames,
+        IEnumerable<string> hashtagNames,
+        CancellationToken cancellationToken = default)
+    {
+        var events = await eventRepository.GetByCategoriesOrHashtagsAsync(categoryNames, hashtagNames, cancellationToken);
+
+        return events.Select(e => new EventRecommendationFeature
+        {
+            Id = e.Id,
+            Title = e.Title,
+            Location = e.Location,
+            BannerUrl = e.BannerUrl,
+            EventStartAt = e.EventStartAt,
+            EventEndAt = e.EventEndAt,
+
+            MinPrice = e.TicketTypes.Min(t => (decimal?)t.Price),
+            MaxPrice = e.TicketTypes.Max(t => (decimal?)t.Price),
+
+            Categories = e.EventCategories
+                .Select(ec => ec.Category.Name)
+                .ToList(),
+
+            Hashtags = e.EventHashtags
+                .Select(eh => eh.Hashtag.Name)
+                .ToList()
+        }).ToList();
+    }
+
 }

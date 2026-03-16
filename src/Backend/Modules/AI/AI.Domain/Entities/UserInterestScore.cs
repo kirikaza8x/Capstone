@@ -18,11 +18,8 @@ namespace AI.Domain.Entities
         public double Score { get; private set; }
         public int TotalInteractions { get; private set; }
         public DateTime LastUpdated { get; private set; }
-
         private const double ScoreFloor = 0.01;
-
         private UserInterestScore() { }
-
         public static UserInterestScore Create(Guid userId, string category, double initialScore = 0)
         {
             if (userId == Guid.Empty)
