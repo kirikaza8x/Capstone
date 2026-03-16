@@ -246,5 +246,9 @@ public static class EventErrors
         public static Error SlugAlreadyExists(string slug) => Error.Conflict(
             "Hashtag.SlugAlreadyExists",
             $"A hashtag with slug '{slug}' already exists.");
+
+        public static Error InUse(int hashtagId) => Error.Validation(
+            "Hashtag.InUse",
+            $"Cannot delete hashtag '{hashtagId}' because it is being used by one or more events.");
     }
 }

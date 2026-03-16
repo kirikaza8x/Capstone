@@ -16,6 +16,10 @@ internal sealed class DeleteHashtagCommandHandler(
         if (hashtag is null)
             return Result.Failure(EventErrors.HashtagErrors.NotFound(command.HashtagId));
 
+        var isInUse = await hashtagRepository.IsInUseAsync(command.HashtagId, cancellationToken);
+        if (isInUse)
+            return Result.Failure(EventErrors.HashtagErrors.InUse(command.HashtagId));
+
         hashtagRepository.Remove(hashtag);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
