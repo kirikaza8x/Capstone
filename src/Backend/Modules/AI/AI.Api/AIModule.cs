@@ -15,7 +15,7 @@ public static class AiModule
 
     public static IApplicationBuilder UseAiModule(this IApplicationBuilder app)
     {
-        // app.UseMigration<AIModuleDbContext>();
+        app.UseMigration<AIModuleDbContext>();
         return app;
     }
 }

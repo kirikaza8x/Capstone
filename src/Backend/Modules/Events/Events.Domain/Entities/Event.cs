@@ -343,5 +343,31 @@ public sealed class Event : AggregateRoot<Guid>
         return Result.Success();
     }
 
+    public Result RejectPublishRequest(string reason)
+    {
+        if (Status != EventStatus.PendingReview)
+            return Result.Failure(EventErrors.Event.CannotRejectPublishRequest(Status));
+
+        if (string.IsNullOrWhiteSpace(reason))
+            return Result.Failure(EventErrors.Event.RejectReasonRequired);
+
+        Status = EventStatus.Draft;
+        ModifiedAt = DateTime.UtcNow;
+        return Result.Success();
+    }
+
+    public Result RejectCancellationRequest(string reason)
+    {
+        if (Status != EventStatus.PendingCancellation)
+            return Result.Failure(EventErrors.Event.CannotRejectCancellationRequest(Status));
+
+        if (string.IsNullOrWhiteSpace(reason))
+            return Result.Failure(EventErrors.Event.RejectReasonRequired);
+
+        Status = EventStatus.Published;
+        ModifiedAt = DateTime.UtcNow;
+        return Result.Success();
+    }
+
     protected override void Apply(IDomainEvent @event) { }
 }

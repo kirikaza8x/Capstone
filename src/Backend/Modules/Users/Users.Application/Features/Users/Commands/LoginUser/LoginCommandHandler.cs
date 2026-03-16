@@ -23,7 +23,7 @@ public class LoginUserCommandHandler
     private readonly IDeviceDetectionService _deviceDetectionService;
     private readonly IUserUnitOfWork _unitOfWork;
 
-    private readonly IEventBus _bus;
+    //private readonly IEventBus _bus;
 
     public LoginUserCommandHandler(
         IUserRepository userRepository,
@@ -32,8 +32,9 @@ public class LoginUserCommandHandler
         IRefreshTokenService refreshTokenService,
         ICurrentUserService currentUserService,
         IDeviceDetectionService deviceDetectionService,
-        IUserUnitOfWork unitOfWork,
-        IEventBus bus)
+        IUserUnitOfWork unitOfWork
+        //,IEventBus bus
+        )
     {
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
@@ -42,7 +43,7 @@ public class LoginUserCommandHandler
         _currentUserService = currentUserService;
         _deviceDetectionService = deviceDetectionService;
         _unitOfWork = unitOfWork;
-        _bus = bus;
+        //_bus = bus;
     }
 
     // ============================================================
@@ -74,19 +75,19 @@ public class LoginUserCommandHandler
 
         var accessToken = CreateAccessToken(user, roles);
 
-        _ = _bus.PublishAsync(new TrackUserActivityIntegrationEvent(
-       Id: Guid.NewGuid(),
-       OccurredOnUtc: DateTime.UtcNow,
-       UserId: user.Id,
-       ActionType: "login",
-       TargetId: user.Id.ToString(),
-       TargetType: "user",
-       Metadata: new Dictionary<string, string>
-       {
-            { "Device", deviceInfo.DeviceType ?? "Unknown" },
-            { "IpAddress", _currentUserService.IpAddress ?? "Unknown" }
-       }
-   ), cancellationToken);
+   //     _ = _bus.PublishAsync(new TrackUserActivityIntegrationEvent(
+   //    Id: Guid.NewGuid(),
+   //    OccurredOnUtc: DateTime.UtcNow,
+   //    UserId: user.Id,
+   //    ActionType: "login",
+   //    TargetId: user.Id.ToString(),
+   //    TargetType: "user",
+   //    Metadata: new Dictionary<string, string>
+   //    {
+   //         { "Device", deviceInfo.DeviceType ?? "Unknown" },
+   //         { "IpAddress", _currentUserService.IpAddress ?? "Unknown" }
+   //    }
+   //), cancellationToken);
 
         return Result.Success(
             BuildResponse(
