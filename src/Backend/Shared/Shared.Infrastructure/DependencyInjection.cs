@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Quartz;
 using Shared.Application.Abstractions.Authentication;
 using Shared.Application.Abstractions.Caching;
 using Shared.Infrastructure.Configs;
@@ -76,6 +77,12 @@ public static class IInfrastructureConfiguration
             });
 
         services.AddHttpContextAccessor();
+
+        // Quartz
+        services.AddQuartzHostedService(options =>
+        {
+            options.WaitForJobsToComplete = true;
+        });
 
         return services;
     }

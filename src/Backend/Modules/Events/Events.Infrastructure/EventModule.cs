@@ -5,6 +5,7 @@ using Events.Domain.Uow;
 using Events.Infrastructure.Caching;
 using Events.Infrastructure.Data;
 using Events.Infrastructure.Data.Repositories;
+using Events.Infrastructure.Jobs;
 using Events.Infrastructure.PublicApi;
 using Events.Infrastructure.Services;
 using Events.PublicApi.PublicApi;
@@ -52,7 +53,7 @@ public static class EventModule
             .UseSnakeCaseNamingConvention()
             .AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
         });
-
+        services.AddEventsQuartzJobs();
         return services;
     }
 

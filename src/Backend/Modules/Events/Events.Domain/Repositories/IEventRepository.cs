@@ -27,11 +27,24 @@ public interface IEventRepository : IRepository<Event, Guid>
 
     Task<Event?> GetByIdWithMembersAsync(Guid id, CancellationToken cancellationToken = default);
 
-    Task<bool> HasPermissionAsync(Guid eventId, Guid userId, string permission,  CancellationToken cancellationToken = default);
+    Task<bool> HasPermissionAsync(Guid eventId, Guid userId, string permission, CancellationToken cancellationToken = default);
 
+<<<<<<< HEAD
     Task<IReadOnlyList<Event>> GetByCategoriesOrHashtagsAsync(
     IEnumerable<string> categoryNames,
     IEnumerable<string> hashtagNames,
     CancellationToken cancellationToken = default);
 
+=======
+    Task<IReadOnlyList<Event>> GetPublishedEndedEventsAsync(
+        DateTime utcNow,
+        int take,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<Event>> GetEventsDueReminderAsync(
+        DateTime utcNow,
+        DateTime toUtc,
+        int take,
+        CancellationToken cancellationToken = default);
+>>>>>>> 82e4db3530a82b8b3ed9533c45d9f155c48c418e
 }

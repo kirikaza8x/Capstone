@@ -23,6 +23,7 @@ public sealed class Event : AggregateRoot<Guid>
     public string Policy { get; private set; } = string.Empty;
     public string? Spec { get; private set; }
     public bool IsEmailReminderEnabled { get; private set; } = false;
+    public DateTime? ReminderTriggeredAt { get; private set; }
     public string? CancellationReason { get; private set; }
 
     private readonly List<EventSession> _sessions = [];
@@ -183,10 +184,12 @@ public sealed class Event : AggregateRoot<Guid>
             return Result.Failure(EventErrors.Event.CannotCancel(Status));
 
         Status = EventStatus.Cancelled;
+
         if (!string.IsNullOrWhiteSpace(reason))
             CancellationReason = reason;
+
         ModifiedAt = DateTime.UtcNow;
-        RaiseDomainEvent(new EventCancelledDomainEvent(Id));
+        RaiseDomainEvent(new EventCancelledDomainEvent(Id, CancellationReason));
         return Result.Success();
     }
 
@@ -288,6 +291,56 @@ public sealed class Event : AggregateRoot<Guid>
     {
         _ticketTypes.Remove(ticketType);
         ModifiedAt = DateTime.UtcNow;
+    }
+
+    public Result Complete(DateTime? utcNow = null)
+    {
+        var now = utcNow ?? DateTime.UtcNow;
+
+        if (Status != EventStatus.Published)
+            return Result.Failure(EventErrors.Event.CannotComplete(Status));
+
+        if (EventEndAt is null || EventEndAt > now)
+            return Result.Failure(EventErrors.Event.CannotCompleteBeforeEnd);
+
+        Status = EventStatus.Completed;
+        ModifiedAt = now;
+
+        RaiseDomainEvent(new EventCompletedDomainEvent(Id));
+        return Result.Success();
+    }
+
+    public Result MarkReminderTriggered(DateTime? utcNow = null)
+    {
+        var now = utcNow ?? DateTime.UtcNow;
+
+        if (ReminderTriggeredAt.HasValue)
+            return Result.Success();
+
+        if (Status != EventStatus.Published)
+            return Result.Failure(EventErrors.Event.CannotTriggerReminder(Status));
+
+        if (!IsEmailReminderEnabled)
+            return Result.Failure(EventErrors.Event.EmailReminderDisabled);
+
+        if (!EventStartAt.HasValue)
+            return Result.Failure(EventErrors.Event.MissingSchedule);
+
+        var startAt = EventStartAt.Value;
+        var dueAt = startAt.AddHours(-24);
+
+        if (now < dueAt || now >= startAt)
+            return Result.Failure(EventErrors.Event.ReminderNotDue);
+
+        ReminderTriggeredAt = now;
+        ModifiedAt = now;
+
+        RaiseDomainEvent(new EventReminderTriggeredDomainEvent(
+            EventId: Id,
+            EventTitle: Title,
+            EventStartAtUtc: startAt));
+
+        return Result.Success();
     }
 
     protected override void Apply(IDomainEvent @event) { }

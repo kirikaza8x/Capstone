@@ -35,6 +35,7 @@ internal sealed class EventConfiguration : IEntityTypeConfiguration<Event>
         builder.Property(e => e.Policy).HasColumnType("text");
         builder.Property(e => e.Spec).HasColumnType("jsonb");
         builder.Property(e => e.IsEmailReminderEnabled).HasDefaultValue(false);
+        builder.Property(e => e.ReminderTriggeredAt).IsRequired(false);
         builder.Property(e => e.CancellationReason).HasColumnType("text");
 
         builder.HasIndex(e => e.UrlPath)
