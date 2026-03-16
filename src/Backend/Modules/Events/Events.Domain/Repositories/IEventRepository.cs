@@ -27,10 +27,16 @@ public interface IEventRepository : IRepository<Event, Guid>
 
     Task<Event?> GetByIdWithMembersAsync(Guid id, CancellationToken cancellationToken = default);
 
-    Task<bool> HasPermissionAsync(Guid eventId, Guid userId, string permission,  CancellationToken cancellationToken = default);
+    Task<bool> HasPermissionAsync(Guid eventId, Guid userId, string permission, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<Event>> GetPublishedEndedEventsAsync(
         DateTime utcNow,
+        int take,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<Event>> GetEventsDueReminderAsync(
+        DateTime utcNow,
+        DateTime toUtc,
         int take,
         CancellationToken cancellationToken = default);
 }

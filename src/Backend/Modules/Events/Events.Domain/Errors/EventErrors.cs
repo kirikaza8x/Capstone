@@ -106,7 +106,20 @@ public static class EventErrors
         public static readonly Error CannotCompleteBeforeEnd = Error.Validation(
             "Event.CannotCompleteBeforeEnd",
             "Cannot complete event before event end time.");
-        }
+
+        public static Error CannotTriggerReminder(EventStatus currentStatus) => Error.Validation(
+            "Event.CannotTriggerReminder",
+            $"Cannot trigger reminder. Current status is '{currentStatus}'.");
+
+        public static readonly Error EmailReminderDisabled = Error.Validation(
+            "Event.EmailReminderDisabled",
+            "Email reminder is disabled for this event.");
+
+        public static readonly Error ReminderNotDue = Error.Validation(
+            "Event.ReminderNotDue",
+            "Reminder is not due yet.");
+    }
+
 
     public static class EventMemberErrors
     {

@@ -177,4 +177,24 @@ internal sealed class EventRepository(EventsDbContext context)
             .Take(take)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<IReadOnlyList<Event>> GetEventsDueReminderAsync(
+        DateTime utcNow,
+        DateTime toUtc,
+        int take,
+        CancellationToken cancellationToken = default)
+    {
+        return await _context.Events
+            .Where(e =>
+                e.Status == EventStatus.Published &&
+                e.IsEmailReminderEnabled &&
+                e.EventStartAt.HasValue &&
+                e.EventStartAt > utcNow &&
+                e.EventStartAt <= toUtc &&
+                e.ReminderTriggeredAt == null
+             )
+            .OrderBy(e => e.EventStartAt)
+            .Take(take)
+            .ToListAsync(cancellationToken);
+    }
 }

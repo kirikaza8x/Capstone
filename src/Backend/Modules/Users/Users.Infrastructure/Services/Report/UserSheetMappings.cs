@@ -4,7 +4,7 @@ using Users.Domain.Enums;
 using Shared.Application.Abstractions.Authentication;
 using Shared.Application.Abstractions.Report;
 
-namespace Users.Infrastructure.ImportExport
+namespace Users.Infrastructure.Services.Report
 {
     public class UserExcelMappings : ISheetMappings<User>
     {
