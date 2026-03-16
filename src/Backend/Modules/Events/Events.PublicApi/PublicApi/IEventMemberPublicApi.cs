@@ -1,4 +1,6 @@
-﻿namespace Events.PublicApi.PublicApi;
+﻿using Events.PublicApi.Records;
+
+namespace Events.PublicApi.PublicApi;
 
 public interface IEventMemberPublicApi
 {
@@ -6,5 +8,10 @@ public interface IEventMemberPublicApi
         Guid eventId,
         Guid userId,
         string permission,
+        CancellationToken cancellationToken = default);
+
+     Task<IReadOnlyList<EventRecommendationFeature>> GetEventsByCategoriesOrHashtagsAsync(
+        IEnumerable<string> categoryNames,
+        IEnumerable<string> hashtagNames,
         CancellationToken cancellationToken = default);
 }

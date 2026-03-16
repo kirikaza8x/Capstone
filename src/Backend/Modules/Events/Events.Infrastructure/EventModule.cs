@@ -1,6 +1,5 @@
 ﻿using Events.Application.Abstractions;
 using Events.Application.Abstractions.Caching;
-using Events.Application.Categories.Queries.GetCategories;
 using Events.Domain.Repositories;
 using Events.Domain.Uow;
 using Events.Infrastructure.Caching;

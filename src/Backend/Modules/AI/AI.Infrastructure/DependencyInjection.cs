@@ -53,7 +53,7 @@ namespace AI.Infrastructure
                 var dataSourceBuilder = new NpgsqlDataSourceBuilder(dbConfig.ConnectionString);
 
                 dataSourceBuilder.EnableDynamicJson();
-                dataSourceBuilder.UseVector(); 
+                // dataSourceBuilder.UseVector(); 
 
                 return dataSourceBuilder.Build();
             });
@@ -65,7 +65,7 @@ namespace AI.Infrastructure
 
                 options.UseNpgsql(dataSource, npgsqlOptions =>
                 {
-                    npgsqlOptions.UseVector();
+                    // npgsqlOptions.UseVector();
 
                     npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", Constants.SchemaName);
 
@@ -83,6 +83,7 @@ namespace AI.Infrastructure
 
 
             services.AddScoped<IGeminiService, GeminiService>();
+            services.AddScoped<IRecommendationAiService,RecommendationAiService>();
            
             return services;
         }

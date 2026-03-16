@@ -29,4 +29,9 @@ public interface IEventRepository : IRepository<Event, Guid>
 
     Task<bool> HasPermissionAsync(Guid eventId, Guid userId, string permission,  CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<Event>> GetByCategoriesOrHashtagsAsync(
+    IEnumerable<string> categoryNames,
+    IEnumerable<string> hashtagNames,
+    CancellationToken cancellationToken = default);
+
 }

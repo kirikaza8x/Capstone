@@ -1,9 +1,9 @@
 namespace AI.Domain.Helpers;
 public class MetadataHelper
 {
-    private readonly Dictionary<string, string> _metadata;
+    private readonly IReadOnlyDictionary<string, string> _metadata;
 
-    public MetadataHelper(Dictionary<string, string> metadata)
+    public MetadataHelper(IReadOnlyDictionary<string, string> metadata)
     {
         _metadata = metadata;
     }

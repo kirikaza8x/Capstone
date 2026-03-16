@@ -82,7 +82,7 @@ namespace AI.Infrastructure.Services.Embedding
                     if (seqLen == 0)
                         return Array.Empty<float>();
 
-                    // ✅ Create tensors with VALUES + DIMENSIONS
+
                     var inputIds = new DenseTensor<long>(encoding.InputIds, new[] { 1, seqLen });
                     var attentionMask = new DenseTensor<long>(encoding.AttentionMask, new[] { 1, seqLen });
                     var tokenTypeIds = new DenseTensor<long>(encoding.TokenTypeIds, new[] { 1, seqLen });
@@ -157,7 +157,7 @@ namespace AI.Infrastructure.Services.Embedding
             double norm = Math.Sqrt(vector.Sum(x => (double)x * x));
 
             if (norm < 1e-8)
-                return vector;  // Avoid division by zero
+                return vector;  
 
             var result = new float[Dimension];
             for (int d = 0; d < Dimension; d++)

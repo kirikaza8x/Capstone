@@ -3,6 +3,8 @@ using Shared.Infrastructure.Data;
 using AI.Domain.Entities;
 using AI.Domain.Repositories;
 using AI.Infrastructure.Data;
+using Pgvector;
+using Pgvector.EntityFrameworkCore;
 
 namespace AI.Infrastructure.Repositories;
 
@@ -42,37 +44,71 @@ public class UserEmbeddingRepository : RepositoryBase<UserEmbedding, Guid>, IUse
     // ⭐ Similarity Search (In-Memory Cosine Similarity)
     // ─────────────────────────────────────────────────────────────
 
+    // public async Task<List<(Guid UserId, double Similarity, int SharedCategories)>> FindSimilarUsersAsync(
+    //     float[] queryEmbedding,
+    //     int topN = 10,
+    //     double minSimilarity = 0.0,
+    //     CancellationToken cancellationToken = default)
+    // {
+    //     // Fetch active embeddings
+    //     var allEmbeddings = await _dbSet
+    //         .AsNoTracking()
+    //         .Where(ue => ue.IsActive && ue.Embedding != null)
+    //         .ToListAsync(cancellationToken);
+
+    //     // Compute similarity in memory
+    //     var results = new List<(Guid UserId, double Similarity, int SharedCategories)>();
+
+    //     foreach (var ue in allEmbeddings)
+    //     {
+    //         if (ue.Embedding == null || ue.Embedding.Length != queryEmbedding.Length)
+    //             continue;
+
+    //         var similarity = ue.CosineSimilarity(queryEmbedding);
+
+    //         if (similarity >= minSimilarity)
+    //         {
+    //             results.Add((ue.UserId, similarity, ue.ContributingCategories.Count));
+    //         }
+    //     }
+
+    //     return results
+    //         .OrderByDescending(x => x.Similarity)
+    //         .Take(topN)
+    //         .ToList();
+    // }
+
     public async Task<List<(Guid UserId, double Similarity, int SharedCategories)>> FindSimilarUsersAsync(
-        float[] queryEmbedding,
-        int topN = 10,
-        double minSimilarity = 0.0,
-        CancellationToken cancellationToken = default)
+    float[] queryEmbedding,
+    int topN = 10,
+    double minSimilarity = 0.0,
+    CancellationToken cancellationToken = default)
     {
-        // Fetch active embeddings
-        var allEmbeddings = await _dbSet
+        if (queryEmbedding == null || queryEmbedding.Length == 0)
+            throw new ArgumentException("Query embedding cannot be empty");
+
+        var queryVector = new Vector(queryEmbedding);
+
+        // ✅ Perform the math in SQL using pgvector
+        var query = _dbSet
             .AsNoTracking()
-            .Where(ue => ue.IsActive && ue.Embedding != null)
+            .Where(ue => ue.IsActive)
+            .Select(ue => new
+            {
+                ue.UserId,
+
+                Distance = new Vector(ue.Embedding).CosineDistance(queryVector),
+                CategoryCount = ue.ContributingCategories.Count
+            });
+
+        var results = await query
+            .Where(x => (1.0 - x.Distance) >= minSimilarity)
+            .OrderBy(x => x.Distance)
+            .Take(topN)
             .ToListAsync(cancellationToken);
 
-        // Compute similarity in memory
-        var results = new List<(Guid UserId, double Similarity, int SharedCategories)>();
-
-        foreach (var ue in allEmbeddings)
-        {
-            if (ue.Embedding == null || ue.Embedding.Length != queryEmbedding.Length)
-                continue;
-
-            var similarity = ue.CosineSimilarity(queryEmbedding);
-            
-            if (similarity >= minSimilarity)
-            {
-                results.Add((ue.UserId, similarity, ue.ContributingCategories.Count));
-            }
-        }
-
         return results
-            .OrderByDescending(x => x.Similarity)
-            .Take(topN)
+            .Select(x => (x.UserId, 1.0 - x.Distance, x.CategoryCount))
             .ToList();
     }
 
@@ -87,9 +123,9 @@ public class UserEmbeddingRepository : RepositoryBase<UserEmbedding, Guid>, IUse
             return new List<(Guid, double, int)>();
 
         var results = await FindSimilarUsersAsync(
-            queryUser.Embedding, 
+            queryUser.Embedding,
             topN + 1,
-            minSimilarity, 
+            minSimilarity,
             cancellationToken);
 
         return results
@@ -134,6 +170,8 @@ public class UserEmbeddingRepository : RepositoryBase<UserEmbedding, Guid>, IUse
             .ToListAsync(cancellationToken);
     }
 
+
+
     public async Task<List<UserEmbedding>> GetNotCalculatedSinceAsync(
         DateTime since,
         CancellationToken cancellationToken = default)
@@ -150,7 +188,7 @@ public class UserEmbeddingRepository : RepositoryBase<UserEmbedding, Guid>, IUse
         CancellationToken cancellationToken = default)
     {
         var existing = await GetByUserIdAsync(embedding.UserId, cancellationToken);
-        
+
         if (existing != null)
         {
             existing.UpdateFrom(embedding);
@@ -181,6 +219,7 @@ public class UserEmbeddingRepository : RepositoryBase<UserEmbedding, Guid>, IUse
             .CountAsync(ue => ue.IsActive && ue.Confidence < threshold, cancellationToken);
     }
 
+
     // ─────────────────────────────────────────────────────────────
     // Cleanup
     // ─────────────────────────────────────────────────────────────
@@ -190,11 +229,11 @@ public class UserEmbeddingRepository : RepositoryBase<UserEmbedding, Guid>, IUse
         CancellationToken cancellationToken = default)
     {
         var cutoff = DateTime.UtcNow.AddDays(-daysThreshold);
-        
+
         return await _dbSet
             .AsNoTracking()
-            .Where(ue => ue.IsActive && 
-                        ue.IsStale && 
+            .Where(ue => ue.IsActive &&
+                        ue.IsStale &&
                         ue.LastCalculated < cutoff)
             .ToListAsync(cancellationToken);
     }

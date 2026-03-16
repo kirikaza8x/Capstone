@@ -162,4 +162,22 @@ internal sealed class EventRepository(EventsDbContext context)
                 m.Permissions.Contains(permission),
                 cancellationToken);
     }
+
+    public async Task<IReadOnlyList<Event>> GetByCategoriesOrHashtagsAsync(
+    IEnumerable<string> categoryNames,
+    IEnumerable<string> hashtagNames,
+    CancellationToken cancellationToken = default)
+    {
+        return await _context.Events
+            .Where(e =>
+                e.EventCategories.Any(ec => categoryNames.Contains(ec.Category.Name)) ||
+                e.EventHashtags.Any(eh => hashtagNames.Contains(eh.Hashtag.Name)))
+            .Include(e => e.EventCategories)
+                .ThenInclude(ec => ec.Category)
+            .Include(e => e.EventHashtags)
+                .ThenInclude(eh => eh.Hashtag)
+            .Include(e => e.TicketTypes)
+            .AsSplitQuery()
+            .ToListAsync(cancellationToken);
+    }
 }
