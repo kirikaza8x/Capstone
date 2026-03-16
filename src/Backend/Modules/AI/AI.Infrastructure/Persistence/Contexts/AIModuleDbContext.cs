@@ -13,11 +13,11 @@ namespace AI.Infrastructure.Data
         public DbSet<UserInterestScore> UserInterestScores { get; set; }
         // public DbSet<GlobalCategoryStat> GlobalCategoryStats { get; set; }
         public DbSet<InteractionWeight> InteractionWeights { get; set; }
-        public DbSet<UserEmbedding> UserEmbeddings { get; set; }
+        // public DbSet<UserEmbedding> UserEmbeddings { get; set; }
         // public DbSet<CategoryEmbedding> CategoryEmbeddings { get; set; }
         // public DbSet<CategoryCoOccurrence> CategoryCoOccurrences { get; set; }
         public DbSet<EventSnapshot> EventSnapshots { get; set; }      
-        public DbSet<EventEmbedding> EventEmbeddings { get; set; }    
+        // public DbSet<EventEmbedding> EventEmbeddings { get; set; }    
         public DbSet<OutboxMessage> OutboxMessages { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

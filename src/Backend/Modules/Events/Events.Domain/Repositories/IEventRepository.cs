@@ -29,13 +29,11 @@ public interface IEventRepository : IRepository<Event, Guid>
 
     Task<bool> HasPermissionAsync(Guid eventId, Guid userId, string permission, CancellationToken cancellationToken = default);
 
-<<<<<<< HEAD
     Task<IReadOnlyList<Event>> GetByCategoriesOrHashtagsAsync(
     IEnumerable<string> categoryNames,
     IEnumerable<string> hashtagNames,
     CancellationToken cancellationToken = default);
 
-=======
     Task<IReadOnlyList<Event>> GetPublishedEndedEventsAsync(
         DateTime utcNow,
         int take,
@@ -46,5 +44,4 @@ public interface IEventRepository : IRepository<Event, Guid>
         DateTime toUtc,
         int take,
         CancellationToken cancellationToken = default);
->>>>>>> 82e4db3530a82b8b3ed9533c45d9f155c48c418e
 }

@@ -25,7 +25,7 @@ namespace AI.Application.Features.Tracking.EventHandlers;
 public class BehaviorLogCreatedEventHandler : IDomainEventHandler<BehaviorLogCreatedEvent>
 {
     private readonly IUserInterestScoreRepository _scoreRepo;
-    private readonly IUserEmbeddingRepository _userEmbeddingRepo;
+    // private readonly IUserEmbeddingRepository _userEmbeddingRepo;
     private readonly IInteractionWeightRepository _weightRepo;
 
     private readonly IEventSnapshotRepository _eventSnapshotRepo;
@@ -36,14 +36,14 @@ public class BehaviorLogCreatedEventHandler : IDomainEventHandler<BehaviorLogCre
 
     public BehaviorLogCreatedEventHandler(
         IUserInterestScoreRepository scoreRepo,
-        IUserEmbeddingRepository userEmbeddingRepo,
+        // IUserEmbeddingRepository userEmbeddingRepo,
         IInteractionWeightRepository weightRepo,
         IEventSnapshotRepository eventSnapshotRepo,
         IAiUnitOfWork aiUnitOfWork,
         ILogger<BehaviorLogCreatedEventHandler> logger)
     {
         _scoreRepo = scoreRepo;
-        _userEmbeddingRepo = userEmbeddingRepo;
+        // _userEmbeddingRepo = userEmbeddingRepo;
         _weightRepo = weightRepo;
         _unitOfWork = aiUnitOfWork;
         _eventSnapshotRepo = eventSnapshotRepo;
@@ -81,7 +81,7 @@ public class BehaviorLogCreatedEventHandler : IDomainEventHandler<BehaviorLogCre
                 ct: ct
             );
             await _unitOfWork.SaveChangesAsync();
-            await MarkUserEmbeddingStaleAsync(@event.UserId, ct);
+            // await MarkUserEmbeddingStaleAsync(@event.UserId, ct);
 
             _logger.LogInformation(
                 "Interest scores updated: UserId={UserId}, Action={Action}, Categories={Categories}, Points={Points}",
@@ -100,14 +100,14 @@ public class BehaviorLogCreatedEventHandler : IDomainEventHandler<BehaviorLogCre
     /// Marks the user's embedding as stale so it gets rebuilt in the next scheduled job.
     /// This is a lightweight operation — just a flag update.
     /// </summary>
-    private async Task MarkUserEmbeddingStaleAsync(Guid userId, CancellationToken ct)
-    {
-        var userEmbedding = await _userEmbeddingRepo.GetByUserIdAsync(userId, ct);
-        if (userEmbedding != null && !userEmbedding.IsStale)
-        {
-            userEmbedding.MarkStale();
-            await _unitOfWork.SaveChangesAsync(ct);
-            _logger.LogDebug("Marked UserEmbedding as stale for UserId={UserId}", userId);
-        }
-    }
+    // private async Task MarkUserEmbeddingStaleAsync(Guid userId, CancellationToken ct)
+    // {
+    //     var userEmbedding = await _userEmbeddingRepo.GetByUserIdAsync(userId, ct);
+    //     if (userEmbedding != null && !userEmbedding.IsStale)
+    //     {
+    //         userEmbedding.MarkStale();
+    //         await _unitOfWork.SaveChangesAsync(ct);
+    //         _logger.LogDebug("Marked UserEmbedding as stale for UserId={UserId}", userId);
+    //     }
+    // }
 }
