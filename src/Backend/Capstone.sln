@@ -84,6 +84,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Payment.IntegrationEvents",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Payment.PublicApi", "Modules\Payment\Payment.PublicApi\Payment.PublicApi.csproj", "{159A3EA0-3312-444F-8A74-71F4D3A57439}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Notifications", "Notifications", "{88806C1D-B3C4-4F55-AE14-B24011152D56}"
+	ProjectSection(SolutionItems) = preProject
+		Modules\Notifications\Notifications.IntegrationEvents\SendEmailIntegrationEvent.cs = Modules\Notifications\Notifications.IntegrationEvents\SendEmailIntegrationEvent.cs
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -495,6 +500,7 @@ Global
 		{D4C81621-C50E-4882-9EB0-B2181F3411B6} = {5B3A39BA-155F-4860-1F7D-9A3CD2EFF833}
 		{6B49E1BA-8D12-42D7-ACF8-F2376373D44B} = {5B3A39BA-155F-4860-1F7D-9A3CD2EFF833}
 		{159A3EA0-3312-444F-8A74-71F4D3A57439} = {5B3A39BA-155F-4860-1F7D-9A3CD2EFF833}
+		{88806C1D-B3C4-4F55-AE14-B24011152D56} = {C73C8822-8FE8-4C65-803A-2D283B46F324}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {211C7E79-0242-4D74-8098-0AFD07A77637}
