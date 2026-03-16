@@ -38,7 +38,7 @@ public class BehaviorLogCreatedEventHandler : IDomainEventHandler<BehaviorLogCre
         IUserInterestScoreRepository scoreRepo,
         // IUserEmbeddingRepository userEmbeddingRepo,
         IInteractionWeightRepository weightRepo,
-        IEventSnapshotRepository eventSnapshotRepo,
+        // IEventSnapshotRepository eventSnapshotRepo,
         IAiUnitOfWork aiUnitOfWork,
         ILogger<BehaviorLogCreatedEventHandler> logger)
     {
@@ -46,7 +46,7 @@ public class BehaviorLogCreatedEventHandler : IDomainEventHandler<BehaviorLogCre
         // _userEmbeddingRepo = userEmbeddingRepo;
         _weightRepo = weightRepo;
         _unitOfWork = aiUnitOfWork;
-        _eventSnapshotRepo = eventSnapshotRepo;
+        // _eventSnapshotRepo = eventSnapshotRepo;
         _logger = logger;
     }
 
@@ -81,7 +81,6 @@ public class BehaviorLogCreatedEventHandler : IDomainEventHandler<BehaviorLogCre
                 ct: ct
             );
             await _unitOfWork.SaveChangesAsync();
-            // await MarkUserEmbeddingStaleAsync(@event.UserId, ct);
 
             _logger.LogInformation(
                 "Interest scores updated: UserId={UserId}, Action={Action}, Categories={Categories}, Points={Points}",
