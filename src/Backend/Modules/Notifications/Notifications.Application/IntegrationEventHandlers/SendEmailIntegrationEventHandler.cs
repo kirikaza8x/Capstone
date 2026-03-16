@@ -5,11 +5,11 @@ using Shared.Application.Abstractions.EventBus;
 namespace Notifications.Application.IntegrationEventHandlers;
 
 internal sealed class SendEmailIntegrationEventHandler(
-    IEmailSender emailSender) : IntegrationEventHandler<SendEmailIntegrationEvent>
+    INotificationService notificationService) : IntegrationEventHandler<SendEmailIntegrationEvent>
 {
     public override async Task Handle(SendEmailIntegrationEvent integrationEvent, CancellationToken cancellationToken = default)
     {
-        await emailSender.SendAsync(
+        await notificationService.SendRawEmailAsync(
             integrationEvent.To,
             integrationEvent.Subject,
             integrationEvent.Body,

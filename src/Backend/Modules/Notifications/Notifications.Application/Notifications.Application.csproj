@@ -6,4 +6,9 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Shared\Shared.Application\Shared.Application.csproj" />
+    <ProjectReference Include="..\Notifications.IntegrationEvents\Notifications.IntegrationEvents.csproj" />
+  </ItemGroup>
+
 </Project>

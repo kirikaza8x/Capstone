@@ -13,7 +13,8 @@ public sealed record SendEmailIntegrationEvent : IntegrationEvent
         DateTime occurredOnUtc,
         string to,
         string subject,
-        string body) : base(id, occurredOnUtc)
+        string body)
+        : base(id, occurredOnUtc)
     {
         To = to;
         Subject = subject;
