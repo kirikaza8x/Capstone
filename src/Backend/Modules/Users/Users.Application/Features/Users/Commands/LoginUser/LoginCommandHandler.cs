@@ -1,4 +1,3 @@
-using FluentValidation;
 using Shared.Application.Abstractions.Authentication;
 using Shared.Application.Abstractions.EventBus;
 using Shared.Application.Abstractions.Messaging;

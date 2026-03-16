@@ -7,14 +7,14 @@ using Users.Domain.Repositories;
 public sealed class GetOrganizerProfileDetailQueryHandler
     : IQueryHandler<GetOrganizerProfileDetailQuery, OrganizerProfileResponseDto>
 {
-    private readonly IUserRepository _userRepository;
+    private readonly IOrganizerProfileRepository _profileRepository;
     private readonly IMapper _mapper;
 
     public GetOrganizerProfileDetailQueryHandler(
-        IUserRepository userRepository,
+        IOrganizerProfileRepository profileRepository,
         IMapper mapper)
     {
-        _userRepository = userRepository;
+        _profileRepository = profileRepository;
         _mapper = mapper;
     }
 
@@ -22,22 +22,16 @@ public sealed class GetOrganizerProfileDetailQueryHandler
         GetOrganizerProfileDetailQuery query,
         CancellationToken cancellationToken)
     {
-        var user = await _userRepository.FirstOrDefaultAsync(
-            u => u.Id == query.UserId,
+        var organizerProfile = await _profileRepository.GetByIdAsync(query.Id,
             cancellationToken);
 
-        if (user == null)
-        {
-            return Result.Failure<OrganizerProfileResponseDto>(
-                Error.NotFound("User.NotFound", "User not found"));
-        }
-
-        if (user.OrganizerProfiles == null)
+        if (organizerProfile == null)
         {
             return Result.Failure<OrganizerProfileResponseDto>(
                 Error.NotFound("Organizer.NotFound", "Organizer profile not found"));
         }
-        var dto = _mapper.Map<OrganizerProfileResponseDto>(user.OrganizerProfiles);
+
+        var dto = _mapper.Map<OrganizerProfileResponseDto>(organizerProfile);
 
         return Result.Success(dto);
     }

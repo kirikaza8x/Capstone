@@ -24,10 +24,12 @@ internal sealed class GetOrganizerProfileQueryHandler(
             return Result.Failure<OrganizerProfileResponseDto>(
                 Error.NotFound("User.NotFound", "User not found."));
 
-        if (user.OrganizerProfiles is null)
+        var organizerProfile = user.OrganizerProfiles?.FirstOrDefault();
+
+        if (organizerProfile is null)
             return Result.Failure<OrganizerProfileResponseDto>(
                 Error.NotFound("Organizer.NotFound", "Organizer profile not found."));
 
-        return Result.Success(mapper.Map<OrganizerProfileResponseDto>(user.OrganizerProfiles));
+        return Result.Success(mapper.Map<OrganizerProfileResponseDto>(organizerProfile));
     }
 }
