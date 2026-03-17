@@ -15,7 +15,7 @@ public sealed record EventPublishedEmbeddingIntegrationEvent : IntegrationEvent
     public IReadOnlyList<string> Categories { get; init; } = [];
     public IReadOnlyList<string> Hashtags { get; init; } = [];
     public bool IsActive { get; init; }
-    public DateTime? UpdatedAt { get; init; }
+    public DateTime UpdatedAt { get; init; }
 
     public EventPublishedEmbeddingIntegrationEvent(
         Guid eventId,
@@ -25,7 +25,7 @@ public sealed record EventPublishedEmbeddingIntegrationEvent : IntegrationEvent
         IReadOnlyList<string> categories,
         IReadOnlyList<string> hashtags,
         bool isActive,
-        DateTime? updatedAt)
+        DateTime updatedAt)
         : base(Guid.NewGuid(), DateTime.UtcNow)
     {
         EventId = eventId;

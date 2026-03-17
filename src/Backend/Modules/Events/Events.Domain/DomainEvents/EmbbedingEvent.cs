@@ -13,7 +13,7 @@ namespace Events.Domain.DomainEvents
         IReadOnlyList<string> Categories,
         IReadOnlyList<string> Hashtags,
         bool IsActive,
-        DateTime? CreatedAt
+        DateTime CreatedAt
     ) : DomainEvent;
 
     /// <summary>
@@ -27,7 +27,7 @@ namespace Events.Domain.DomainEvents
         IReadOnlyList<string> Categories,
         IReadOnlyList<string> Hashtags,
         bool IsActive,
-        DateTime? UpdatedAt
+        DateTime UpdatedAt
     ) : DomainEvent;
 
     /// <summary>
@@ -41,6 +41,6 @@ namespace Events.Domain.DomainEvents
         IReadOnlyList<string> Categories,
         IReadOnlyList<string> Hashtags,
         bool IsActive,
-        DateTime? UpdatedAt
+        DateTime UpdatedAt
     ) : DomainEvent;
 }

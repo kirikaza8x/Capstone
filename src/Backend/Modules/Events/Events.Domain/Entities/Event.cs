@@ -91,10 +91,10 @@ public sealed class Event : AggregateRoot<Guid>
             organizerId,
             @event.Title,
             @event.Description,
-            categoryNames,
-            hashtagNames,
+            @event.GetCategoryNames(),
+            @event.GetHashtagNames(),
             @event.IsActive,
-            @event.CreatedAt
+            @event.CreatedAt ?? DateTime.UtcNow
         ));
         return @event;
     }
@@ -192,26 +192,15 @@ public sealed class Event : AggregateRoot<Guid>
         ModifiedAt = DateTime.UtcNow;
 
         RaiseDomainEvent(new EventPublishedDomainEvent(Id));
-        // Build category names from EventCategories
-        var categoryNames = EventCategories
-            .Select(ec => ec.Category.Name)
-            .ToList();
-
-        // Build hashtag names from EventHashtags
-        var hashtagNames = EventHashtags
-            .Select(eh => eh.Hashtag.Name)
-            .ToList();
-
-        // Raise the richer embedding domain event
         RaiseDomainEvent(new EventPublishedEmbeddingDomainEvent(
             Id,
             OrganizerId,
             Title,
             Description,
-            categoryNames,
-            hashtagNames,
+            GetCategoryNames(),
+            GetHashtagNames(),
             IsActive,
-            ModifiedAt
+            ModifiedAt ?? DateTime.UtcNow
         ));
         return Result.Success();
     }
@@ -428,6 +417,24 @@ public sealed class Event : AggregateRoot<Guid>
     }
 
 
+    /// <summary>
+    /// Returns the list of category names for this event.
+    /// </summary>
+    public List<string> GetCategoryNames()
+    {
+        return EventCategories
+            .Select(ec => ec.Category.Name)
+            .ToList();
+    }
 
+    /// <summary>
+    /// Returns the list of hashtag names for this event.
+    /// </summary>
+    public List<string> GetHashtagNames()
+    {
+        return EventHashtags
+            .Select(eh => eh.Hashtag.Name)
+            .ToList();
+    }
     protected override void Apply(IDomainEvent @event) { }
 }
