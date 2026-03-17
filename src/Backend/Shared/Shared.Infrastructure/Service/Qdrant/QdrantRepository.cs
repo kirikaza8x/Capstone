@@ -41,9 +41,10 @@ public abstract class QdrantRepositoryBase : IQdrantRepository
 
     /// <summary>
     /// Ensure collection exists with cosine similarity and the repo's VectorSize.
+    /// Marked virtual so concrete repos can override to also create payload indexes.
     /// Safe to call on startup — creates only if missing.
     /// </summary>
-    public async Task EnsureCollectionAsync(CancellationToken ct = default)
+    public virtual async Task EnsureCollectionAsync(CancellationToken ct = default)
     {
         try
         {
@@ -52,7 +53,7 @@ public abstract class QdrantRepositoryBase : IQdrantRepository
                 CollectionName,
                 new VectorParams
                 {
-                    Size = (ulong)VectorSize,
+                    Size     = (ulong)VectorSize,
                     Distance = Distance.Cosine
                 },
                 cancellationToken: ct
@@ -62,7 +63,7 @@ public abstract class QdrantRepositoryBase : IQdrantRepository
         }
         catch (Exception ex) when (ex.Message.Contains("already exists"))
         {
-            Logger.LogDebug("Collection {Collection} already exists — skipping creation", CollectionName);
+            Logger.LogDebug("Collection {Collection} already exists — skipping", CollectionName);
         }
     }
 
@@ -103,6 +104,24 @@ public abstract class QdrantRepositoryBase : IQdrantRepository
     // ─────────────────────────────────────────────────────────────
 
     /// <summary>
+    /// Create a payload field index for fast filtering.
+    /// Idempotent — safe to call every startup (Qdrant ignores if index already exists).
+    /// Correct method name for Qdrant.Client v1.17: CreatePayloadIndexAsync.
+    /// </summary>
+    protected async Task CreatePayloadIndexAsync(
+        string            field,
+        PayloadSchemaType schemaType,
+        CancellationToken ct = default)
+    {
+        await Client.CreatePayloadIndexAsync(
+            collectionName: CollectionName,
+            fieldName:      field,
+            schemaType:     schemaType,
+            cancellationToken: ct
+        );
+    }
+
+    /// <summary>
     /// Raw single upsert — delegates to batch internally.
     /// For bulk ingestion use UpsertBatchRawAsync directly.
     /// </summary>
@@ -127,7 +146,7 @@ public abstract class QdrantRepositoryBase : IQdrantRepository
         {
             var point = new PointStruct
             {
-                Id = new PointId { Uuid = item.PointId.ToString() },
+                Id      = new PointId { Uuid = item.PointId.ToString() },
                 Vectors = item.Vector,
                 Payload = { }
             };
@@ -147,16 +166,16 @@ public abstract class QdrantRepositoryBase : IQdrantRepository
     /// Note: SearchAsync will be deprecated in favour of QueryAsync in future Qdrant versions.
     /// </summary>
     protected async Task<IReadOnlyList<ScoredPoint>> SearchRawAsync(
-        float[] queryVector,
-        Filter? qdrantFilter,
-        int limit,
+        float[]           queryVector,
+        Filter?           qdrantFilter,
+        int               limit,
         CancellationToken ct)
     {
         return await Client.SearchAsync(
-            collectionName: CollectionName,
-            vector: queryVector,
-            filter: qdrantFilter,
-            limit: (ulong)limit,
+            collectionName:  CollectionName,
+            vector:          queryVector,
+            filter:          qdrantFilter,
+            limit:           (ulong)limit,
             payloadSelector: true,
             vectorsSelector: false,
             cancellationToken: ct
@@ -168,17 +187,17 @@ public abstract class QdrantRepositoryBase : IQdrantRepository
     /// where results need to be pulled from a different collection.
     /// </summary>
     protected async Task<IReadOnlyList<ScoredPoint>> SearchCrossRawAsync(
-        string targetCollection,
-        float[] queryVector,
-        Filter? qdrantFilter,
-        int limit,
+        string            targetCollection,
+        float[]           queryVector,
+        Filter?           qdrantFilter,
+        int               limit,
         CancellationToken ct)
     {
         return await Client.SearchAsync(
-            collectionName: targetCollection,
-            vector: queryVector,
-            filter: qdrantFilter,
-            limit: (ulong)limit,
+            collectionName:  targetCollection,
+            vector:          queryVector,
+            filter:          qdrantFilter,
+            limit:           (ulong)limit,
             payloadSelector: true,
             vectorsSelector: false,
             cancellationToken: ct

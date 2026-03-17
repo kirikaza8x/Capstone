@@ -3,10 +3,10 @@ version: "3.9"
 services:
   # Backend API
   backend-api:
-    image: capstone-backend:latest
     build:
-      context: ./src/Backend/Api/Api
-      dockerfile: Dockerfile
+      context: ./src/Backend
+      dockerfile: Api/Api/Dockerfile
+    image: capstone-backend:latest
     container_name: AIPromo-api
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
@@ -21,6 +21,21 @@ services:
       - rabbitmq
     networks:
       - aipromo-network
+
+  # Embedding Generator
+  # embedding-generator:
+  #   build:
+  #     context: ./src/Backend
+  #     dockerfile: embbeding-generator/Dockerfile
+  #   image: capstone-embedding:latest
+  #   container_name: AIPromo-embedding
+  #   ports:
+  #     - "5100:8080"
+    # depends_on:
+    #   - postgres
+    #   - redis
+    # networks:
+    #   - aipromo-network
 
   # PostgreSQL Database
   postgres:
