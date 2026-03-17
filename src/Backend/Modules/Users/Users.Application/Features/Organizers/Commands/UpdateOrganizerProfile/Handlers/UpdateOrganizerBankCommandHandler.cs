@@ -31,7 +31,7 @@ public class UpdateOrganizerBankCommandHandler
     {
         var userId = _currentUserService.UserId;
 
-        var user = await _userRepository.GetByIdAsync(
+        var user = await _userRepository.GetByIdWithOrganizerProfileAsync(
             userId,
             cancellationToken);
 

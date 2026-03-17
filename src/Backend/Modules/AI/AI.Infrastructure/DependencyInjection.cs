@@ -65,7 +65,6 @@ namespace AI.Infrastructure
 
                 options.UseNpgsql(dataSource, npgsqlOptions =>
                 {
-                    // npgsqlOptions.UseVector();
 
                     npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", Constants.SchemaName);
 
@@ -80,11 +79,9 @@ namespace AI.Infrastructure
             });
 
             services.AddHttpClient<IImageGenerationService, OpenRouterImageService>();
-
-
             services.AddScoped<IGeminiService, GeminiService>();
-            services.AddScoped<IRecommendationAiService,RecommendationAiService>();
-           
+            services.AddScoped<IRecommendationAiService, RecommendationAiService>();
+
             return services;
         }
 
