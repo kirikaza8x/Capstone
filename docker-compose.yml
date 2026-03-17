@@ -1,24 +1,41 @@
+version: "3.9"
+
 services:
   # Backend API
-  # backend-api:
-  #   image: capstone-backend:latest
+  backend-api:
+    build:
+      context: ./src/Backend
+      dockerfile: Api/Api/Dockerfile
+    image: capstone-backend:latest
+    container_name: AIPromo-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=AIPromo;Username=postgres;Password=AIPromo123
+      - Redis__Configuration=redis:6379,password=AIPromo123
+      - RabbitMQ__Host=rabbitmq
+    ports:
+      - "5000:8080"
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    networks:
+      - aipromo-network
+
+  # Embedding Generator
+  # embedding-generator:
   #   build:
-  #     context: .
-  #     dockerfile: Backend/Api/Api/Dockerfile
-  #   container_name: AIPromo-api
-  #   environment:
-  #     - ASPNETCORE_ENVIRONMENT=Development
-  #     - ConnectionStrings__DefaultConnection=Host=postgres;Database=AIPromo;Username=postgres;Password=AIPromo123
-  #     - Redis__Configuration=redis:6379,password=AIPromo123
-  #     - RabbitMQ__Host=rabbitmq
+  #     context: ./src/Backend
+  #     dockerfile: embbeding-generator/Dockerfile
+  #   image: capstone-embedding:latest
+  #   container_name: AIPromo-embedding
   #   ports:
-  #     - "5000:8080"
-  #   depends_on:
-  #     - postgres
-  #     - redis
-  #     - rabbitmq
-  #   networks:
-  #     - aipromo-network
+  #     - "5100:8080"
+    # depends_on:
+    #   - postgres
+    #   - redis
+    # networks:
+    #   - aipromo-network
 
   # PostgreSQL Database
   postgres:
@@ -48,7 +65,7 @@ services:
       - redis_data:/data
     networks:
       - aipromo-network
-  
+
   # Redis Web GUI
   redis-insight:
     image: redis/redisinsight:latest
@@ -62,46 +79,48 @@ services:
       - aipromo-network
     depends_on:
       - redis
-  
+
   # RabbitMQ
   rabbitmq:
     image: rabbitmq:3-management-alpine
     container_name: AIPromo-rabbitmq
     restart: unless-stopped
     environment:
-        RABBITMQ_DEFAULT_USER: admin
-        RABBITMQ_DEFAULT_PASS: admin
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
     ports:
-        - "5672:5672"
-        - "15672:15672"
+      - "5672:5672"
+      - "15672:15672"
     volumes:
-        - rabbitmq_data:/var/lib/rabbitmq
+      - rabbitmq_data:/var/lib/rabbitmq
     networks:
-        - aipromo-network
-        
+      - aipromo-network
+
   # MinIO
   minio:
-     image: minio/minio:latest
-     container_name: AIPromo-minio
-     restart: unless-stopped
-     environment:
-        MINIO_ROOT_USER: minioadmin
-        MINIO_ROOT_PASSWORD: minioadmin
-     command: server /data --console-address ":9001"
-     ports:
-        - "9000:9000"
-        - "9001:9001"
-     volumes:
-        - minio_data:/data
-     networks:
-        - aipromo-network
+    image: minio/minio:latest
+    container_name: AIPromo-minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - aipromo-network
+
+  # Qdrant Vector DB
   qdrant:
     image: qdrant/qdrant:latest
     container_name: AIPromo-qdrant
     restart: unless-stopped
     ports:
-      - "6333:6333"  
-      - "6334:6334"  
+      - "6333:6333"
+      - "6334:6334"
     volumes:
       - qdrant_data:/qdrant/storage
     networks:
