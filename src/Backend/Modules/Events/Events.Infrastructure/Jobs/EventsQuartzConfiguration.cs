@@ -6,6 +6,7 @@ namespace Events.Infrastructure.Jobs;
 public static class EventsQuartzConfiguration
 {
     private const int AutoCompleteIntervalMinutes = 5;
+    private const int ReminderIntervalMinutes = 60;
 
     public static IServiceCollection AddEventsQuartzJobs(this IServiceCollection services)
     {
@@ -35,7 +36,7 @@ public static class EventsQuartzConfiguration
                 .WithIdentity("events.send-reminder-24h.trigger")
                 .StartNow()
                 .WithSimpleSchedule(schedule => schedule
-                    .WithIntervalInMinutes(AutoCompleteIntervalMinutes)
+                    .WithIntervalInMinutes(ReminderIntervalMinutes)
                     .RepeatForever()));
         });
 

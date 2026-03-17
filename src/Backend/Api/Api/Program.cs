@@ -4,6 +4,7 @@ using Api.Extensions;
 using Api.Middleware;
 using Carter;
 using Events.Infrastructure;
+using Notifications.Infrastructure;
 using Shared.Api;
 using Shared.Application;
 using Shared.Infrastructure;
@@ -57,6 +58,7 @@ public class Program
 
         // Add module
         builder.Services
+            .AddNotificationModule(Configuration)
             .AddUserModule(Configuration)
             .AddEventModule(Configuration)
             .AddAiModule(Configuration)
@@ -82,6 +84,7 @@ public class Program
         app.MapCarter();
 
         app
+        .UseNotificationModule()
         .UseUserModule()
         .UseEventModule()
         .UseAiModule()

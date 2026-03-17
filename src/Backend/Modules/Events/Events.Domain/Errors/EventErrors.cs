@@ -130,6 +130,14 @@ public static class EventErrors
         public static readonly Error RejectReasonRequired = Error.Validation(
             "Event.RejectReasonRequired",
             "Reject reason is required.");
+
+        public static Error CannotSuspend(EventStatus currentStatus) => Error.Validation(
+            "Event.CannotSuspend",
+            $"Cannot suspend event. Current status is '{currentStatus}'.");
+
+        public static readonly Error SuspendReasonRequired = Error.Validation(
+            "Event.SuspendReasonRequired",
+            "Suspend reason is required.");
     }
 
 
@@ -246,5 +254,9 @@ public static class EventErrors
         public static Error SlugAlreadyExists(string slug) => Error.Conflict(
             "Hashtag.SlugAlreadyExists",
             $"A hashtag with slug '{slug}' already exists.");
+
+        public static Error InUse(int hashtagId) => Error.Validation(
+            "Hashtag.InUse",
+            $"Cannot delete hashtag '{hashtagId}' because it is being used by one or more events.");
     }
 }
