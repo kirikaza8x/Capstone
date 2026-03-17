@@ -18,17 +18,17 @@ public class UserInterestScoreRepository : RepositoryBase<UserInterestScore, Gui
     }
 
     public async Task<UserInterestScore?> GetByUserAndCategoryAsync(
-        Guid userId, 
+        Guid userId,
         string category,
         CancellationToken ct = default)
     {
         var normalized = category.ToLowerInvariant().Trim();
         return await _dbSet
             .AsNoTracking()
-            .FirstOrDefaultAsync(x => 
-                x.UserId == userId && 
+            .FirstOrDefaultAsync(x =>
+                x.UserId == userId &&
                 x.Category == normalized &&
-                x.IsActive, 
+                x.IsActive,
             ct);
     }
 
@@ -62,17 +62,17 @@ public class UserInterestScoreRepository : RepositoryBase<UserInterestScore, Gui
 
         return await _dbSet
             .AsNoTracking()
-            .Where(x => 
-                x.UserId == userId && 
+            .Where(x =>
+                x.UserId == userId &&
                 normalized.Contains(x.Category) &&
                 x.IsActive)
             .ToListAsync(ct);
     }
 
     public async Task<UserInterestScore> UpsertWithDecayAsync(
-        Guid userId, 
-        string category, 
-        double weight, 
+        Guid userId,
+        string category,
+        double weight,
         double halfLifeDays,
         CancellationToken ct = default)
     {
@@ -83,30 +83,49 @@ public class UserInterestScoreRepository : RepositoryBase<UserInterestScore, Gui
         {
             try
             {
-                var existing = await GetByUserAndCategoryAsync(userId, normalizedCategory, ct);
+                // FIX 1: Check the change tracker first before hitting the DB.
+                // If a previous BulkUpsert iteration already loaded this entity,
+                // reuse the tracked instance instead of attaching a second copy.
+                var tracked = _dbContext.ChangeTracker
+                    .Entries<UserInterestScore>()
+                    .FirstOrDefault(e =>
+                        e.Entity.UserId   == userId &&
+                        e.Entity.Category == normalizedCategory &&
+                        e.Entity.IsActive)
+                    ?.Entity;
 
-                if (existing != null)
+                if (tracked is not null)
                 {
-                    existing.ApplyDecay(halfLifeDays);
-                    existing.AddScore(weight);
-                    _dbSet.Update(existing);
-                    await _dbContext.SaveChangesAsync(ct);
+                    tracked.DecayAndAdd(weight, halfLifeDays);
+                    // Already tracked — EF will detect changes automatically, no Update() call needed
+                    return tracked;
+                }
+
+                // FIX 2: Query without AsNoTracking so EF owns the instance.
+                // This prevents the "already tracked" conflict on _dbSet.Update().
+                var existing = await _dbSet
+                    .FirstOrDefaultAsync(x =>
+                        x.UserId   == userId &&
+                        x.Category == normalizedCategory &&
+                        x.IsActive, ct);
+
+                if (existing is not null)
+                {
+                    existing.DecayAndAdd(weight, halfLifeDays);
+                    // No _dbSet.Update() needed — entity is already tracked
                     return existing;
                 }
-                else
-                {
-                    var newScore = UserInterestScore.Create(userId, normalizedCategory, weight);
-                    _dbSet.Add(newScore);
-                    await _dbContext.SaveChangesAsync(ct);
-                    return newScore;
-                }
+
+                var newScore = UserInterestScore.Create(userId, normalizedCategory, weight);
+                _dbSet.Add(newScore);
+                return newScore;
             }
             catch (DbUpdateException ex) when (
                 ex.InnerException?.Message.Contains("duplicate") == true ||
-                ex.InnerException?.Message.Contains("unique") == true)
+                ex.InnerException?.Message.Contains("unique")    == true)
             {
                 _dbContext.ChangeTracker.Clear();
-                
+
                 if (attempt == maxRetries - 1)
                     throw;
             }
@@ -122,18 +141,22 @@ public class UserInterestScoreRepository : RepositoryBase<UserInterestScore, Gui
         CancellationToken ct = default)
     {
         var results = new List<UserInterestScore>();
-        
+
         foreach (var (category, weight) in categoryWeights)
         {
             var result = await UpsertWithDecayAsync(userId, category, weight, halfLifeDays, ct);
             results.Add(result);
         }
-        
+
+        // FIX 3: Single SaveChanges at the end of the bulk operation
+        // instead of one per category — avoids partial commits and is faster
+        await _dbContext.SaveChangesAsync(ct);
+
         return results;
     }
 
     public async Task<List<UserInterestScore>> GetTopCategoriesAsync(
-        Guid userId, 
+        Guid userId,
         int topN = 10,
         double minScore = 1.0,
         CancellationToken ct = default)
@@ -164,11 +187,11 @@ public class UserInterestScoreRepository : RepositoryBase<UserInterestScore, Gui
         CancellationToken ct = default)
     {
         var cutoff = DateTime.UtcNow.AddDays(-daysThreshold);
-        
+
         return await _dbSet
             .AsNoTracking()
-            .Where(x => x.IsActive && 
-                       x.LastUpdated < cutoff && 
+            .Where(x => x.IsActive &&
+                       x.LastUpdated < cutoff &&
                        x.Score < maxScore)
             .ToListAsync(ct);
     }
@@ -184,16 +207,16 @@ public class UserInterestScoreRepository : RepositoryBase<UserInterestScore, Gui
     public async Task<Dictionary<string, object>> GetAggregateStatsAsync(
         CancellationToken ct = default)
     {
-        var totalUsers = await _dbSet.Select(x => x.UserId).Distinct().CountAsync(ct);
+        var totalUsers      = await _dbSet.Select(x => x.UserId).Distinct().CountAsync(ct);
         var totalCategories = await _dbSet.Select(x => x.Category).Distinct().CountAsync(ct);
-        var avgScore = await _dbSet.AverageAsync(x => (double?)x.Score) ?? 0;
-        
+        var avgScore        = await _dbSet.AverageAsync(x => (double?)x.Score) ?? 0;
+
         return new Dictionary<string, object>
         {
-            { "TotalUsers", totalUsers },
+            { "TotalUsers",      totalUsers },
             { "TotalCategories", totalCategories },
-            { "AverageScore", Math.Round(avgScore, 2) },
-            { "Timestamp", DateTime.UtcNow }
+            { "AverageScore",    Math.Round(avgScore, 2) },
+            { "Timestamp",       DateTime.UtcNow }
         };
     }
 
@@ -203,18 +226,16 @@ public class UserInterestScoreRepository : RepositoryBase<UserInterestScore, Gui
         CancellationToken ct = default)
     {
         var cutoff = DateTime.UtcNow.AddDays(-daysThreshold);
-        
+
         var stale = await _dbSet
-            .Where(x => x.IsActive && 
-                       x.LastUpdated < cutoff && 
+            .Where(x => x.IsActive &&
+                       x.LastUpdated < cutoff &&
                        x.Score < maxScore)
             .ToListAsync(ct);
-        
+
         foreach (var score in stale)
-        {
             score.IsActive = false;
-        }
-        
+
         return await _dbContext.SaveChangesAsync(ct);
     }
 }

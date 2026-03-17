@@ -80,6 +80,24 @@ public sealed class Event : AggregateRoot<Guid>
         };
 
         @event.RaiseDomainEvent(new EventCreatedDomainEvent(@event.Id, organizerId));
+        var categoryNames = @event.EventCategories
+        .Select(ec => ec.Category.Name)
+        .ToList();
+
+        var hashtagNames = @event.EventHashtags
+            .Select(eh => eh.Hashtag.Name)
+            .ToList();
+
+        @event.RaiseDomainEvent(new EventCreatedEmbeddingDomainEvent(
+            @event.Id,
+            organizerId,
+            @event.Title,
+            @event.Description,
+            @event.GetCategoryNames(),
+            @event.GetHashtagNames(),
+            @event.IsActive,
+            @event.CreatedAt ?? DateTime.UtcNow
+        ));
         return @event;
     }
 
@@ -176,6 +194,16 @@ public sealed class Event : AggregateRoot<Guid>
         ModifiedAt = DateTime.UtcNow;
 
         RaiseDomainEvent(new EventPublishedDomainEvent(Id));
+        RaiseDomainEvent(new EventPublishedEmbeddingDomainEvent(
+            Id,
+            OrganizerId,
+            Title,
+            Description,
+            GetCategoryNames(),
+            GetHashtagNames(),
+            IsActive,
+            ModifiedAt ?? DateTime.UtcNow
+        ));
         return Result.Success();
     }
 
@@ -419,5 +447,25 @@ public sealed class Event : AggregateRoot<Guid>
         return Result.Success();
     }
 
+
+    /// <summary>
+    /// Returns the list of category names for this event.
+    /// </summary>
+    public List<string> GetCategoryNames()
+    {
+        return EventCategories
+            .Select(ec => ec.Category.Name)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Returns the list of hashtag names for this event.
+    /// </summary>
+    public List<string> GetHashtagNames()
+    {
+        return EventHashtags
+            .Select(eh => eh.Hashtag.Name)
+            .ToList();
+    }
     protected override void Apply(IDomainEvent @event) { }
 }

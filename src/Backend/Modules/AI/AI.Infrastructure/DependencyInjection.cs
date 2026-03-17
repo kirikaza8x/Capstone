@@ -1,14 +1,14 @@
 using AI.Application.Abstractions;
+using AI.Application.Abstractions.Qdrant;
 using AI.Infrastructure.Data;
 using AI.Infrastructure.ExternalServices;
+using AI.Infrastructure.Qdrant;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Npgsql;
-using Pgvector;
-using Quartz;
 using Shared.Domain.Data;
 using Shared.Domain.Data.Repositories;
 using Shared.Infrastructure.Configs;
@@ -65,7 +65,6 @@ namespace AI.Infrastructure
 
                 options.UseNpgsql(dataSource, npgsqlOptions =>
                 {
-                    // npgsqlOptions.UseVector();
 
                     npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", Constants.SchemaName);
 
@@ -80,11 +79,10 @@ namespace AI.Infrastructure
             });
 
             services.AddHttpClient<IImageGenerationService, OpenRouterImageService>();
-
-
             services.AddScoped<IGeminiService, GeminiService>();
-            services.AddScoped<IRecommendationAiService,RecommendationAiService>();
-           
+            services.AddScoped<IRecommendationAiService, RecommendationAiService>();
+            services.AddScoped<IEventVectorRepository, EventVectorRepository>();
+            services.AddScoped<IUserBehaviorVectorRepository, UserBehaviorVectorRepository>();
             return services;
         }
 

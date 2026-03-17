@@ -1,6 +1,6 @@
 ﻿namespace Users.PublicApi.Services;
 
-public sealed record UserInfo(Guid Id, string Email, string FullName, IReadOnlyList<string> Roles);
+public sealed record UserInfo(Guid Id, string? Email, string FullName, IReadOnlyList<string> Roles);
 
 public interface IUserPublicApi
 {

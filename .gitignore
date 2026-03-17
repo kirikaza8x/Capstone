@@ -420,3 +420,31 @@ FodyWeavers.xsd
 **/appsettings.json
 **/appsettings.Development.json
 **/appsettings.Production.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.env
+
+# Models (large files - don't commit)
+models/
+*.bin
+*.pt
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db

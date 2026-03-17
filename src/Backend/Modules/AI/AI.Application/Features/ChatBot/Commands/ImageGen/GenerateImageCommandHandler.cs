@@ -3,7 +3,6 @@ using FluentValidation;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
 using AI.Application.Abstractions;
-using AI.Application.Models;
 using AI.Application.Features.ImageGeneration.Commands;
 
 namespace AI.Application.Features.ImageGeneration.Handlers;
