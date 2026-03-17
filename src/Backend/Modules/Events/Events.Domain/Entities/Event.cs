@@ -78,6 +78,24 @@ public sealed class Event : AggregateRoot<Guid>
         };
 
         @event.RaiseDomainEvent(new EventCreatedDomainEvent(@event.Id, organizerId));
+        var categoryNames = @event.EventCategories
+        .Select(ec => ec.Category.Name)
+        .ToList();
+
+        var hashtagNames = @event.EventHashtags
+            .Select(eh => eh.Hashtag.Name)
+            .ToList();
+
+        @event.RaiseDomainEvent(new EventCreatedEmbeddingDomainEvent(
+            @event.Id,
+            organizerId,
+            @event.Title,
+            @event.Description,
+            categoryNames,
+            hashtagNames,
+            @event.IsActive,
+            @event.CreatedAt
+        ));
         return @event;
     }
 
@@ -174,6 +192,27 @@ public sealed class Event : AggregateRoot<Guid>
         ModifiedAt = DateTime.UtcNow;
 
         RaiseDomainEvent(new EventPublishedDomainEvent(Id));
+        // Build category names from EventCategories
+        var categoryNames = EventCategories
+            .Select(ec => ec.Category.Name)
+            .ToList();
+
+        // Build hashtag names from EventHashtags
+        var hashtagNames = EventHashtags
+            .Select(eh => eh.Hashtag.Name)
+            .ToList();
+
+        // Raise the richer embedding domain event
+        RaiseDomainEvent(new EventPublishedEmbeddingDomainEvent(
+            Id,
+            OrganizerId,
+            Title,
+            Description,
+            categoryNames,
+            hashtagNames,
+            IsActive,
+            ModifiedAt
+        ));
         return Result.Success();
     }
 
