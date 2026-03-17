@@ -130,6 +130,14 @@ public static class EventErrors
         public static readonly Error RejectReasonRequired = Error.Validation(
             "Event.RejectReasonRequired",
             "Reject reason is required.");
+
+        public static Error CannotSuspend(EventStatus currentStatus) => Error.Validation(
+            "Event.CannotSuspend",
+            $"Cannot suspend event. Current status is '{currentStatus}'.");
+
+        public static readonly Error SuspendReasonRequired = Error.Validation(
+            "Event.SuspendReasonRequired",
+            "Suspend reason is required.");
     }
 
 

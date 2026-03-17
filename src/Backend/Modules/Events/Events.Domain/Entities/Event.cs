@@ -27,6 +27,8 @@ public sealed class Event : AggregateRoot<Guid>
     public string? CancellationReason { get; private set; }
     public string? PublishRejectionReason { get; private set; }
     public string? CancellationRejectionReason { get; private set; }
+    public string? SuspensionReason { get; private set; }
+    public DateTime? SuspendedAt { get; private set; }
 
     private readonly List<EventSession> _sessions = [];
     public IReadOnlyCollection<EventSession> Sessions => _sessions.AsReadOnly();
@@ -175,20 +177,25 @@ public sealed class Event : AggregateRoot<Guid>
         return Result.Success();
     }
 
-    public Result Unpublish()
+    public Result Suspend(string reason)
     {
         if (Status != EventStatus.Published)
-            return Result.Failure(EventErrors.Event.CannotUnpublish(Status));
+            return Result.Failure(EventErrors.Event.CannotSuspend(Status));
 
-        Status = EventStatus.Unpublished;
+        if (string.IsNullOrWhiteSpace(reason))
+            return Result.Failure(EventErrors.Event.SuspendReasonRequired);
+
+        Status = EventStatus.Suspended;
+        SuspensionReason = reason.Trim();
+        SuspendedAt = DateTime.UtcNow;
         ModifiedAt = DateTime.UtcNow;
-        RaiseDomainEvent(new EventUnpublishedDomainEvent(Id));
+
         return Result.Success();
     }
 
     public Result Cancel(string? reason = null)
     {
-        if (Status is EventStatus.Cancelled or EventStatus.Completed)
+        if (Status is not (EventStatus.Suspended or EventStatus.PendingCancellation))
             return Result.Failure(EventErrors.Event.CannotCancel(Status));
 
         Status = EventStatus.Cancelled;
@@ -210,14 +217,14 @@ public sealed class Event : AggregateRoot<Guid>
 
     public Result RequestCancellation(string reason)
     {
-        if (Status is not (EventStatus.Published or EventStatus.Unpublished))
+        if (Status != EventStatus.Published)
             return Result.Failure(EventErrors.Event.CannotRequestCancellation(Status));
 
         if (EventStartAt.HasValue && EventStartAt.Value <= DateTime.UtcNow)
             return Result.Failure(EventErrors.Event.AlreadyStarted);
 
         Status = EventStatus.PendingCancellation;
-        CancellationReason = reason; // reason organizer request cancel
+        CancellationReason = reason;
         CancellationRejectionReason = null;
         ModifiedAt = DateTime.UtcNow;
         return Result.Success();
@@ -225,7 +232,7 @@ public sealed class Event : AggregateRoot<Guid>
 
     public Result RequestPublish()
     {
-        if (Status != EventStatus.Draft)
+        if (Status is not (EventStatus.Draft or EventStatus.Suspended))
             return Result.Failure(EventErrors.Event.CannotRequestPublish(Status));
 
         Status = EventStatus.PendingReview;
@@ -380,6 +387,8 @@ public sealed class Event : AggregateRoot<Guid>
         ModifiedAt = DateTime.UtcNow;
         return Result.Success();
     }
+
+
 
     protected override void Apply(IDomainEvent @event) { }
 }
