@@ -215,4 +215,21 @@ internal sealed class EventRepository(EventsDbContext context)
             .Take(take)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<IReadOnlyList<Event>> GetSuspendedExpiredEventsAsync(
+        DateTime fromUtc,
+        DateTime toUtc,
+        int take,
+        CancellationToken cancellationToken = default)
+    {
+        return await _context.Events
+            .Where(e =>
+                e.Status == EventStatus.Suspended &&
+                e.SuspendedUntilAt.HasValue &&
+                e.SuspendedUntilAt > fromUtc &&
+                e.SuspendedUntilAt <= toUtc)
+            .OrderBy(e => e.SuspendedUntilAt)
+            .Take(take)
+            .ToListAsync(cancellationToken);
+    }
 }

@@ -29,6 +29,8 @@ public sealed class Event : AggregateRoot<Guid>
     public string? CancellationRejectionReason { get; private set; }
     public string? SuspensionReason { get; private set; }
     public DateTime? SuspendedAt { get; private set; }
+    public DateTime? SuspendedUntilAt { get; private set; }
+    public Guid? SuspendedBy { get; private set; }
 
     private readonly List<EventSession> _sessions = [];
     public IReadOnlyCollection<EventSession> Sessions => _sessions.AsReadOnly();
@@ -177,18 +179,42 @@ public sealed class Event : AggregateRoot<Guid>
         return Result.Success();
     }
 
-    public Result Suspend(string reason)
+    public Result Suspend(Guid suspendedBy, string reason, TimeSpan fixWindow, DateTime? utcNow = null)
     {
+        var now = utcNow ?? DateTime.UtcNow;
+
         if (Status != EventStatus.Published)
             return Result.Failure(EventErrors.Event.CannotSuspend(Status));
+
+        if (!EventStartAt.HasValue)
+            return Result.Failure(EventErrors.Event.MissingSchedule);
+
+        if (EventStartAt.Value <= now)
+            return Result.Failure(EventErrors.Event.CannotSuspendAfterStart);
+
+        if (suspendedBy == Guid.Empty)
+            return Result.Failure(EventErrors.Event.SuspendByRequired);
 
         if (string.IsNullOrWhiteSpace(reason))
             return Result.Failure(EventErrors.Event.SuspendReasonRequired);
 
+        if (fixWindow <= TimeSpan.Zero)
+            return Result.Failure(EventErrors.Event.InvalidSuspendFixWindow);
+
         Status = EventStatus.Suspended;
+        SuspendedBy = suspendedBy;
         SuspensionReason = reason.Trim();
-        SuspendedAt = DateTime.UtcNow;
-        ModifiedAt = DateTime.UtcNow;
+        SuspendedAt = now;
+        SuspendedUntilAt = now.Add(fixWindow);
+        ModifiedAt = now;
+
+        RaiseDomainEvent(new EventSuspendedDomainEvent(
+            EventId: Id,
+            OrganizerId: OrganizerId,
+            SuspendedBy: suspendedBy,
+            EventTitle: Title,
+            SuspensionReason: SuspensionReason,
+            SuspendedUntilAtUtc: SuspendedUntilAt.Value));
 
         return Result.Success();
     }
@@ -230,10 +256,15 @@ public sealed class Event : AggregateRoot<Guid>
         return Result.Success();
     }
 
-    public Result RequestPublish()
+    public Result RequestPublish(DateTime? utcNow = null)
     {
+        var now = utcNow ?? DateTime.UtcNow;
+
         if (Status is not (EventStatus.Draft or EventStatus.Suspended))
             return Result.Failure(EventErrors.Event.CannotRequestPublish(Status));
+
+        if (Status == EventStatus.Suspended && SuspendedUntilAt.HasValue && now > SuspendedUntilAt.Value)
+            return Result.Failure(EventErrors.Event.CannotResubmitAfterSuspendDeadline);
 
         Status = EventStatus.PendingReview;
         PublishRejectionReason = null;
@@ -387,8 +418,6 @@ public sealed class Event : AggregateRoot<Guid>
         ModifiedAt = DateTime.UtcNow;
         return Result.Success();
     }
-
-
 
     protected override void Apply(IDomainEvent @event) { }
 }

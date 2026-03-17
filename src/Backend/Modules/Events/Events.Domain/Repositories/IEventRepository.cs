@@ -44,4 +44,10 @@ public interface IEventRepository : IRepository<Event, Guid>
         DateTime toUtc,
         int take,
         CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<Event>> GetSuspendedExpiredEventsAsync(
+        DateTime fromUtc,
+        DateTime toUtc,
+        int take,
+        CancellationToken cancellationToken = default);
 }

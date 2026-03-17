@@ -138,6 +138,26 @@ public static class EventErrors
         public static readonly Error SuspendReasonRequired = Error.Validation(
             "Event.SuspendReasonRequired",
             "Suspend reason is required.");
+
+        public static readonly Error CannotSuspendAfterStart = Error.Validation(
+            "Event.CannotSuspendAfterStart",
+            "Cannot suspend event after event start time.");
+
+        public static readonly Error InvalidSuspendFixWindow = Error.Validation(
+            "Event.InvalidSuspendFixWindow",
+            "Suspend fix window must be greater than zero.");
+
+        public static readonly Error CannotResubmitAfterSuspendDeadline = Error.Validation(
+            "Event.CannotResubmitAfterSuspendDeadline",
+            "Cannot re-submit because suspension fix deadline has passed.");
+
+        public static readonly Error EventStartMustBeInFuture = Error.Validation(
+            "Event.EventStartMustBeInFuture",
+            "Event start time must be in the future.");
+
+        public static readonly Error SuspendByRequired = Error.Validation(
+            "Event.SuspendByRequired",
+            "Suspended by is required.");
     }
 
 
