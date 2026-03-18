@@ -5,7 +5,7 @@ namespace Events.Domain.DomainEvents
     /// <summary>
     /// Raised when a new event is created in the domain and requires embedding.
     /// </summary>
-    public sealed record EventCreatedEmbeddingDomainEvent(
+    public sealed record EventChangedEmbeddingDomainEvent(
         Guid TargetEventId,
         Guid OrganizerId,
         string Title,
