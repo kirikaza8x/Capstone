@@ -1,5 +1,6 @@
 using AI.Application.Abstractions;
 using AI.Application.Abstractions.Qdrant;
+using AI.Application.Services;
 using AI.Infrastructure.Data;
 using AI.Infrastructure.Embedding;
 using AI.Infrastructure.ExternalServices;
@@ -105,6 +106,13 @@ public static class DependencyInjection
 
         // Ensures Qdrant collections + indexes exist before app accepts traffic
         services.AddHostedService<QdrantStartupService>();
+        services.AddHostedService<BackgroundJobs.EventReIndexJob>();
+ 
+        // Updates GlobalCategoryStat every 6 hours for cold-start recommendations
+        services.AddHostedService<BackgroundJobs.GlobalCategoryStatUpdateJob>();
+ 
+        // Re-index service — shared by job and manual admin endpoint
+        services.AddScoped<IEventReIndexService, EventReIndexService>();
 
         // ── 5. Embedding — HTTP for dev, swap comment for production ──
         var embeddingOptions = configuration

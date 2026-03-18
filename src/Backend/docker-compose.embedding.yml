@@ -1,0 +1,52 @@
+# ─────────────────────────────────────────────────────────────
+# AIPromo - Python Embedding Generator
+# ─────────────────────────────────────────────────────────────
+
+services:
+  # ───────────────────────────────────────────────────────────
+  # Embedding Generator (Python)
+  # ───────────────────────────────────────────────────────────
+  embedding-generator:
+    build:
+      context: ./embbeding-generator
+      dockerfile: Dockerfile
+    image: capstone-embedding:latest
+    container_name: AIPromo-embedding
+    env_file:
+      - .env
+    environment:
+      # RabbitMQ
+      - RABBITMQ_HOST=${RABBITMQ_HOST}
+      - RABBITMQ_PORT=${RABBITMQ_PORT}
+      - RABBITMQ_USER=${RABBITMQ_USER}
+      - RABBITMQ_PASS=${RABBITMQ_PASS}
+      - REQUEST_QUEUE=${EMBEDDING_REQUEST_QUEUE}
+      - RESPONSE_QUEUE=${EMBEDDING_RESPONSE_QUEUE}
+      # HTTP API
+      - ENABLE_HTTP_API=true
+      - HTTP_HOST=0.0.0.0
+      - HTTP_PORT=8001
+      # Model
+      - MODEL_NAME=${MODEL_NAME:-bge-small-en-v1.5}
+      - MODEL_PATH=/app/models/bge-small-en-v1.5
+      # Processing
+      - BATCH_SIZE=${BATCH_SIZE:-32}
+      - NORMALIZE_EMBEDDINGS=${NORMALIZE_EMBEDDINGS:-true}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      # Retry
+      - MAX_RETRIES=${MAX_RETRIES:-10}
+      - RETRY_DELAY=${RETRY_DELAY:-2.0}
+      - RECONNECT_INTERVAL=${RECONNECT_INTERVAL:-30}
+    ports:
+      - "${EMBEDDING_GENERATOR_PORT:-5100}:8001"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - aipromo-network
+    restart: unless-stopped
+    volumes:
+      - embedding_models:/app/models
+
+volumes:
+  embedding_models:

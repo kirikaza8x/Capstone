@@ -1,32 +1,22 @@
+using AI.Application.Abstractions.Qdrant;
+using AI.Application.Abstractions.Qdrant.Model;
+using Microsoft.Extensions.Logging;
 using Qdrant.Client;
 using Qdrant.Client.Grpc;
-using Microsoft.Extensions.Logging;
 using Shared.Infrastructure.Configs.Qdrant;
 using Shared.Infrastructure.Qdrant;
 using Shared.Infrastructure.Qdrant.Helpers;
-using AI.Application.Abstractions.Qdrant;
-using AI.Application.Abstractions.Qdrant.Model;
 
 namespace AI.Infrastructure.Qdrant;
-
-// ── DTOs ─────────────────────────────────────────────────────────────────────
-
-
-
-// ── Repository ────────────────────────────────────────────────────────────────
 
 /// <summary>
 /// Stores embeddings of user behavior logs (views, searches, bookmarks, purchases).
 ///
 /// PURPOSE:
-///   - BehaviorLogCreated handler embeds the log text and calls UpsertBehaviorAsync.
-///   - Recommendation pipeline calls SearchUserBehaviorAsync to find what a user
-///     engaged with, averages those vectors → user interest vector →
-///     passes to EventVectorRepository.SearchSimilarAsync.
-///   - GetCategoryFrequencyAsync seeds UserInterestScore without a full ML job.
-///
-/// EMBEDDING TEXT (built in application layer):
-///   "{ActionType} {TargetType} {Categories.Join(" ")} {Hashtags.Join(" ")}"
+///   - BehaviorLogCreatedEvent handler embeds the log and calls UpsertBehaviorAsync.
+///   - Recommendation pipeline calls GetRecentVectorsAsync to fetch raw vectors,
+///     computes WeightedCentroid weighted by UserInterestScore,
+///     then searches EventVectorRepository with the resulting interest vector.
 ///
 /// COLLECTION KEY: "UserBehavior" in Qdrant:Collections config.
 /// </summary>
@@ -48,10 +38,6 @@ public sealed class UserBehaviorVectorRepository : QdrantRepositoryBase, IUserBe
 
     // ── Collection Setup ──────────────────────────────────────────
 
-    /// <summary>
-    /// Creates the collection then adds payload field indexes.
-    /// Overrides base to append index creation after collection is ready.
-    /// </summary>
     public override async Task EnsureCollectionAsync(CancellationToken ct = default)
     {
         await base.EnsureCollectionAsync(ct);
@@ -65,24 +51,71 @@ public sealed class UserBehaviorVectorRepository : QdrantRepositoryBase, IUserBe
 
     // ── Write ─────────────────────────────────────────────────────
 
-    /// <summary>
-    /// Store a single behavior log embedding.
-    /// Called from the BehaviorLogCreated domain event handler.
-    /// </summary>
     public async Task UpsertBehaviorAsync(
         UserBehaviorVectorPayload log,
         float[]                   embedding,
         CancellationToken         ct = default)
     {
         await UpsertRawAsync(log.LogId, embedding, BuildPayload(log), ct);
-        Logger.LogDebug("Upserted behavior vector {LogId} for user {UserId}", log.LogId, log.UserId);
+        Logger.LogDebug(
+            "Upserted behavior vector {LogId} for user {UserId}",
+            log.LogId, log.UserId);
     }
 
     // ── Read ──────────────────────────────────────────────────────
 
     /// <summary>
+    /// Fetch raw embedding vectors for a user's recent behavior logs.
+    ///
+    /// HOW IT WORKS:
+    ///   1. Filter Qdrant by user_id (+ optional since date)
+    ///   2. Request withVectors: true so raw float[] is returned
+    ///   3. Map to UserBehaviorVector {LogId, Categories, Vector}
+    ///
+    /// USED BY: Recommendation pipeline to build WeightedCentroid interest vector.
+    /// The Categories are returned so the caller can weight each vector
+    /// by the user's UserInterestScore for that category.
+    /// </summary>
+    public async Task<IReadOnlyList<UserBehaviorVector>> GetRecentVectorsAsync(
+        Guid              userId,
+        int               limit = 50,
+        DateTime?         since = null,
+        CancellationToken ct    = default)
+    {
+        var filter = QdrantFilterBuilder.Must()
+            .Keyword("user_id", userId)
+            .DateTimeAfter("occurred_at", since)
+            .Build();
+
+        // Use RetrieveAsync via scroll-style search with zero vector
+        // withVectors: true returns the actual float[] embeddings
+        var points = await Client.SearchAsync(
+            collectionName:  CollectionName,
+            vector:          new float[VectorSize],  // zero vector — we want all matching, not similarity order
+            filter:          filter,
+            limit:           (ulong)limit,
+            payloadSelector: true,
+            vectorsSelector: true,                   // ← fetch raw vectors
+            cancellationToken: ct
+        );
+
+        return points
+            .Select(p =>
+            {
+                var reader     = new QdrantPayloadReader(p.Payload);
+                var logId      = reader.GetGuid("log_id");
+                var categories = reader.GetStringList("categories");
+                var vector     = p.Vectors?.Vector?.GetDenseVector()?.Data.ToArray()
+                                 ?? Array.Empty<float>();
+
+                return new UserBehaviorVector(logId, categories, vector);
+            })
+            .Where(v => v.Vector.Length > 0)
+            .ToList();
+    }
+
+    /// <summary>
     /// Find behavior logs most similar to a query vector, scoped to one user.
-    /// Primary use: build a user interest vector for recommendation by averaging results.
     /// </summary>
     public async Task<IReadOnlyList<BehaviorSearchResult>> SearchUserBehaviorAsync(
         Guid              userId,
@@ -108,8 +141,7 @@ public sealed class UserBehaviorVectorRepository : QdrantRepositoryBase, IUserBe
     }
 
     /// <summary>
-    /// Find behavior logs across ALL users similar to a query vector.
-    /// Use case: collaborative filtering.
+    /// Find behavior logs across ALL users — for collaborative filtering.
     /// </summary>
     public async Task<IReadOnlyList<BehaviorSearchResult>> SearchGlobalBehaviorAsync(
         float[]           queryVector,
@@ -132,7 +164,7 @@ public sealed class UserBehaviorVectorRepository : QdrantRepositoryBase, IUserBe
 
     /// <summary>
     /// Returns category → interaction count for a user's recent behavior.
-    /// Used to seed/update UserInterestScore without a full ML pipeline.
+    /// Used to seed UserInterestScore without a full ML pipeline.
     /// </summary>
     public async Task<IReadOnlyDictionary<string, int>> GetCategoryFrequencyAsync(
         Guid              userId,
@@ -147,10 +179,8 @@ public sealed class UserBehaviorVectorRepository : QdrantRepositoryBase, IUserBe
             .DateTimeAfter("occurred_at", since)
             .Build();
 
-        // Zero vector — we want all matching points, not similarity ranking.
-        // For production volume, add ScrollRawAsync to base class using Client.ScrollAsync.
         var zeroVector = new float[VectorSize];
-        var hits = await SearchRawAsync(zeroVector, filter, sampleSize, ct);
+        var hits       = await SearchRawAsync(zeroVector, filter, sampleSize, ct);
 
         return hits
             .SelectMany(h => new QdrantPayloadReader(h.Payload).GetStringList("categories"))
@@ -169,9 +199,11 @@ public sealed class UserBehaviorVectorRepository : QdrantRepositoryBase, IUserBe
             ["action_type"] = ToQdrantValue(log.ActionType),
             ["target_id"]   = ToQdrantValue(log.TargetId),
             ["target_type"] = ToQdrantValue(log.TargetType),
-            ["categories"]  = ToQdrantValue(log.Categories.Select(c => c.ToLowerInvariant()).ToList()),
-            ["hashtags"]    = ToQdrantValue(log.Hashtags.Select(h => h.ToLowerInvariant()).ToList()),
-            ["session_id"]  = ToQdrantValue(log.SessionId ?? ""),
+            ["categories"]  = ToQdrantValue(log.Categories
+                                .Select(c => c.ToLowerInvariant()).ToList()),
+            ["hashtags"]    = ToQdrantValue(log.Hashtags
+                                .Select(h => h.ToLowerInvariant()).ToList()),
+            ["session_id"]  = ToQdrantValue(log.SessionId  ?? ""),
             ["device_type"] = ToQdrantValue(log.DeviceType ?? ""),
             ["occurred_at"] = ToQdrantValue(log.OccurredAt),
         };

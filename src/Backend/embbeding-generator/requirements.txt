@@ -1,17 +1,13 @@
-# Core - RabbitMQ + Embeddings
 aio-pika==9.3.0
-sentence-transformers==2.2.2
-huggingface-hub==0.19.4
-transformers==4.36.0
-torch==2.1.0
+
+sentence-transformers==2.6.1
+torch==2.1.0+cpu
 numpy==1.26.0
 
-# HTTP API (for Swagger/testing)
 fastapi==0.109.0
-uvicorn[standard]==0.27.0
+uvicorn==0.27.0
 
-# Pydantic v1 (compatible with our message contracts)
 pydantic==1.10.13
-
-# Utilities
 python-dotenv==1.0.0
+
+-f https://download.pytorch.org/whl/torch_stable.html

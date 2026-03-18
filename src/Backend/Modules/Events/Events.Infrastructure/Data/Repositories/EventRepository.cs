@@ -232,4 +232,32 @@ internal sealed class EventRepository(EventsDbContext context)
             .Take(take)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<IReadOnlyList<Event>> GetAllActivePagedAsync(
+    int page, int pageSize, CancellationToken ct = default)
+    {
+        return await _context.Set<Event>()
+            .AsNoTracking()
+            .Where(e => e.IsActive)
+            .Include(e => e.EventCategories).ThenInclude(ec => ec.Category)
+            .Include(e => e.EventHashtags).ThenInclude(eh => eh.Hashtag)
+            .Include(e => e.TicketTypes)
+            .OrderBy(e => e.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(ct);
+    }
+
+    public async Task<Event?> GetByIdForReIndexAsync(
+    Guid id, CancellationToken ct = default)
+    {
+        return await _context.Events
+            .AsNoTracking()
+            .Where(e => e.Id == id && e.IsActive)
+            .Include(e => e.EventCategories).ThenInclude(ec => ec.Category)
+            .Include(e => e.EventHashtags).ThenInclude(eh => eh.Hashtag)
+            .Include(e => e.TicketTypes)
+            .AsSplitQuery()
+            .FirstOrDefaultAsync(ct);
+    }
 }

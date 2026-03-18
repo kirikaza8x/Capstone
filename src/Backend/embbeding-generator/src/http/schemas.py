@@ -18,7 +18,7 @@ class GenerateEmbeddingResponse(BaseModel):
     model: str
 
 class BatchEmbeddingRequest(BaseModel):
-    texts: List[str] = Field(..., min_length=1, max_length=50, examples=[["machine learning", "deep learning"]])
+    texts: List[str] = Field(..., min_length=1, max_length=512, examples=[["machine learning", "deep learning"]])
     normalize: bool = Field(True)
 
 class BatchEmbeddingResponse(BaseModel):

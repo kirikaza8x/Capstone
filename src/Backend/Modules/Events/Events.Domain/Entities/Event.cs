@@ -475,21 +475,22 @@ public sealed class Event : AggregateRoot<Guid>
             : Result.Failure(EventErrors.Event.CannotUpdate(Status));
     }
     public void RaiseEmbeddingEvent(List<string>? categoryNames, List<string>? hashtagNames)
-{
-    var safeCategoryNames = categoryNames ?? new List<string>();
-    var safeHashtagNames  = hashtagNames  ?? new List<string>();
+    {
+        var safeCategoryNames = categoryNames ?? new List<string>();
+        var safeHashtagNames = hashtagNames ?? new List<string>();
 
-    RaiseDomainEvent(new EventChangedEmbeddingDomainEvent(
-        Id,
-        OrganizerId,
-        Title,
-        Description,
-        safeCategoryNames,
-        safeHashtagNames,
-        IsActive,
-        CreatedAt ?? DateTime.UtcNow
-    ));
-}
+        RaiseDomainEvent(new EventChangedEmbeddingDomainEvent(
+            Id,
+            OrganizerId,
+            Title,
+            Description,
+            safeCategoryNames,
+            safeHashtagNames,
+            IsActive,
+            CreatedAt ?? DateTime.UtcNow,
+            EventStartAt: EventStartAt
+        ));
+    }
 
     protected override void Apply(IDomainEvent @event) { }
 }

@@ -8,24 +8,29 @@ using Microsoft.Extensions.Caching.Distributed;
 namespace Events.Infrastructure.PublicApi;
 
 internal class EventMemberPublicApi(
-    IEventRepository eventRepository,
-    IDistributedCache distributedCache
-    ) : IEventMemberPublicApi
+    IEventRepository   eventRepository,
+    IDistributedCache  distributedCache)
+    : IEventMemberPublicApi
 {
     private static readonly TimeSpan PermissionCacheTtl = TimeSpan.FromSeconds(60);
 
-    public async Task<bool> HasPermissionAsync(Guid eventId, Guid userId, string permission, CancellationToken cancellationToken = default)
+    public async Task<bool> HasPermissionAsync(
+        Guid              eventId,
+        Guid              userId,
+        string            permission,
+        CancellationToken cancellationToken = default)
     {
         if (!EventPermissions.All.Contains(permission))
             return false;
 
-        var cacheKey = EventPermissionCacheKeys.Permission(eventId, userId, permission);
-
+        var cacheKey    = EventPermissionCacheKeys.Permission(eventId, userId, permission);
         var cachedValue = await distributedCache.GetStringAsync(cacheKey, cancellationToken);
+
         if (cachedValue is not null)
             return cachedValue == bool.TrueString;
 
-        var hasPermission = await eventRepository.HasPermissionAsync(eventId, userId, permission, cancellationToken);
+        var hasPermission = await eventRepository
+            .HasPermissionAsync(eventId, userId, permission, cancellationToken);
 
         await distributedCache.SetStringAsync(
             cacheKey,
@@ -42,30 +47,54 @@ internal class EventMemberPublicApi(
     public async Task<IReadOnlyList<EventRecommendationFeature>> GetEventsByCategoriesOrHashtagsAsync(
         IEnumerable<string> categoryNames,
         IEnumerable<string> hashtagNames,
-        CancellationToken cancellationToken = default)
+        CancellationToken   cancellationToken = default)
     {
-        var events = await eventRepository.GetByCategoriesOrHashtagsAsync(categoryNames, hashtagNames, cancellationToken);
+        var events = await eventRepository
+            .GetByCategoriesOrHashtagsAsync(categoryNames, hashtagNames, cancellationToken);
 
-        return events.Select(e => new EventRecommendationFeature
-        {
-            Id = e.Id,
-            Title = e.Title,
-            Location = e.Location,
-            BannerUrl = e.BannerUrl,
-            EventStartAt = e.EventStartAt,
-            EventEndAt = e.EventEndAt,
-
-            MinPrice = e.TicketTypes.Min(t => (decimal?)t.Price),
-            MaxPrice = e.TicketTypes.Max(t => (decimal?)t.Price),
-
-            Categories = e.EventCategories
-                .Select(ec => ec.Category.Name)
-                .ToList(),
-
-            Hashtags = e.EventHashtags
-                .Select(eh => eh.Hashtag.Name)
-                .ToList()
-        }).ToList();
+        return MapToFeatures(events);
     }
 
+    public async Task<EventRecommendationFeature?> GetByIdForReIndexAsync(
+        Guid              eventId,
+        CancellationToken cancellationToken = default)
+    {
+        var evt = await eventRepository
+            .GetByIdForReIndexAsync(eventId, cancellationToken);
+
+        return evt is null ? null : MapToFeatures(new[] { evt }).FirstOrDefault();
+    }
+
+    public async Task<IReadOnlyList<EventRecommendationFeature>> GetAllForReIndexAsync(
+        int               page              = 1,
+        int               pageSize          = 100,
+        CancellationToken cancellationToken = default)
+    {
+        var events = await eventRepository
+            .GetAllActivePagedAsync(page, pageSize, cancellationToken);
+
+        return MapToFeatures(events);
+    }
+
+    
+
+    // ── Private ───────────────────────────────────────────────────
+
+    private static IReadOnlyList<EventRecommendationFeature> MapToFeatures(
+        IEnumerable<Events.Domain.Entities.Event> events)
+    {
+        return events.Select(e => new EventRecommendationFeature
+        {
+            Id           = e.Id,
+            Title        = e.Title,
+            Location     = e.Location,
+            BannerUrl    = e.BannerUrl,
+            EventStartAt = e.EventStartAt,
+            EventEndAt   = e.EventEndAt,
+            MinPrice     = e.TicketTypes.Min(t => (decimal?)t.Price),
+            MaxPrice     = e.TicketTypes.Max(t => (decimal?)t.Price),
+            Categories   = e.EventCategories.Select(ec => ec.Category.Name).ToList(),
+            Hashtags     = e.EventHashtags.Select(eh => eh.Hashtag.Name).ToList()
+        }).ToList();
+    }
 }

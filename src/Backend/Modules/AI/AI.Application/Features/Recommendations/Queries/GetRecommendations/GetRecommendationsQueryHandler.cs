@@ -1,112 +1,218 @@
-using Shared.Domain.Abstractions;
-using Shared.Application.Abstractions.Messaging;
+using AI.Application.Abstractions.Qdrant;
 using AI.Application.Features.Recommendations.Queries;
-using AI.Application.Features.Recommendations.DTOs;
-using AI.Application.Abstractions;
+using AI.Application.Features.Recommendations.Services;
+using AI.Domain.Helpers;
 using AI.Domain.Repositories;
-using Events.PublicApi.PublicApi;
 using Microsoft.Extensions.Logging;
+using Shared.Application.Abstractions.Messaging;
+using Shared.Domain.Abstractions;
 
 namespace AI.Application.Features.Recommendations.Handlers;
 
 /// <summary>
-/// Handles recommendation queries by fetching user interests, candidate events,
-/// and ranking them via AI with graceful fallbacks.
+/// Semantic recommendation pipeline with re-ranking.
+///
+/// THREE PATHS (tried in order, first with results wins):
+///
+/// 1. SEMANTIC — fetch behavior vectors from Qdrant, WeightedCentroid, cosine search + re-rank
+/// 2. CATEGORY FALLBACK — user has interest scores but no behavior vectors yet
+/// 3. COLD-START — brand new user, popularity-based
 /// </summary>
-public sealed class GetRecommendationsQueryHandler
-    : IQueryHandler<GetRecommendationsProtoQuery, List<RecommendationResultLiteDto>>
+public sealed class GetRecommendationsQueryHandler(
+    IUserBehaviorVectorRepository           behaviorVectorRepo,
+    IEventVectorRepository                  eventVectorRepo,
+    IUserInterestScoreRepository            interestScoreRepo,
+    IGlobalCategoryStatRepository           globalStatRepo,
+    ILogger<GetRecommendationsQueryHandler> logger)
+    : IQueryHandler<GetRecommendationsQuery, List<EventRecommendationResult>>
 {
-    private const int MaxCategoriesToFetch = 5;
-    private const int MaxCandidatesToRank = 30;
-    private const int DefaultTopN = 10;
+    private const float ScoreThreshold = 0.3f;
+    private const int   MaxCategories  = 10;
+    private const int   ColdStartTopN  = 5;
+    private const int   CandidateCount = 50;
+    private const int   VectorDim      = 384;
+    private const int   MaxPerCategory = 3;
+    private const int   BehaviorLimit  = 50;
 
-    private readonly IUserInterestScoreRepository _interestRepository;
-    private readonly IEventMemberPublicApi _eventApi;
-    private readonly IRecommendationAiService _aiService;
-    private readonly ILogger<GetRecommendationsQueryHandler> _logger;
-
-    public GetRecommendationsQueryHandler(
-        IUserInterestScoreRepository interestRepository,
-        IEventMemberPublicApi eventApi,
-        IRecommendationAiService aiService,
-        ILogger<GetRecommendationsQueryHandler> logger)
-    {
-        _interestRepository = interestRepository;
-        _eventApi = eventApi;
-        _aiService = aiService;
-        _logger = logger;
-    }
-
-    /// <inheritdoc />
-    public async Task<Result<List<RecommendationResultLiteDto>>> Handle(
-        GetRecommendationsProtoQuery request,
-        CancellationToken cancellationToken)
+    public async Task<Result<List<EventRecommendationResult>>> Handle(
+        GetRecommendationsQuery request,
+        CancellationToken ct)
     {
         try
         {
-            var interests = await _interestRepository
-                .GetTopCategoriesAsync(request.UserId, MaxCategoriesToFetch, 0, cancellationToken);
+            var results = await TrySemanticPathAsync(request, ct);
 
-            var categories = interests
-                .Select(x => x.Category)
-                .Where(c => !string.IsNullOrWhiteSpace(c))
-                .Distinct()
-                .ToList();
+            if (results.Count == 0)
+                results = await TryCategoryFallbackAsync(request, ct);
 
-            var candidates = await _eventApi
-                .GetEventsByCategoriesOrHashtagsAsync(
-                    categories,
-                    [],  
-                    cancellationToken);
+            if (results.Count == 0)
+                results = await TryColdStartFallbackAsync(request, ct);
 
-            if (candidates.Count == 0)
-            {
-                _logger.LogDebug("No candidates found for user {UserId}", request.UserId);
-                return Result.Success(new List<RecommendationResultLiteDto>());
-            }
-
-            candidates = candidates.Take(MaxCandidatesToRank).ToList();
-
-            IReadOnlyList<int> rankedIndexes;
-            try
-            {
-                rankedIndexes = await _aiService
-                    .RankEventsAsync(candidates, cancellationToken);
-                
-                _logger.LogDebug("AI returned {Count} ranked indexes", rankedIndexes.Count);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "AI ranking failed for user {UserId}; falling back to unranked", request.UserId);
-                rankedIndexes = Enumerable.Range(0, candidates.Count).ToList();
-            }
-
-            var results = rankedIndexes
-                .Where(i => i >= 0 && i < candidates.Count)  
-                .Distinct()                                   
-                .Select(i => candidates[i])
-                .Select(e => new RecommendationResultLiteDto
-                {
-                    EventId = e.Id,
-                    Title = e.Title ?? string.Empty,
-                    BannerUrl = e.BannerUrl,
-                    EventStartAt = e.EventStartAt,
-                    MinPrice = e.MinPrice
-                })
-                .Take(request.TopN > 0 ? request.TopN : DefaultTopN)  
-                .ToList();
-
-            _logger.LogInformation("Returned {Count} recommendations for user {UserId}", 
-                results.Count, request.UserId);
+            logger.LogInformation(
+                "Recommendations — UserId={UserId}, Count={Count}, Source={Source}",
+                request.UserId, results.Count,
+                results.FirstOrDefault()?.Source ?? "none");
 
             return Result.Success(results);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to handle recommendation query for user {UserId}", request.UserId);
-            
-            return Result.Failure<List<RecommendationResultLiteDto>>(
-                 Error.Failure("Recommendations.FetchFailed", "Unable to fetch recommendations at this time"));
+            logger.LogError(ex,
+                "Recommendation failed for UserId={UserId}", request.UserId);
+            return Result.Failure<List<EventRecommendationResult>>(
+                Error.Failure("Recommendations.Failed", "Unable to fetch recommendations."));
         }
+    }
+
+    // ── Path 1: Semantic ──────────────────────────────────────────
+
+    private async Task<List<EventRecommendationResult>> TrySemanticPathAsync(
+        GetRecommendationsQuery request,
+        CancellationToken ct)
+    {
+        // Fetch raw behavior vectors — actual embeddings of what user engaged with
+        var behaviorVectors = await behaviorVectorRepo.GetRecentVectorsAsync(
+            userId: request.UserId,
+            limit:  BehaviorLimit,
+            since:  DateTime.UtcNow.AddDays(-90),
+            ct:     ct
+        );
+
+        if (behaviorVectors.Count == 0)
+            return new List<EventRecommendationResult>();
+
+        // Load interest scores to weight each behavior vector
+        var interestScores = await interestScoreRepo.GetTopCategoriesAsync(
+            userId:  request.UserId,
+            topN:    MaxCategories,
+            minScore: 0,
+            ct:      ct
+        );
+
+        var scoreByCategory = interestScores
+            .ToDictionary(s => s.Category, s => s.Score);
+
+        // Weight each vector by average interest score of its categories
+        var weightedVectors = behaviorVectors
+            .Select(bv =>
+            {
+                var weight = bv.Categories.Count > 0
+                    ? bv.Categories
+                        .Select(c => scoreByCategory.TryGetValue(c, out var s) ? s : 1.0)
+                        .Average()
+                    : 1.0;
+                return (Vector: bv.Vector, Weight: weight);
+            })
+            .Where(x => x.Vector.Length == VectorDim)
+            .ToList();
+
+        if (weightedVectors.Count == 0)
+            return new List<EventRecommendationResult>();
+
+        float[] interestVector;
+        try
+        {
+            interestVector = VectorMath.WeightedCentroid(
+                weightedVectors.Select(v => (v.Vector, v.Weight)));
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex,
+                "WeightedCentroid failed for UserId={UserId}", request.UserId);
+            return new List<EventRecommendationResult>();
+        }
+
+        var afterDate = request.FutureOnly ? DateTime.UtcNow : (DateTime?)null;
+
+        var hits = await eventVectorRepo.SearchSimilarAsync(
+            queryEmbedding: interestVector,
+            limit:          CandidateCount,
+            scoreThreshold: ScoreThreshold,
+            afterDate:      afterDate,
+            ct:             ct
+        );
+
+        if (hits.Count == 0)
+            return new List<EventRecommendationResult>();
+
+        var ranked = RecommendationRanker.Rank(
+            hits, scoreByCategory,
+            topN:           request.TopN,
+            maxPerCategory: MaxPerCategory);
+
+        return ranked
+            .Select(r => new EventRecommendationResult(
+                r.EventId, r.FinalScore, r.SemanticScore, "semantic"))
+            .ToList();
+    }
+
+    // ── Path 2: Category Fallback ─────────────────────────────────
+
+    private async Task<List<EventRecommendationResult>> TryCategoryFallbackAsync(
+        GetRecommendationsQuery request,
+        CancellationToken ct)
+    {
+        var topScores = await interestScoreRepo.GetTopCategoriesAsync(
+            userId:   request.UserId,
+            topN:     MaxCategories,
+            minScore: 0,
+            ct:       ct
+        );
+
+        if (topScores.Count == 0)
+            return new List<EventRecommendationResult>();
+
+        var categoryNames = topScores.Select(c => c.Category).ToList();
+        var afterDate     = request.FutureOnly ? DateTime.UtcNow : (DateTime?)null;
+
+        var hits = await eventVectorRepo.SearchSimilarAsync(
+            queryEmbedding:   new float[VectorDim],
+            limit:            CandidateCount,
+            scoreThreshold:   0f,
+            filterCategories: categoryNames,
+            afterDate:        afterDate,
+            ct:               ct
+        );
+
+        if (hits.Count == 0)
+            return new List<EventRecommendationResult>();
+
+        var categoryWeights = topScores.ToDictionary(s => s.Category, s => s.Score);
+        var ranked = RecommendationRanker.Rank(
+            hits, categoryWeights,
+            topN:           request.TopN,
+            maxPerCategory: MaxPerCategory);
+
+        return ranked
+            .Select(r => new EventRecommendationResult(
+                r.EventId, r.FinalScore, r.SemanticScore, "category_fallback"))
+            .ToList();
+    }
+
+    // ── Path 3: Cold-Start ────────────────────────────────────────
+
+    private async Task<List<EventRecommendationResult>> TryColdStartFallbackAsync(
+        GetRecommendationsQuery request,
+        CancellationToken ct)
+    {
+        var popular   = await globalStatRepo.GetTopCategoriesAsync(ColdStartTopN);
+        var afterDate = request.FutureOnly ? DateTime.UtcNow : (DateTime?)null;
+
+        if (popular.Count == 0)
+            return new List<EventRecommendationResult>();
+
+        var hits = await eventVectorRepo.SearchSimilarAsync(
+            queryEmbedding:   new float[VectorDim],
+            limit:            request.TopN,
+            scoreThreshold:   0f,
+            filterCategories: popular.Select(c => c.Category).ToList(),
+            afterDate:        afterDate,
+            ct:               ct
+        );
+
+        return hits
+            .Select(h => new EventRecommendationResult(
+                h.EventId, 0f, 0f, "popular_fallback"))
+            .ToList();
     }
 }

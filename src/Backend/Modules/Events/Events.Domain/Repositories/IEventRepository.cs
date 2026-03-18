@@ -50,4 +50,11 @@ public interface IEventRepository : IRepository<Event, Guid>
         DateTime toUtc,
         int take,
         CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Event>> GetAllActivePagedAsync(
+    int page,
+    int pageSize,
+    CancellationToken ct = default);
+
+    Task<Event?> GetByIdForReIndexAsync(Guid id, CancellationToken ct = default);
+
 }
