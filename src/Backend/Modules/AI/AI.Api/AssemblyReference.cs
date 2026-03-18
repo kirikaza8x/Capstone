@@ -1,9 +1,6 @@
 using System.Reflection;
 
-namespace Ai.Api
-{
-    public static class AiApiAssemblyReference
-    {
-        public static readonly Assembly Assembly = typeof(AiApiAssemblyReference).Assembly;
-    }
+namespace AI.Api;
+public static class ApiAssemblyReference {
+    public static readonly Assembly Assembly = typeof(ApiAssemblyReference).Assembly;
 }

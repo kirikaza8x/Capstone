@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
 
-namespace Events.Application;
+namespace Ticketing.Api;
 
 public static class AssemblyReference
 {

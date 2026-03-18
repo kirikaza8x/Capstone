@@ -1,4 +1,4 @@
-using Ai.Api;
+using AI.Api;
 using AI.Application;
 using Api.Extensions;
 using Api.Middleware;
@@ -8,6 +8,7 @@ using Notifications.Infrastructure;
 using Shared.Api;
 using Shared.Application;
 using Shared.Infrastructure;
+using Ticketing.Infrastructure;
 using Users.Api;
 using Users.Application;
 
@@ -29,10 +30,14 @@ public class Program
             // event
             Events.Application.AssemblyReference.Assembly,
             Events.Api.AssemblyReference.Assembly,
+
+            // ticketing
+            Ticketing.Application.AssemblyReference.Assembly,
+            Ticketing.Api.AssemblyReference.Assembly,
             
             // AI
             AiApplicationAssemblyReference.Assembly,
-            AiApiAssemblyReference.Assembly,
+            ApiAssemblyReference.Assembly,
         };
 
         // Add Application Services
@@ -62,6 +67,7 @@ public class Program
             .AddUserModule(Configuration)
             .AddEventModule(Configuration)
             .AddAiModule(Configuration)
+            .AddTicketingModule(Configuration)
         ;
 
         builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
@@ -88,6 +94,7 @@ public class Program
         .UseUserModule()
         .UseEventModule()
         .UseAiModule()
+        .UseTicketingModule()
             ;
 
         app.Run();
