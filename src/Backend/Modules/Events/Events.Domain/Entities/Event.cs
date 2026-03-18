@@ -80,24 +80,6 @@ public sealed class Event : AggregateRoot<Guid>
         };
 
         @event.RaiseDomainEvent(new EventCreatedDomainEvent(@event.Id, organizerId));
-        var categoryNames = @event.EventCategories
-        .Select(ec => ec.Category.Name)
-        .ToList();
-
-        var hashtagNames = @event.EventHashtags
-            .Select(eh => eh.Hashtag.Name)
-            .ToList();
-
-        @event.RaiseDomainEvent(new EventChangedEmbeddingDomainEvent(
-            @event.Id,
-            organizerId,
-            @event.Title,
-            @event.Description,
-            @event.GetCategoryNames(),
-            @event.GetHashtagNames(),
-            @event.IsActive,
-            @event.CreatedAt ?? DateTime.UtcNow
-        ));
         return @event;
     }
 
@@ -227,16 +209,6 @@ public sealed class Event : AggregateRoot<Guid>
         ModifiedAt = DateTime.UtcNow;
 
         RaiseDomainEvent(new EventPublishedDomainEvent(Id));
-        RaiseDomainEvent(new EventChangedEmbeddingDomainEvent(
-            Id,
-            OrganizerId,
-            Title,
-            Description,
-            GetCategoryNames(),
-            GetHashtagNames(),
-            IsActive,
-            ModifiedAt ?? DateTime.UtcNow
-        ));
         return Result.Success();
     }
 
@@ -502,5 +474,22 @@ public sealed class Event : AggregateRoot<Guid>
             ? Result.Success()
             : Result.Failure(EventErrors.Event.CannotUpdate(Status));
     }
+    public void RaiseEmbeddingEvent(List<string>? categoryNames, List<string>? hashtagNames)
+{
+    var safeCategoryNames = categoryNames ?? new List<string>();
+    var safeHashtagNames  = hashtagNames  ?? new List<string>();
+
+    RaiseDomainEvent(new EventChangedEmbeddingDomainEvent(
+        Id,
+        OrganizerId,
+        Title,
+        Description,
+        safeCategoryNames,
+        safeHashtagNames,
+        IsActive,
+        CreatedAt ?? DateTime.UtcNow
+    ));
+}
+
     protected override void Apply(IDomainEvent @event) { }
 }

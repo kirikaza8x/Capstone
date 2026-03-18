@@ -52,6 +52,8 @@ public sealed class CreateEventCommandValidator : AbstractValidator<CreateEventC
 
 internal sealed class CreateEventCommandHandler(
     IEventRepository eventRepository,
+    ICategoryRepository categoryRepository,
+    IHashtagRepository hashtagRepository,
     ICurrentUserService currentUserService,
     IEventUnitOfWork unitOfWork) : ICommandHandler<CreateEventCommand, Guid>
 {
@@ -77,6 +79,9 @@ internal sealed class CreateEventCommandHandler(
         foreach (var imageUrl in command.ImageUrls)
             @event.AddImage(imageUrl);
 
+        var categoryNames = await categoryRepository.GetNamesByIdsAsync(command.CategoryIds,cancellationToken);
+        var hashtagNames  = await hashtagRepository.GetNamesByIdsAsync(command.HashtagIds,cancellationToken);
+        @event.RaiseEmbeddingEvent(categoryNames,hashtagNames);
         eventRepository.Add(@event);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 

@@ -1,10 +1,11 @@
 namespace AI.Application.Abstractions.Qdrant.Model;
+
 /// <summary>What gets stored per event in Qdrant.</summary>
 public record EventVectorPayload(
     Guid         EventId,
     string       Title,
-    string?      Category,
-    List<string> Hashtags,
+    List<string> Categories,  // all categories — keyword filter + embedding signal
+    List<string> Hashtags,    // all hashtags   — keyword filter + embedding signal
     DateTime     EventStartAt,
     decimal?     MinPrice,
     string?      BannerUrl
@@ -15,7 +16,7 @@ public record EventSearchResult(
     Guid         EventId,
     float        Score,
     string       Title,
-    string?      Category,
+    List<string> Categories,
     List<string> Hashtags,
     DateTime     EventStartAt,
     decimal?     MinPrice,

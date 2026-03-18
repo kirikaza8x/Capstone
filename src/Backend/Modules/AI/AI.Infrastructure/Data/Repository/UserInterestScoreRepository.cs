@@ -1,8 +1,8 @@
-using Microsoft.EntityFrameworkCore;
-using Shared.Infrastructure.Data;
 using AI.Domain.Entities;
 using AI.Domain.Repositories;
 using AI.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+using Shared.Infrastructure.Data;
 
 namespace AI.Infrastructure.Repositories;
 
@@ -69,6 +69,10 @@ public class UserInterestScoreRepository : RepositoryBase<UserInterestScore, Gui
             .ToListAsync(ct);
     }
 
+    /// <summary>
+    /// Upsert with decay for a single category.
+    /// Does NOT call SaveChangesAsync — caller must commit via UoW.
+    /// </summary>
     public async Task<UserInterestScore> UpsertWithDecayAsync(
         Guid userId,
         string category,
@@ -83,9 +87,6 @@ public class UserInterestScoreRepository : RepositoryBase<UserInterestScore, Gui
         {
             try
             {
-                // FIX 1: Check the change tracker first before hitting the DB.
-                // If a previous BulkUpsert iteration already loaded this entity,
-                // reuse the tracked instance instead of attaching a second copy.
                 var tracked = _dbContext.ChangeTracker
                     .Entries<UserInterestScore>()
                     .FirstOrDefault(e =>
@@ -97,12 +98,10 @@ public class UserInterestScoreRepository : RepositoryBase<UserInterestScore, Gui
                 if (tracked is not null)
                 {
                     tracked.DecayAndAdd(weight, halfLifeDays);
-                    // Already tracked — EF will detect changes automatically, no Update() call needed
                     return tracked;
                 }
 
-                // FIX 2: Query without AsNoTracking so EF owns the instance.
-                // This prevents the "already tracked" conflict on _dbSet.Update().
+                // Query with tracking so EF owns the instance
                 var existing = await _dbSet
                     .FirstOrDefaultAsync(x =>
                         x.UserId   == userId &&
@@ -112,7 +111,6 @@ public class UserInterestScoreRepository : RepositoryBase<UserInterestScore, Gui
                 if (existing is not null)
                 {
                     existing.DecayAndAdd(weight, halfLifeDays);
-                    // No _dbSet.Update() needed — entity is already tracked
                     return existing;
                 }
 
@@ -131,9 +129,14 @@ public class UserInterestScoreRepository : RepositoryBase<UserInterestScore, Gui
             }
         }
 
-        throw new InvalidOperationException("Failed to upsert UserInterestScore after retries");
+        throw new InvalidOperationException(
+            "Failed to upsert UserInterestScore after retries");
     }
 
+    /// <summary>
+    /// Bulk upsert for multiple categories.
+    /// Does NOT call SaveChangesAsync — caller must commit via UoW.
+    /// </summary>
     public async Task<List<UserInterestScore>> BulkUpsertWithDecayAsync(
         Guid userId,
         Dictionary<string, double> categoryWeights,
@@ -144,13 +147,10 @@ public class UserInterestScoreRepository : RepositoryBase<UserInterestScore, Gui
 
         foreach (var (category, weight) in categoryWeights)
         {
-            var result = await UpsertWithDecayAsync(userId, category, weight, halfLifeDays, ct);
+            var result = await UpsertWithDecayAsync(
+                userId, category, weight, halfLifeDays, ct);
             results.Add(result);
         }
-
-        // FIX 3: Single SaveChanges at the end of the bulk operation
-        // instead of one per category — avoids partial commits and is faster
-        await _dbContext.SaveChangesAsync(ct);
 
         return results;
     }
@@ -187,12 +187,11 @@ public class UserInterestScoreRepository : RepositoryBase<UserInterestScore, Gui
         CancellationToken ct = default)
     {
         var cutoff = DateTime.UtcNow.AddDays(-daysThreshold);
-
         return await _dbSet
             .AsNoTracking()
             .Where(x => x.IsActive &&
-                       x.LastUpdated < cutoff &&
-                       x.Score < maxScore)
+                        x.LastUpdated < cutoff &&
+                        x.Score < maxScore)
             .ToListAsync(ct);
     }
 
@@ -229,13 +228,15 @@ public class UserInterestScoreRepository : RepositoryBase<UserInterestScore, Gui
 
         var stale = await _dbSet
             .Where(x => x.IsActive &&
-                       x.LastUpdated < cutoff &&
-                       x.Score < maxScore)
+                        x.LastUpdated < cutoff &&
+                        x.Score < maxScore)
             .ToListAsync(ct);
 
         foreach (var score in stale)
             score.IsActive = false;
 
+        // ArchiveStale is a batch admin operation — SaveChanges here is acceptable
+        // since it's not part of a request pipeline UoW
         return await _dbContext.SaveChangesAsync(ct);
     }
 }

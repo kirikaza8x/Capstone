@@ -1,58 +1,57 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Shared.Infrastructure.Data.Seeds;
-using AI.Domain.Entities;
-using AI.Domain.ReadModels;
+﻿using AI.Domain.Entities;
+using AI.Domain.ValueObjects;
 using AI.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+using Shared.Infrastructure.Data.Seeds;
 
 namespace AI.Infrastructure.Persistence.Seeds;
 
+/// <summary>
+/// Seeds InteractionWeight for every action type defined in ActionTypes.
+/// Weights are aligned with the semantic meaning of each action:
+///   - Passive (view)               → low weight
+///   - Engagement (click/like/etc.) → medium weight
+///   - Conversion (purchase/etc.)   → high weight
+///
+/// Re-running is safe — only inserts missing action types.
+/// To change a weight: update directly in DB or add an UpdateWeight() call below.
+/// </summary>
 public class InteractionWeightSeeder(AIModuleDbContext context) : IDataSeeder<InteractionWeight>
 {
     public async Task SeedAllAsync()
     {
-        var existingWeights = await context.Set<InteractionWeight>()
+        var existing = await context.Set<InteractionWeight>()
             .Select(w => w.ActionType)
             .ToListAsync();
 
-        var weightsToAdd = new List<InteractionWeight>();
-
-        // // Ticket-related
-        // if (!existingWeights.Contains("ticket_purchase"))
-        //     weightsToAdd.Add(InteractionWeight.Create("ticket_purchase", 30.0, "User purchased a ticket"));
-
-        // if (!existingWeights.Contains("ticket_view"))
-        //     weightsToAdd.Add(InteractionWeight.Create("ticket_view", 2.0, "User viewed ticket details"));
-
-        // if (!existingWeights.Contains("ticket_cancel"))
-        //     weightsToAdd.Add(InteractionWeight.Create("ticket_cancel", 10.0, "User canceled a ticket"));
-
-        // General platform interactions
-        if (!existingWeights.Contains("view"))
-            weightsToAdd.Add(InteractionWeight.Create("view", 1.0, "Basic view action"));
-
-        if (!existingWeights.Contains("click"))
-            weightsToAdd.Add(InteractionWeight.Create("click", 5.0, "User clicked on item"));
-
-        if (!existingWeights.Contains("like"))
-            weightsToAdd.Add(InteractionWeight.Create("like", 3.0, "User liked content"));
-
-        if (!existingWeights.Contains("share"))
-            weightsToAdd.Add(InteractionWeight.Create("share", 7.0, "User shared content"));
-
-        if (!existingWeights.Contains("comment"))
-            weightsToAdd.Add(InteractionWeight.Create("comment", 6.0, "User commented on content"));
-
-        if (!existingWeights.Contains("wishlist_add"))
-            weightsToAdd.Add(InteractionWeight.Create("wishlist_add", 8.0, "User added item to wishlist"));
-
-        if (!existingWeights.Contains("purchase"))
-            weightsToAdd.Add(InteractionWeight.Create("purchase", 25.0, "User purchased item"));
-
-        if (weightsToAdd.Count > 0)
+        var definitions = new[]
         {
-            await context.Set<InteractionWeight>().AddRangeAsync(weightsToAdd);
-        }
+            // ── Passive ───────────────────────────────────────────
+            (ActionTypes.View,      1.0,  "User viewed content"),
 
-        await context.SaveChangesAsync();
+            // ── Engagement ────────────────────────────────────────
+            (ActionTypes.Click,     3.0,  "User clicked on item"),
+            (ActionTypes.Like,      4.0,  "User liked content"),
+            (ActionTypes.Bookmark,  6.0,  "User bookmarked content"),
+            (ActionTypes.Comment,   6.0,  "User commented on content"),
+            (ActionTypes.Share,     8.0,  "User shared content"),
+
+            // ── Conversion ────────────────────────────────────────
+            (ActionTypes.Checkout,  15.0, "User started checkout"),
+            (ActionTypes.Subscribe, 20.0, "User subscribed"),
+            (ActionTypes.Signup,    20.0, "User signed up"),
+            (ActionTypes.Purchase,  25.0, "User completed purchase"),
+        };
+
+        var toAdd = definitions
+            .Where(d => !existing.Contains(d.Item1))
+            .Select(d => InteractionWeight.Create(d.Item1, d.Item2, d.Item3))
+            .ToList();
+
+        if (toAdd.Count > 0)
+        {
+            await context.Set<InteractionWeight>().AddRangeAsync(toAdd);
+            await context.SaveChangesAsync();
+        }
     }
 }
