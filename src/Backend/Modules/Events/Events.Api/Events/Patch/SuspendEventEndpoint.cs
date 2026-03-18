@@ -11,7 +11,7 @@ using Users.PublicApi.Constants;
 
 namespace Events.Api.Events.Patch;
 
-public sealed record SuspendEventRequest(string Reason);
+public sealed record SuspendEventRequest(string Reason, int FixWindowHours);
 
 public class SuspendEventEndpoint : ICarterModule
 {
@@ -24,7 +24,7 @@ public class SuspendEventEndpoint : ICarterModule
             CancellationToken cancellationToken) =>
         {
             var result = await sender.Send(
-                new SuspendEventCommand(eventId, request.Reason),
+                new SuspendEventCommand(eventId, request.Reason, request.FixWindowHours),
                 cancellationToken);
 
             return result.ToOk("Event suspended successfully.");
@@ -32,7 +32,7 @@ public class SuspendEventEndpoint : ICarterModule
         .WithTags(Constants.Tags.EventForStaff)
         .WithName("SuspendEvent")
         .WithSummary("Suspend an event")
-        .WithDescription("Admin or Staff suspends a published event and must provide a suspension reason.")
+        .WithDescription("Admin or Staff suspends a published event and sets fix window in hours for organizer resubmission.")
         .Produces(StatusCodes.Status204NoContent)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status403Forbidden)

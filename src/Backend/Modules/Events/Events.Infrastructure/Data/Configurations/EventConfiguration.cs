@@ -40,7 +40,9 @@ internal sealed class EventConfiguration : IEntityTypeConfiguration<Event>
         builder.Property(e => e.PublishRejectionReason).HasColumnType("text");
         builder.Property(e => e.CancellationRejectionReason).HasColumnType("text");
         builder.Property(e => e.SuspensionReason).HasColumnType("text");
-        builder.Property(e => e.SuspendedAt).IsRequired(false);
+        builder.Property(e => e.SuspendedAt).IsRequired(false); 
+        builder.Property(e => e.SuspendedUntilAt).IsRequired(false);
+        builder.Property(e => e.SuspendedBy).IsRequired(false);
 
         builder.HasIndex(e => e.UrlPath)
             .IsUnique()

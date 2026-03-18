@@ -8,6 +8,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\Shared\Shared.Infrastructure\Shared.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Events\Events.IntegrationEvents\Events.IntegrationEvents.csproj" />
+    <ProjectReference Include="..\..\Users\Users.PublicApi\Users.PublicApi.csproj" />
     <ProjectReference Include="..\Notifications.Application\Notifications.Application.csproj" />
   </ItemGroup>
 
