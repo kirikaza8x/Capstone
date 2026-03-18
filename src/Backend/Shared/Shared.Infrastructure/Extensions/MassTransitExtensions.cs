@@ -56,7 +56,7 @@ public static class MassTransitExtentions
     }
 
     /// <summary>
-    /// Scan assemblies with Scrutor to find all IIntegrationEventHandler<T> and register them into DI container 
+    /// Scan assemblies with Scrutor to find all IIntegrationEventHandler<T> and register them into DI container
     /// </summary>
     /// <param name="services"></param>
     /// <param name="assemblies"></param>

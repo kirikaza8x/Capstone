@@ -88,16 +88,16 @@ public sealed class Event : AggregateRoot<Guid>
             .Select(eh => eh.Hashtag.Name)
             .ToList();
 
-        @event.RaiseDomainEvent(new EventCreatedEmbeddingDomainEvent(
-            @event.Id,
-            organizerId,
-            @event.Title,
-            @event.Description,
-            @event.GetCategoryNames(),
-            @event.GetHashtagNames(),
-            @event.IsActive,
-            @event.CreatedAt ?? DateTime.UtcNow
-        ));
+        // @event.RaiseDomainEvent(new EventCreatedEmbeddingDomainEvent(
+        //     @event.Id,
+        //     organizerId,
+        //     @event.Title,
+        //     @event.Description,
+        //     @event.GetCategoryNames(),
+        //     @event.GetHashtagNames(),
+        //     @event.IsActive,
+        //     @event.CreatedAt ?? DateTime.UtcNow
+        // ));
         return @event;
     }
 
@@ -194,16 +194,16 @@ public sealed class Event : AggregateRoot<Guid>
         ModifiedAt = DateTime.UtcNow;
 
         RaiseDomainEvent(new EventPublishedDomainEvent(Id));
-        RaiseDomainEvent(new EventPublishedEmbeddingDomainEvent(
-            Id,
-            OrganizerId,
-            Title,
-            Description,
-            GetCategoryNames(),
-            GetHashtagNames(),
-            IsActive,
-            ModifiedAt ?? DateTime.UtcNow
-        ));
+        // RaiseDomainEvent(new EventPublishedEmbeddingDomainEvent(
+        //     Id,
+        //     OrganizerId,
+        //     Title,
+        //     Description,
+        //     GetCategoryNames(),
+        //     GetHashtagNames(),
+        //     IsActive,
+        //     ModifiedAt ?? DateTime.UtcNow
+        // ));
         return Result.Success();
     }
 
