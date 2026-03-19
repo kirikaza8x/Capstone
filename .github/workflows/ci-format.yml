@@ -16,6 +16,5 @@ jobs:
         dotnet-version: '9.0.x'
 
     - name: Verify Formatting
-      # THIS IS THE MAGIC LINE:
       continue-on-error: true 
       run: dotnet format src/Backend/Capstone.sln --verify-no-changes --severity warn
