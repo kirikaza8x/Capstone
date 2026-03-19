@@ -55,8 +55,6 @@ namespace  Payments.Infrastructure
                 .AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
             });
 
-           
-
             services.AddScoped<IVnPayService,VnPayService>();
 
             // Public Api
