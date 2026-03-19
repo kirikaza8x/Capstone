@@ -1,3 +1,4 @@
+using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
@@ -18,7 +19,6 @@ using Shared.Infrastructure.Data.Seeds;
 using Shared.Infrastructure.Extensions;
 using Shared.Infrastructure.Service.Authentication;
 using Shared.Infrastructure.Service.Report;
-using System.Text;
 using Users.Application.Abstractions.Authentication;
 using Users.Application.Abstractions.Sms;
 using Users.Domain.Entities;
@@ -26,8 +26,8 @@ using Users.Domain.UOW;
 using Users.Infrastructure.Data.UOW;
 using Users.Infrastructure.Persistence.Contexts;
 using Users.Infrastructure.PublicApi;
-using Users.Infrastructure.Services.Report;
 using Users.Infrastructure.Services.Authentication;
+using Users.Infrastructure.Services.Report;
 using Users.Infrastructure.Services.Sms;
 using Users.PublicApi.Services;
 

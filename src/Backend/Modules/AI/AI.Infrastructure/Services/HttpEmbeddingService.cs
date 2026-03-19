@@ -1,7 +1,7 @@
-using Microsoft.Extensions.Logging;
-using Shared.Application.Abstractions.Embbeding;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
+using Shared.Application.Abstractions.Embbeding;
 
 namespace AI.Infrastructure.Embedding;
 

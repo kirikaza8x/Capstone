@@ -1,8 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Linq.Dynamic.Core;
+using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using Shared.Domain.Pagination;
 using Shared.Domain.Queries;
-using System.Linq.Dynamic.Core;
-using System.Text.Json;
 
 namespace Shared.Infrastructure.Extensions;
 

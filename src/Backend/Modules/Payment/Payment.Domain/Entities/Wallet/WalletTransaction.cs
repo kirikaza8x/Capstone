@@ -1,5 +1,5 @@
-using Shared.Domain.DDD;
 using Payments.Domain.Enums;
+using Shared.Domain.DDD;
 
 namespace Payments.Domain.Entities
 {

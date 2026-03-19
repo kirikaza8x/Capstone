@@ -1,9 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Quartz;
 using Shared.Application.Abstractions.EventBus;
-using System.Text.Json;
 
 namespace Shared.Infrastructure.Inbox;
 

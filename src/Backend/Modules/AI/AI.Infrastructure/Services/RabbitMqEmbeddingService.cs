@@ -1,12 +1,12 @@
+using System.Collections.Concurrent;
+using System.Text;
+using System.Text.Json;
 using AI.IntegrationEvents;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using Shared.Application.Abstractions.Embbeding;
-using System.Collections.Concurrent;
-using System.Text;
-using System.Text.Json;
 
 namespace AI.Infrastructure.Embedding;
 

@@ -1,6 +1,6 @@
+using Microsoft.Extensions.Logging;
 using Qdrant.Client;
 using Qdrant.Client.Grpc;
-using Microsoft.Extensions.Logging;
 using Shared.Application.Abstractions.Qdrant;
 
 namespace Shared.Infrastructure.Qdrant;

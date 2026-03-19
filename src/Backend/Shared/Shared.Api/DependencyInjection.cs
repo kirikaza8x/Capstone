@@ -1,10 +1,10 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using System.Reflection;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Shared.Api.Extensions;
 using Shared.Api.Results;
 using Shared.Domain.Abstractions;
-using System.Reflection;
 namespace Shared.Api;
 
 public class SharedApiAssemblyReference

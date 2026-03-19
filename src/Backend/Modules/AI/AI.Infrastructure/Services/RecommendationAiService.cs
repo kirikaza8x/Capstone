@@ -1,8 +1,8 @@
+using System.Text.Json;
 using AI.Application.Abstractions;
 using AI.Application.Features.Recommendations.DTOs;
 using Events.PublicApi.Records;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
 
 namespace AI.Infrastructure.ExternalServices;
 

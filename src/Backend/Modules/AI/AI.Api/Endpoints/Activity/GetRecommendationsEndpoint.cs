@@ -1,10 +1,10 @@
+using AI.Application.Features.Recommendations.Queries;
 using Carter;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Shared.Api.Results;
-using AI.Application.Features.Recommendations.Queries;
 
 namespace AI.Api.Features.Activity;
 

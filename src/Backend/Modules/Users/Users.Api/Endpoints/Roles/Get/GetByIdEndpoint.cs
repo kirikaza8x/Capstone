@@ -1,10 +1,10 @@
+using Carter;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Shared.Api.Results;
 using Users.Application.Features.Roles.Dtos;
-using Carter;
 using Users.Application.Features.Roles.Queries.GetRoleById;
 
 namespace Users.Api.Roles.Get;

@@ -1,5 +1,5 @@
-using Shared.Application.DTOs;
 using System.ComponentModel;
+using Shared.Application.DTOs;
 
 namespace Users.Application.Features.Roles.Dtos;
 

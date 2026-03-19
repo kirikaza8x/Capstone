@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using Shared.Infrastructure.Outbox;
 using Payments.Domain.Entities;
+using Shared.Infrastructure.Outbox;
 
 namespace Payments.Infrastructure.Persistence.Contexts
 {

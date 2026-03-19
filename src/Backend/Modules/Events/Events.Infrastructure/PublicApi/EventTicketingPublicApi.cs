@@ -95,8 +95,36 @@ internal sealed class EventTicketingPublicApi(EventsDbContext dbContext) : IEven
 
     private static EventAreaType MapAreaType(AreaType t) => t switch
     {
+<<<<<<< HEAD
         AreaType.Zone => EventAreaType.Zone,
         AreaType.Seat => EventAreaType.Seat,
         _ => EventAreaType.Default
     };
 }
+=======
+        return areaType switch
+        {
+            AreaType.Seat => EventAreaType.Seat,
+            AreaType.Default => EventAreaType.Default,
+            _ => EventAreaType.Zone
+        };
+    }
+
+    private static bool IsPurchasable(Event @event, DateTime utcNow)
+    {
+        if (@event.Status != EventStatus.Published)
+            return false;
+
+        if (!@event.TicketSaleStartAt.HasValue || !@event.TicketSaleEndAt.HasValue)
+            return false;
+
+        if (@event.TicketSaleStartAt.Value > utcNow || @event.TicketSaleEndAt.Value < utcNow)
+            return false;
+
+        if (@event.EventStartAt.HasValue && @event.EventStartAt.Value <= utcNow)
+            return false;
+
+        return true;
+    }
+}
+>>>>>>> 97ebaa9 (chore: add editorconfig and fix final newlines)

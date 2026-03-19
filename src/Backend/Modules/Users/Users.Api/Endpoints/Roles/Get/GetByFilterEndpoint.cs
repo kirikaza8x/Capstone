@@ -1,5 +1,6 @@
-using MediatR;
 using AutoMapper;
+using Carter;
+using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -8,7 +9,6 @@ using Shared.Api.Results;
 using Shared.Domain.Pagination;
 using Users.Application.Features.Roles.Dtos;
 using Users.Application.Features.Roles.Queries;
-using Carter;
 
 namespace Users.Api.Roles.Get;
 

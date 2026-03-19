@@ -1,8 +1,8 @@
+using Payment.Application.Features.VnPay.Dtos;
+using Payments.Application.Abstractions;
+using Payments.Application.Features.Commands.InitiatePayment;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
-using Payment.Application.Features.VnPay.Dtos;
-using Payments.Application.Features.Commands.InitiatePayment;
-using Payments.Application.Abstractions;
 
 namespace Payments.Application.Features.Payments.Commands.InitiatePayment;
 

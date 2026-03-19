@@ -1,9 +1,9 @@
 // AI.Application/Features/ImageGeneration/Handlers/GenerateImageCommandHandler.cs
+using AI.Application.Abstractions;
+using AI.Application.Features.ImageGeneration.Commands;
 using FluentValidation;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
-using AI.Application.Abstractions;
-using AI.Application.Features.ImageGeneration.Commands;
 
 namespace AI.Application.Features.ImageGeneration.Handlers;
 

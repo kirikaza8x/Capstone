@@ -42,6 +42,7 @@ public class CreateOrderEndpoint : ICarterModule
             if (result.IsFailure)
                 return result.ToProblem();
 
+<<<<<<< HEAD
             return result.ToCreated(
                 $"{Constants.Routes.Orders}/{result.Value}",
                 "Order created successfully.");
@@ -57,3 +58,19 @@ public class CreateOrderEndpoint : ICarterModule
         .RequireRoles(Roles.Attendee);
     }
 }
+=======
+//            return result.ToCreated(
+//                $"{Constants.Routes.Orders}/{result.Value}",
+//                "Order created successfully.");
+//        })
+//        .WithTags(Constants.Tags.Orders)
+//        .WithName("CreateOrder")
+//        .WithSummary("Create a pending order")
+//        .WithDescription("Creates a pending order with selected ticket items.")
+//        .Produces<Guid>(StatusCodes.Status201Created)
+//        .ProducesProblem(StatusCodes.Status400BadRequest)
+//        .ProducesProblem(StatusCodes.Status401Unauthorized)
+//        .RequireRoles(Roles.Attendee);
+//    }
+//}
+>>>>>>> 97ebaa9 (chore: add editorconfig and fix final newlines)

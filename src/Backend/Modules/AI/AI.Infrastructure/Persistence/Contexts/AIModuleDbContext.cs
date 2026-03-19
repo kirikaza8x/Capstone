@@ -1,7 +1,7 @@
-using Microsoft.EntityFrameworkCore;
 using AI.Domain.Entities;
-using Shared.Infrastructure.Outbox;
 using AI.Domain.ReadModels;
+using Microsoft.EntityFrameworkCore;
+using Shared.Infrastructure.Outbox;
 
 namespace AI.Infrastructure.Data
 {

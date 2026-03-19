@@ -6,13 +6,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Payments.Application.Abstractions;
 using Payments.Infrastructure.Persistence.Contexts;
 using Shared.Domain.Data.Repositories;
 using Shared.Infrastructure.Configs;
 using Shared.Infrastructure.Configs.Database;
 using Shared.Infrastructure.Data.Seeds;
-using Microsoft.Extensions.Options;
 namespace Payments.Infrastructure
 {
 

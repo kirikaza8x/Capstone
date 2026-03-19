@@ -1,7 +1,7 @@
-﻿using FluentValidation;
+﻿using System.Reflection;
+using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using Shared.Application.Extensions;
-using System.Reflection;
 
 namespace Shared.Application;
 

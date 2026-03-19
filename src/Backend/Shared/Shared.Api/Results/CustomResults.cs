@@ -1,5 +1,5 @@
-﻿using Shared.Domain.Abstractions;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
+using Shared.Domain.Abstractions;
 
 namespace Shared.Api.Results;
 
