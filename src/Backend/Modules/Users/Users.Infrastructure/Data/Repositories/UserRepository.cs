@@ -134,9 +134,9 @@ namespace Users.Infrastructure.Data.Repositories
             _users.Add(user);
 
             // Initialize wallet for the user
-            var wallet = Wallet.Create(user.Id, 1000); // Default balance of 1000, can be adjusted as needed
-            user.AttachWallet(wallet);
-            _dbContext.Set<Wallet>().Add(wallet);
+            // var wallet = Wallet.Create(user.Id, 1000); // Default balance of 1000, can be adjusted as needed
+            // user.AttachWallet(wallet);
+            // _dbContext.Set<Wallet>().Add(wallet);
             return user;
         }
 

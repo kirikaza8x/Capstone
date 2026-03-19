@@ -82,10 +82,10 @@ namespace Users.Infrastructure.Persistence.Configs
                    .HasDefaultValue(false);
 
             // --- Wallet Relationship ---
-            builder.HasOne(u => u.Wallet)
-                   .WithOne(w => w.User)
-                   .HasForeignKey<Wallet>(w => w.UserId)
-                   .OnDelete(DeleteBehavior.Cascade);
+       //      builder.HasOne(u => u.Wallet)
+       //             .WithOne(w => w.User)
+       //             .HasForeignKey<Wallet>(w => w.UserId)
+       //             .OnDelete(DeleteBehavior.Cascade);
 
             // ================================
             // Organizer Profiles Relationship (Versioned)

@@ -20,7 +20,7 @@ namespace Users.Domain.Entities
         // --------------------
         // Wallet
         // --------------------
-        public Wallet? Wallet { get; private set; }
+        // public Wallet? Wallet { get; private set; }
 
         public void UpdateProfileImage(string imageUrl)
             => ProfileImageUrl = imageUrl;
@@ -47,12 +47,12 @@ namespace Users.Domain.Entities
             ProfileImageUrl = profileImageUrl ?? ProfileImageUrl;
         }
 
-        public void AttachWallet(Wallet wallet)
-        {
-            if (Wallet != null)
-                throw new InvalidOperationException("User already has a wallet.");
+        // public void AttachWallet(Wallet wallet)
+        // {
+        //     if (Wallet != null)
+        //         throw new InvalidOperationException("User already has a wallet.");
 
-            Wallet = wallet;
-        }
+        //     Wallet = wallet;
+        // }
     }
 }
