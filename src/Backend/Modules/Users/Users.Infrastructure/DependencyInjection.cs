@@ -30,7 +30,6 @@ using Users.Infrastructure.Services.Report;
 using Users.Infrastructure.Services.Authentication;
 using Users.Infrastructure.Services.Sms;
 using Users.PublicApi.Services;
-using Shared.Application.Abstractions.Notifications;
 
 namespace Users.Infrastructure
 {
