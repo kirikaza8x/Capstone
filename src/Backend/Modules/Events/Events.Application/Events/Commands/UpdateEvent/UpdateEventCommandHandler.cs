@@ -82,16 +82,16 @@ internal sealed class UpdateEventCommandHandler(
         if (@event.OrganizerId != currentUserService.UserId)
             return Result.Failure(EventErrors.Event.NotOwner);
 
-        if (@event.Status != EventStatus.Draft)
-            return Result.Failure(EventErrors.Event.CannotUpdate(@event.Status));
-
         if (command.Title is not null || command.Location is not null || command.Description is not null)
         {
-            @event.UpdateInfo(
+            var updateInfoResult = @event.UpdateInfo(
                 command.Title ?? @event.Title,
                 command.Location ?? @event.Location,
                 command.MapUrl ?? @event.MapUrl,
                 command.Description ?? @event.Description);
+
+            if (updateInfoResult.IsFailure)
+                return updateInfoResult;
         }
 
         if (command.HashtagIds is not null)

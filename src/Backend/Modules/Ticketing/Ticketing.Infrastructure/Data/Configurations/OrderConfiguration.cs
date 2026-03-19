@@ -15,7 +15,6 @@ internal sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
 
         builder.Property(x => x.UserId).IsRequired();
         builder.Property(x => x.TotalPrice).HasPrecision(18, 2).IsRequired();
-        builder.Property(x => x.Type).HasMaxLength(50).IsRequired();
 
         builder.Property(x => x.Status)
             .HasConversion(

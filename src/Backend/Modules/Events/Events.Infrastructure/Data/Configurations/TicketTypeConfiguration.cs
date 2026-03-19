@@ -19,6 +19,10 @@ internal sealed class TicketTypeConfiguration : IEntityTypeConfiguration<TicketT
 
         builder.Property(e => e.Quantity).IsRequired();
 
+        builder.Property(e => e.SoldQuantity)
+            .HasDefaultValue(0)
+            .IsRequired();
+
         builder.Property(e => e.Price)
             .HasColumnType("decimal(18,2)")
             .IsRequired();

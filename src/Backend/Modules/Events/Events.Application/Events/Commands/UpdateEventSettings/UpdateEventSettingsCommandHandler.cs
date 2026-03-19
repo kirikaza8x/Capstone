@@ -73,18 +73,23 @@ internal sealed class UpdateEventSettingsCommandHandler(
                 return Result.Failure(EventErrors.Event.UrlPathAlreadyExists(urlPath));
         }
 
-        @event.UpdateSettings(command.IsEmailReminderEnabled, command.UrlPath);
+        var updateSettingsResult = @event.UpdateSettings(command.IsEmailReminderEnabled, command.UrlPath);
+        if (updateSettingsResult.IsFailure)
+            return updateSettingsResult;
 
         if (command.TicketSaleStartAt.HasValue &&
             command.TicketSaleEndAt.HasValue &&
             command.EventStartAt.HasValue &&
             command.EventEndAt.HasValue)
         {
-            @event.UpdateSchedule(
+            var updateScheduleResult = @event.UpdateSchedule(
                 command.TicketSaleStartAt.Value,
                 command.TicketSaleEndAt.Value,
                 command.EventStartAt.Value,
                 command.EventEndAt.Value);
+
+            if (updateScheduleResult.IsFailure)
+                return updateScheduleResult;
         }
 
         await unitOfWork.SaveChangesAsync(cancellationToken);

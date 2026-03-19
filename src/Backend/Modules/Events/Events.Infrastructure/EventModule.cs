@@ -32,6 +32,7 @@ public static class EventModule
         services.AddScoped<ISeatLockService, SeatLockService>();
 
         services.AddScoped<IEventMemberPublicApi, EventMemberPublicApi>();
+        services.AddScoped<IEventTicketingPublicApi, EventTicketingPublicApi>();
         services.AddScoped<IEventMemberPermissionCacheInvalidator, EventMemberPermissionCacheInvalidator>();
 
         services.AddDbContext<EventsDbContext>((sp, options) =>

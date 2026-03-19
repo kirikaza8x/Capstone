@@ -39,7 +39,9 @@ internal sealed class UpdateEventPolicyCommandHandler(
         if (@event.OrganizerId != currentUserService.UserId)
             return Result.Failure(EventErrors.Event.NotOwner);
 
-        @event.UpdatePolicy(command.Policy);
+        var updateResult = @event.UpdatePolicy(command.Policy);
+        if (updateResult.IsFailure)
+            return updateResult;
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 

@@ -204,6 +204,18 @@ public static class EventErrors
         public static Error NotEnoughTickets(int requested, int available) => Error.Validation(
             "TicketType.NotEnoughTickets",
             $"Requested {requested} tickets but only {available} available.");
+
+        public static readonly Error InvalidSoldQuantityAmount = Error.Validation(
+            "TicketType.InvalidSoldQuantityAmount",
+            "Sold quantity amount must be greater than zero.");
+
+        public static readonly Error CannotDecreaseSoldBelowZero = Error.Validation(
+            "TicketType.CannotDecreaseSoldBelowZero",
+            "Cannot decrease sold quantity below zero.");
+
+        public static Error ExceedQuantity(int quantity, int attemptedSold) => Error.Conflict(
+            "TicketType.ExceedQuantity",
+            $"Sold quantity cannot exceed total quantity. Quantity: {quantity}, attempted sold: {attemptedSold}.");
     }
 
     public static class SessionTicketQuotaErrors

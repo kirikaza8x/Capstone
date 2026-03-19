@@ -100,9 +100,6 @@ internal sealed class UpdateEventSpecCommandHandler(
                         x: specSeat.X,
                         y: specSeat.Y);
 
-                    if (specSeat.ParsedStatus == SeatMapSeatStatus.blocked)
-                        seat.Deactivate();
-
                     specSeat.Id = seat.Id.ToString();
                     area.AddSeat(seat);
                 }

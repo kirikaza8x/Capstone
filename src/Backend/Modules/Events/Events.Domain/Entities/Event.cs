@@ -101,13 +101,19 @@ public sealed class Event : AggregateRoot<Guid>
         return @event;
     }
 
-    public void UpdateInfo(string title, string location, string? mapUrl, string description)
+    public Result UpdateInfo(string title, string location, string? mapUrl, string description)
     {
+        var canEdit = EnsureCanEdit();
+        if (canEdit.IsFailure)
+            return canEdit;
+
         Title = title;
         Location = location;
         MapUrl = mapUrl;
         Description = description;
         ModifiedAt = DateTime.UtcNow;
+
+        return Result.Success();
     }
 
     public void UpdateUrlPath(string urlPath)
@@ -116,23 +122,34 @@ public sealed class Event : AggregateRoot<Guid>
         ModifiedAt = DateTime.UtcNow;
     }
 
-    public void UpdatePolicy(string policy)
+    public Result UpdatePolicy(string policy)
     {
+        var canEdit = EnsureCanEdit();
+        if (canEdit.IsFailure)
+            return canEdit;
+
         Policy = policy;
         ModifiedAt = DateTime.UtcNow;
+        return Result.Success();
     }
 
-    public void UpdateSchedule(
+    public Result UpdateSchedule(
         DateTime ticketSaleStartAt,
         DateTime ticketSaleEndAt,
         DateTime eventStartAt,
         DateTime eventEndAt)
     {
+        var canEdit = EnsureCanEdit();
+        if (canEdit.IsFailure)
+            return canEdit;
+
         TicketSaleStartAt = ticketSaleStartAt;
         TicketSaleEndAt = ticketSaleEndAt;
         EventStartAt = eventStartAt;
         EventEndAt = eventEndAt;
         ModifiedAt = DateTime.UtcNow;
+
+        return Result.Success();
     }
 
     public void UpdateBannerUrl(string? bannerUrl)
@@ -141,12 +158,28 @@ public sealed class Event : AggregateRoot<Guid>
         ModifiedAt = DateTime.UtcNow;
     }
 
-    public void UpdateSettings(bool isEmailReminderEnabled, string? urlPath)
+    public Result UpdateSettings(bool isEmailReminderEnabled, string? urlPath)
     {
+        var canEdit = EnsureCanEdit();
+        if (canEdit.IsFailure)
+            return canEdit;
+
         IsEmailReminderEnabled = isEmailReminderEnabled;
         if (!string.IsNullOrWhiteSpace(urlPath))
             UrlPath = urlPath.Trim().ToLowerInvariant();
+
         ModifiedAt = DateTime.UtcNow;
+        return Result.Success();
+    }
+    public Result UpdateSpec(string spec)
+    {
+        var canEdit = EnsureCanEdit();
+        if (canEdit.IsFailure)
+            return canEdit;
+
+        Spec = spec;
+        ModifiedAt = DateTime.UtcNow;
+        return Result.Success();
     }
 
     public void ReplaceHashtags(IEnumerable<EventHashtag> hashtags)
@@ -338,12 +371,6 @@ public sealed class Event : AggregateRoot<Guid>
         return image;
     }
 
-    public void UpdateSpec(string spec)
-    {
-        Spec = spec;
-        ModifiedAt = DateTime.UtcNow;
-    }
-
     public void ClearAreasAndSeats()
     {
         _areas.Clear();
@@ -466,6 +493,14 @@ public sealed class Event : AggregateRoot<Guid>
         return EventHashtags
             .Select(eh => eh.Hashtag.Name)
             .ToList();
+    }
+
+
+    private Result EnsureCanEdit()
+    {
+        return Status is EventStatus.Draft or EventStatus.Suspended
+            ? Result.Success()
+            : Result.Failure(EventErrors.Event.CannotUpdate(Status));
     }
     protected override void Apply(IDomainEvent @event) { }
 }

@@ -1,7 +1,6 @@
 using Shared.Domain.Abstractions;
 using Shared.Domain.DDD;
 using Ticketing.Domain.DomainEvents;
-using Ticketing.Domain.Entities;
 using Ticketing.Domain.Enums;
 using Ticketing.Domain.Errors;
 
@@ -11,7 +10,6 @@ public sealed class Order : AggregateRoot<Guid>
 {
     public Guid UserId { get; private set; }
     public decimal TotalPrice { get; private set; }
-    public string Type { get; private set; } = string.Empty;
     public OrderStatus Status { get; private set; }
 
     private readonly List<OrderTicket> _tickets = [];
@@ -22,7 +20,7 @@ public sealed class Order : AggregateRoot<Guid>
 
     private Order() { }
 
-    public static Order Create(Guid userId, string type, DateTime? utcNow = null)
+    public static Order Create(Guid userId, DateTime? utcNow = null)
     {
         var now = utcNow ?? DateTime.UtcNow;
 
@@ -30,7 +28,6 @@ public sealed class Order : AggregateRoot<Guid>
         {
             Id = Guid.NewGuid(),
             UserId = userId,
-            Type = type,
             Status = OrderStatus.Pending,
             TotalPrice = 0,
             CreatedAt = now

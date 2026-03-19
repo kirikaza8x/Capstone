@@ -30,13 +30,6 @@ internal sealed class SeatConfiguration : IEntityTypeConfiguration<Seat>
         builder.Property(e => e.X).IsRequired();
         builder.Property(e => e.Y).IsRequired();
 
-        builder.Property(e => e.Status)
-            .HasConversion(
-                v => v.ToString().ToLowerInvariant(),
-                v => Enum.Parse<SeatStatus>(v, true))
-            .HasMaxLength(20)
-            .IsRequired();
-
         builder.HasIndex(e => e.AreaId);
         builder.HasIndex(e => new { e.AreaId, e.SeatCode }).IsUnique();
     }

@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Shared.Api.Results;
+using Users.PublicApi.Constants;
 
 namespace Events.Api.Events.Patch;
 
@@ -21,7 +22,7 @@ public class UpdateEventSettingsEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPut(Constants.Routes.EventById + "/settings", async (
+        app.MapPatch(Constants.Routes.EventById + "/settings", async (
             [FromRoute] Guid eventId,
             [FromBody] UpdateEventSettingsRequest request,
             ISender sender,
@@ -47,6 +48,7 @@ public class UpdateEventSettingsEndpoint : ICarterModule
         .Produces(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status404NotFound)
-        .ProducesProblem(StatusCodes.Status409Conflict);
+        .ProducesProblem(StatusCodes.Status409Conflict)
+        .RequireAuthorization(Roles.Organizer);
     }
 }

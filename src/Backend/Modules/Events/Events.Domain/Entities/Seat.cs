@@ -13,7 +13,6 @@ public sealed class Seat : Entity<Guid>
     public string ColumnLabel { get; private set; } = string.Empty;
     public float X { get; private set; }
     public float Y { get; private set; }
-    public SeatStatus Status { get; private set; }
 
     public Area Area { get; private set; } = null!;
 
@@ -34,12 +33,7 @@ public sealed class Seat : Entity<Guid>
             ColumnLabel = columnLabel,
             X = x,
             Y = y,
-            Status = SeatStatus.Active,
             CreatedAt = DateTime.UtcNow
         };
     }
-
-    public void Activate() => Status = SeatStatus.Active;
-    public void Deactivate() => Status = SeatStatus.Inactive;
-    public void SetMaintenance() => Status = SeatStatus.Maintenance;
 }

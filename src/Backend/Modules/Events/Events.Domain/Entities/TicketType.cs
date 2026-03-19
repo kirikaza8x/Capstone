@@ -1,4 +1,6 @@
-﻿using Shared.Domain.DDD;
+﻿using Events.Domain.Errors;
+using Shared.Domain.Abstractions;
+using Shared.Domain.DDD;
 
 namespace Events.Domain.Entities;
 
@@ -10,6 +12,7 @@ public sealed class TicketType : Entity<Guid>
     public string Name { get; private set; } = string.Empty;
     public decimal Price { get; private set; }
     public int Quantity { get; private set; }
+    public int SoldQuantity { get; private set; }
     public Guid? AreaId { get; private set; }
 
     public Event Event { get; private set; } = null!;
@@ -23,6 +26,7 @@ public sealed class TicketType : Entity<Guid>
             EventId = eventId,
             Name = name,
             Quantity = quantity,
+            SoldQuantity = 0,
             Price = price,
             AreaId = null,
             CreatedAt = DateTime.UtcNow
@@ -47,5 +51,31 @@ public sealed class TicketType : Entity<Guid>
     {
         AreaId = null;
         ModifiedAt = DateTime.UtcNow;
+    }
+
+    public Result IncreaseSoldQuantity(int amount = 1)
+    {
+        if (amount <= 0)
+            return Result.Failure(EventErrors.TicketTypeErrors.InvalidSoldQuantityAmount);
+
+        if (SoldQuantity + amount > Quantity)
+            return Result.Failure(EventErrors.TicketTypeErrors.ExceedQuantity(Quantity, SoldQuantity + amount));
+
+        SoldQuantity += amount;
+        ModifiedAt = DateTime.UtcNow;
+        return Result.Success();
+    }
+
+    public Result DecreaseSoldQuantity(int amount = 1)
+    {
+        if (amount <= 0)
+            return Result.Failure(EventErrors.TicketTypeErrors.InvalidSoldQuantityAmount);
+
+        if (SoldQuantity - amount < 0)
+            return Result.Failure(EventErrors.TicketTypeErrors.CannotDecreaseSoldBelowZero);
+
+        SoldQuantity -= amount;
+        ModifiedAt = DateTime.UtcNow;
+        return Result.Success();
     }
 }
