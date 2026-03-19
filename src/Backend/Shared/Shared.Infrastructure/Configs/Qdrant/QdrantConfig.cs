@@ -10,11 +10,11 @@ public class QdrantConfig : ConfigBase
     public override string SectionName => "Qdrant";
 
     // ── Connection ────────────────────────────────────────────────
-    public string Host     { get; set; } = "localhost";
-    public int    Port     { get; set; } = 6334;
-    public bool   UseHttps { get; set; } = false;
-    public string ApiKey   { get; set; } = "";
-
+    public string Host { get; set; } = "localhost";
+    public int Port { get; set; } = 6334;
+    public bool UseHttps { get; set; } = false;
+    public string ApiKey { get; set; } = "";
+    public RetryConfig Retry { get; set; } = new RetryConfig();
     /// <summary>
     /// ── Collections ───────────────────────────────────────────────
     /// Key = logical name used by repos (e.g. "Events", "UserBehavior")
@@ -40,6 +40,13 @@ public class QdrantConfig : ConfigBase
 /// </summary>
 public class QdrantCollectionConfig
 {
-    public string Name       { get; set; } = "";
-    public int    VectorSize { get; set; } = 384;
+    public string Name { get; set; } = "";
+    public int VectorSize { get; set; } = 384;
+}
+
+public class RetryConfig
+{
+    public int InitialDelaySeconds { get; set; } = 5;
+    public int MaxDelaySeconds { get; set; } = 60;
+    public bool Infinite { get; set; } = true;
 }

@@ -21,7 +21,6 @@ namespace Events.Application.Events.EventHandlers
                 createdAt: domainEvent.CreatedAt
             );
 
-            await eventBus.PublishAsync(integrationEvent, cancellationToken);
-        }
+            _ = Task.Run(() => eventBus.PublishAsync(integrationEvent, cancellationToken));        }
     }
 }

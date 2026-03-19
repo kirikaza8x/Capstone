@@ -50,20 +50,18 @@ def create_app(embedding_service: EmbeddingService) -> FastAPI:
     async def model_info():
         """Return model information."""
         info = embedding_service.get_info()
-        logger.info(f"Model info requested: {info.get('model_name', 'unknown')}")
+        logger.info(f"Model info requested: {info.get('model', 'unknown')}")
         return info
     
     @app.post("/embeddings/generate", response_model=GenerateEmbeddingResponse, tags=["Embeddings"])
     async def generate_embedding(request: GenerateEmbeddingRequest):
         """Generate embedding for single text."""
         start_time = time.perf_counter()
-        # Log the incoming request (truncated text for brevity)
         preview = (request.text[:50] + '...') if len(request.text) > 50 else request.text
         logger.info(f"📥 Generating embedding | length: {len(request.text)} chars | text: '{preview}'")
         
         try:
             embedding = embedding_service.generate(request.text, request.normalize)
-            
             duration = time.perf_counter() - start_time
             logger.info(f"✅ Embedding generated in {duration:.4f}s | dim: {len(embedding)}")
             
@@ -73,7 +71,7 @@ def create_app(embedding_service: EmbeddingService) -> FastAPI:
                 embedding=embedding,
                 dimension=len(embedding),
                 normalized=request.normalize,
-                model="bge-small-en-v1.5"
+                model=embedding_service.model_name
             )
         except Exception as e:
             logger.error(f"❌ Failed to generate embedding: {str(e)}", exc_info=True)
@@ -88,7 +86,6 @@ def create_app(embedding_service: EmbeddingService) -> FastAPI:
         
         try:
             embeddings = embedding_service.generate_batch(request.texts, request.normalize)
-            
             duration = time.perf_counter() - start_time
             logger.info(f"✅ Batch completed | size: {batch_size} | time: {duration:.4f}s")
             
@@ -98,7 +95,7 @@ def create_app(embedding_service: EmbeddingService) -> FastAPI:
                 embeddings=embeddings,
                 dimension=embedding_service.dimension,
                 normalized=request.normalize,
-                model="bge-small-en-v1.5"
+                model=embedding_service.model_name
             )
         except Exception as e:
             logger.error(f"❌ Batch embedding failed for {batch_size} items: {str(e)}", exc_info=True)

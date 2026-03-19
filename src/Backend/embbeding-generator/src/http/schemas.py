@@ -18,7 +18,8 @@ class GenerateEmbeddingResponse(BaseModel):
     model: str
 
 class BatchEmbeddingRequest(BaseModel):
-    texts: List[str] = Field(..., min_length=1, max_length=512, examples=[["machine learning", "deep learning"]])
+    # min_items/max_items control the batch size in Pydantic v1
+    texts: List[str] = Field(..., min_items=1, max_items=512, examples=[["machine learning", "deep learning"]])
     normalize: bool = Field(True)
 
 class BatchEmbeddingResponse(BaseModel):

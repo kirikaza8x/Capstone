@@ -129,3 +129,7 @@ volumes:
   rabbitmq_data:
   minio_data:
   qdrant_data:
+
+networks:
+  aipromo-network:
+    driver: bridge

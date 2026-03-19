@@ -1,12 +1,14 @@
 # ─────────────────────────────────────────────────────────────
-# Embedding Generator - Optimized CPU-only Dockerfile
+# Embedding Generator - Flexible CPU/GPU Dockerfile
 # ─────────────────────────────────────────────────────────────
 
 FROM python:3.11-slim-bookworm
 
-# Basic Python optimizations
+# Basic Python & HuggingFace optimizations
+# HF_HOME ensures sentence-transformers cache doesn't write to root
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    HF_HOME=/app/cache
 
 WORKDIR /app
 
@@ -22,21 +24,30 @@ RUN groupadd -r appuser && useradd -r -g appuser appuser
 # Copy requirements first (for Docker layer caching)
 COPY requirements.txt .
 
-#  Install torch FIRST (separate layer for caching)
-RUN pip install --no-cache-dir torch==2.2.2
+# -------------------------------------------------------------
+# PYTORCH INSTALLATION (Flexible Layer)
+# Default is CPU to keep the image small (~1GB). 
+# To build for GPU, run: docker build --build-arg TORCH_INDEX_URL="https://pypi.org/simple" .
+# -------------------------------------------------------------
+ARG TORCH_INDEX_URL="https://download.pytorch.org/whl/cpu"
+RUN pip install --no-cache-dir torch==2.2.2 --index-url ${TORCH_INDEX_URL}
 
 # Install remaining dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
+# Copy application code and scripts
 COPY src/ ./src/
 COPY scripts/ ./scripts/
 
-# Prepare model directory
-RUN mkdir -p /app/models && chown -R appuser:appuser /app
+# Prepare model and cache directories, then assign permissions BEFORE switching user
+RUN mkdir -p /app/models /app/cache && \
+    chown -R appuser:appuser /app
 
 # Switch to non-root user
 USER appuser
+
+# Download model at build time (Runs as appuser to ensure proper permissions)
+RUN python scripts/download_model.py
 
 # Environment variables
 ENV PYTHONPATH=/app \
@@ -59,9 +70,6 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
 EXPOSE 8001
 
 ENTRYPOINT ["/usr/bin/tini", "--"]
-
-#  Download model at build time (no delay at runtime)
-RUN python scripts/download_model.py
 
 # Start app
 CMD ["python", "-m", "src.main"]

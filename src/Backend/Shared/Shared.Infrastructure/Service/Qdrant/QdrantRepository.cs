@@ -24,7 +24,6 @@ public abstract class QdrantRepositoryBase : IQdrantRepository
     /// e.g. all-MiniLM-L6-v2 = 384, text-embedding-3-small = 1536
     /// </summary>
     protected abstract int VectorSize { get; }
-
     protected readonly QdrantClient Client;
     protected readonly ILogger Logger;
 
