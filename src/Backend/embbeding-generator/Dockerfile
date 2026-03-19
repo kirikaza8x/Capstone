@@ -2,40 +2,44 @@
 # Embedding Generator - Optimized CPU-only Dockerfile
 # ─────────────────────────────────────────────────────────────
 
-# Base image
-FROM python:3.11-slim-bookworm AS base
+FROM python:3.11-slim-bookworm
 
-# Security: Create non-root user
-RUN groupadd -r appuser && useradd -r -g appuser appuser
+# Basic Python optimizations
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-# Install runtime dependencies and patch system
-RUN apt-get update && apt-get upgrade -y \
-    && apt-get install -y --no-install-recommends curl git tini \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
+# Install minimal runtime dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    tini \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install CPU-only dependencies
+# Create non-root user
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+
+# Copy requirements first (for Docker layer caching)
 COPY requirements.txt .
-# Force CPU-only torch wheels
-RUN pip install --no-cache-dir -r requirements.txt \
-    -f https://download.pytorch.org/whl/torch_stable.html
+
+#  Install torch FIRST (separate layer for caching)
+RUN pip install --no-cache-dir torch==2.2.2
+
+# Install remaining dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY src/ ./src/
 COPY scripts/ ./scripts/
 
-# Create models directory with correct permissions
+# Prepare model directory
 RUN mkdir -p /app/models && chown -R appuser:appuser /app
 
 # Switch to non-root user
 USER appuser
 
-# Environment variables (defaults for Docker Compose)
+# Environment variables
 ENV PYTHONPATH=/app \
-    PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
     MODEL_PATH=/app/models/bge-small-en-v1.5 \
     HTTP_HOST=0.0.0.0 \
     HTTP_PORT=8001 \
@@ -56,5 +60,8 @@ EXPOSE 8001
 
 ENTRYPOINT ["/usr/bin/tini", "--"]
 
-# Run: download model if missing, then start main
-CMD ["sh", "-c", "python scripts/download_model.py && python -m src.main"]
+#  Download model at build time (no delay at runtime)
+RUN python scripts/download_model.py
+
+# Start app
+CMD ["python", "-m", "src.main"]
