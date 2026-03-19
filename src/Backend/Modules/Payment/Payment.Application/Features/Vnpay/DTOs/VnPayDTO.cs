@@ -34,3 +34,7 @@ public class VnPayResultDto
     public string? ResponseCode { get; set; }
     public DateTime CheckedOutAt { get; set; }
 }
+
+public record InitiatePaymentResponseDto(
+    string PaymentUrl
+);

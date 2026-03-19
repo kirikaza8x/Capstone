@@ -1,8 +1,6 @@
-// using Application.Features.VnPay.DTOs;
-
-
 using Payment.Application.Features.VnPay.Dtos;
 
+namespace Payments.Application.Abstractions;
 public interface IVnPayService
 {
     /// <summary>

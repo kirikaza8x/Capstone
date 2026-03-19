@@ -1,4 +1,10 @@
-namespace Modules.Payment.Infrastructure
+using System.Reflection;
+
+namespace Payments.Infrastructure
 {
-    public static class InfrastructureAssemblyReference { }
+    public class PaymentsInfrastructureAssemblyReference
+    {
+        public static readonly Assembly Assembly = typeof(PaymentsInfrastructureAssemblyReference).Assembly;
+
+    }
 }

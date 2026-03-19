@@ -1,4 +1,9 @@
-namespace Modules.Payment.Api
+using System.Reflection;
+
+namespace Payments.Api
 {
-    public static class ApiAssemblyReference { }
+    public static class PaymentApiAssemblyReference
+    {
+        public static readonly Assembly Assembly = typeof(PaymentApiAssemblyReference).Assembly;
+    }
 }

@@ -5,6 +5,9 @@ using Api.Middleware;
 using Carter;
 using Events.Infrastructure;
 using Notifications.Infrastructure;
+using Payments.Api;
+using Payments.Application;
+using Payments.Infrastructure;
 using Shared.Api;
 using Shared.Application;
 using Shared.Infrastructure;
@@ -38,6 +41,10 @@ public class Program
             // AI
             AiApplicationAssemblyReference.Assembly,
             ApiAssemblyReference.Assembly,
+
+            // Payment
+            PaymentsApplicationAssemblyReference.Assembly,
+            PaymentApiAssemblyReference.Assembly
         };
 
         // Add Application Services
@@ -68,6 +75,7 @@ public class Program
             .AddEventModule(Configuration)
             .AddAiModule(Configuration)
             .AddTicketingModule(Configuration)
+            .AddPaymentModule(Configuration)
         ;
 
         builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
