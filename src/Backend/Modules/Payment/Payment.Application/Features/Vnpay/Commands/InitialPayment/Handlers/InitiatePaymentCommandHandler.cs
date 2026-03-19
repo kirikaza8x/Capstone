@@ -17,11 +17,7 @@ public class InitiatePaymentCommandHandler : ICommandHandler<InitiatePaymentComm
 
     public Task<Result<InitiatePaymentResponseDto>> Handle(InitiatePaymentCommand command, CancellationToken cancellationToken)
     {
-        if (command.Amount <= 0)
-        {
-            return Task.FromResult(Result.Failure<InitiatePaymentResponseDto>(
-                Error.Validation("Payment.InvalidAmount", "Amount must be greater than zero")));
-        }
+        
 
         if (string.IsNullOrWhiteSpace(command.OrderId))
         {

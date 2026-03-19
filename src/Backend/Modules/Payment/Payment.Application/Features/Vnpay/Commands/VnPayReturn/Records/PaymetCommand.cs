@@ -40,7 +40,7 @@ public class VnPayReturnQueriesCommand : ICommand<VnPayResultDto>
     //[FromQuery(Name = "vnp_TransactionStatus")]
     public string? VnpTransactionStatus { get; set; }
 
-    //[FromQuery(Name = "vnp_TxnRef")]
+    // [FromQuery(Name = "vnp_TxnRef")]
     public string? VnpTxnRef { get; set; }
 
     //[FromQuery(Name = "vnp_SecureHash")]
