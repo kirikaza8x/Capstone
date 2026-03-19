@@ -79,9 +79,9 @@ internal sealed class CreateEventCommandHandler(
         foreach (var imageUrl in command.ImageUrls)
             @event.AddImage(imageUrl);
 
-        var categoryNames = await categoryRepository.GetNamesByIdsAsync(command.CategoryIds,cancellationToken);
-        var hashtagNames  = await hashtagRepository.GetNamesByIdsAsync(command.HashtagIds,cancellationToken);
-        @event.RaiseEmbeddingEvent(categoryNames,hashtagNames);
+        var categoryNames = await categoryRepository.GetNamesByIdsAsync(command.CategoryIds, cancellationToken);
+        var hashtagNames = await hashtagRepository.GetNamesByIdsAsync(command.HashtagIds, cancellationToken);
+        @event.RaiseEmbeddingEvent(categoryNames, hashtagNames);
         eventRepository.Add(@event);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 

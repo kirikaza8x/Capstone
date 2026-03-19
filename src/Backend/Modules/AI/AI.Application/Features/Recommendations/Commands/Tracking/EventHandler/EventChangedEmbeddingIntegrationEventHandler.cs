@@ -20,14 +20,14 @@ namespace AI.Application.Features.Recommendations.Commands.Tracking.EventHandler
 /// both require the class to be publicly visible.
 /// </summary>
 public sealed class EventChangedEmbeddingIntegrationEventHandler(
-    IEmbeddingService      embeddingService,
+    IEmbeddingService embeddingService,
     IEventVectorRepository eventVectorRepo,
     ILogger<EventChangedEmbeddingIntegrationEventHandler> logger)
     : IntegrationEventHandler<EventChangedEmbeddingIntegrationEvent>
 {
     public override async Task Handle(
         EventChangedEmbeddingIntegrationEvent integrationEvent,
-        CancellationToken                      cancellationToken = default)
+        CancellationToken cancellationToken = default)
     {
         logger.LogInformation(
             "Embedding event {EventId} — title: {Title}",
@@ -35,9 +35,9 @@ public sealed class EventChangedEmbeddingIntegrationEventHandler(
 
         // ── 1. Build embedding text ───────────────────────────────
         var text = EmbeddingTextBuilder.ForEvent(
-            title:       integrationEvent.Title,
-            categories:  integrationEvent.Categories.ToList(),
-            hashtags:    integrationEvent.Hashtags.ToList(),
+            title: integrationEvent.Title,
+            categories: integrationEvent.Categories.ToList(),
+            hashtags: integrationEvent.Hashtags.ToList(),
             description: integrationEvent.Description
         );
 
@@ -54,16 +54,16 @@ public sealed class EventChangedEmbeddingIntegrationEventHandler(
 
         // ── 3. Upsert into Qdrant ─────────────────────────────────
         var payload = new EventVectorPayload(
-            EventId:      integrationEvent.EventId,
-            Title:        integrationEvent.Title,
-            Categories:   integrationEvent.Categories.ToList(),
-            Hashtags:     integrationEvent.Hashtags.ToList(),
+            EventId: integrationEvent.EventId,
+            Title: integrationEvent.Title,
+            Categories: integrationEvent.Categories.ToList(),
+            Hashtags: integrationEvent.Hashtags.ToList(),
             // Use actual event start date if set, otherwise 1 year out for drafts
             // so FutureOnly=true doesn't filter out draft/unscheduled events
             EventStartAt: integrationEvent.EventStartAt
                           ?? DateTime.UtcNow.AddYears(1),
-            MinPrice:     null,
-            BannerUrl:    null
+            MinPrice: null,
+            BannerUrl: null
         );
 
         await eventVectorRepo.UpsertEventAsync(payload, embedding, cancellationToken);

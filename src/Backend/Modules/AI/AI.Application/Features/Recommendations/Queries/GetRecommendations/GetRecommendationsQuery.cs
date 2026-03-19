@@ -8,7 +8,7 @@ namespace AI.Application.Features.Recommendations.Queries;
 /// </summary>
 public sealed record GetRecommendationsQuery(
     Guid UserId,
-    int  TopN       = 20,
+    int TopN = 20,
     bool FutureOnly = true
 ) : IQuery<List<EventRecommendationResult>>;
 
@@ -20,8 +20,8 @@ public sealed record GetRecommendationsQuery(
 /// Source        — "semantic" | "category_fallback" | "popular_fallback"
 /// </summary>
 public record EventRecommendationResult(
-    Guid   EventId,
-    float  FinalScore,
-    float  SemanticScore,
+    Guid EventId,
+    float FinalScore,
+    float SemanticScore,
     string Source
 );

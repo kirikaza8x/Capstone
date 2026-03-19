@@ -18,9 +18,9 @@ namespace Shared.Domain.Helpers;
 /// </summary>
 public static class EmbeddingConfidence
 {
-    public const double DefaultHalfLifeDays    = 7.0;
-    public const double DefaultScaleFactor     = 0.5;
-    public const int    DefaultInflectionPoint = 10;
+    public const double DefaultHalfLifeDays = 7.0;
+    public const double DefaultScaleFactor = 0.5;
+    public const int DefaultInflectionPoint = 10;
 
     /// <summary>
     /// Calculate confidence given interaction count and days since last calculation.
@@ -35,11 +35,11 @@ public static class EmbeddingConfidence
     /// Use this overload for A/B testing different decay curves.
     /// </summary>
     public static double Calculate(
-        int    interactionCount,
+        int interactionCount,
         double daysElapsed,
         double halfLifeDays,
         double scaleFactor,
-        int    inflectionPoint)
+        int inflectionPoint)
     {
         if (halfLifeDays <= 0)
             throw new ArgumentException("Half-life must be positive.", nameof(halfLifeDays));

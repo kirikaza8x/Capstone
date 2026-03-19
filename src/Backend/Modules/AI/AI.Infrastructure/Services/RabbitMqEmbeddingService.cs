@@ -43,8 +43,8 @@ public sealed class RabbitMqEmbeddingService : IEmbeddingService, IAsyncDisposab
         ILogger<RabbitMqEmbeddingService> logger)
     {
         _connection = connection;
-        _options    = options;
-        _logger     = logger;
+        _options = options;
+        _logger = logger;
     }
 
     /// <summary>
@@ -65,7 +65,7 @@ public sealed class RabbitMqEmbeddingService : IEmbeddingService, IAsyncDisposab
     private async Task InitializeAsync(CancellationToken ct)
     {
         // v7: CreateChannelAsync instead of CreateModel()
-        _requestChannel  = await _connection.CreateChannelAsync(cancellationToken: ct);
+        _requestChannel = await _connection.CreateChannelAsync(cancellationToken: ct);
         _responseChannel = await _connection.CreateChannelAsync(cancellationToken: ct);
 
         await _requestChannel.QueueDeclareAsync(
@@ -142,9 +142,9 @@ public sealed class RabbitMqEmbeddingService : IEmbeddingService, IAsyncDisposab
         var request = new EmbeddingRequested
         {
             CorrelationId = correlationId,
-            Text          = text,
-            Normalize     = true,
-            RequestedAt   = DateTime.UtcNow.ToString("O")
+            Text = text,
+            Normalize = true,
+            RequestedAt = DateTime.UtcNow.ToString("O")
         };
 
         var body = JsonSerializer.SerializeToUtf8Bytes(request, new JsonSerializerOptions
@@ -154,17 +154,17 @@ public sealed class RabbitMqEmbeddingService : IEmbeddingService, IAsyncDisposab
 
         var props = new BasicProperties
         {
-            ContentType  = "application/json",
+            ContentType = "application/json",
             DeliveryMode = DeliveryModes.Persistent,
-            MessageId    = Guid.NewGuid().ToString(),
+            MessageId = Guid.NewGuid().ToString(),
             CorrelationId = correlationId,
-            Timestamp    = new AmqpTimestamp(DateTimeOffset.UtcNow.ToUnixTimeSeconds())
+            Timestamp = new AmqpTimestamp(DateTimeOffset.UtcNow.ToUnixTimeSeconds())
         };
 
         await _requestChannel!.BasicPublishAsync(
-            exchange:   "",
+            exchange: "",
             routingKey: _options.RequestQueue,
-            mandatory:  true,
+            mandatory: true,
             basicProperties: props,
             body: body,
             cancellationToken: ct);
@@ -221,7 +221,7 @@ public sealed class RabbitMqEmbeddingService : IEmbeddingService, IAsyncDisposab
     // v7: IAsyncDisposable instead of IDisposable
     public async ValueTask DisposeAsync()
     {
-        if (_requestChannel is not null)  await _requestChannel.DisposeAsync();
+        if (_requestChannel is not null) await _requestChannel.DisposeAsync();
         if (_responseChannel is not null) await _responseChannel.DisposeAsync();
     }
 }
@@ -234,7 +234,7 @@ public sealed class EmbeddingQueueOptions
     public const string Section = "Embedding:Queue";
 
     /// <summary>Must match Python REQUEST_QUEUE.</summary>
-    public string RequestQueue  { get; set; } = "embedding.requests";
+    public string RequestQueue { get; set; } = "embedding.requests";
 
     /// <summary>Must match Python RESPONSE_QUEUE.</summary>
     public string ResponseQueue { get; set; } = "embedding.responses";

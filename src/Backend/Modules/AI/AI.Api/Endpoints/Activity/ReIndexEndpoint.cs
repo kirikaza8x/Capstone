@@ -19,7 +19,7 @@ public class ReIndexEndpoint : ICarterModule
         // Re-index all events
         app.MapPost("api/admin/events/reindex", async (
             IEventReIndexService reIndexService,
-            CancellationToken    ct) =>
+            CancellationToken ct) =>
         {
             var count = await reIndexService.ReIndexAllAsync(ct);
             return Results.Ok(new
@@ -40,9 +40,9 @@ public class ReIndexEndpoint : ICarterModule
 
         // Re-index single event
         app.MapPost("api/admin/events/reindex/{eventId:guid}", async (
-            Guid                 eventId,
+            Guid eventId,
             IEventReIndexService reIndexService,
-            CancellationToken    ct) =>
+            CancellationToken ct) =>
         {
             await reIndexService.ReIndexOneAsync(eventId, ct);
             return Results.Ok(new

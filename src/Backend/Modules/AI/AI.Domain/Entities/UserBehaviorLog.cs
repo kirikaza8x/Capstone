@@ -12,12 +12,12 @@ namespace AI.Domain.Entities;
 /// </summary>
 public class UserBehaviorLog : AggregateRoot<Guid>
 {
-    public Guid     UserId     { get; private set; }
-    public string   ActionType { get; private set; } = default!;
-    public string   TargetId   { get; private set; } = default!;
-    public string   TargetType { get; private set; } = default!;
-    public string?  SessionId  { get; private set; }
-    public string?  DeviceType { get; private set; }
+    public Guid UserId { get; private set; }
+    public string ActionType { get; private set; } = default!;
+    public string TargetId { get; private set; } = default!;
+    public string TargetType { get; private set; } = default!;
+    public string? SessionId { get; private set; }
+    public string? DeviceType { get; private set; }
     public DateTime OccurredAt { get; private set; }
 
     private Dictionary<string, string> _metadata = new();
@@ -26,12 +26,12 @@ public class UserBehaviorLog : AggregateRoot<Guid>
     private UserBehaviorLog() { }
 
     public static UserBehaviorLog Create(
-        Guid   userId,
+        Guid userId,
         string actionType,
         string targetId,
         string targetType,
         IReadOnlyDictionary<string, string>? metadata = null,
-        string? sessionId  = null,
+        string? sessionId = null,
         string? deviceType = null)
     {
         if (userId == Guid.Empty)
@@ -47,15 +47,15 @@ public class UserBehaviorLog : AggregateRoot<Guid>
 
         var log = new UserBehaviorLog
         {
-            Id         = Guid.NewGuid(),
-            UserId     = userId,
+            Id = Guid.NewGuid(),
+            UserId = userId,
             ActionType = normalizedAction,
-            TargetId   = targetId.Trim(),
+            TargetId = targetId.Trim(),
             TargetType = targetType.Trim().ToLowerInvariant(),
-            SessionId  = sessionId,
+            SessionId = sessionId,
             DeviceType = deviceType?.Trim().ToLowerInvariant(),
             OccurredAt = DateTime.UtcNow,
-            _metadata  = metadata is not null
+            _metadata = metadata is not null
                 ? metadata.ToDictionary(
                     k => k.Key.Trim().ToLowerInvariant(),
                     v => v.Value.Trim())
@@ -63,13 +63,13 @@ public class UserBehaviorLog : AggregateRoot<Guid>
         };
 
         log.RaiseDomainEvent(new BehaviorLogCreatedEvent(
-            LogId:      log.Id,
-            UserId:     log.UserId,
+            LogId: log.Id,
+            UserId: log.UserId,
             ActionType: log.ActionType,
-            TargetId:   log.TargetId,
+            TargetId: log.TargetId,
             TargetType: log.TargetType,
             OccurredAt: log.OccurredAt,
-            Metadata:   log.Metadata
+            Metadata: log.Metadata
         ));
 
         return log;

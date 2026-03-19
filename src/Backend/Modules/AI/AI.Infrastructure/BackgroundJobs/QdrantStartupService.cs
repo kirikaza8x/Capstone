@@ -21,8 +21,8 @@ public sealed class QdrantStartupService : IHostedService
         IOptions<QdrantConfig> config)
     {
         _scopeFactory = scopeFactory;
-        _logger       = logger;
-        _config       = config.Value;
+        _logger = logger;
+        _config = config.Value;
     }
 
     public Task StartAsync(CancellationToken ct)
@@ -44,7 +44,7 @@ public sealed class QdrantStartupService : IHostedService
             {
                 await using var scope = _scopeFactory.CreateAsyncScope();
 
-                var eventRepo    = scope.ServiceProvider.GetRequiredService<IEventVectorRepository>();
+                var eventRepo = scope.ServiceProvider.GetRequiredService<IEventVectorRepository>();
                 var behaviorRepo = scope.ServiceProvider.GetRequiredService<IUserBehaviorVectorRepository>();
 
                 await eventRepo.EnsureCollectionAsync(ct);

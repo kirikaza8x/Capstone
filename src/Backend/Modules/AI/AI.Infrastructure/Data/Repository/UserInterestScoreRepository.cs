@@ -90,7 +90,7 @@ public class UserInterestScoreRepository : RepositoryBase<UserInterestScore, Gui
                 var tracked = _dbContext.ChangeTracker
                     .Entries<UserInterestScore>()
                     .FirstOrDefault(e =>
-                        e.Entity.UserId   == userId &&
+                        e.Entity.UserId == userId &&
                         e.Entity.Category == normalizedCategory &&
                         e.Entity.IsActive)
                     ?.Entity;
@@ -104,7 +104,7 @@ public class UserInterestScoreRepository : RepositoryBase<UserInterestScore, Gui
                 // Query with tracking so EF owns the instance
                 var existing = await _dbSet
                     .FirstOrDefaultAsync(x =>
-                        x.UserId   == userId &&
+                        x.UserId == userId &&
                         x.Category == normalizedCategory &&
                         x.IsActive, ct);
 
@@ -120,7 +120,7 @@ public class UserInterestScoreRepository : RepositoryBase<UserInterestScore, Gui
             }
             catch (DbUpdateException ex) when (
                 ex.InnerException?.Message.Contains("duplicate") == true ||
-                ex.InnerException?.Message.Contains("unique")    == true)
+                ex.InnerException?.Message.Contains("unique") == true)
             {
                 _dbContext.ChangeTracker.Clear();
 
@@ -206,9 +206,9 @@ public class UserInterestScoreRepository : RepositoryBase<UserInterestScore, Gui
     public async Task<Dictionary<string, object>> GetAggregateStatsAsync(
         CancellationToken ct = default)
     {
-        var totalUsers      = await _dbSet.Select(x => x.UserId).Distinct().CountAsync(ct);
+        var totalUsers = await _dbSet.Select(x => x.UserId).Distinct().CountAsync(ct);
         var totalCategories = await _dbSet.Select(x => x.Category).Distinct().CountAsync(ct);
-        var avgScore        = await _dbSet.AverageAsync(x => (double?)x.Score) ?? 0;
+        var avgScore = await _dbSet.AverageAsync(x => (double?)x.Score) ?? 0;
 
         return new Dictionary<string, object>
         {

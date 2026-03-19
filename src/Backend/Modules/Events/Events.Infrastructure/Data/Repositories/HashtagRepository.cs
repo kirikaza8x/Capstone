@@ -27,7 +27,7 @@ public class HashtagRepository(EventsDbContext context)
             return new List<string>();
 
         return await _context.Hashtags
-            .Where(h => ids.Contains(h.Id) && h.IsActive)  
+            .Where(h => ids.Contains(h.Id) && h.IsActive)
             .Select(h => h.Name)
             .ToListAsync();
     }

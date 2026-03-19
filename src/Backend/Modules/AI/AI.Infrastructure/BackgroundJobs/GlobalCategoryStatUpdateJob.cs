@@ -35,7 +35,7 @@ public sealed class GlobalCategoryStatUpdateJob : BackgroundService
         ILogger<GlobalCategoryStatUpdateJob> logger)
     {
         _scopeFactory = scopeFactory;
-        _logger       = logger;
+        _logger = logger;
     }
 
     protected override async Task ExecuteAsync(CancellationToken ct)
@@ -63,8 +63,8 @@ public sealed class GlobalCategoryStatUpdateJob : BackgroundService
 
     private async Task RunAsync(CancellationToken ct)
     {
-        await using var scope   = _scopeFactory.CreateAsyncScope();
-        var dbContext           = scope.ServiceProvider.GetRequiredService<AIModuleDbContext>();
+        await using var scope = _scopeFactory.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AIModuleDbContext>();
 
         _logger.LogInformation("Running GlobalCategoryStat update...");
 
@@ -74,10 +74,10 @@ public sealed class GlobalCategoryStatUpdateJob : BackgroundService
             .GroupBy(s => s.Category)
             .Select(g => new
             {
-                Category          = g.Key,
-                TotalScore        = g.Sum(s => s.Score),
+                Category = g.Key,
+                TotalScore = g.Sum(s => s.Score),
                 TotalInteractions = g.Sum(s => s.TotalInteractions),
-                UserCount         = g.Count()
+                UserCount = g.Count()
             })
             .ToListAsync(ct);
 
@@ -95,7 +95,7 @@ public sealed class GlobalCategoryStatUpdateJob : BackgroundService
         var existingStats = await dbContext.Set<GlobalCategoryStat>()
             .ToDictionaryAsync(s => s.Category, ct);
 
-        var toAdd    = new List<GlobalCategoryStat>();
+        var toAdd = new List<GlobalCategoryStat>();
         var toUpdate = new List<GlobalCategoryStat>();
 
         // ── 4. Apply decay to all existing stats first ────────────
@@ -109,7 +109,7 @@ public sealed class GlobalCategoryStatUpdateJob : BackgroundService
         foreach (var agg in categoryAggregates)
         {
             var normalised = (agg.TotalScore / maxScore) * 100.0;
-            var rawScore   = agg.TotalScore;
+            var rawScore = agg.TotalScore;
 
             if (existingStats.TryGetValue(agg.Category, out var existing))
             {
@@ -119,10 +119,10 @@ public sealed class GlobalCategoryStatUpdateJob : BackgroundService
             else
             {
                 toAdd.Add(GlobalCategoryStat.Create(
-                    category:  agg.Category,
-                    score:     normalised,
-                    count:     agg.TotalInteractions,
-                    rawScore:  rawScore
+                    category: agg.Category,
+                    score: normalised,
+                    count: agg.TotalInteractions,
+                    rawScore: rawScore
                 ));
             }
         }

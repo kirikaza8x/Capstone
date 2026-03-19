@@ -16,10 +16,10 @@ public class RecommendationsEndpoint : ICarterModule
             Guid userId,
             ISender sender,
             CancellationToken cancellationToken,
-            int  topN       = 20,
+            int topN = 20,
             bool futureOnly = false) =>
         {
-            var query  = new GetRecommendationsQuery(userId, topN, futureOnly);
+            var query = new GetRecommendationsQuery(userId, topN, futureOnly);
             var result = await sender.Send(query, cancellationToken);
             return result.ToOk();
         })

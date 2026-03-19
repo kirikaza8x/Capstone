@@ -67,7 +67,7 @@ public static class DependencyInjection
         services.AddDbContext<AIModuleDbContext>((sp, options) =>
         {
             var dataSource = sp.GetRequiredService<NpgsqlDataSource>();
-            var dbConfig   = sp.GetRequiredService<IOptions<DatabaseConfig>>().Value;
+            var dbConfig = sp.GetRequiredService<IOptions<DatabaseConfig>>().Value;
 
             options.UseNpgsql(dataSource, npgsqlOptions =>
             {
@@ -95,9 +95,9 @@ public static class DependencyInjection
         services.AddSingleton(qdrantConfig);
 
         services.AddSingleton(_ => new QdrantClient(
-            host:   qdrantConfig.Host,
-            port:   qdrantConfig.Port,
-            https:  qdrantConfig.UseHttps,
+            host: qdrantConfig.Host,
+            port: qdrantConfig.Port,
+            https: qdrantConfig.UseHttps,
             apiKey: string.IsNullOrWhiteSpace(qdrantConfig.ApiKey) ? null : qdrantConfig.ApiKey
         ));
 
@@ -107,10 +107,10 @@ public static class DependencyInjection
         // Ensures Qdrant collections + indexes exist before app accepts traffic
         services.AddHostedService<QdrantStartupService>();
         services.AddHostedService<BackgroundJobs.EventReIndexJob>();
- 
+
         // Updates GlobalCategoryStat every 6 hours for cold-start recommendations
         services.AddHostedService<BackgroundJobs.GlobalCategoryStatUpdateJob>();
- 
+
         // Re-index service — shared by job and manual admin endpoint
         services.AddScoped<IEventReIndexService, EventReIndexService>();
 
@@ -125,7 +125,7 @@ public static class DependencyInjection
         services.AddHttpClient<IEmbeddingService, HttpEmbeddingService>(client =>
         {
             client.BaseAddress = new Uri(embeddingOptions.BaseUrl);
-            client.Timeout     = TimeSpan.FromSeconds(embeddingOptions.TimeoutSeconds);
+            client.Timeout = TimeSpan.FromSeconds(embeddingOptions.TimeoutSeconds);
             client.DefaultRequestHeaders.Add("Accept", "application/json");
         });
 

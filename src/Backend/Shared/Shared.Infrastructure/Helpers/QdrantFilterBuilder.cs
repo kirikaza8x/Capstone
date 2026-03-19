@@ -23,7 +23,7 @@ namespace Shared.Infrastructure.Qdrant.Helpers;
 /// </summary>
 public sealed class QdrantFilterBuilder
 {
-    private readonly List<Condition> _must   = new();
+    private readonly List<Condition> _must = new();
     private readonly List<Condition> _should = new();
     private readonly List<Condition> _mustNot = new();
 
@@ -46,7 +46,7 @@ public sealed class QdrantFilterBuilder
         {
             Field = new FieldCondition
             {
-                Key   = field,
+                Key = field,
                 Match = new Match { Keyword = value.Trim().ToLowerInvariant() }
             }
         };
@@ -81,7 +81,7 @@ public sealed class QdrantFilterBuilder
             {
                 Field = new FieldCondition
                 {
-                    Key   = field,
+                    Key = field,
                     Match = new Match { Keyword = val.Trim().ToLowerInvariant() }
                 }
             });
@@ -108,7 +108,7 @@ public sealed class QdrantFilterBuilder
         {
             Field = new FieldCondition
             {
-                Key   = field,
+                Key = field,
                 Range = new QdrantRange { Gte = ((DateTimeOffset)after.Value).ToUnixTimeSeconds() }
             }
         };
@@ -129,7 +129,7 @@ public sealed class QdrantFilterBuilder
         {
             Field = new FieldCondition
             {
-                Key   = field,
+                Key = field,
                 Range = new QdrantRange { Lte = ((DateTimeOffset)before.Value).ToUnixTimeSeconds() }
             }
         };
@@ -171,8 +171,8 @@ public sealed class QdrantFilterBuilder
             return null;
 
         var filter = new Filter();
-        foreach (var c in _must)    filter.Must.Add(c);
-        foreach (var c in _should)  filter.Should.Add(c);
+        foreach (var c in _must) filter.Must.Add(c);
+        foreach (var c in _should) filter.Should.Add(c);
         foreach (var c in _mustNot) filter.MustNot.Add(c);
         return filter;
     }
@@ -182,6 +182,6 @@ public sealed class QdrantFilterBuilder
     private void Add(Condition condition, bool must)
     {
         if (must) _must.Add(condition);
-        else      _should.Add(condition);
+        else _should.Add(condition);
     }
 }

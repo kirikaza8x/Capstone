@@ -19,7 +19,7 @@ namespace AI.Infrastructure.Qdrant;
 public sealed class EventVectorRepository : QdrantRepositoryBase, IEventVectorRepository
 {
     protected override string CollectionName { get; }
-    protected override int    VectorSize     { get; }
+    protected override int VectorSize { get; }
 
     public EventVectorRepository(
         QdrantClient client,
@@ -29,7 +29,7 @@ public sealed class EventVectorRepository : QdrantRepositoryBase, IEventVectorRe
     {
         var col = config.Get("Events");
         CollectionName = col.Name;
-        VectorSize     = col.VectorSize;
+        VectorSize = col.VectorSize;
     }
 
     // ── Collection Setup ──────────────────────────────────────────
@@ -37,8 +37,8 @@ public sealed class EventVectorRepository : QdrantRepositoryBase, IEventVectorRe
     public override async Task EnsureCollectionAsync(CancellationToken ct = default)
     {
         await base.EnsureCollectionAsync(ct);
-        await CreatePayloadIndexAsync("category", PayloadSchemaType.Keyword,  ct);
-        await CreatePayloadIndexAsync("hashtags", PayloadSchemaType.Keyword,  ct);
+        await CreatePayloadIndexAsync("category", PayloadSchemaType.Keyword, ct);
+        await CreatePayloadIndexAsync("hashtags", PayloadSchemaType.Keyword, ct);
         await CreatePayloadIndexAsync("start_at", PayloadSchemaType.Datetime, ct);
     }
 
@@ -46,8 +46,8 @@ public sealed class EventVectorRepository : QdrantRepositoryBase, IEventVectorRe
 
     public async Task UpsertEventAsync(
         EventVectorPayload evt,
-        float[]            embedding,
-        CancellationToken  ct = default)
+        float[] embedding,
+        CancellationToken ct = default)
     {
         await UpsertRawAsync(evt.EventId, embedding, BuildPayload(evt), ct);
         Logger.LogDebug("Upserted event vector {EventId}", evt.EventId);
@@ -65,13 +65,13 @@ public sealed class EventVectorRepository : QdrantRepositoryBase, IEventVectorRe
     // ── Read ──────────────────────────────────────────────────────
 
     public async Task<IReadOnlyList<EventSearchResult>> SearchSimilarAsync(
-        float[]                queryEmbedding,
-        int                    limit            = 20,
-        float                  scoreThreshold   = 0.3f,
+        float[] queryEmbedding,
+        int limit = 20,
+        float scoreThreshold = 0.3f,
         IReadOnlyList<string>? filterCategories = null,
-        IReadOnlyList<string>? filterHashtags   = null,
-        DateTime?              afterDate        = null,
-        CancellationToken      ct               = default)
+        IReadOnlyList<string>? filterHashtags = null,
+        DateTime? afterDate = null,
+        CancellationToken ct = default)
     {
         var filter = QdrantFilterBuilder.Must()
             .KeywordAny("category", filterCategories)
@@ -92,16 +92,16 @@ public sealed class EventVectorRepository : QdrantRepositoryBase, IEventVectorRe
     private static IDictionary<string, Value> BuildPayload(EventVectorPayload evt) =>
         new Dictionary<string, Value>
         {
-            ["event_id"]   = ToQdrantValue(evt.EventId),
-            ["title"]      = ToQdrantValue(evt.Title),
-            ["category"]   = ToQdrantValue(evt.Categories
+            ["event_id"] = ToQdrantValue(evt.EventId),
+            ["title"] = ToQdrantValue(evt.Title),
+            ["category"] = ToQdrantValue(evt.Categories
                                 .Select(c => c.ToLowerInvariant())
                                 .ToList()),
-            ["hashtags"]   = ToQdrantValue(evt.Hashtags
+            ["hashtags"] = ToQdrantValue(evt.Hashtags
                                 .Select(h => h.ToLowerInvariant())
                                 .ToList()),
-            ["start_at"]   = ToQdrantValue(evt.EventStartAt),
-            ["min_price"]  = ToQdrantValue(evt.MinPrice?.ToString() ?? ""),
+            ["start_at"] = ToQdrantValue(evt.EventStartAt),
+            ["min_price"] = ToQdrantValue(evt.MinPrice?.ToString() ?? ""),
             ["banner_url"] = ToQdrantValue(evt.BannerUrl ?? ""),
         };
 
@@ -109,14 +109,14 @@ public sealed class EventVectorRepository : QdrantRepositoryBase, IEventVectorRe
     {
         var r = new QdrantPayloadReader(hit.Payload);
         return new EventSearchResult(
-            EventId:      r.GetGuid("event_id"),
-            Score:        hit.Score,
-            Title:        r.GetString("title"),
-            Categories:   r.GetStringList("category"),
-            Hashtags:     r.GetStringList("hashtags"),
+            EventId: r.GetGuid("event_id"),
+            Score: hit.Score,
+            Title: r.GetString("title"),
+            Categories: r.GetStringList("category"),
+            Hashtags: r.GetStringList("hashtags"),
             EventStartAt: r.GetDateTime("start_at"),
-            MinPrice:     r.GetDecimal("min_price"),
-            BannerUrl:    r.GetStringOrNull("banner_url")
+            MinPrice: r.GetDecimal("min_price"),
+            BannerUrl: r.GetStringOrNull("banner_url")
         );
     }
 }

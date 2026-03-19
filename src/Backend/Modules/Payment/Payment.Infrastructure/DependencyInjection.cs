@@ -12,8 +12,8 @@ using Shared.Domain.Data.Repositories;
 using Shared.Infrastructure.Configs;
 using Shared.Infrastructure.Configs.Database;
 using Shared.Infrastructure.Data.Seeds;
-using Microsoft.Extensions.Options;   
-namespace  Payments.Infrastructure
+using Microsoft.Extensions.Options;
+namespace Payments.Infrastructure
 {
 
     public static class DependencyInjection
@@ -55,7 +55,7 @@ namespace  Payments.Infrastructure
                 .AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
             });
 
-            services.AddScoped<IVnPayService,VnPayService>();
+            services.AddScoped<IVnPayService, VnPayService>();
 
             // Public Api
             return services;

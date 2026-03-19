@@ -26,7 +26,7 @@ public sealed class EventReIndexJob : BackgroundService
         ILogger<EventReIndexJob> logger)
     {
         _scopeFactory = scopeFactory;
-        _logger       = logger;
+        _logger = logger;
     }
 
     protected override async Task ExecuteAsync(CancellationToken ct)

@@ -14,7 +14,7 @@ namespace Events.Domain.DomainEvents
         IReadOnlyList<string> Hashtags,
         bool IsActive,
         DateTime CreatedAt,
-        DateTime?         EventStartAt   
+        DateTime? EventStartAt
     ) : DomainEvent;
 
     /// <summary>

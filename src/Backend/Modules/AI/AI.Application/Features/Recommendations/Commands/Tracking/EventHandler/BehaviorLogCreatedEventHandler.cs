@@ -14,9 +14,9 @@ namespace AI.Application.Features.Tracking.EventHandlers;
 /// RUNS ALONGSIDE BehaviorLogEmbeddingHandler — MediatR dispatches both.
 /// </summary>
 public sealed class BehaviorLogCreatedEventHandler(
-    IUserInterestScoreRepository            scoreRepo,
-    IInteractionWeightRepository            weightRepo,
-    IAiUnitOfWork                           unitOfWork,
+    IUserInterestScoreRepository scoreRepo,
+    IInteractionWeightRepository weightRepo,
+    IAiUnitOfWork unitOfWork,
     ILogger<BehaviorLogCreatedEventHandler> logger)
     : IDomainEventHandler<BehaviorLogCreatedEvent>
 {
@@ -40,14 +40,14 @@ public sealed class BehaviorLogCreatedEventHandler(
 
             // Falls back to 1.0 if action type not seeded in InteractionWeight yet
             var weightEntity = await weightRepo.GetByActionTypeAsync(@event.ActionType, ct: ct);
-            var points       = weightEntity?.Weight ?? 1.0;
+            var points = weightEntity?.Weight ?? 1.0;
 
             // Stages changes in EF change tracker — does NOT save
             await scoreRepo.BulkUpsertWithDecayAsync(
-                userId:          @event.UserId,
+                userId: @event.UserId,
                 categoryWeights: categories.ToDictionary(c => c, _ => points),
-                halfLifeDays:    InterestHalfLifeDays,
-                ct:              ct
+                halfLifeDays: InterestHalfLifeDays,
+                ct: ct
             );
 
             await unitOfWork.SaveChangesAsync(ct);

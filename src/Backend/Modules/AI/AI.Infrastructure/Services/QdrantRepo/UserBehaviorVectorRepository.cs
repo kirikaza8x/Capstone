@@ -23,7 +23,7 @@ namespace AI.Infrastructure.Qdrant;
 public sealed class UserBehaviorVectorRepository : QdrantRepositoryBase, IUserBehaviorVectorRepository
 {
     protected override string CollectionName { get; }
-    protected override int    VectorSize     { get; }
+    protected override int VectorSize { get; }
 
     public UserBehaviorVectorRepository(
         QdrantClient client,
@@ -33,7 +33,7 @@ public sealed class UserBehaviorVectorRepository : QdrantRepositoryBase, IUserBe
     {
         var col = config.Get("UserBehavior");
         CollectionName = col.Name;
-        VectorSize     = col.VectorSize;
+        VectorSize = col.VectorSize;
     }
 
     // ── Collection Setup ──────────────────────────────────────────
@@ -42,19 +42,19 @@ public sealed class UserBehaviorVectorRepository : QdrantRepositoryBase, IUserBe
     {
         await base.EnsureCollectionAsync(ct);
 
-        await CreatePayloadIndexAsync("user_id",     PayloadSchemaType.Keyword,  ct);
-        await CreatePayloadIndexAsync("action_type", PayloadSchemaType.Keyword,  ct);
+        await CreatePayloadIndexAsync("user_id", PayloadSchemaType.Keyword, ct);
+        await CreatePayloadIndexAsync("action_type", PayloadSchemaType.Keyword, ct);
         await CreatePayloadIndexAsync("occurred_at", PayloadSchemaType.Datetime, ct);
-        await CreatePayloadIndexAsync("categories",  PayloadSchemaType.Keyword,  ct);
-        await CreatePayloadIndexAsync("hashtags",    PayloadSchemaType.Keyword,  ct);
+        await CreatePayloadIndexAsync("categories", PayloadSchemaType.Keyword, ct);
+        await CreatePayloadIndexAsync("hashtags", PayloadSchemaType.Keyword, ct);
     }
 
     // ── Write ─────────────────────────────────────────────────────
 
     public async Task UpsertBehaviorAsync(
         UserBehaviorVectorPayload log,
-        float[]                   embedding,
-        CancellationToken         ct = default)
+        float[] embedding,
+        CancellationToken ct = default)
     {
         await UpsertRawAsync(log.LogId, embedding, BuildPayload(log), ct);
         Logger.LogDebug(
@@ -77,10 +77,10 @@ public sealed class UserBehaviorVectorRepository : QdrantRepositoryBase, IUserBe
     /// by the user's UserInterestScore for that category.
     /// </summary>
     public async Task<IReadOnlyList<UserBehaviorVector>> GetRecentVectorsAsync(
-        Guid              userId,
-        int               limit = 50,
-        DateTime?         since = null,
-        CancellationToken ct    = default)
+        Guid userId,
+        int limit = 50,
+        DateTime? since = null,
+        CancellationToken ct = default)
     {
         var filter = QdrantFilterBuilder.Must()
             .Keyword("user_id", userId)
@@ -90,10 +90,10 @@ public sealed class UserBehaviorVectorRepository : QdrantRepositoryBase, IUserBe
         // Use RetrieveAsync via scroll-style search with zero vector
         // withVectors: true returns the actual float[] embeddings
         var points = await Client.SearchAsync(
-            collectionName:  CollectionName,
-            vector:          new float[VectorSize],  // zero vector — we want all matching, not similarity order
-            filter:          filter,
-            limit:           (ulong)limit,
+            collectionName: CollectionName,
+            vector: new float[VectorSize],  // zero vector — we want all matching, not similarity order
+            filter: filter,
+            limit: (ulong)limit,
             payloadSelector: true,
             vectorsSelector: true,                   // ← fetch raw vectors
             cancellationToken: ct
@@ -102,10 +102,10 @@ public sealed class UserBehaviorVectorRepository : QdrantRepositoryBase, IUserBe
         return points
             .Select(p =>
             {
-                var reader     = new QdrantPayloadReader(p.Payload);
-                var logId      = reader.GetGuid("log_id");
+                var reader = new QdrantPayloadReader(p.Payload);
+                var logId = reader.GetGuid("log_id");
                 var categories = reader.GetStringList("categories");
-                var vector     = p.Vectors?.Vector?.GetDenseVector()?.Data.ToArray()
+                var vector = p.Vectors?.Vector?.GetDenseVector()?.Data.ToArray()
                                  ?? Array.Empty<float>();
 
                 return new UserBehaviorVector(logId, categories, vector);
@@ -118,13 +118,13 @@ public sealed class UserBehaviorVectorRepository : QdrantRepositoryBase, IUserBe
     /// Find behavior logs most similar to a query vector, scoped to one user.
     /// </summary>
     public async Task<IReadOnlyList<BehaviorSearchResult>> SearchUserBehaviorAsync(
-        Guid              userId,
-        float[]           queryVector,
-        int               limit          = 50,
-        float             scoreThreshold = 0.3f,
-        string?           filterAction   = null,
-        DateTime?         afterDate      = null,
-        CancellationToken ct             = default)
+        Guid userId,
+        float[] queryVector,
+        int limit = 50,
+        float scoreThreshold = 0.3f,
+        string? filterAction = null,
+        DateTime? afterDate = null,
+        CancellationToken ct = default)
     {
         var filter = QdrantFilterBuilder.Must()
             .Keyword("user_id", userId)
@@ -144,11 +144,11 @@ public sealed class UserBehaviorVectorRepository : QdrantRepositoryBase, IUserBe
     /// Find behavior logs across ALL users — for collaborative filtering.
     /// </summary>
     public async Task<IReadOnlyList<BehaviorSearchResult>> SearchGlobalBehaviorAsync(
-        float[]           queryVector,
-        int               limit          = 100,
-        float             scoreThreshold = 0.4f,
-        string?           filterAction   = null,
-        CancellationToken ct             = default)
+        float[] queryVector,
+        int limit = 100,
+        float scoreThreshold = 0.4f,
+        string? filterAction = null,
+        CancellationToken ct = default)
     {
         var filter = QdrantFilterBuilder.Must()
             .Keyword("action_type", filterAction)
@@ -167,11 +167,11 @@ public sealed class UserBehaviorVectorRepository : QdrantRepositoryBase, IUserBe
     /// Used to seed UserInterestScore without a full ML pipeline.
     /// </summary>
     public async Task<IReadOnlyDictionary<string, int>> GetCategoryFrequencyAsync(
-        Guid              userId,
-        DateTime?         since        = null,
-        string?           filterAction = null,
-        int               sampleSize   = 200,
-        CancellationToken ct           = default)
+        Guid userId,
+        DateTime? since = null,
+        string? filterAction = null,
+        int sampleSize = 200,
+        CancellationToken ct = default)
     {
         var filter = QdrantFilterBuilder.Must()
             .Keyword("user_id", userId)
@@ -180,7 +180,7 @@ public sealed class UserBehaviorVectorRepository : QdrantRepositoryBase, IUserBe
             .Build();
 
         var zeroVector = new float[VectorSize];
-        var hits       = await SearchRawAsync(zeroVector, filter, sampleSize, ct);
+        var hits = await SearchRawAsync(zeroVector, filter, sampleSize, ct);
 
         return hits
             .SelectMany(h => new QdrantPayloadReader(h.Payload).GetStringList("categories"))
@@ -194,16 +194,16 @@ public sealed class UserBehaviorVectorRepository : QdrantRepositoryBase, IUserBe
     private static IDictionary<string, Value> BuildPayload(UserBehaviorVectorPayload log) =>
         new Dictionary<string, Value>
         {
-            ["log_id"]      = ToQdrantValue(log.LogId),
-            ["user_id"]     = ToQdrantValue(log.UserId),
+            ["log_id"] = ToQdrantValue(log.LogId),
+            ["user_id"] = ToQdrantValue(log.UserId),
             ["action_type"] = ToQdrantValue(log.ActionType),
-            ["target_id"]   = ToQdrantValue(log.TargetId),
+            ["target_id"] = ToQdrantValue(log.TargetId),
             ["target_type"] = ToQdrantValue(log.TargetType),
-            ["categories"]  = ToQdrantValue(log.Categories
+            ["categories"] = ToQdrantValue(log.Categories
                                 .Select(c => c.ToLowerInvariant()).ToList()),
-            ["hashtags"]    = ToQdrantValue(log.Hashtags
+            ["hashtags"] = ToQdrantValue(log.Hashtags
                                 .Select(h => h.ToLowerInvariant()).ToList()),
-            ["session_id"]  = ToQdrantValue(log.SessionId  ?? ""),
+            ["session_id"] = ToQdrantValue(log.SessionId ?? ""),
             ["device_type"] = ToQdrantValue(log.DeviceType ?? ""),
             ["occurred_at"] = ToQdrantValue(log.OccurredAt),
         };
@@ -212,13 +212,13 @@ public sealed class UserBehaviorVectorRepository : QdrantRepositoryBase, IUserBe
     {
         var r = new QdrantPayloadReader(hit.Payload);
         return new BehaviorSearchResult(
-            LogId:      r.GetGuid("log_id"),
-            UserId:     r.GetGuid("user_id"),
-            Score:      hit.Score,
+            LogId: r.GetGuid("log_id"),
+            UserId: r.GetGuid("user_id"),
+            Score: hit.Score,
             ActionType: r.GetString("action_type"),
-            TargetId:   r.GetString("target_id"),
+            TargetId: r.GetString("target_id"),
             Categories: r.GetStringList("categories"),
-            Hashtags:   r.GetStringList("hashtags"),
+            Hashtags: r.GetStringList("hashtags"),
             OccurredAt: r.GetDateTime("occurred_at")
         );
     }

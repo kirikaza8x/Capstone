@@ -13,9 +13,9 @@ namespace AI.Application.Services;
 /// Used by both the scheduled job and the manual admin endpoint.
 /// </summary>
 public sealed class EventReIndexService(
-    IEventMemberPublicApi  eventApi,
+    IEventMemberPublicApi eventApi,
     IEventVectorRepository eventVectorRepo,
-    IEmbeddingService      embeddingService,
+    IEmbeddingService embeddingService,
     ILogger<EventReIndexService> logger)
     : IEventReIndexService
 {
@@ -25,9 +25,9 @@ public sealed class EventReIndexService(
     {
         logger.LogInformation("Starting full event re-index...");
 
-        int page        = 1;
-        int totalCount  = 0;
-        int errorCount  = 0;
+        int page = 1;
+        int totalCount = 0;
+        int errorCount = 0;
 
         while (true)
         {
@@ -40,9 +40,9 @@ public sealed class EventReIndexService(
             // Build batch: embed all texts in one call (more efficient)
             var texts = events
                 .Select(e => EmbeddingTextBuilder.ForEvent(
-                    title:       e.Title,
-                    categories:  e.Categories.ToList() ?? new List<string>(),
-                    hashtags:    e.Hashtags.ToList()   ?? new List<string>(),
+                    title: e.Title,
+                    categories: e.Categories.ToList() ?? new List<string>(),
+                    hashtags: e.Hashtags.ToList() ?? new List<string>(),
                     description: null))
                 .ToList();
 
@@ -64,13 +64,13 @@ public sealed class EventReIndexService(
             var batch = events
                 .Select((e, i) => (
                     new EventVectorPayload(
-                        EventId:      e.Id,
-                        Title:        e.Title,
-                        Categories:   e.Categories?.ToList() ?? new List<string>(),
-                        Hashtags:     e.Hashtags?.ToList()   ?? new List<string>(),
+                        EventId: e.Id,
+                        Title: e.Title,
+                        Categories: e.Categories?.ToList() ?? new List<string>(),
+                        Hashtags: e.Hashtags?.ToList() ?? new List<string>(),
                         EventStartAt: e.EventStartAt ?? DateTime.UtcNow.AddYears(1),
-                        MinPrice:     e.MinPrice,
-                        BannerUrl:    e.BannerUrl
+                        MinPrice: e.MinPrice,
+                        BannerUrl: e.BannerUrl
                     ),
                     embeddings[i]
                 ))
@@ -105,7 +105,7 @@ public sealed class EventReIndexService(
         // (public API doesn't have GetByIdAsync — use GetAllForReIndexAsync page 1
         //  and find by ID, or add GetByIdAsync to the public API)
         var page1 = await eventApi.GetAllForReIndexAsync(1, 1000, ct);
-        var evt   = page1.FirstOrDefault(e => e.Id == eventId);
+        var evt = page1.FirstOrDefault(e => e.Id == eventId);
 
         if (evt is null)
         {
@@ -114,22 +114,22 @@ public sealed class EventReIndexService(
         }
 
         var text = EmbeddingTextBuilder.ForEvent(
-            title:       evt.Title,
-            categories:  evt.Categories.ToList() ?? new List<string>(),
-            hashtags:    evt.Hashtags .ToList()  ?? new List<string>(),
+            title: evt.Title,
+            categories: evt.Categories.ToList() ?? new List<string>(),
+            hashtags: evt.Hashtags.ToList() ?? new List<string>(),
             description: null);
 
         var embedding = await embeddingService.EmbedAsync(text, ct);
 
         await eventVectorRepo.UpsertEventAsync(
             new EventVectorPayload(
-                EventId:      evt.Id,
-                Title:        evt.Title,
-                Categories:   evt.Categories?.ToList() ?? new List<string>(),
-                Hashtags:     evt.Hashtags?.ToList()   ?? new List<string>(),
+                EventId: evt.Id,
+                Title: evt.Title,
+                Categories: evt.Categories?.ToList() ?? new List<string>(),
+                Hashtags: evt.Hashtags?.ToList() ?? new List<string>(),
                 EventStartAt: evt.EventStartAt ?? DateTime.UtcNow.AddYears(1),
-                MinPrice:     evt.MinPrice,
-                BannerUrl:    evt.BannerUrl
+                MinPrice: evt.MinPrice,
+                BannerUrl: evt.BannerUrl
             ),
             embedding, ct);
 

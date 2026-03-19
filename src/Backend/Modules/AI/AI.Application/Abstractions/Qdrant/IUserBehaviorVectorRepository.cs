@@ -12,8 +12,8 @@ public interface IUserBehaviorVectorRepository
 
     Task UpsertBehaviorAsync(
         UserBehaviorVectorPayload log,
-        float[]                   embedding,
-        CancellationToken         ct = default);
+        float[] embedding,
+        CancellationToken ct = default);
 
     /// <summary>
     /// Fetch raw embedding vectors for a user's recent behavior logs.
@@ -21,33 +21,33 @@ public interface IUserBehaviorVectorRepository
     /// Returns (LogId, Categories, Vector) — Categories needed for weighting by interest score.
     /// </summary>
     Task<IReadOnlyList<UserBehaviorVector>> GetRecentVectorsAsync(
-        Guid              userId,
-        int               limit = 50,
-        DateTime?         since = null,
-        CancellationToken ct    = default);
+        Guid userId,
+        int limit = 50,
+        DateTime? since = null,
+        CancellationToken ct = default);
 
     Task<IReadOnlyList<BehaviorSearchResult>> SearchUserBehaviorAsync(
-        Guid              userId,
-        float[]           queryVector,
-        int               limit          = 50,
-        float             scoreThreshold = 0.3f,
-        string?           filterAction   = null,
-        DateTime?         afterDate      = null,
-        CancellationToken ct             = default);
+        Guid userId,
+        float[] queryVector,
+        int limit = 50,
+        float scoreThreshold = 0.3f,
+        string? filterAction = null,
+        DateTime? afterDate = null,
+        CancellationToken ct = default);
 
     Task<IReadOnlyList<BehaviorSearchResult>> SearchGlobalBehaviorAsync(
-        float[]           queryVector,
-        int               limit          = 100,
-        float             scoreThreshold = 0.4f,
-        string?           filterAction   = null,
-        CancellationToken ct             = default);
+        float[] queryVector,
+        int limit = 100,
+        float scoreThreshold = 0.4f,
+        string? filterAction = null,
+        CancellationToken ct = default);
 
     Task<IReadOnlyDictionary<string, int>> GetCategoryFrequencyAsync(
-        Guid              userId,
-        DateTime?         since        = null,
-        string?           filterAction = null,
-        int               sampleSize   = 200,
-        CancellationToken ct           = default);
+        Guid userId,
+        DateTime? since = null,
+        string? filterAction = null,
+        int sampleSize = 200,
+        CancellationToken ct = default);
 
     Task DeleteAsync(Guid logId, CancellationToken ct = default);
     Task<int> CountAsync(CancellationToken ct = default);
@@ -57,7 +57,7 @@ public interface IUserBehaviorVectorRepository
 /// Raw behavior vector fetched from Qdrant for use in WeightedCentroid.
 /// </summary>
 public record UserBehaviorVector(
-    Guid         LogId,
+    Guid LogId,
     List<string> Categories,  // used to look up UserInterestScore weight
-    float[]      Vector        // raw 384-dim embedding
+    float[] Vector        // raw 384-dim embedding
 );

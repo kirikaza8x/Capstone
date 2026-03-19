@@ -28,8 +28,8 @@ namespace AI.Application.Features.Tracking.EventHandlers;
 /// must never break the main tracking flow.
 /// </summary>
 public sealed class BehaviorLogEmbeddingHandler(
-    IUserBehaviorVectorRepository        behaviorVectorRepo,
-    IEmbeddingService                    embeddingService,
+    IUserBehaviorVectorRepository behaviorVectorRepo,
+    IEmbeddingService embeddingService,
     ILogger<BehaviorLogEmbeddingHandler> logger)
     : IDomainEventHandler<BehaviorLogCreatedEvent>
 {
@@ -54,7 +54,7 @@ public sealed class BehaviorLogEmbeddingHandler(
                 actionType: @event.ActionType,
                 targetType: @event.TargetType,
                 categories: categories,
-                hashtags:   hashtags
+                hashtags: hashtags
             );
 
             if (string.IsNullOrWhiteSpace(text))
@@ -70,14 +70,14 @@ public sealed class BehaviorLogEmbeddingHandler(
 
             // ── 4. Upsert to Qdrant ───────────────────────────────
             var payload = new UserBehaviorVectorPayload(
-                LogId:      @event.LogId,
-                UserId:     @event.UserId,
+                LogId: @event.LogId,
+                UserId: @event.UserId,
                 ActionType: @event.ActionType,
-                TargetId:   @event.TargetId,
+                TargetId: @event.TargetId,
                 TargetType: @event.TargetType,
                 Categories: categories,
-                Hashtags:   hashtags,
-                SessionId:  null,   // not in domain event — add to BehaviorLogCreatedEvent if needed
+                Hashtags: hashtags,
+                SessionId: null,   // not in domain event — add to BehaviorLogCreatedEvent if needed
                 DeviceType: null,   // not in domain event — add to BehaviorLogCreatedEvent if needed
                 OccurredAt: @event.OccurredAt
             );

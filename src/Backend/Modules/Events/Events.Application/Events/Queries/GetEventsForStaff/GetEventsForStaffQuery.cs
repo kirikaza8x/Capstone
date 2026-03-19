@@ -8,8 +8,8 @@ namespace Events.Application.Events.Queries.GetEventsForStaff;
 public record GetEventsForStaffQuery : PagedQuery, IQuery<PagedResult<EventsForStaffResponse>>
 {
     public string? Title { get; init; }
-    
-    public string? Statuses { get; init; } 
+
+    public string? Statuses { get; init; }
 }
 
 public sealed record EventsForStaffResponse

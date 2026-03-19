@@ -71,8 +71,8 @@ public sealed class RecommendationAiService : IRecommendationAiService
 
         // GenerateStructuredAsync<T>(string userPrompt, string? systemPromptOverride, CancellationToken)
         var response = await _gemini.GenerateStructuredAsync<GeminiRecommendationResponse>(
-            userPrompt,              
-            systemPrompt,            
+            userPrompt,
+            systemPrompt,
             cancellationToken);
 
         if (response?.RankedIndexes == null)

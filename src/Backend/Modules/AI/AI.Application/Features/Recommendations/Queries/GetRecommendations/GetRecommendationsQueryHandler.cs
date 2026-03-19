@@ -19,20 +19,20 @@ namespace AI.Application.Features.Recommendations.Handlers;
 /// 3. COLD-START — brand new user, popularity-based
 /// </summary>
 public sealed class GetRecommendationsQueryHandler(
-    IUserBehaviorVectorRepository           behaviorVectorRepo,
-    IEventVectorRepository                  eventVectorRepo,
-    IUserInterestScoreRepository            interestScoreRepo,
-    IGlobalCategoryStatRepository           globalStatRepo,
+    IUserBehaviorVectorRepository behaviorVectorRepo,
+    IEventVectorRepository eventVectorRepo,
+    IUserInterestScoreRepository interestScoreRepo,
+    IGlobalCategoryStatRepository globalStatRepo,
     ILogger<GetRecommendationsQueryHandler> logger)
     : IQueryHandler<GetRecommendationsQuery, List<EventRecommendationResult>>
 {
     private const float ScoreThreshold = 0.3f;
-    private const int   MaxCategories  = 10;
-    private const int   ColdStartTopN  = 5;
-    private const int   CandidateCount = 50;
-    private const int   VectorDim      = 384;
-    private const int   MaxPerCategory = 3;
-    private const int   BehaviorLimit  = 50;
+    private const int MaxCategories = 10;
+    private const int ColdStartTopN = 5;
+    private const int CandidateCount = 50;
+    private const int VectorDim = 384;
+    private const int MaxPerCategory = 3;
+    private const int BehaviorLimit = 50;
 
     public async Task<Result<List<EventRecommendationResult>>> Handle(
         GetRecommendationsQuery request,
@@ -73,9 +73,9 @@ public sealed class GetRecommendationsQueryHandler(
         // Fetch raw behavior vectors — actual embeddings of what user engaged with
         var behaviorVectors = await behaviorVectorRepo.GetRecentVectorsAsync(
             userId: request.UserId,
-            limit:  BehaviorLimit,
-            since:  DateTime.UtcNow.AddDays(-90),
-            ct:     ct
+            limit: BehaviorLimit,
+            since: DateTime.UtcNow.AddDays(-90),
+            ct: ct
         );
 
         if (behaviorVectors.Count == 0)
@@ -83,10 +83,10 @@ public sealed class GetRecommendationsQueryHandler(
 
         // Load interest scores to weight each behavior vector
         var interestScores = await interestScoreRepo.GetTopCategoriesAsync(
-            userId:  request.UserId,
-            topN:    MaxCategories,
+            userId: request.UserId,
+            topN: MaxCategories,
             minScore: 0,
-            ct:      ct
+            ct: ct
         );
 
         var scoreByCategory = interestScores
@@ -126,10 +126,10 @@ public sealed class GetRecommendationsQueryHandler(
 
         var hits = await eventVectorRepo.SearchSimilarAsync(
             queryEmbedding: interestVector,
-            limit:          CandidateCount,
+            limit: CandidateCount,
             scoreThreshold: ScoreThreshold,
-            afterDate:      afterDate,
-            ct:             ct
+            afterDate: afterDate,
+            ct: ct
         );
 
         if (hits.Count == 0)
@@ -137,7 +137,7 @@ public sealed class GetRecommendationsQueryHandler(
 
         var ranked = RecommendationRanker.Rank(
             hits, scoreByCategory,
-            topN:           request.TopN,
+            topN: request.TopN,
             maxPerCategory: MaxPerCategory);
 
         return ranked
@@ -153,25 +153,25 @@ public sealed class GetRecommendationsQueryHandler(
         CancellationToken ct)
     {
         var topScores = await interestScoreRepo.GetTopCategoriesAsync(
-            userId:   request.UserId,
-            topN:     MaxCategories,
+            userId: request.UserId,
+            topN: MaxCategories,
             minScore: 0,
-            ct:       ct
+            ct: ct
         );
 
         if (topScores.Count == 0)
             return new List<EventRecommendationResult>();
 
         var categoryNames = topScores.Select(c => c.Category).ToList();
-        var afterDate     = request.FutureOnly ? DateTime.UtcNow : (DateTime?)null;
+        var afterDate = request.FutureOnly ? DateTime.UtcNow : (DateTime?)null;
 
         var hits = await eventVectorRepo.SearchSimilarAsync(
-            queryEmbedding:   new float[VectorDim],
-            limit:            CandidateCount,
-            scoreThreshold:   0f,
+            queryEmbedding: new float[VectorDim],
+            limit: CandidateCount,
+            scoreThreshold: 0f,
             filterCategories: categoryNames,
-            afterDate:        afterDate,
-            ct:               ct
+            afterDate: afterDate,
+            ct: ct
         );
 
         if (hits.Count == 0)
@@ -180,7 +180,7 @@ public sealed class GetRecommendationsQueryHandler(
         var categoryWeights = topScores.ToDictionary(s => s.Category, s => s.Score);
         var ranked = RecommendationRanker.Rank(
             hits, categoryWeights,
-            topN:           request.TopN,
+            topN: request.TopN,
             maxPerCategory: MaxPerCategory);
 
         return ranked
@@ -195,19 +195,19 @@ public sealed class GetRecommendationsQueryHandler(
         GetRecommendationsQuery request,
         CancellationToken ct)
     {
-        var popular   = await globalStatRepo.GetTopCategoriesAsync(ColdStartTopN);
+        var popular = await globalStatRepo.GetTopCategoriesAsync(ColdStartTopN);
         var afterDate = request.FutureOnly ? DateTime.UtcNow : (DateTime?)null;
 
         if (popular.Count == 0)
             return new List<EventRecommendationResult>();
 
         var hits = await eventVectorRepo.SearchSimilarAsync(
-            queryEmbedding:   new float[VectorDim],
-            limit:            request.TopN,
-            scoreThreshold:   0f,
+            queryEmbedding: new float[VectorDim],
+            limit: request.TopN,
+            scoreThreshold: 0f,
             filterCategories: popular.Select(c => c.Category).ToList(),
-            afterDate:        afterDate,
-            ct:               ct
+            afterDate: afterDate,
+            ct: ct
         );
 
         return hits

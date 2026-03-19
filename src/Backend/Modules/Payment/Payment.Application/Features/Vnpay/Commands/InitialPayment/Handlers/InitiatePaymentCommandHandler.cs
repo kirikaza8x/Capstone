@@ -17,7 +17,7 @@ public class InitiatePaymentCommandHandler : ICommandHandler<InitiatePaymentComm
 
     public Task<Result<InitiatePaymentResponseDto>> Handle(InitiatePaymentCommand command, CancellationToken cancellationToken)
     {
-        
+
 
         if (string.IsNullOrWhiteSpace(command.OrderId))
         {

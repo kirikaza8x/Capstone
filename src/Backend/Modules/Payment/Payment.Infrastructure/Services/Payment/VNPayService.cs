@@ -34,17 +34,17 @@ public class VnPayService : IVnPayService
 
         if (string.IsNullOrEmpty(_vnPay.Url) || string.IsNullOrEmpty(_vnPay.TmnCode) || string.IsNullOrEmpty(_vnPay.HashSecret))
             throw new InvalidOperationException("VNPay configuration is missing.");
-        
+
         if (amount <= 0) throw new ArgumentException("Amount must be greater than 0", nameof(amount));
         if (string.IsNullOrWhiteSpace(orderId)) throw new ArgumentException("OrderId is required", nameof(orderId));
 
         // VNPay expects amount in VND * 100 (integer)
         // var amountInt = (long)Math.Truncate(amount * 1000000M);
-    
+
         // var amountInt = (long)Math.Truncate(amount);
         var amountInt = (long)Math.Truncate(amount * 100M);
         var createDate = GetVietnamNow().ToString("yyyyMMddHHmmss");
-        
+
         var query = new SortedDictionary<string, string>(StringComparer.Ordinal)
         {
             ["vnp_Version"] = "2.1.0",
@@ -63,7 +63,7 @@ public class VnPayService : IVnPayService
 
         var sanitized = new SortedDictionary<string, string>(
             query.Where(kvp => !string.IsNullOrEmpty(kvp.Value))
-                 .ToDictionary(k => k.Key, v => v.Value), 
+                 .ToDictionary(k => k.Key, v => v.Value),
             StringComparer.Ordinal);
 
         var signData = string.Join("&", sanitized.Select(kvp => $"{WebUtility.UrlEncode(kvp.Key)}={WebUtility.UrlEncode(kvp.Value.Trim())}"));
@@ -88,7 +88,7 @@ public class VnPayService : IVnPayService
 
         var copy = new SortedDictionary<string, string>(
             queryParams.Where(kvp => kvp.Key != "vnp_SecureHash" && kvp.Key != "vnp_SecureHashType" && !string.IsNullOrEmpty(kvp.Value))
-                       .ToDictionary(k => k.Key, v => v.Value), 
+                       .ToDictionary(k => k.Key, v => v.Value),
             StringComparer.Ordinal);
 
         var signData = string.Join("&", copy.Select(kvp => $"{kvp.Key}={kvp.Value.Trim()}"));
@@ -147,7 +147,7 @@ public class VnPayService : IVnPayService
 
             var sortedParams = requestData.OrderBy(x => x.Key).ToList();
             var queryString = string.Join("&", sortedParams.Select(x => $"{x.Key}={x.Value}"));
-            
+
             requestData["vnp_SecureHash"] = HmacSHA512(_vnPay.HashSecret, queryString);
 
             using var httpClient = new HttpClient();
@@ -233,10 +233,10 @@ public class VnPayService : IVnPayService
     {
         var keyBytes = Encoding.UTF8.GetBytes(key);
         var inputBytes = Encoding.UTF8.GetBytes(data);
-        
+
         using var hmac = new HMACSHA512(keyBytes);
         var hashValue = hmac.ComputeHash(inputBytes);
-        
+
         var hash = new StringBuilder(hashValue.Length * 2);
         foreach (var b in hashValue)
         {
