@@ -1,6 +1,5 @@
 
 using Infrastructure.Payments;
-using MassTransit.Configuration;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -8,6 +7,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Payments.Application.Abstractions;
+using Payments.Domain.UOW;
+using Payments.Infrastructure.Data.UOW;
 using Payments.Infrastructure.Persistence.Contexts;
 using Shared.Domain.Data.Repositories;
 using Shared.Infrastructure.Configs;
@@ -54,7 +55,7 @@ namespace Payments.Infrastructure
                 .UseSnakeCaseNamingConvention()
                 .AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
             });
-
+            services.AddScoped<IPaymentUnitOfWork, PaymentUnitOfWork>();
             services.AddScoped<IVnPayService, VnPayService>();
 
             // Public Api

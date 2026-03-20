@@ -13,6 +13,7 @@ public record PaymentResponseResult(
     string? OrderId
 );
 
+
 /// <summary>
 /// Result of querying payment status from VNPay
 /// </summary>

@@ -1,11 +1,11 @@
 ﻿
+using System.Security.Cryptography;
 using Events.PublicApi.PublicApi;
 using Events.PublicApi.Records;
 using Shared.Application.Abstractions.Authentication;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Application.Abstractions.Time;
 using Shared.Domain.Abstractions;
-using System.Security.Cryptography;
 using Ticketing.Application.Abstractions.Locks;
 using Ticketing.Domain.Entities;
 using Ticketing.Domain.Errors;

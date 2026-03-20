@@ -46,7 +46,7 @@ internal sealed class EventTicketingPublicApi(EventsDbContext dbContext) : IEven
         // Build dictionary key = (sessionId, ticketTypeId)
         var result = new Dictionary<(Guid, Guid), EventTicketingItemDto>();
 
-        foreach(var row in rows)
+        foreach (var row in rows)
         {
             var isPurchasable =
                 row.Status == EventStatus.Published &&

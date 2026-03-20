@@ -8,16 +8,19 @@ jobs:
   check-migrations:
     runs-on: ubuntu-latest
     
-    env:
-      # We override your specific variable name here. 
-      # EF doesn't need a real DB to check 'has-pending-model-changes', 
-      # but it DOES need the string to not be empty/null.
-      Database__ConnectionString: "Server=localhost;Database=FakeDb;User Id=sa;Password=Password123!;TrustServerCertificate=True"
-
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
     
+    - name: Load Central Environment Variables
+      # This reads the .env.ci file, ignores empty lines, and pushes variables to the OS environment
+      run: |
+        while read -r line; do
+          if [[ -n "$line" && "$line" != /* ]]; then
+            echo "$line" >> $GITHUB_ENV
+          fi
+        done < .github/.env.ci
+
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
