@@ -74,7 +74,7 @@
 //         CancellationToken ct = default)
 //     {
 //         var searchTerm = query.ToLowerInvariant();
-        
+
 //         return await _dbSet
 //             .AsNoTracking()
 //             .Where(es => es.IsActive && 

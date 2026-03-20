@@ -1,6 +1,6 @@
+using AI.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using AI.Domain.Entities;
 
 namespace AI.Infrastructure.Persistence.Configs
 {

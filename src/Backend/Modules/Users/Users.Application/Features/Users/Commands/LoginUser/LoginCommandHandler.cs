@@ -75,19 +75,19 @@ public class LoginUserCommandHandler
 
         var accessToken = CreateAccessToken(user, roles);
 
-   //     _ = _bus.PublishAsync(new TrackUserActivityIntegrationEvent(
-   //    Id: Guid.NewGuid(),
-   //    OccurredOnUtc: DateTime.UtcNow,
-   //    UserId: user.Id,
-   //    ActionType: "login",
-   //    TargetId: user.Id.ToString(),
-   //    TargetType: "user",
-   //    Metadata: new Dictionary<string, string>
-   //    {
-   //         { "Device", deviceInfo.DeviceType ?? "Unknown" },
-   //         { "IpAddress", _currentUserService.IpAddress ?? "Unknown" }
-   //    }
-   //), cancellationToken);
+        //     _ = _bus.PublishAsync(new TrackUserActivityIntegrationEvent(
+        //    Id: Guid.NewGuid(),
+        //    OccurredOnUtc: DateTime.UtcNow,
+        //    UserId: user.Id,
+        //    ActionType: "login",
+        //    TargetId: user.Id.ToString(),
+        //    TargetType: "user",
+        //    Metadata: new Dictionary<string, string>
+        //    {
+        //         { "Device", deviceInfo.DeviceType ?? "Unknown" },
+        //         { "IpAddress", _currentUserService.IpAddress ?? "Unknown" }
+        //    }
+        //), cancellationToken);
 
         return Result.Success(
             BuildResponse(

@@ -1,6 +1,6 @@
 using Shared.Domain.DDD;
-using Users.Domain.Events;
 using Users.Domain.Enums;
+using Users.Domain.Events;
 
 namespace Users.Domain.Entities
 {

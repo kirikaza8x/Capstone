@@ -1,17 +1,14 @@
-# Core - RabbitMQ + Embeddings
+# Messaging
 aio-pika==9.3.0
-sentence-transformers==2.2.2
-huggingface-hub==0.19.4
-transformers==4.36.0
-torch==2.1.0
+
+# Machine Learning
+sentence-transformers==2.6.1
 numpy==1.26.0
 
-# HTTP API (for Swagger/testing)
+# API & Server
 fastapi==0.109.0
-uvicorn[standard]==0.27.0
-
-# Pydantic v1 (compatible with our message contracts)
+uvicorn==0.27.0
 pydantic==1.10.13
 
-# Utilities
+# Config
 python-dotenv==1.0.0

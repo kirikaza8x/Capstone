@@ -1,6 +1,6 @@
+using AutoMapper;
 using Carter;
 using MediatR;
-using AutoMapper;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

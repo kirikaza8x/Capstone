@@ -20,12 +20,12 @@ public interface IEventReadModelService
 /// No navigation properties, no domain logic.
 /// </summary>
 public record EventAiReadModel(
-    Guid         EventId,
-    string       Title,
-    string?      Description,
-    string?      BannerUrl,
+    Guid EventId,
+    string Title,
+    string? Description,
+    string? BannerUrl,
     List<string> CategoryNames,
     List<string> HashtagNames,
-    DateTime?    EventStartAt,
-    decimal?     MinPrice
+    DateTime? EventStartAt,
+    decimal? MinPrice
 );

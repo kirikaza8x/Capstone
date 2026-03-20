@@ -1,0 +1,92 @@
+# ─────────────────────────────────────────────────────────────
+# AIPromo - .NET Backend API
+# ─────────────────────────────────────────────────────────────
+
+services:
+  # ───────────────────────────────────────────────────────────
+  # Backend API (.NET)
+  # ───────────────────────────────────────────────────────────
+  backend-api:
+    build:
+      context: .
+      dockerfile: Api/Api/Dockerfile
+    image: capstone-backend:latest
+    container_name: AIPromo-api
+    env_file:
+      - .env
+    environment:
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Development}
+      # Database
+      - Database__ConnectionString=${DATABASE_CONNECTION_STRING}
+      - Database__MaxRetryCount=3
+      - Database__CommandTimeout=30
+      - Database__EnableDetailedErrors=true
+      - Database__EnableSensitiveDataLogging=false
+      # Redis
+      - Redis__Host=${REDIS_HOST}
+      - Redis__Port=${REDIS_PORT}
+      - Redis__Password=${REDIS_PASSWORD}
+      - Redis__InstanceName=${REDIS_INSTANCE_NAME}
+      # RabbitMQ
+      - MessageBroker__Host=${RABBITMQ_CONNECTION_STRING}
+      - MessageBroker__UserName=${RABBITMQ_USER}
+      - MessageBroker__Password=${RABBITMQ_PASS}
+      # JWT
+      - JwtConfigs__Secret=${JWT_SECRET}
+      - JwtConfigs__Issuer=${JWT_ISSUER}
+      - JwtConfigs__Audience=${JWT_AUDIENCE}
+      - JwtConfigs__ExpiryMinutes=${JWT_EXPIRY_MINUTES}
+      - JwtConfigs__RefreshTokenExpiryDays=${JWT_REFRESH_TOKEN_EXPIRY_DAYS}
+      # Gemini
+      - Gemini__ApiKey=${GEMINI_API_KEY}
+      - Gemini__Model=${GEMINI_MODEL}
+      # OpenRouter
+      - OpenRouter__ApiKey=${OPENROUTER_API_KEY}
+      - OpenRouter__Model=${OPENROUTER_MODEL}
+      # OAuth
+      - Authentication__Google__ServerClientId=${GOOGLE_CLIENT_ID}
+      - Authentication__Google__AndroidClientId=${GOOGLE_ANDROID_CLIENT_ID}
+      - Authentication__Facebook__ServerClientId=${FACEBOOK_CLIENT_ID}
+      - Authentication__Facebook__AndroidClientId=${FACEBOOK_ANDROID_CLIENT_ID}
+      # Gmail/SMTP
+      - Gmail__SmtpServer=${SMTP_SERVER}
+      - Gmail__SmtpPort=${SMTP_PORT}
+      - Gmail__SenderEmail=${SENDER_EMAIL}
+      - Gmail__SenderPassword=${SENDER_PASSWORD}
+      # Embedding Service
+      - Embedding__Queue__RequestQueue=${EMBEDDING_REQUEST_QUEUE}
+      - Embedding__Queue__ResponseQueue=${EMBEDDING_RESPONSE_QUEUE}
+      - Embedding__Queue__TimeoutSeconds=${EMBEDDING_TIMEOUT_SECONDS}
+      - Embedding__Http__BaseUrl=${EMBEDDING_BASE_URL}
+      - Embedding__Http__TimeoutSeconds=${EMBEDDING_TIMEOUT_SECONDS}
+      # Qdrant
+      - Qdrant__Host=${QDRANT_HOST}
+      - Qdrant__Port=${QDRANT_PORT}
+      - Qdrant__UseHttps=${QDRANT_USE_HTTPS}
+      - Qdrant__ApiKey=${QDRANT_API_KEY}
+      # MinIO
+      - MinIO__Endpoint=${MINIO_ENDPOINT}
+      - MinIO__AccessKey=${MINIO_ACCESS_KEY}
+      - MinIO__SecretKey=${MINIO_SECRET_KEY}
+      - MinIO__UseSsl=${MINIO_USE_SSL}
+      # Logging
+      - Logging__LogLevel__Default=${LOG_LEVEL_DEFAULT:-Information}
+      - Logging__LogLevel__Microsoft.AspNetCore=${LOG_LEVEL_MICROSOFT:-Warning}
+      - Logging__LogLevel__Microsoft.EntityFrameworkCore=${LOG_LEVEL_EF:-Warning}
+      - Logging__LogLevel__Quartz=${LOG_LEVEL_QUARTZ:-Warning}
+    ports:
+      - "${BACKEND_API_PORT:-5000}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+      minio:
+        condition: service_started
+    networks:
+      - aipromo-network
+    restart: unless-stopped

@@ -21,5 +21,5 @@ public record BehaviorLogPublishedIntegrationEvent(
     string TargetId,
     string TargetType,
     IReadOnlyDictionary<string, string>? Metadata,
-    string CorrelationId  
+    string CorrelationId
 ) : IntegrationEvent(Id, OccurredOnUtc);

@@ -1,0 +1,10 @@
+// version: 2
+// updates:
+//   - package-ecosystem: "nuget"
+//     directory: "/src/Backend" # Points it to where your code lives
+//     schedule:
+//       interval: "weekly"
+//     open-pull-requests-limit: 5
+//     ignore:
+//       - dependency-name: "*"
+//         update-types: ["version-update:semver-major"] # Ignores major breaking changes so it doesn't break your app

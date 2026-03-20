@@ -1,11 +1,11 @@
-﻿using MassTransit;
+﻿using System.Reflection;
+using MassTransit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Shared.Application.Abstractions.EventBus;
 using Shared.Infrastructure.Configs.MessageBroker;
 using Shared.Infrastructure.EventBus;
-using System.Reflection;
 
 namespace Shared.Infrastructure.Extensions;
 

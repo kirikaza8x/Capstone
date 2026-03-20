@@ -1,10 +1,10 @@
-using Shared.Domain.Abstractions;
-using AI.Application.Services;
 using AI.Application.Features.Tracking.Commands;
-using Shared.Application.Abstractions.Messaging;
-using AI.Domain.Repositories;
+using AI.Application.Services;
 using AI.Domain.Entities;
 using AI.Domain.Interfaces.UOW;
+using AI.Domain.Repositories;
+using Shared.Application.Abstractions.Messaging;
+using Shared.Domain.Abstractions;
 
 namespace AI.Application.Features.Tracking.Handlers
 {

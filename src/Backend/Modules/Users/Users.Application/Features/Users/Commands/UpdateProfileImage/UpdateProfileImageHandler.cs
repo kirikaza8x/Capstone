@@ -1,10 +1,10 @@
-using Users.Domain.Repositories;
-using Users.Domain.UOW;
+using Shared.Application.Abstractions.Messaging;
 using Shared.Application.Abstractions.Storage;
 using Shared.Domain.Abstractions;
 using Users.Application.Features.Users.Commands.Records;
 using Users.Application.Storage;
-using Shared.Application.Abstractions.Messaging;
+using Users.Domain.Repositories;
+using Users.Domain.UOW;
 
 namespace Users.Application.Features.Users.Commands.Handlers;
 

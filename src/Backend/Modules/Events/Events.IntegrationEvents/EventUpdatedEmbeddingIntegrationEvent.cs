@@ -2,7 +2,7 @@ using Shared.Application.Abstractions.EventBus;
 
 namespace Events.IntegrationEvents
 {
-    
+
 
     /// <summary>
     /// Published when an existing event is updated and needs its embedding refreshed.

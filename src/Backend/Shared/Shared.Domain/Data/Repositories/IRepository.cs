@@ -1,7 +1,7 @@
-﻿using Shared.Domain.DDD;
+﻿using System.Linq.Expressions;
+using Shared.Domain.DDD;
 using Shared.Domain.Pagination;
 using Shared.Domain.Queries;
-using System.Linq.Expressions;
 
 namespace Shared.Domain.Data.Repositories;
 

@@ -1,8 +1,8 @@
+using System.Text.Json;
 using AI.Application.Abstractions;
 using AI.Application.Features.Recommendations.DTOs;
 using Events.PublicApi.Records;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
 
 namespace AI.Infrastructure.ExternalServices;
 
@@ -71,8 +71,8 @@ public sealed class RecommendationAiService : IRecommendationAiService
 
         // GenerateStructuredAsync<T>(string userPrompt, string? systemPromptOverride, CancellationToken)
         var response = await _gemini.GenerateStructuredAsync<GeminiRecommendationResponse>(
-            userPrompt,              
-            systemPrompt,            
+            userPrompt,
+            systemPrompt,
             cancellationToken);
 
         if (response?.RankedIndexes == null)

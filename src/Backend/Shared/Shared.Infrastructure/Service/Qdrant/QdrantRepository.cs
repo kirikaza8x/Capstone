@@ -1,6 +1,6 @@
+using Microsoft.Extensions.Logging;
 using Qdrant.Client;
 using Qdrant.Client.Grpc;
-using Microsoft.Extensions.Logging;
 using Shared.Application.Abstractions.Qdrant;
 
 namespace Shared.Infrastructure.Qdrant;
@@ -24,7 +24,6 @@ public abstract class QdrantRepositoryBase : IQdrantRepository
     /// e.g. all-MiniLM-L6-v2 = 384, text-embedding-3-small = 1536
     /// </summary>
     protected abstract int VectorSize { get; }
-
     protected readonly QdrantClient Client;
     protected readonly ILogger Logger;
 
@@ -53,7 +52,7 @@ public abstract class QdrantRepositoryBase : IQdrantRepository
                 CollectionName,
                 new VectorParams
                 {
-                    Size     = (ulong)VectorSize,
+                    Size = (ulong)VectorSize,
                     Distance = Distance.Cosine
                 },
                 cancellationToken: ct
@@ -109,14 +108,14 @@ public abstract class QdrantRepositoryBase : IQdrantRepository
     /// Correct method name for Qdrant.Client v1.17: CreatePayloadIndexAsync.
     /// </summary>
     protected async Task CreatePayloadIndexAsync(
-        string            field,
+        string field,
         PayloadSchemaType schemaType,
         CancellationToken ct = default)
     {
         await Client.CreatePayloadIndexAsync(
             collectionName: CollectionName,
-            fieldName:      field,
-            schemaType:     schemaType,
+            fieldName: field,
+            schemaType: schemaType,
             cancellationToken: ct
         );
     }
@@ -146,7 +145,7 @@ public abstract class QdrantRepositoryBase : IQdrantRepository
         {
             var point = new PointStruct
             {
-                Id      = new PointId { Uuid = item.PointId.ToString() },
+                Id = new PointId { Uuid = item.PointId.ToString() },
                 Vectors = item.Vector,
                 Payload = { }
             };
@@ -166,16 +165,16 @@ public abstract class QdrantRepositoryBase : IQdrantRepository
     /// Note: SearchAsync will be deprecated in favour of QueryAsync in future Qdrant versions.
     /// </summary>
     protected async Task<IReadOnlyList<ScoredPoint>> SearchRawAsync(
-        float[]           queryVector,
-        Filter?           qdrantFilter,
-        int               limit,
+        float[] queryVector,
+        Filter? qdrantFilter,
+        int limit,
         CancellationToken ct)
     {
         return await Client.SearchAsync(
-            collectionName:  CollectionName,
-            vector:          queryVector,
-            filter:          qdrantFilter,
-            limit:           (ulong)limit,
+            collectionName: CollectionName,
+            vector: queryVector,
+            filter: qdrantFilter,
+            limit: (ulong)limit,
             payloadSelector: true,
             vectorsSelector: false,
             cancellationToken: ct
@@ -187,17 +186,17 @@ public abstract class QdrantRepositoryBase : IQdrantRepository
     /// where results need to be pulled from a different collection.
     /// </summary>
     protected async Task<IReadOnlyList<ScoredPoint>> SearchCrossRawAsync(
-        string            targetCollection,
-        float[]           queryVector,
-        Filter?           qdrantFilter,
-        int               limit,
+        string targetCollection,
+        float[] queryVector,
+        Filter? qdrantFilter,
+        int limit,
         CancellationToken ct)
     {
         return await Client.SearchAsync(
-            collectionName:  targetCollection,
-            vector:          queryVector,
-            filter:          qdrantFilter,
-            limit:           (ulong)limit,
+            collectionName: targetCollection,
+            vector: queryVector,
+            filter: qdrantFilter,
+            limit: (ulong)limit,
             payloadSelector: true,
             vectorsSelector: false,
             cancellationToken: ct
@@ -210,14 +209,14 @@ public abstract class QdrantRepositoryBase : IQdrantRepository
     /// </summary>
     protected static Value ToQdrantValue(object value) => value switch
     {
-        string s                 => new Value { StringValue = s },
-        bool b                   => new Value { BoolValue = b },
-        int i                    => new Value { IntegerValue = i },
-        long l                   => new Value { IntegerValue = l },
-        double d                 => new Value { DoubleValue = d },
-        float f                  => new Value { DoubleValue = f },
-        Guid g                   => new Value { StringValue = g.ToString() },
-        DateTime dt              => new Value { StringValue = dt.ToString("O") }, // ISO 8601
+        string s => new Value { StringValue = s },
+        bool b => new Value { BoolValue = b },
+        int i => new Value { IntegerValue = i },
+        long l => new Value { IntegerValue = l },
+        double d => new Value { DoubleValue = d },
+        float f => new Value { DoubleValue = f },
+        Guid g => new Value { StringValue = g.ToString() },
+        DateTime dt => new Value { StringValue = dt.ToString("O") }, // ISO 8601
         IEnumerable<string> list => new Value
         {
             ListValue = new ListValue

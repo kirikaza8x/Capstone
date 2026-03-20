@@ -1,7 +1,7 @@
-using Microsoft.OpenApi.Models;
-using Swashbuckle.AspNetCore.SwaggerGen;
-using Shared.Application.Dtos.Queries;
 using System.Text.Json;
+using Microsoft.OpenApi.Models;
+using Shared.Application.Dtos.Queries;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 public class FilterSchemaFilter : ISchemaFilter
 {

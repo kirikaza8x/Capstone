@@ -1,4 +1,5 @@
-﻿using Carter;
+﻿using System.Text.Json;
+using Carter;
 using Events.Application.Events.Commands.UpdateEventSpec;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
@@ -7,7 +8,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Shared.Api.Extensions;
 using Shared.Api.Results;
-using System.Text.Json;
 using Users.PublicApi.Constants;
 
 namespace Events.Api.Events.Patch;

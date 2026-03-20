@@ -12,11 +12,11 @@ public interface IUserBehaviorLogRepository : IRepository<UserBehaviorLog, Guid>
     // ─────────────────────────────────────────────────────────────
     // Basic Lookups
     // ─────────────────────────────────────────────────────────────
-    
+
     // ─────────────────────────────────────────────────────────────
     // User-Centric Queries
     // ─────────────────────────────────────────────────────────────
-    
+
     /// <summary>
     /// Fetches all raw logs for a user since a specific time.
     /// Used by enrichment pipeline to rebuild user embeddings.
@@ -52,7 +52,7 @@ public interface IUserBehaviorLogRepository : IRepository<UserBehaviorLog, Guid>
     // ─────────────────────────────────────────────────────────────
     // Event-Centric Queries (for embedding pipeline)
     // ─────────────────────────────────────────────────────────────
-    
+
     /// <summary>
     /// Gets all logs targeting a specific event.
     /// Used to measure event popularity / engagement signals.
@@ -71,7 +71,7 @@ public interface IUserBehaviorLogRepository : IRepository<UserBehaviorLog, Guid>
     // ─────────────────────────────────────────────────────────────
     // Background Job Queries
     // ─────────────────────────────────────────────────────────────
-    
+
     /// <summary>
     /// Fetches all raw logs since a specific time (e.g., Last 24 Hours).
     /// We need raw logs because "category" is inside Metadata JSON,
@@ -94,7 +94,7 @@ public interface IUserBehaviorLogRepository : IRepository<UserBehaviorLog, Guid>
     // ─────────────────────────────────────────────────────────────
     // Analytics
     // ─────────────────────────────────────────────────────────────
-    
+
     Task<long> GetTotalCountAsync(CancellationToken ct = default);
     Task<long> GetCountByActionTypeAsync(string actionType, CancellationToken ct = default);
     Task<long> GetCountByUserAsync(Guid userId, CancellationToken ct = default);

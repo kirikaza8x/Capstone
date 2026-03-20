@@ -1,12 +1,12 @@
+using AutoMapper;
+using FluentValidation;
+using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
 using Users.Application.Features.Users.Commands.Records;
 using Users.Application.Features.Users.Dtos;
+using Users.Domain.Enums;
 using Users.Domain.Repositories;
 using Users.Domain.UOW;
-using FluentValidation;
-using AutoMapper;
-using Users.Domain.Enums;
-using Shared.Application.Abstractions.Messaging;
 
 namespace Users.Application.Features.Users.Commands.Handlers;
 

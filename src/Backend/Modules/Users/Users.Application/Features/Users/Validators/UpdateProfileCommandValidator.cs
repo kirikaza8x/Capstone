@@ -1,5 +1,5 @@
-using Users.Application.Features.Users.Commands.Records;
 using FluentValidation;
+using Users.Application.Features.Users.Commands.Records;
 
 namespace Users.Application.Features.Users.Validators;
 

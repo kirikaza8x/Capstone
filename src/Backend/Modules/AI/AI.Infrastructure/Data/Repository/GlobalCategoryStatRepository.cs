@@ -1,8 +1,8 @@
+using AI.Domain.ReadModels;
+using AI.Domain.Repositories;
+using AI.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Shared.Infrastructure.Data;
-using AI.Domain.Repositories;
-using AI.Domain.ReadModels;
-using AI.Infrastructure.Data;
 
 namespace AI.Infrastructure.Repositories
 {

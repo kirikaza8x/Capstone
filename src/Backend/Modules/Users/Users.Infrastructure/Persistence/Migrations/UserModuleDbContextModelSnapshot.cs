@@ -693,145 +693,6 @@ namespace Users.Infrastructure.Persistence.Migrations
                     b.ToTable("user_session", "users");
                 });
 
-            modelBuilder.Entity("Users.Domain.Entities.Wallet", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
-
-                    b.Property<decimal>("Balance")
-                        .HasColumnType("numeric(18,2)")
-                        .HasColumnName("balance");
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<string>("CreatedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("created_by");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_active");
-
-                    b.Property<DateTime?>("ModifiedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("modified_at");
-
-                    b.Property<string>("ModifiedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("modified_by");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("status");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id")
-                        .HasName("pk_wallet");
-
-                    b.HasIndex("Status")
-                        .HasDatabaseName("ix_wallet_status");
-
-                    b.HasIndex("UserId")
-                        .IsUnique()
-                        .HasDatabaseName("ix_wallet_user_id");
-
-                    b.ToTable("wallet", "users");
-                });
-
-            modelBuilder.Entity("Users.Domain.Entities.WalletTransaction", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
-
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("numeric(18,2)")
-                        .HasColumnName("amount");
-
-                    b.Property<decimal>("BalanceAfter")
-                        .HasColumnType("numeric(18,2)")
-                        .HasColumnName("balance_after");
-
-                    b.Property<decimal>("BalanceBefore")
-                        .HasColumnType("numeric(18,2)")
-                        .HasColumnName("balance_before");
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<string>("CreatedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("created_by");
-
-                    b.Property<string>("Direction")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)")
-                        .HasColumnName("direction");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_active");
-
-                    b.Property<DateTime?>("ModifiedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("modified_at");
-
-                    b.Property<string>("ModifiedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("modified_by");
-
-                    b.Property<string>("Note")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("note");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("status");
-
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("type");
-
-                    b.Property<Guid>("WalletId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("wallet_id");
-
-                    b.HasKey("Id")
-                        .HasName("pk_wallet_transaction");
-
-                    b.HasIndex("CreatedAt")
-                        .HasDatabaseName("ix_wallet_transaction_created_at");
-
-                    b.HasIndex("Status")
-                        .HasDatabaseName("ix_wallet_transaction_status");
-
-                    b.HasIndex("WalletId")
-                        .HasDatabaseName("ix_wallet_transaction_wallet_id");
-
-                    b.ToTable("wallet_transaction", "users");
-                });
-
             modelBuilder.Entity("user_roles", b =>
                 {
                     b.Property<Guid>("user_id")
@@ -893,28 +754,6 @@ namespace Users.Infrastructure.Persistence.Migrations
                         .HasConstraintName("fk_otp_users_user_id");
                 });
 
-            modelBuilder.Entity("Users.Domain.Entities.Wallet", b =>
-                {
-                    b.HasOne("Users.Domain.Entities.User", "User")
-                        .WithOne("Wallet")
-                        .HasForeignKey("Users.Domain.Entities.Wallet", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_wallet_users_user_id");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Users.Domain.Entities.WalletTransaction", b =>
-                {
-                    b.HasOne("Users.Domain.Entities.Wallet", null)
-                        .WithMany("Transactions")
-                        .HasForeignKey("WalletId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_wallet_transaction_wallet_wallet_id");
-                });
-
             modelBuilder.Entity("user_roles", b =>
                 {
                     b.HasOne("Users.Domain.Entities.Role", null)
@@ -941,13 +780,6 @@ namespace Users.Infrastructure.Persistence.Migrations
                     b.Navigation("Otps");
 
                     b.Navigation("RefreshTokens");
-
-                    b.Navigation("Wallet");
-                });
-
-            modelBuilder.Entity("Users.Domain.Entities.Wallet", b =>
-                {
-                    b.Navigation("Transactions");
                 });
 #pragma warning restore 612, 618
         }
