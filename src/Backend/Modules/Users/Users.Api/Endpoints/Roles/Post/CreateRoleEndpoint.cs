@@ -1,12 +1,12 @@
 using Carter;
 using MediatR;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Shared.Api.Results;
 using Shared.Domain.Abstractions;
 using Users.Application.Features.Roles.Commands;
 using Users.Application.Features.Roles.Dtos;
-using Microsoft.AspNetCore.Builder;
 
 namespace Users.Api.Endpoints.Roles
 {

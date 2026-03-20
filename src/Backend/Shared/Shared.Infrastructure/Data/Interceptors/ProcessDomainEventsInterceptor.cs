@@ -1,9 +1,9 @@
+using System.Text.Json;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Shared.Domain.DDD;
 using Shared.Infrastructure.Outbox;
-using System.Text.Json;
 
 namespace Shared.Infrastructure.Data.Interceptors;
 

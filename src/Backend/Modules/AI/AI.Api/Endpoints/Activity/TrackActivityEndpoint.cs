@@ -1,3 +1,5 @@
+using AI.Application.Features.Recommendations.DTOs;
+using AI.Application.Features.Tracking.Commands;
 using Carter;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
@@ -6,8 +8,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Shared.Api.Results;
 using Shared.Domain.Abstractions;
-using AI.Application.Features.Recommendations.DTOs;
-using AI.Application.Features.Tracking.Commands;
 
 namespace AI.Api.Features.Activity
 {

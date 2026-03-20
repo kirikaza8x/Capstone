@@ -1,7 +1,7 @@
-using Microsoft.Extensions.Logging;
-using Shared.Application.Abstractions.Embbeding;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
+using Shared.Application.Abstractions.Embbeding;
 
 namespace AI.Infrastructure.Embedding;
 
@@ -27,7 +27,7 @@ public sealed class HttpEmbeddingService : IEmbeddingService
         HttpClient http,
         ILogger<HttpEmbeddingService> logger)
     {
-        _http   = http;
+        _http = http;
         _logger = logger;
     }
 
@@ -92,21 +92,21 @@ public sealed class HttpEmbeddingService : IEmbeddingService
     // ── Response DTOs — mirrors Python schemas exactly ────────────
 
     private sealed record GenerateEmbeddingResponse(
-        bool          Success,
-        string        Text,
-        List<float>   Embedding,
-        int           Dimension,
-        bool          Normalized,
-        string        Model
+        bool Success,
+        string Text,
+        List<float> Embedding,
+        int Dimension,
+        bool Normalized,
+        string Model
     );
 
     private sealed record BatchEmbeddingResponse(
-        bool              Success,
-        int               Count,
+        bool Success,
+        int Count,
         List<List<float>> Embeddings,
-        int               Dimension,
-        bool              Normalized,
-        string            Model
+        int Dimension,
+        bool Normalized,
+        string Model
     );
 }
 

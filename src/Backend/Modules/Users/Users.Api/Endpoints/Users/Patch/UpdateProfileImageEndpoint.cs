@@ -1,3 +1,5 @@
+using Carter;
+using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -5,8 +7,6 @@ using Shared.Api.Results;
 using Shared.Domain.Abstractions;
 using Users.Application.Features.Users.Commands.Records;
 using Users.Application.Features.Users.Dtos;
-using Carter;
-using MediatR;
 
 namespace Users.Api.Users.Patch;
 

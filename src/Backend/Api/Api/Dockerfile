@@ -9,13 +9,13 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
 # Copy csproj and restore as distinct layers
-COPY Api/Api/*.csproj ./Api/Api/
-RUN dotnet restore ./Api/Api/Api.csproj
+COPY ["Api/Api/Api.csproj", "Api/Api/"]
+RUN dotnet restore "Api/Api/Api.csproj"
 
 # Copy everything else and build
 COPY . .
-WORKDIR /src/Api/Api
-RUN dotnet publish Api.csproj -c Release -o /app/publish
+WORKDIR "/src/Api/Api"
+RUN dotnet publish "Api.csproj" -c Release -o /app/publish
 
 # Stage 3: Publish
 FROM build AS publish

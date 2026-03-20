@@ -1,8 +1,8 @@
-using Microsoft.EntityFrameworkCore;
-using Shared.Infrastructure.Data;
 using AI.Domain.Entities;
 using AI.Domain.Repositories;
 using AI.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+using Shared.Infrastructure.Data;
 
 namespace AI.Infrastructure.Repositories;
 
@@ -25,10 +25,10 @@ public class InteractionWeightRepository : RepositoryBase<InteractionWeight, Gui
         var normalized = actionType.ToLowerInvariant().Trim();
         return await _dbSet
             .AsNoTracking()
-            .FirstOrDefaultAsync(x => 
-                x.ActionType == normalized && 
-                x.Version == version && 
-                x.IsActive, 
+            .FirstOrDefaultAsync(x =>
+                x.ActionType == normalized &&
+                x.Version == version &&
+                x.IsActive,
             ct);
     }
 
@@ -58,11 +58,11 @@ public class InteractionWeightRepository : RepositoryBase<InteractionWeight, Gui
         CancellationToken ct = default)
     {
         var normalized = actionType.ToLowerInvariant().Trim();
-        
+
         var allVersions = await _dbSet
             .Where(x => x.ActionType == normalized)
             .ToListAsync(ct);
-        
+
         foreach (var weight in allVersions)
         {
             if (weight.Version == versionToActivate)
@@ -70,7 +70,7 @@ public class InteractionWeightRepository : RepositoryBase<InteractionWeight, Gui
             else
                 weight.Deactivate();
         }
-        
+
         await _dbContext.SaveChangesAsync(ct);
     }
 
@@ -82,13 +82,13 @@ public class InteractionWeightRepository : RepositoryBase<InteractionWeight, Gui
         CancellationToken ct = default)
     {
         var normalized = actionType.ToLowerInvariant().Trim();
-        
+
         var existing = await _dbSet
-            .FirstOrDefaultAsync(x => 
-                x.ActionType == normalized && 
-                x.Version == version, 
+            .FirstOrDefaultAsync(x =>
+                x.ActionType == normalized &&
+                x.Version == version,
             ct);
-        
+
         if (existing != null)
         {
             existing.UpdateWeight(weight, description);
@@ -99,9 +99,9 @@ public class InteractionWeightRepository : RepositoryBase<InteractionWeight, Gui
             var newWeight = InteractionWeight.Create(normalized, weight, description, version);
             await _dbSet.AddAsync(newWeight, ct);
         }
-        
+
         await _dbContext.SaveChangesAsync(ct);
-        return existing ?? await _dbSet.FirstAsync(x => 
+        return existing ?? await _dbSet.FirstAsync(x =>
             x.ActionType == normalized && x.Version == version, ct);
     }
 

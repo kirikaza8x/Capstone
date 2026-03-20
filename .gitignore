@@ -420,6 +420,9 @@ FodyWeavers.xsd
 **/appsettings.json
 **/appsettings.Development.json
 **/appsettings.Production.json
+# Docker environment files (keep .env.example)
+**/.env
+!**/.env.example
 
 # Python
 __pycache__/

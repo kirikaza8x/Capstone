@@ -1,10 +1,10 @@
-﻿using MassTransit;
+﻿using System.Text.Json;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Quartz;
 using Shared.Domain.DDD;
-using System.Text.Json;
 
 namespace Shared.Infrastructure.Outbox;
 

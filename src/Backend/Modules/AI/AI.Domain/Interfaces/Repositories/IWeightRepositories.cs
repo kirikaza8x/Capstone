@@ -28,7 +28,7 @@ public interface IInteractionWeightRepository : IRepository<InteractionWeight, G
     // ─────────────────────────────────────────────────────────────
     // Versioning / A/B Testing
     // ─────────────────────────────────────────────────────────────
-    
+
     /// <summary>
     /// Gets all versions of weights for an action type (for A/B test selection).
     /// </summary>
@@ -48,7 +48,7 @@ public interface IInteractionWeightRepository : IRepository<InteractionWeight, G
     // ─────────────────────────────────────────────────────────────
     // Configuration Management
     // ─────────────────────────────────────────────────────────────
-    
+
     /// <summary>
     /// Creates or updates a weight (UPSERT pattern for config).
     /// </summary>
@@ -69,7 +69,7 @@ public interface IInteractionWeightRepository : IRepository<InteractionWeight, G
     // ─────────────────────────────────────────────────────────────
     // Analytics
     // ─────────────────────────────────────────────────────────────
-    
+
     Task<int> GetActiveCountAsync(CancellationToken ct = default);
     Task<Dictionary<string, double>> GetAllActiveWeightsAsDictionaryAsync(
         CancellationToken ct = default);

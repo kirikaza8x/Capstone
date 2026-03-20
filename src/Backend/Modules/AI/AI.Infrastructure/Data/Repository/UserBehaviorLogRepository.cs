@@ -1,8 +1,8 @@
-using Microsoft.EntityFrameworkCore;
-using Shared.Infrastructure.Data;
 using AI.Domain.Entities;
 using AI.Domain.Repositories;
 using AI.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+using Shared.Infrastructure.Data;
 
 namespace AI.Infrastructure.Repositories;
 
@@ -79,7 +79,7 @@ public class UserBehaviorLogRepository : RepositoryBase<UserBehaviorLog, Guid>, 
                 var cats = catValue.Split(new[] { ',', ';', '|' }, StringSplitOptions.RemoveEmptyEntries)
                     .Select(c => c.Trim().ToLowerInvariant())
                     .Where(c => !string.IsNullOrWhiteSpace(c));
-                
+
                 foreach (var c in cats)
                     categories.Add(c);
             }

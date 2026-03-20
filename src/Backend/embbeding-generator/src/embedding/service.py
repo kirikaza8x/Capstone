@@ -3,7 +3,6 @@ Embedding generation logic - SHARED by RabbitMQ consumer AND HTTP API.
 """
 
 import logging
-from typing import List
 from sentence_transformers import SentenceTransformer
 from src.utils.logging import setup_logging
 from src.config import NORMALIZE_EMBEDDINGS
@@ -16,29 +15,28 @@ class EmbeddingService:
     Shared by both RabbitMQ consumer and HTTP API.
     """
     
-    def __init__(self, model: SentenceTransformer, dimension: int):
+    def __init__(self, model: SentenceTransformer, dimension: int, model_name: str = "bge-small-en-v1.5"):
         self.model = model
         self.dimension = dimension
-        logger.info(f"🔧 EmbeddingService initialized: dimension={dimension}")
+        self.model_name = model_name
+        logger.info(f"🔧 EmbeddingService initialized: dimension={dimension}, device={self.model.device}")
     
-    def generate(self, text: str, normalize: bool = NORMALIZE_EMBEDDINGS) -> List[float]:
+    def generate(self, text: str, normalize: bool = NORMALIZE_EMBEDDINGS) -> list[float]:
         """Generate embedding for single text."""
         if not text or not text.strip():
             raise ValueError("Text cannot be empty")
         
-        embedding = self.model.encode(
-            [text],
-            convert_to_numpy=True,
-            normalize_embeddings=normalize,
-            show_progress_bar=False
-        )[0]
-        
-        return embedding.astype(float).tolist()
+        # DRY: Reuse batch generation logic
+        return self.generate_batch([text], normalize)[0]
     
-    def generate_batch(self, texts: List[str], normalize: bool = NORMALIZE_EMBEDDINGS) -> List[List[float]]:
+    def generate_batch(self, texts: list[str], normalize: bool = NORMALIZE_EMBEDDINGS) -> list[list[float]]:
         """Generate embeddings for multiple texts."""
         if not texts:
             return []
+            
+        # Optional safeguard: warn if empty strings are passed in a batch
+        if any(not t or not t.strip() for t in texts):
+            logger.warning("Empty strings detected in batch generation.")
         
         embeddings = self.model.encode(
             texts,
@@ -52,8 +50,8 @@ class EmbeddingService:
     def get_info(self) -> dict:
         """Return model information for health checks."""
         return {
-            "model": "bge-small-en-v1.5",
+            "model": self.model_name,
             "dimension": self.dimension,
             "normalize": NORMALIZE_EMBEDDINGS,
-            "device": "cpu"
+            "device": str(self.model.device) # Dynamically returns cpu, cuda, or mps
         }

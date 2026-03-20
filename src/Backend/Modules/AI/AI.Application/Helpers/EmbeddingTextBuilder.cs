@@ -19,10 +19,10 @@ public static class EmbeddingTextBuilder
     /// Title is repeated to give it higher semantic weight.
     /// </summary>
     public static string ForEvent(
-        string        title,
+        string title,
         IList<string> categories,
         IList<string> hashtags,
-        string?       description = null)
+        string? description = null)
     {
         var parts = new List<string>
         {
@@ -49,8 +49,8 @@ public static class EmbeddingTextBuilder
     /// Simple and focused — captures WHAT the user did and WHAT it was about.
     /// </summary>
     public static string ForBehaviorLog(
-        string        actionType,
-        string        targetType,
+        string actionType,
+        string targetType,
         IList<string> categories,
         IList<string> hashtags)
     {

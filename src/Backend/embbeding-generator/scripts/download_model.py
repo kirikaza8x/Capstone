@@ -5,12 +5,14 @@ STANDALONE - does not import from src/
 Usage: python scripts/download_model.py
 """
 
+import os
 from pathlib import Path
 from sentence_transformers import SentenceTransformer
 
-# Configuration
-MODEL_ID = "BAAI/bge-small-en-v1.5"
-OUTPUT_DIR = Path(__file__).parent.parent / "models" / "bge-small-en-v1.5"
+# Pull from environment variables with sensible defaults
+MODEL_ID = os.getenv("MODEL_ID", "BAAI/bge-small-en-v1.5")
+DEFAULT_OUTPUT = Path(__file__).parent.parent / "models" / "bge-small-en-v1.5"
+OUTPUT_DIR = Path(os.getenv("MODEL_PATH", DEFAULT_OUTPUT))
 
 def main():
     print("=" * 60)
@@ -26,6 +28,7 @@ def main():
     
     # Download and save model
     print("⏳ Downloading model (this may take 2-5 minutes)...")
+    # This will use HF_HOME=/app/cache for intermediate downloads as set in Docker
     model = SentenceTransformer(MODEL_ID)
     model.save(str(OUTPUT_DIR))
     

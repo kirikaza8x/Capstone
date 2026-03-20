@@ -1,6 +1,6 @@
-using Shared.Application.DTOs;
 using System.ComponentModel;
 using System.Text.Json.Serialization;
+using Shared.Application.DTOs;
 using Users.Domain.Enums;
 
 namespace Users.Application.Features.Users.Dtos;

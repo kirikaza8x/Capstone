@@ -1,6 +1,6 @@
+using AI.Domain.ReadModels;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using AI.Domain.ReadModels;
 
 namespace AI.Infrastructure.Persistence.Configs
 {

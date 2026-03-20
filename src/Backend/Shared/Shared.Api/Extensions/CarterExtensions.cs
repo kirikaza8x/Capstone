@@ -1,6 +1,6 @@
-﻿using Carter;
+﻿using System.Reflection;
+using Carter;
 using Microsoft.Extensions.DependencyInjection;
-using System.Reflection;
 
 namespace Shared.Api.Extensions;
 

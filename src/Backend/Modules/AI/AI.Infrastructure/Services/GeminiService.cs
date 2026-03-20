@@ -1,11 +1,11 @@
+using System.Runtime.CompilerServices;
+using System.Text.Json;
 using AI.Application.Abstractions;
 using AI.Infrastructure.Configs;
 using GenerativeAI;
 using GenerativeAI.Types;
-using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
-using System.Runtime.CompilerServices;
-using System.Text.Json;
+using Microsoft.Extensions.Options;
 
 namespace AI.Infrastructure.ExternalServices;
 

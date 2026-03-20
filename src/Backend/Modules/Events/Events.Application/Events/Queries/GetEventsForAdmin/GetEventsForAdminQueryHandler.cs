@@ -25,7 +25,7 @@ internal sealed class GetEventsForAdminQueryHandler(
 
         var pagedEvents = await eventRepository.GetAllWithPagingAsync(
             pagedQuery,
-            e => 
+            e =>
                 e.Status != EventStatus.Draft &&
                 (!query.OrganizerId.HasValue || e.OrganizerId == query.OrganizerId.Value) &&
                 (statuses.Count == 0 || statuses.Contains(e.Status)) &&
@@ -38,7 +38,7 @@ internal sealed class GetEventsForAdminQueryHandler(
         var sortedResponseItems = string.IsNullOrWhiteSpace(query.SortColumn)
             ? responseItems
                 .OrderBy(x => x.Status == EventStatus.Published.ToString() ? 0 : 1)
-                .ThenByDescending(x => x.CreatedAt) 
+                .ThenByDescending(x => x.CreatedAt)
                 .ToList()
             : responseItems.ToList();
 

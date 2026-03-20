@@ -1,7 +1,7 @@
-using Microsoft.EntityFrameworkCore;
-using Shared.Infrastructure.Data.Seeds;
 using AI.Domain.ReadModels;
 using AI.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+using Shared.Infrastructure.Data.Seeds;
 
 namespace AI.Infrastructure.Persistence.Seeds;
 

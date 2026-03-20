@@ -1,12 +1,12 @@
+using Carter;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Shared.Api.Results;
-using Shared.Domain.Abstractions;
 using Shared.Application.DTOs;
+using Shared.Domain.Abstractions;
 using Users.Application.Features.Users.Queries;
-using Carter;
 
 namespace Users.Api.Users.Get;
 

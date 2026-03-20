@@ -1,8 +1,8 @@
 using ClosedXML.Excel;
-using Users.Domain.Entities;
-using Users.Domain.Enums;
 using Shared.Application.Abstractions.Authentication;
 using Shared.Application.Abstractions.Report;
+using Users.Domain.Entities;
+using Users.Domain.Enums;
 
 namespace Users.Infrastructure.Services.Report
 {

@@ -1,8 +1,8 @@
+using Carter;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using Carter;
 
 namespace Users.Api.Users.Get
 {

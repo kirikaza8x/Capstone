@@ -1,5 +1,5 @@
-﻿using Events.Domain.Errors;
-using Events.Domain.Entities;
+﻿using Events.Domain.Entities;
+using Events.Domain.Errors;
 using Events.Domain.Repositories;
 using Events.Domain.Uow;
 using Shared.Application.Abstractions.Messaging;

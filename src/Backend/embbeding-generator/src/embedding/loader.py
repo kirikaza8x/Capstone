@@ -53,7 +53,7 @@ class ModelLoader:
         if not self.validate():
             raise FileNotFoundError(f"Model not found at {self.model_path}")
         
-        logger.info(f"📦 Loading model from {self.model_path}...")
+        logger.info(f"📦 Loading model from {self.model_path} onto {device}...")
         self.model = SentenceTransformer(str(self.model_path), device=device)
         self.dimension = self.model.get_sentence_embedding_dimension()
         

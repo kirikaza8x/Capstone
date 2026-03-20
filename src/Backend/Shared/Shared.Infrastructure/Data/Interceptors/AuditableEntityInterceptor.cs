@@ -1,8 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-using Shared.Domain.DDD;
 using Shared.Application.Abstractions.Authentication;
+using Shared.Domain.DDD;
 
 namespace Shared.Infrastructure.Data.Interceptors;
 

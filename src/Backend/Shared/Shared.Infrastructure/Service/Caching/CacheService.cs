@@ -1,7 +1,7 @@
-﻿using Microsoft.Extensions.Caching.Distributed;
-using Shared.Application.Abstractions.Caching;
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.Caching.Distributed;
+using Shared.Application.Abstractions.Caching;
 
 namespace Shared.Infrastructure.Service.Caching;
 

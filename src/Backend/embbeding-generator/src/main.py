@@ -9,6 +9,7 @@ Run: python -m src.main
 """
 
 import asyncio
+import os
 import sys
 from pathlib import Path
 
@@ -17,18 +18,14 @@ sys.path.insert(0, str(project_root))
 
 from src.config import (
     ENABLE_HTTP_API, HTTP_HOST, HTTP_PORT,
-    RABBITMQ_HOST, MODEL_PATH
+    RABBITMQ_HOST, MODEL_PATH,
+    REQUEST_QUEUE, RESPONSE_QUEUE  
 )
 from src.utils.logging import setup_logging
 from src.embedding.loader import ModelLoader
 from src.embedding.service import EmbeddingService
 from src.messaging.consumer import RabbitMQConsumer
 from src.http.app import create_app
-from src.config import (
-    ENABLE_HTTP_API, HTTP_HOST, HTTP_PORT,
-    RABBITMQ_HOST, MODEL_PATH,
-    REQUEST_QUEUE, RESPONSE_QUEUE  
-)
 
 logger = setup_logging("main")
 
@@ -48,9 +45,12 @@ async def run_http_server(app):
 
 async def main():
     """Main entry point - runs RabbitMQ consumer + optional HTTP server."""
+    model_name = Path(MODEL_PATH).name
+    device = os.getenv("MODEL_DEVICE", "cpu")
+
     logger.info("=" * 70)
     logger.info("🚀 Starting Embedding Service")
-    logger.info(f"📦 Model: bge-small-en-v1.5")
+    logger.info(f"📦 Model: {model_name} on {device}")
     logger.info(f"🔌 RabbitMQ: {'Enabled' if RABBITMQ_HOST else 'Disabled'} (Production interface)")
     logger.info(f"🌐 HTTP: {'Enabled' if ENABLE_HTTP_API else 'Disabled'} (Swagger testing)")
     logger.info("=" * 70)
@@ -58,12 +58,16 @@ async def main():
     try:
         # 1. Load model
         logger.info("📦 Step 1: Loading model...")
-        loader = ModelLoader(MODEL_PATH)
-        model = loader.load(device="cpu")
+        loader = ModelLoader(Path(MODEL_PATH))
+        model = loader.load(device=device)
         
         # 2. Initialize shared embedding service
         logger.info("🔧 Step 2: Initializing embedding service...")
-        embedding_service = EmbeddingService(model, loader.get_dimension())
+        embedding_service = EmbeddingService(
+            model=model, 
+            dimension=loader.get_dimension(),
+            model_name=model_name
+        )
         
         # 3. Start RabbitMQ consumer (NON-BLOCKING, graceful degradation)
         consumer_task = None
@@ -95,10 +99,7 @@ async def main():
             logger.info(f"🌐 Swagger: http://{HTTP_HOST}:{HTTP_PORT}/docs")
         logger.info("=" * 70)
         
-        # Keep service running:
-        # - If HTTP is enabled, wait for it (it runs forever)
-        # - If only RabbitMQ, wait for consumer task
-        # - If neither, keep alive with Future
+        # Keep service running
         if http_task:
             await http_task  # HTTP server runs forever
         elif consumer_task:

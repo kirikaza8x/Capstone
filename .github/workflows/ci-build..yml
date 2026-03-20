@@ -1,0 +1,38 @@
+name: CI - Build & Verify
+
+on:
+  push:
+    branches: [ "dev", "main" ]
+  pull_request:
+    branches: [ "dev", "main" ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-verify:
+    runs-on: ubuntu-latest
+    env:
+      ASPNETCORE_ENVIRONMENT: CI
+      DOTNET_NOLOGO: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore src/Backend/Capstone.sln
+
+    - name: Build solution
+      run: dotnet build src/Backend/Capstone.sln --configuration Release --no-restore
+
+    - name: Check for Vulnerable Packages
+      continue-on-error: true
+      run: dotnet list src/Backend/Capstone.sln package --vulnerable --fail-on-severity low

@@ -19,4 +19,15 @@ public class CategoryRepository(EventsDbContext context) : RepositoryBase<Catego
         return await _context.EventCategoryMappings
             .AnyAsync(x => x.CategoryId == categoryId, cancellationToken);
     }
+
+    public async Task<List<string>> GetNamesByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default)
+    {
+        if (ids == null || !ids.Any())
+            return new List<string>();
+
+        return await _context.EventCategories
+            .Where(c => ids.Contains(c.Id) && c.IsActive)
+            .Select(c => c.Name)
+            .ToListAsync();
+    }
 }

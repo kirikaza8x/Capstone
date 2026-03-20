@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore.Diagnostics;
+﻿using System.Reflection;
+using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -14,8 +16,6 @@ using Shared.Infrastructure.Service.Authentication;
 using Shared.Infrastructure.Service.Caching;
 using Shared.Infrastructure.Service.Time;
 using StackExchange.Redis;
-using System.Reflection;
-using System.Text.Json.Serialization;
 
 namespace Shared.Infrastructure;
 

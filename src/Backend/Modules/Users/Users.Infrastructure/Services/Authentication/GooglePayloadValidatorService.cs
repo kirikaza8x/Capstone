@@ -1,7 +1,7 @@
 using Google.Apis.Auth;
+using Microsoft.Extensions.Options;
 using Shared.Domain.Abstractions;
 using Shared.Infrastructure.Configs.Security;
-using Microsoft.Extensions.Options;
 using Users.Application.Abstractions.Authentication;
 
 namespace Users.Infrastructure.Services.Authentication;

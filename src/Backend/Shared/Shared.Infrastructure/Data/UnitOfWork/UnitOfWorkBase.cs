@@ -1,9 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Collections.Concurrent;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Shared.Domain.Data;
 using Shared.Domain.Data.Repositories;
 using Shared.Domain.DDD;
-using System.Collections.Concurrent;
 
 namespace Shared.Infrastructure.Data;
 
