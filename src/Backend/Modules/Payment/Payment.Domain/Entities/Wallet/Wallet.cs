@@ -12,7 +12,6 @@ namespace Payments.Domain.Entities
         public ICollection<WalletTransaction> Transactions { get; private set; } =
             new List<WalletTransaction>();
 
-        // Navigation back to User (optional, if you want EF relationship)
 
         private Wallet() { }
 

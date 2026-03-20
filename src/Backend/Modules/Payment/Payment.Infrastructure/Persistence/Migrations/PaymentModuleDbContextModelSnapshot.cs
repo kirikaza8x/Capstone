@@ -57,6 +57,10 @@ namespace Payment.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("event_id");
 
+                    b.Property<DateTime?>("FailedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("failed_at");
+
                     b.Property<string>("GatewayBankCode")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
@@ -142,6 +146,14 @@ namespace Payment.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("gateway_txn_ref");
 
+                    b.Property<string>("InternalStatus")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasDefaultValue("AwaitingGateway")
+                        .HasColumnName("internal_status");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean")
                         .HasColumnName("is_active");
@@ -154,6 +166,10 @@ namespace Payment.Infrastructure.Persistence.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("modified_by");
+
+                    b.Property<DateTime?>("RefundedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("refunded_at");
 
                     b.Property<string>("Type")
                         .IsRequired()
@@ -179,13 +195,23 @@ namespace Payment.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_payment_transaction_response_code");
 
                     b.HasIndex("GatewayStatus")
-                        .HasDatabaseName("ix_payment_transaction_status");
+                        .HasDatabaseName("ix_payment_transaction_gateway_status");
+
+                    b.HasIndex("GatewayTxnRef")
+                        .IsUnique()
+                        .HasDatabaseName("ix_payment_transaction_txn_ref");
+
+                    b.HasIndex("InternalStatus")
+                        .HasDatabaseName("ix_payment_transaction_internal_status");
 
                     b.HasIndex("UserId")
                         .HasDatabaseName("ix_payment_transaction_user_id");
 
                     b.HasIndex("WalletId")
                         .HasDatabaseName("ix_payment_transaction_wallet_id");
+
+                    b.HasIndex("EventId", "InternalStatus")
+                        .HasDatabaseName("ix_payment_transaction_event_status");
 
                     b.ToTable("payment_transaction", "payments");
                 });

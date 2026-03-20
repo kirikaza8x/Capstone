@@ -1,5 +1,5 @@
-using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore;
 using Shared.Domain.Data.Repositories;
 using Shared.Domain.DDD;
 
@@ -10,7 +10,7 @@ public partial class RepositoryBase<TEntity, TId> : IRepository<TEntity, TId>
 {
     public virtual void Upsert(TEntity entity)
     {
-        var trackedEntity = DbSet.Local.FirstOrDefault(e => 
+        var trackedEntity = DbSet.Local.FirstOrDefault(e =>
             e.Id != null && e.Id.Equals(entity.Id));
 
         if (trackedEntity != null)
@@ -22,8 +22,8 @@ public partial class RepositoryBase<TEntity, TId> : IRepository<TEntity, TId>
     }
 
     public virtual async Task UpsertAsync(
-        TEntity entity, 
-        Expression<Func<TEntity, bool>> predicate, 
+        TEntity entity,
+        Expression<Func<TEntity, bool>> predicate,
         CancellationToken cancellationToken = default)
     {
         var existing = await DbSet.AsNoTracking()
@@ -36,8 +36,8 @@ public partial class RepositoryBase<TEntity, TId> : IRepository<TEntity, TId>
         else
         {
 
-            entity.Id = existing.Id; 
-            
+            entity.Id = existing.Id;
+
             DbSet.Update(entity);
         }
     }

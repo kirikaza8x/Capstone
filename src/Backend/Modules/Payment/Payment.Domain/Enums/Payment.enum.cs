@@ -1,29 +1,40 @@
-
 namespace Payment.Domain.Enums;
+
 public enum PaymentType
 {
-    DirectPay,   // For ticket/event purchase
-    WalletTopUp  // For adding funds to wallet
+    DirectPay,
+    WalletTopUp,
+    WalletPay
+
+}
+
+public enum PaymentInternalStatus
+{
+    AwaitingGateway,  // Created, user redirected to VNPay
+    Completed,        // Gateway confirmed success
+    Failed,            // Gateway failure or internal error
+    Refunded    // wallet credit issued, VNPay bank refund deferred
+
 }
 
 public enum VnPayTransactionStatus
 {
-    Success = 00,
-    Incomplete = 01,
-    Error = 02,
-    Reversal = 04,
-    ProcessingRefund = 05,
-    BankRefundRequested = 06,
-    SuspectedFraud = 07,
-    RefundRejected = 09,
+    Success = 0,
+    Incomplete = 1,
+    Error = 2,
+    Reversal = 4,
+    ProcessingRefund = 5,
+    BankRefundRequested = 6,
+    SuspectedFraud = 7,
+    RefundRejected = 9,
     Unknown = -1
 }
 
 public enum VnPayResponseCode
 {
-    Success = 00,
-    SuspectedFraud = 07,
-    NoInternetBanking = 09,
+    Success = 0,
+    SuspectedFraud = 7,
+    NoInternetBanking = 9,
     AuthFailed = 10,
     Timeout = 11,
     AccountLocked = 12,

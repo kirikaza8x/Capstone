@@ -13,5 +13,8 @@ namespace Payments.Domain.Repositories
 
         // Check if a wallet is active/exists for a user
         Task<bool> HasActiveWalletAsync(Guid userId, CancellationToken cancellationToken = default);
+
+        Task<IEnumerable<Wallet>> GetByUserIdsAsync(IEnumerable<Guid> userIds, CancellationToken cancellationToken = default);
+
     }
 }

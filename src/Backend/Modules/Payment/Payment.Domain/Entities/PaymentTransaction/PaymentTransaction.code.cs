@@ -4,32 +4,33 @@ namespace Payments.Domain.Entities
 {
     public partial class PaymentTransaction
     {
-        public VnPayTransactionStatus TransactionStatus =>
-            Enum.TryParse(GatewayStatus, out VnPayTransactionStatus status)
-                ? status
+        // Parsed views of raw gateway strings
+        public VnPayTransactionStatus VnPayStatus =>
+            int.TryParse(GatewayStatus, out var i) && Enum.IsDefined(typeof(VnPayTransactionStatus), i)
+                ? (VnPayTransactionStatus)i
                 : VnPayTransactionStatus.Unknown;
 
-        public VnPayResponseCode ResponseCode =>
-            Enum.TryParse(GatewayResponseCode, out VnPayResponseCode code)
-                ? code
+        public VnPayResponseCode VnPayResponseCode =>
+            int.TryParse(GatewayResponseCode, out var i) && Enum.IsDefined(typeof(VnPayResponseCode), i)
+                ? (VnPayResponseCode)i
                 : VnPayResponseCode.Unknown;
 
-        // Helper methods
+        // Helpers — use InternalStatus for your own logic,
+        // use these only when you need to inspect VNPay specifics
         public bool IsSuccessful() =>
-            ResponseCode == VnPayResponseCode.Success &&
-            TransactionStatus == VnPayTransactionStatus.Success;
+            InternalStatus == PaymentInternalStatus.Completed &&
+            VnPayResponseCode == VnPayResponseCode.Success &&
+            VnPayStatus == VnPayTransactionStatus.Success;
 
         public bool IsRefund() =>
-            TransactionStatus is VnPayTransactionStatus.ProcessingRefund
-                             or VnPayTransactionStatus.BankRefundRequested;
+            VnPayStatus is VnPayTransactionStatus.ProcessingRefund
+                       or VnPayTransactionStatus.BankRefundRequested;
 
         public bool IsFraudSuspected() =>
-            ResponseCode == VnPayResponseCode.SuspectedFraud ||
-            TransactionStatus == VnPayTransactionStatus.SuspectedFraud;
+            VnPayResponseCode == VnPayResponseCode.SuspectedFraud ||
+            VnPayStatus == VnPayTransactionStatus.SuspectedFraud;
 
         public bool IsCancelled() =>
-            ResponseCode == VnPayResponseCode.Cancelled;
+            VnPayResponseCode == VnPayResponseCode.Cancelled;
     }
-
-
 }

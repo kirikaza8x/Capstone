@@ -8,7 +8,7 @@ public interface IVnPayService
     /// </summary>
     string CreatePaymentUrl(
         decimal amount,
-        string orderId,
+        string txnRef,
         string orderDescription,
         string ipAddress,
         string? customReturnUrl = null);

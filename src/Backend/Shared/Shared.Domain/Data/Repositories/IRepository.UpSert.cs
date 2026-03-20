@@ -18,7 +18,7 @@ public partial interface IRepository<TEntity, TId>
     /// Useful for checking unique constraints like Email or Code.
     /// </summary>
     Task UpsertAsync(
-        TEntity entity, 
-        Expression<Func<TEntity, bool>> predicate, 
+        TEntity entity,
+        Expression<Func<TEntity, bool>> predicate,
         CancellationToken cancellationToken = default);
 }

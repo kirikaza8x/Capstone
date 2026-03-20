@@ -1,10 +1,14 @@
 using Payment.Application.Features.VnPay.Dtos;
+using Payment.Domain.Enums;
 using Shared.Application.Abstractions.Messaging;
 
 namespace Payments.Application.Features.Commands.InitiatePayment;
 
 public record InitiatePaymentCommand(
-    string OrderId,
+    Guid UserId,
+    string IpAddress,
     decimal Amount,
-    string IpAddress
+    PaymentType Type,
+    Guid? EventId,          // required only for DirectPay
+    string? Description = null
 ) : ICommand<InitiatePaymentResponseDto>;

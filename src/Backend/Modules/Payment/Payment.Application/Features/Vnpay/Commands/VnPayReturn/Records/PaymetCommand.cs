@@ -1,11 +1,7 @@
 using Payment.Application.Features.VnPay.Dtos;
 using Shared.Application.Abstractions.Messaging;
 
-public record VnPayReturnCommand(
-        Guid ItemId,
-        string TransactionNo,
-        string ResponseCode
-    ) : ICommand<VnPayResultDto>;
+public record VnPayReturnCommand(IDictionary<string, string> QueryParams) : ICommand<VnPayResultDto>;
 
 
 public class VnPayReturnQueriesCommand : ICommand<VnPayResultDto>

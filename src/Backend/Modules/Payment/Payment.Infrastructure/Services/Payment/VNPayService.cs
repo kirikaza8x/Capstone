@@ -28,7 +28,12 @@ public class VnPayService : IVnPayService
         }
     }
 
-    public string CreatePaymentUrl(decimal amount, string orderId, string orderDescription, string ipAddress, string? customReturnUrl = null)
+    public string CreatePaymentUrl(
+    decimal amount,
+    string txnRef,
+    string orderDescription,
+    string ipAddress,
+    string? customReturnUrl = null)
     {
         var returnUrl = string.IsNullOrEmpty(customReturnUrl) ? _vnPay.ReturnUrl : customReturnUrl;
 
@@ -36,12 +41,9 @@ public class VnPayService : IVnPayService
             throw new InvalidOperationException("VNPay configuration is missing.");
 
         if (amount <= 0) throw new ArgumentException("Amount must be greater than 0", nameof(amount));
-        if (string.IsNullOrWhiteSpace(orderId)) throw new ArgumentException("OrderId is required", nameof(orderId));
+        if (string.IsNullOrWhiteSpace(txnRef)) throw new ArgumentException("txnRef is required", nameof(txnRef));
 
-        // VNPay expects amount in VND * 100 (integer)
-        // var amountInt = (long)Math.Truncate(amount * 1000000M);
-
-        // var amountInt = (long)Math.Truncate(amount);
+        // VNPay expects amount in VND * 100
         var amountInt = (long)Math.Truncate(amount * 100M);
         var createDate = GetVietnamNow().ToString("yyyyMMddHHmmss");
 
@@ -55,10 +57,10 @@ public class VnPayService : IVnPayService
             ["vnp_CurrCode"] = "VND",
             ["vnp_IpAddr"] = NormalizeIpAddress(ipAddress),
             ["vnp_Locale"] = "vn",
-            ["vnp_OrderInfo"] = orderId,
+            ["vnp_OrderInfo"] = orderDescription,
             ["vnp_OrderType"] = "other",
             ["vnp_ReturnUrl"] = returnUrl?.Trim() ?? string.Empty,
-            ["vnp_TxnRef"] = Guid.NewGuid().ToString()
+            ["vnp_TxnRef"] = txnRef
         };
 
         var sanitized = new SortedDictionary<string, string>(
@@ -66,9 +68,13 @@ public class VnPayService : IVnPayService
                  .ToDictionary(k => k.Key, v => v.Value),
             StringComparer.Ordinal);
 
-        var signData = string.Join("&", sanitized.Select(kvp => $"{WebUtility.UrlEncode(kvp.Key)}={WebUtility.UrlEncode(kvp.Value.Trim())}"));
+        var signData = string.Join("&", sanitized.Select(kvp =>
+            $"{WebUtility.UrlEncode(kvp.Key)}={WebUtility.UrlEncode(kvp.Value.Trim())}"));
+
         var secureHash = HmacSHA512(_vnPay.HashSecret, signData);
-        var urlEncoded = string.Join("&", sanitized.Select(kvp => $"{kvp.Key}={Uri.EscapeDataString(kvp.Value.Trim())}"));
+
+        var urlEncoded = string.Join("&", sanitized.Select(kvp =>
+            $"{kvp.Key}={Uri.EscapeDataString(kvp.Value.Trim())}"));
 
         return $"{_vnPay.Url}?{urlEncoded}&vnp_SecureHashType=HMACSHA512&vnp_SecureHash={secureHash}";
     }

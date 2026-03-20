@@ -1,10 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Payment.Domain.Enums;
 using Payments.Domain.Entities;
 using Shared.Infrastructure.Extensions;
-
-
-
 
 namespace Payments.Infrastructure.Persistence.Configs
 {
@@ -40,6 +38,14 @@ namespace Payments.Infrastructure.Persistence.Configs
                    .HasMaxLength(20)
                    .IsRequired();
 
+            // --- Internal lifecycle ---
+            builder.Property(t => t.InternalStatus)
+                   .HasColumnName("internal_status")
+                   .HasConversion<string>()
+                   .HasMaxLength(30)
+                   .IsRequired()
+                   .HasDefaultValue(PaymentInternalStatus.AwaitingGateway);
+
             // --- Core transaction info ---
             builder.Property(t => t.Amount)
                    .HasColumnName("amount")
@@ -51,6 +57,7 @@ namespace Payments.Infrastructure.Persistence.Configs
                    .HasMaxLength(10)
                    .IsRequired();
 
+            // --- Gateway fields ---
             builder.Property(t => t.GatewayTransactionNo)
                    .HasColumnName("gateway_transaction_no")
                    .HasMaxLength(100);
@@ -119,33 +126,21 @@ namespace Payments.Infrastructure.Persistence.Configs
                    .HasColumnName("gateway_merchant")
                    .HasMaxLength(100);
 
-            // --- Lifecycle ---
-            // builder.Property(t => t.CreatedAt)
-            //        .HasColumnName("created_at")
-            //        .HasColumnType("timestamp with time zone");
-
+            // --- Lifecycle timestamps ---
             builder.Property(t => t.CompletedAt)
                    .HasColumnName("completed_at")
                    .HasColumnType("timestamp with time zone");
 
+            builder.Property(t => t.FailedAt)
+                   .HasColumnName("failed_at")
+                   .HasColumnType("timestamp with time zone");
+
+            builder.Property(t => t.RefundedAt)
+                   .HasColumnName("refunded_at")
+                   .HasColumnType("timestamp with time zone");
+
             // --- Auditing ---
-            // builder.Property(t => t.CreatedBy)
-            //        .HasColumnName("created_by")
-            //        .HasMaxLength(100);
-
-            // builder.Property(t => t.ModifiedAt)
-            //        .HasColumnName("modified_at")
-            //        .HasColumnType("timestamp with time zone");
-
-            // builder.Property(t => t.ModifiedBy)
-            //        .HasColumnName("modified_by")
-            //        .HasMaxLength(100);
-
-            // builder.Property(t => t.IsActive)
-            //        .HasColumnName("is_active");
-
             builder.ConfigureAudit<PaymentTransaction, Guid>();
-
 
             // --- Indexes ---
             builder.HasIndex(t => t.UserId)
@@ -157,11 +152,21 @@ namespace Payments.Infrastructure.Persistence.Configs
             builder.HasIndex(t => t.WalletId)
                    .HasDatabaseName("ix_payment_transaction_wallet_id");
 
+            builder.HasIndex(t => t.InternalStatus)
+                   .HasDatabaseName("ix_payment_transaction_internal_status");
+
+            builder.HasIndex(t => t.GatewayTxnRef)
+                   .IsUnique()
+                   .HasDatabaseName("ix_payment_transaction_txn_ref");
+
             builder.HasIndex(t => t.GatewayResponseCode)
                    .HasDatabaseName("ix_payment_transaction_response_code");
 
             builder.HasIndex(t => t.GatewayStatus)
-                   .HasDatabaseName("ix_payment_transaction_status");
+                   .HasDatabaseName("ix_payment_transaction_gateway_status");
+
+            builder.HasIndex(t => new { t.EventId, t.InternalStatus })
+                   .HasDatabaseName("ix_payment_transaction_event_status");
         }
     }
 }

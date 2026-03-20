@@ -17,5 +17,10 @@ namespace Payments.Domain.Repositories
 
         // Get pending transactions that might need a status check (Requery)
         Task<IEnumerable<PaymentTransaction>> GetPendingTransactionsAsync(CancellationToken cancellationToken = default);
+
+        Task<PaymentTransaction?> GetCompletedByEventIdAsync(Guid eventId, Guid userId, CancellationToken cancellationToken = default);
+
+        Task<IEnumerable<PaymentTransaction>> GetAllCompletedByEventIdAsync(Guid eventId, CancellationToken cancellationToken = default);
+
     }
 }
