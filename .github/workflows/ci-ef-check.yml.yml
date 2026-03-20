@@ -7,6 +7,13 @@ on:
 jobs:
   check-migrations:
     runs-on: ubuntu-latest
+    
+    env:
+      # We override your specific variable name here. 
+      # EF doesn't need a real DB to check 'has-pending-model-changes', 
+      # but it DOES need the string to not be empty/null.
+      Database__ConnectionString: "Server=localhost;Database=FakeDb;User Id=sa;Password=Password123!;TrustServerCertificate=True"
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -21,6 +28,9 @@ jobs:
 
     - name: Restore dependencies
       run: dotnet restore src/Backend/Capstone.sln
+
+    - name: Build solution
+      run: dotnet build src/Backend/Capstone.sln --configuration Debug --no-restore
 
     - name: Run Dynamic Migration Checker
       shell: pwsh
