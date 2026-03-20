@@ -40,29 +40,7 @@ public class WalletPayEndpoint : ICarterModule
         .Produces<WalletPayResultDto>(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status400BadRequest);
 
-        app.MapPost("api/payments/refund/event/{eventId:guid}", async (
-            Guid eventId,
-            ICurrentUserService currentUser,
-            ISender sender,
-            CancellationToken cancellationToken) =>
-        {
-            var command = new RefundByEventCommand(
-                UserId: currentUser.UserId,
-                EventId: eventId
-            );
 
-            var result = await sender.Send(command, cancellationToken);
-
-            return result.IsSuccess
-                ? Results.Ok(result.Value)
-                : Results.BadRequest(result.Error);
-        })
-        .RequireAuthorization()
-        .WithTags("Payments")
-        .WithName("RefundByEvent")
-        .WithSummary("Refund a completed event payment to wallet balance")
-        .Produces<RefundByEventResultDto>(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status400BadRequest);
     }
 }
 
