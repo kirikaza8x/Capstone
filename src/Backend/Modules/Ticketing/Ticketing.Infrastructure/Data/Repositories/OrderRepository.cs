@@ -16,6 +16,22 @@ internal sealed class OrderRepository(TicketingDbContext context)
             .Include(o => o.Tickets)
             .FirstOrDefaultAsync(o => o.Id == id, cancellationToken);
 
+    public async Task<IReadOnlyList<Order>> GetPendingExpiredWithTicketsAsync(
+        DateTime expiredBeforeUtc,
+        int take,
+        CancellationToken cancellationToken = default)
+    {
+        return await _context.Orders
+            .Include(o => o.Tickets)
+            .Where(o =>
+                o.Status == OrderStatus.Pending &&
+                o.CreatedAt.HasValue &&
+                o.CreatedAt <= expiredBeforeUtc)
+            .OrderBy(o => o.CreatedAt)
+            .Take(take)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlySet<(Guid SessionId, Guid SeatId)>> GetCommittedSeatsAsync(
         IReadOnlyCollection<(Guid SessionId, Guid SeatId)> pairs,
         CancellationToken cancellationToken = default)

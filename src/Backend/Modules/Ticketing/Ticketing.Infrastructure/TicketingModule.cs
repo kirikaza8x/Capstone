@@ -13,6 +13,7 @@ using Ticketing.Domain.Uow;
 using Ticketing.Infrastructure.Data;
 using Ticketing.Infrastructure.Data.Repositories;
 using Ticketing.Infrastructure.Data.Uow;
+using Ticketing.Infrastructure.Jobs;
 using Ticketing.Infrastructure.Locks;
 
 namespace Ticketing.Infrastructure;
@@ -24,7 +25,7 @@ public static class TicketingModule
         services.TryAddScoped<IOrderRepository, OrderRepository>();
         services.TryAddScoped<IVoucherRepository, VoucherRepository>();
         services.TryAddScoped<ITicketingUnitOfWork, TicketingUnitOfWork>();
-        services.TryAddScoped<ITicketLockService, TicketLockService>();
+        services.AddScoped<ITicketLockService, TicketLockService>();
 
         services.AddDbContext<TicketingDbContext>((sp, options) =>
         {
@@ -43,6 +44,8 @@ public static class TicketingModule
             .UseSnakeCaseNamingConvention()
             .AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
         });
+
+        services.AddTicketingQuartzJobs();
 
         return services;
     }

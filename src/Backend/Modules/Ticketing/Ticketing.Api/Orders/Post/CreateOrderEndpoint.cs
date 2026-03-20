@@ -54,6 +54,6 @@ public class CreateOrderEndpoint : ICarterModule
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status401Unauthorized)
         .ProducesProblem(StatusCodes.Status409Conflict)
-        .RequireRoles(Roles.Attendee);
+        .RequireRoles(Roles.AttendeeAndOrganizer);
     }
 }
