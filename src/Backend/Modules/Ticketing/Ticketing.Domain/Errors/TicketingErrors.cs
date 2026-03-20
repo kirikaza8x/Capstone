@@ -34,6 +34,38 @@ public static class TicketingErrors
         public static readonly Error DuplicateVoucher = Error.Conflict(
             "Order.DuplicateVoucher",
             "Voucher has already been applied to this order.");
+
+        public static readonly Error InvalidTicketSelection = Error.Validation(
+            "Order.InvalidTicketSelection",
+            "Invalid ticket selection.");
+
+        public static readonly Error TicketNotPurchasable = Error.Conflict(
+            "Order.TicketNotPurchasable",
+            "Selected ticket is not purchasable at this time.");
+
+        public static readonly Error SeatRequired = Error.Validation(
+            "Order.SeatRequired",
+            "SeatId is required for seat ticket type.");
+
+        public static readonly Error SeatMustBeNullForZone = Error.Validation(
+            "Order.SeatMustBeNullForZone",
+            "SeatId must be null for zone ticket type.");
+
+        public static readonly Error SeatNotFound = Error.NotFound(
+            "Order.SeatNotFound",
+            "Selected seat was not found.");
+
+        public static readonly Error SeatNotBelongToArea = Error.Validation(
+            "Order.SeatNotBelongToArea",
+            "Selected seat does not belong to ticket type area.");
+
+        public static readonly Error SeatNotAvailable = Error.Conflict(
+            "Order.SeatNotAvailable",
+            "Selected seat is not available.");
+
+        public static readonly Error ZoneSoldOut = Error.Conflict(
+            "Order.ZoneSoldOut",
+            "Ticket zone is sold out.");
     }
 
     public static class OrderTicket

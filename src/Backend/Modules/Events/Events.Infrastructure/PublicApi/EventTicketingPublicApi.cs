@@ -1,4 +1,3 @@
-using Events.Domain.Entities;
 using Events.Domain.Enums;
 using Events.Infrastructure.Data;
 using Events.PublicApi.PublicApi;
@@ -9,86 +8,95 @@ namespace Events.Infrastructure.PublicApi;
 
 internal sealed class EventTicketingPublicApi(EventsDbContext dbContext) : IEventTicketingPublicApi
 {
-    public async Task<EventTicketingItemDto?> GetTicketingItemAsync(
-        Guid eventSessionId,
-        Guid ticketTypeId,
+    public async Task<IReadOnlyDictionary<(Guid SessionId, Guid TicketTypeId), EventTicketingItemDto>> GetTicketingItemsBatchAsync(
+        IReadOnlyCollection<(Guid SessionId, Guid TicketTypeId)> pairs,
         DateTime utcNow,
         CancellationToken cancellationToken = default)
     {
-        var ticketType = await dbContext.TicketTypes
+        var pairSet = pairs.ToHashSet();
+
+        var sessionIds = pairSet.Select(p => p.SessionId).ToList();
+        var ticketTypeIds = pairSet.Select(p => p.TicketTypeId).ToList();
+
+        var rows = await dbContext.TicketTypes
             .AsNoTracking()
-            .Include(x => x.Event)
-            .Include(x => x.Area)
-            .FirstOrDefaultAsync(x => x.Id == ticketTypeId, cancellationToken);
+            .Where(tt =>
+                ticketTypeIds.Contains(tt.Id) &&
+                tt.Event.Sessions.Any(s => sessionIds.Contains(s.Id)))
+            .Select(tt => new
+            {
+                tt.Id,
+                tt.EventId,
+                tt.AreaId,
+                tt.Price,
+                tt.Quantity,
+                tt.SoldQuantity,
+                AreaType = tt.Area != null ? tt.Area.Type : AreaType.Zone,
+                tt.Event.Status,
+                tt.Event.TicketSaleStartAt,
+                tt.Event.TicketSaleEndAt,
+                tt.Event.EventStartAt,
+                ValidSessionIds = tt.Event.Sessions
+                    .Where(s => sessionIds.Contains(s.Id))
+                    .Select(s => s.Id)
+                    .ToList()
+            })
+            .ToListAsync(cancellationToken);
 
-        if (ticketType is null)
-            return null;
+        // Build dictionary key = (sessionId, ticketTypeId)
+        var result = new Dictionary<(Guid, Guid), EventTicketingItemDto>();
 
-        var sessionBelongsToEvent = await dbContext.EventSessions
-            .AsNoTracking()
-            .AnyAsync(
-                x => x.Id == eventSessionId && x.EventId == ticketType.EventId,
-                cancellationToken);
-
-        if (!sessionBelongsToEvent)
-            return null;
-
-        return new EventTicketingItemDto
+        foreach(var row in rows)
         {
-            EventId = ticketType.EventId,
-            EventSessionId = eventSessionId,
-            TicketTypeId = ticketType.Id,
-            AreaId = ticketType.AreaId,
-            AreaType = MapAreaType(ticketType.Area?.Type),
-            Price = ticketType.Price,
-            Quantity = ticketType.Quantity,
-            SoldQuantity = ticketType.SoldQuantity,
-            IsPurchasable = IsPurchasable(ticketType.Event, utcNow)
-        };
+            var isPurchasable =
+                row.Status == EventStatus.Published &&
+                row.TicketSaleStartAt.HasValue &&
+                row.TicketSaleEndAt.HasValue &&
+                row.TicketSaleStartAt.Value <= utcNow &&
+                row.TicketSaleEndAt.Value >= utcNow &&
+                (!row.EventStartAt.HasValue || row.EventStartAt.Value > utcNow);
+
+            foreach (var sessionId in row.ValidSessionIds)
+            {
+                if (!pairSet.Contains((sessionId, row.Id)))
+                    continue;
+
+                result[(sessionId, row.Id)] = new EventTicketingItemDto(
+                    EventId: row.EventId,
+                    EventSessionId: sessionId,
+                    TicketTypeId: row.Id,
+                    AreaId: row.AreaId,
+                    AreaType: MapAreaType(row.AreaType),
+                    Price: row.Price,
+                    Quantity: row.Quantity,
+                    SoldQuantity: row.SoldQuantity,
+                    IsPurchasable: isPurchasable);
+            }
+        }
+
+        return result;
     }
 
-    public async Task<EventSeatDto?> GetSeatAsync(
-        Guid seatId,
+    public async Task<IReadOnlyDictionary<Guid, EventSeatDto>> GetSeatsBatchAsync(
+        IReadOnlyCollection<Guid> seatIds,
         CancellationToken cancellationToken = default)
     {
-        var seat = await dbContext.Seats
+        if (seatIds.Count == 0)
+            return new Dictionary<Guid, EventSeatDto>();
+
+        var seats = await dbContext.Seats
             .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Id == seatId, cancellationToken);
+            .Where(s => seatIds.Contains(s.Id))
+            .Select(s => new EventSeatDto(s.Id, s.AreaId, s.SeatCode))
+            .ToListAsync(cancellationToken);
 
-        if (seat is null)
-            return null;
-
-        return new EventSeatDto
-        {
-            SeatId = seat.Id,
-            AreaId = seat.AreaId
-        };
+        return seats.ToDictionary(s => s.SeatId);
     }
 
-    private static EventAreaType MapAreaType(AreaType? areaType)
+    private static EventAreaType MapAreaType(AreaType t) => t switch
     {
-        return areaType switch
-        {
-            AreaType.Seat => EventAreaType.Seat,
-            AreaType.Default => EventAreaType.Default,
-            _ => EventAreaType.Zone
-        };
-    }
-
-    private static bool IsPurchasable(Event @event, DateTime utcNow)
-    {
-        if (@event.Status != EventStatus.Published)
-            return false;
-
-        if (!@event.TicketSaleStartAt.HasValue || !@event.TicketSaleEndAt.HasValue)
-            return false;
-
-        if (@event.TicketSaleStartAt.Value > utcNow || @event.TicketSaleEndAt.Value < utcNow)
-            return false;
-
-        if (@event.EventStartAt.HasValue && @event.EventStartAt.Value <= utcNow)
-            return false;
-
-        return true;
-    }
+        AreaType.Zone => EventAreaType.Zone,
+        AreaType.Seat => EventAreaType.Seat,
+        _ => EventAreaType.Default
+    };
 }

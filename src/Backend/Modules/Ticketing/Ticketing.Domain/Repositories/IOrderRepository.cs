@@ -5,7 +5,10 @@ namespace Ticketing.Domain.Repositories;
 
 public interface IOrderRepository : IRepository<Order, Guid>
 {
-    Task<Order?> GetByIdWithTicketsAsync(Guid orderId, CancellationToken cancellationToken = default);
-    Task<Order?> GetByIdWithVouchersAsync(Guid orderId, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<Order>> GetPendingExpiredOrdersAsync(DateTime utcNow, int take, CancellationToken cancellationToken = default);
+    Task<Order?> GetByIdWithOrderTicketAsync(Guid id, CancellationToken cancellationToken = default);
+
+    // Returns the set of (SessionId, SeatId) pairs that are already committed (Valid/Used) in orders.
+    Task<IReadOnlySet<(Guid SessionId, Guid SeatId)>> GetCommittedSeatsAsync(
+        IReadOnlyCollection<(Guid SessionId, Guid SeatId)> pairs,
+        CancellationToken cancellationToken = default);
 }

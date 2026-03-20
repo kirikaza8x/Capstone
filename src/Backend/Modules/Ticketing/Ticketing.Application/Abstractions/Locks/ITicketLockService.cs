@@ -14,11 +14,6 @@ public interface ITicketLockService
         Guid seatId,
         CancellationToken cancellationToken = default);
 
-    Task<int> GetZoneLockedCountAsync(
-        Guid eventSessionId,
-        Guid ticketTypeId,
-        CancellationToken cancellationToken = default);
-
     Task<bool> TryIncreaseZoneLockAsync(
         Guid eventSessionId,
         Guid ticketTypeId,

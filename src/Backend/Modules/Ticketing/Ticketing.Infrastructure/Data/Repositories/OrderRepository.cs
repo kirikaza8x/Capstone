@@ -11,34 +11,34 @@ internal sealed class OrderRepository(TicketingDbContext context)
 {
     private readonly TicketingDbContext _context = context;
 
-    public async Task<Order?> GetByIdWithTicketsAsync(Guid orderId, CancellationToken cancellationToken = default)
-    {
-        return await _context.Orders
-            .Include(x => x.Tickets)
-            .FirstOrDefaultAsync(x => x.Id == orderId, cancellationToken);
-    }
+    public async Task<Order?> GetByIdWithOrderTicketAsync(Guid id, CancellationToken cancellationToken = default)
+    => await _context.Orders
+            .Include(o => o.Tickets)
+            .FirstOrDefaultAsync(o => o.Id == id, cancellationToken);
 
-    public async Task<Order?> GetByIdWithVouchersAsync(Guid orderId, CancellationToken cancellationToken = default)
-    {
-        return await _context.Orders
-            .Include(x => x.OrderVouchers)
-                .ThenInclude(x => x.Voucher)
-            .FirstOrDefaultAsync(x => x.Id == orderId, cancellationToken);
-    }
-
-    public async Task<IReadOnlyList<Order>> GetPendingExpiredOrdersAsync(
-        DateTime utcNow,
-        int take,
+    public async Task<IReadOnlySet<(Guid SessionId, Guid SeatId)>> GetCommittedSeatsAsync(
+        IReadOnlyCollection<(Guid SessionId, Guid SeatId)> pairs,
         CancellationToken cancellationToken = default)
     {
-        return await _context.Orders
-            .Include(x => x.Tickets)
-            .Where(x =>
-                x.Status == OrderStatus.Pending &&
-                x.CreatedAt.HasValue &&
-                x.CreatedAt <= utcNow)
-            .OrderBy(x => x.CreatedAt)
-            .Take(take)
+        if (pairs.Count == 0)
+            return new HashSet<(Guid, Guid)>();
+
+        var sessionIds = pairs.Select(p => p.SessionId).ToList();
+        var seatIds = pairs.Select(p => p.SeatId).ToList();
+
+        var committed = await _context.OrderTickets
+            .AsNoTracking()
+            .Where(ot =>
+                ot.SeatId.HasValue &&
+                sessionIds.Contains(ot.EventSessionId) &&
+                seatIds.Contains(ot.SeatId!.Value) &&
+                (ot.Status == OrderTicketStatus.Valid || ot.Status == OrderTicketStatus.Used) &&
+                ot.Order.Status == OrderStatus.Paid)
+            .Select(ot => new { ot.EventSessionId, SeatId = ot.SeatId!.Value })
             .ToListAsync(cancellationToken);
+
+        return committed
+            .Select(x => (x.EventSessionId, x.SeatId))
+            .ToHashSet();
     }
 }

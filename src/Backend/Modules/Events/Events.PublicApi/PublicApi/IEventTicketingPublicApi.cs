@@ -4,13 +4,12 @@ namespace Events.PublicApi.PublicApi;
 
 public interface IEventTicketingPublicApi
 {
-    Task<EventTicketingItemDto?> GetTicketingItemAsync(
-        Guid eventSessionId,
-        Guid ticketTypeId,
+    Task<IReadOnlyDictionary<(Guid SessionId, Guid TicketTypeId), EventTicketingItemDto>> GetTicketingItemsBatchAsync(
+        IReadOnlyCollection<(Guid SessionId, Guid TicketTypeId)> pairs,
         DateTime utcNow,
         CancellationToken cancellationToken = default);
 
-    Task<EventSeatDto?> GetSeatAsync(
-        Guid seatId,
+    Task<IReadOnlyDictionary<Guid, EventSeatDto>> GetSeatsBatchAsync(
+        IReadOnlyCollection<Guid> seatIds,
         CancellationToken cancellationToken = default);
 }

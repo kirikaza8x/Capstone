@@ -5,12 +5,14 @@ using Microsoft.Extensions.Options;
 using Quartz;
 using Shared.Application.Abstractions.Authentication;
 using Shared.Application.Abstractions.Caching;
+using Shared.Application.Abstractions.Time;
 using Shared.Infrastructure.Configs;
 using Shared.Infrastructure.Configs.Redis;
 using Shared.Infrastructure.Data.Interceptors;
 using Shared.Infrastructure.Extensions;
 using Shared.Infrastructure.Service.Authentication;
 using Shared.Infrastructure.Service.Caching;
+using Shared.Infrastructure.Service.Time;
 using StackExchange.Redis;
 using System.Reflection;
 using System.Text.Json.Serialization;
@@ -58,7 +60,7 @@ public static class IInfrastructureConfiguration
         services.AddSingleton<ICacheService, CacheService>();
 
         services.AddScoped<ICurrentUserService, CurrentUserService>();
-
+        services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
         services.AddScoped<IDeviceDetectionService, DeviceDetectionService>();
 
         services.AddMassTransitWithAssemblies(configuration, moduleAssemblies);
