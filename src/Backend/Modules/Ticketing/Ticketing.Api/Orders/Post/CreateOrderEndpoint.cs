@@ -42,7 +42,6 @@ public class CreateOrderEndpoint : ICarterModule
             if (result.IsFailure)
                 return result.ToProblem();
 
-<<<<<<< HEAD
             return result.ToCreated(
                 $"{Constants.Routes.Orders}/{result.Value}",
                 "Order created successfully.");
@@ -58,7 +57,6 @@ public class CreateOrderEndpoint : ICarterModule
         .RequireRoles(Roles.Attendee);
     }
 }
-=======
 //            return result.ToCreated(
 //                $"{Constants.Routes.Orders}/{result.Value}",
 //                "Order created successfully.");
@@ -73,4 +71,3 @@ public class CreateOrderEndpoint : ICarterModule
 //        .RequireRoles(Roles.Attendee);
 //    }
 //}
->>>>>>> 97ebaa9 (chore: add editorconfig and fix final newlines)
