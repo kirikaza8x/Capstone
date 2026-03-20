@@ -81,7 +81,6 @@ internal sealed class CreateOrderCommandHandler(
                     if (!seatMap.TryGetValue(ticket.SeatId.Value, out var seat))
                         return Result.Failure<Guid>(TicketingErrors.Order.SeatNotFound);
 
-<<<<<<< HEAD
                     // validate seat belongs to area
                     if (!item.AreaId.HasValue || seat.AreaId != item.AreaId.Value)
                         return Result.Failure<Guid>(TicketingErrors.Order.SeatNotBelongToArea);
@@ -211,8 +210,3 @@ internal sealed class CreateOrderCommandHandler(
         await Task.WhenAll(tasks);
     }
 }
-=======
-//        return Result.Success(order.Id);
-//    }
-//}
->>>>>>> 97ebaa9 (chore: add editorconfig and fix final newlines)
