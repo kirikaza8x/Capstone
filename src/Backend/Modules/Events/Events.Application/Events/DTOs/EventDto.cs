@@ -32,6 +32,7 @@ public sealed record TicketTypeDto
     public string Name { get; init; } = string.Empty;
     public decimal Price { get; init; }
     public int Quantity { get; init; }
+    public int SoldQuantity { get; init; }
     public Guid? AreaId { get; init; }
     public string? AreaName { get; init; }
     public string? AreaType { get; init; }
