@@ -13,18 +13,22 @@ public class GetEventSpecEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapGet(Constants.Routes.EventById + "/spec", async (
+        app.MapGet($"{Constants.Routes.EventById}/sessions/{{sessionId:guid}}/spec", async (
             [FromRoute] Guid eventId,
+            [FromRoute] Guid sessionId,
             ISender sender,
             CancellationToken cancellationToken) =>
         {
-            var result = await sender.Send(new GetEventSpecQuery(eventId), cancellationToken);
+            var result = await sender.Send(
+                new GetEventSpecQuery(eventId, sessionId),
+                cancellationToken);
+
             return result.ToOk();
         })
         .WithTags(Constants.Tags.Events)
         .WithName("GetEventSpec")
-        .WithSummary("Get event spec")
-        .WithDescription("Retrieve the seatmap spec JSON of an event.")
+        .WithSummary("Get event spec with realtime seat availability")
+        .WithDescription("Retrieve seatmap spec and enrich seat status as available/blocked for the target session.")
         .Produces<ApiResult<GetEventSpecResponse>>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status404NotFound);
     }
