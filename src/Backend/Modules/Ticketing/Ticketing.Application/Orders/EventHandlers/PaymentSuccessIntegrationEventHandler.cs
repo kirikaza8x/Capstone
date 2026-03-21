@@ -6,7 +6,7 @@ using Ticketing.Application.Orders.Commands.ConfirmOrder;
 
 namespace Ticketing.Application.Orders.EventHandlers;
 
-internal class PaymentSuccessIntegrationEventHandler(
+public class PaymentSuccessIntegrationEventHandler(
     ISender sender,
     ILogger<PaymentSuccessIntegrationEventHandler> logger)
     : IntegrationEventHandler<PaymentSuccessIntegrationEvent>
