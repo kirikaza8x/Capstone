@@ -7,7 +7,6 @@ using Events.Infrastructure;
 using Notifications.Infrastructure;
 using Payments.Api;
 using Payments.Application;
-using Payments.Infrastructure;
 using Shared.Api;
 using Shared.Application;
 using Shared.Infrastructure;
