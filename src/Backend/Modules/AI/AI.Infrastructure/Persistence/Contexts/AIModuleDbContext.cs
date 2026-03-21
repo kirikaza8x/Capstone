@@ -21,7 +21,6 @@ namespace AI.Infrastructure.Data
             modelBuilder.HasDefaultSchema(Constants.SchemaName);
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(AIModuleDbContext).Assembly);
             modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration());
-            modelBuilder.HasPostgresExtension("vector");
             base.OnModelCreating(modelBuilder);
         }
     }

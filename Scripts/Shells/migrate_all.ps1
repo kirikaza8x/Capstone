@@ -5,6 +5,7 @@ param(
 $ScriptDir  = Split-Path -Parent $MyInvocation.MyCommand.Path
 $BackendDir = $null
 
+# 1. Locate Backend Directory
 foreach ($candidate in @("..\..\src\Backend", "..\..\..\src\Backend")) {
     $path = Join-Path $ScriptDir $candidate
     if (Test-Path $path) {
@@ -18,17 +19,20 @@ if (-not $BackendDir) {
     exit 1
 }
 
+# 2. Locate Startup Project
 $HostApiProj = Join-Path $BackendDir "Api\Api\Api.csproj"
 if (-not (Test-Path $HostApiProj)) {
     Write-Host "[X] Host API project not found at $HostApiProj." -ForegroundColor Red
     exit 1
 }
 
-$Timestamp     = Get-Date -Format "yyyyMMddHHmmss"
-$MigrationName = if ($MigrationName) { "${MigrationName}_$Timestamp" } else { "migrate_auto_$Timestamp" }
+# 3. Setup Migration Naming
+$Timestamp = Get-Date -Format "yyyyMMddHHmmss"
+$BaseName  = if ($MigrationName) { $MigrationName } else { "migrate_auto" }
+$FullMigrationName = "${BaseName}_$Timestamp"
 
-Write-Host "Scanning for EF Core DbContexts across all modules..." -ForegroundColor Cyan
-Write-Host "Migration name: $MigrationName`n" -ForegroundColor DarkGray
+Write-Host "`nScanning for EF Core DbContexts across all modules..." -ForegroundColor Cyan
+Write-Host "Target Migration: $FullMigrationName" -ForegroundColor DarkGray
 
 $AllInfraProjects = Get-ChildItem -Path "$BackendDir\Modules" -Filter "*.Infrastructure.csproj" -Recurse
 $summary   = @()
@@ -36,60 +40,96 @@ $hasErrors = $false
 
 foreach ($proj in $AllInfraProjects) {
     $moduleName = $proj.Directory.Parent.Name
-    Write-Host "Module: $moduleName" -ForegroundColor Yellow
+    Write-Host "`nModule: $moduleName" -ForegroundColor Yellow
 
     $ContextFiles = Get-ChildItem -Path $proj.Directory.FullName -Filter "*Context.cs" -Recurse |
                     Where-Object { $_.Name -notmatch "Factory" }
 
     if (-not $ContextFiles) {
-        Write-Host "  [INFO] No DbContext found — skipping." -ForegroundColor DarkGray
-        $summary += "  $moduleName : Skipped (no DbContext)"
+        Write-Host "  [INFO] No DbContext found - skipping." -ForegroundColor DarkGray
+        $summary += "$moduleName : No DbContext"
         continue
     }
 
     foreach ($file in $ContextFiles) {
         $ctxName = $file.BaseName
-        Write-Host "  -> $ctxName" -ForegroundColor White
+        Write-Host "  -> Verifying $ctxName..." -ForegroundColor White
 
-        # ── Add migration ──────────────────────────────────────────────────
-        dotnet ef migrations add $MigrationName `
+        # --- FIX: CAPTURE AND USE OUTPUT ---
+        $checkOutput = dotnet ef migrations has-pending-model-changes `
             --project "$($proj.FullName)" `
             --startup-project "$HostApiProj" `
             --context "$ctxName" `
-            --output-dir "Persistence/Migrations" 2>&1 | Write-Host
+            --no-build 2>&1
+        
+        $checkExitCode = $LASTEXITCODE
 
-        if ($LASTEXITCODE -ne 0) {
-            Write-Host "     [X] Migration failed for $ctxName." -ForegroundColor Red
-            $summary  += "  $moduleName / $ctxName : FAILED (migration)"
-            $hasErrors  = $true
+        if ($checkExitCode -eq 0) {
+            Write-Host "    [OK] No changes detected." -ForegroundColor Gray
+            $summary += "$moduleName / $ctxName : OK (No changes)"
+            continue
+        } 
+        elseif ($checkExitCode -ne 1) {
+            # THE VARIABLE IS NOW USED HERE:
+            Write-Host "    [!] Error checking model for $ctxName. Output details:" -ForegroundColor Yellow
+            Write-Host "    $($checkOutput | Out-String)" -ForegroundColor DarkGray
+            
+            $summary += "$moduleName / $ctxName : CHECK ERROR"
+            $hasErrors = $true
             continue
         }
 
-        # ── Update database ────────────────────────────────────────────────
-        dotnet ef database update `
+        # --- STEP 2: ADD MIGRATION ---
+        Write-Host "    [>] Changes detected. Adding migration..." -ForegroundColor Cyan
+        dotnet ef migrations add $FullMigrationName `
             --project "$($proj.FullName)" `
             --startup-project "$HostApiProj" `
-            --context "$ctxName" 2>&1 | Write-Host
+            --context "$ctxName" `
+            --output-dir "Persistence/Migrations"
 
         if ($LASTEXITCODE -ne 0) {
-            Write-Host "     [X] Database update failed for $ctxName." -ForegroundColor Red
-            $summary  += "  $moduleName / $ctxName : FAILED (db update)"
-            $hasErrors  = $true
+            Write-Host "    [X] Migration add failed." -ForegroundColor Red
+            $summary += "$moduleName / $ctxName : FAILED (Add)"
+            $hasErrors = $true
             continue
         }
 
-        Write-Host "     [OK] $ctxName migrated." -ForegroundColor Green
-        $summary += "  $moduleName / $ctxName : OK"
+        # --- STEP 3: UPDATE DATABASE ---
+        Write-Host "    [>] Updating database..." -ForegroundColor Cyan
+        $updateOutput = dotnet ef database update `
+            --project "$($proj.FullName)" `
+            --startup-project "$HostApiProj" `
+            --context "$ctxName" 2>&1
+
+        if ($LASTEXITCODE -ne 0) {
+            if ($updateOutput -match "42P07" -or $updateOutput -match "already exists") {
+                Write-Host "    [!] FAILED: Table already exists (42P07). Sync needed." -ForegroundColor Yellow
+                $summary += "$moduleName / $ctxName : SYNC ERROR (Table Exists)"
+            } else {
+                Write-Host "    [X] Database update failed. Output:" -ForegroundColor Red
+                Write-Host "    $($updateOutput | Out-String)" -ForegroundColor DarkGray
+                $summary += "$moduleName / $ctxName : FAILED (Update)"
+            }
+            $hasErrors = $true
+            continue
+        }
+
+        Write-Host "    [OK] $ctxName migrated successfully." -ForegroundColor Green
+        $summary += "$moduleName / $ctxName : OK (Migrated)"
     }
 }
 
-Write-Host "`n=== MIGRATION SUMMARY ===" -ForegroundColor Cyan
-foreach ($line in $summary) { Write-Host $line }
+Write-Host "`n================ MIGRATION SUMMARY ================" -ForegroundColor Cyan
+foreach ($line in $summary) {
+    if ($line -match "OK") { Write-Host "  $line" -ForegroundColor Green }
+    elseif ($line -match "FAILED" -or $line -match "ERROR") { Write-Host "  $line" -ForegroundColor Red }
+    else { Write-Host "  $line" -ForegroundColor Gray }
+}
 
 if ($hasErrors) {
-    Write-Host "`n[X] Some migrations failed." -ForegroundColor Red
+    Write-Host "`n[X] Process completed with errors. See logs above." -ForegroundColor Red
     exit 1
 }
 
-Write-Host "`n[OK] All modules migrated successfully with '$MigrationName'." -ForegroundColor Green
+Write-Host "`n[SUCCESS] All modules are processed." -ForegroundColor Green
 exit 0

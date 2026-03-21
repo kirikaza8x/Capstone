@@ -3,6 +3,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Payments.Application;
 using Payments.Infrastructure;
+using Payments.Infrastructure.Persistence.Contexts;
+using Shared.Infrastructure.Extensions;
 using Shared.Infrastructure.Middleware;
 
 public static class PaymentModule
@@ -17,6 +19,7 @@ public static class PaymentModule
     public static IApplicationBuilder UsePaymentModule(this IApplicationBuilder app)
     {
         app.UseMiddleware<DeviceIdMiddleware>();
+        app.UseMigration<PaymentModuleDbContext>();
         return app;
     }
 }

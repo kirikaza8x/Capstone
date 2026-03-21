@@ -13,8 +13,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AI.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AIModuleDbContext))]
-    [Migration("20260318163017_init_default")]
-    partial class init_default
+    [Migration("20260321050555_migrate_auto_20260321120548")]
+    partial class migrate_auto_20260321120548
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,7 +25,6 @@ namespace AI.Infrastructure.Persistence.Migrations
                 .HasAnnotation("ProductVersion", "9.0.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "vector");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("AI.Domain.Entities.InteractionWeight", b =>
