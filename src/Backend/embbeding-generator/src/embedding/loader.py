@@ -1,67 +1,71 @@
 """
-Model loading logic - supports both old (pytorch) and new (safetensors) formats.
+Model loader — uses ONNX Runtime for fast, lightweight inference.
+No PyTorch dependency at runtime.
 """
 
-import logging
 from pathlib import Path
-from sentence_transformers import SentenceTransformer
+from optimum.onnxruntime import ORTModelForFeatureExtraction
+from transformers import AutoTokenizer
 from src.utils.logging import setup_logging
 
 logger = setup_logging("embedding.loader")
 
+_REQUIRED_FILES = ["model.onnx", "tokenizer.json", "config.json"]
+
+
 class ModelLoader:
-    """Handles model loading and validation."""
-    
+    """Loads ONNX model + tokenizer from local snapshot directory."""
+
     def __init__(self, model_path: Path):
         self.model_path = model_path
-        self.model = None
-        self.dimension = None
-    
+        self.model: ORTModelForFeatureExtraction | None = None
+        self.tokenizer: AutoTokenizer | None = None
+        self.dimension: int | None = None
+
     def validate(self) -> bool:
-        """Check if model files exist (supports both old and new formats)."""
         if not self.model_path.exists():
             logger.error(f"❌ Model path not found: {self.model_path}")
             return False
-        
-        # ✅ Check for NEW format (safetensors + subfolders)
-        new_format_files = ["model.safetensors", "config.json", "tokenizer.json"]
-        new_format_folders = ["1_Pooling", "2_Normalize"]
-        
-        has_new_format = all((self.model_path / f).exists() for f in new_format_files)
-        has_new_folders = all((self.model_path / folder).exists() for folder in new_format_folders)
-        
-        if has_new_format and has_new_folders:
-            logger.info(f"✅ Model validation passed (new format): {self.model_path}")
-            return True
-        
-        # ✅ Check for OLD format (pytorch bin)
-        old_format_files = ["pytorch_model.bin", "config.json", "tokenizer.json"]
-        has_old_format = all((self.model_path / f).exists() for f in old_format_files)
-        
-        if has_old_format:
-            logger.info(f"✅ Model validation passed (old format): {self.model_path}")
-            return True
-        
-        # ❌ Neither format found
-        logger.error(f"❌ Required files missing in: {self.model_path}")
-        found_files = [f.name for f in self.model_path.iterdir()]
-        logger.error(f"📁 Found: {found_files}")
-        return False
-    
-    def load(self, device: str = "cpu") -> SentenceTransformer:
-        """Load the model into memory."""
+
+        missing = [f for f in _REQUIRED_FILES if not (self.model_path / f).exists()]
+        if missing:
+            logger.error(f"❌ Missing required files: {missing}")
+            return False
+
+        logger.info(f"✅ ONNX model validated: {self.model_path}")
+        return True
+
+    def load(self, device: str = "cpu") -> tuple[ORTModelForFeatureExtraction, AutoTokenizer]:
+        """Returns (ort_model, tokenizer)."""
         if not self.validate():
-            raise FileNotFoundError(f"Model not found at {self.model_path}")
-        
-        logger.info(f"📦 Loading model from {self.model_path} onto {device}...")
-        self.model = SentenceTransformer(str(self.model_path), device=device)
-        self.dimension = self.model.get_sentence_embedding_dimension()
-        
-        logger.info(f"✅ Model loaded: dimension={self.dimension}")
-        return self.model
-    
+            raise FileNotFoundError(f"Invalid ONNX model at {self.model_path}")
+
+        logger.info(f"📦 Loading ONNX model from: {self.model_path}")
+
+        try:
+            self.model = ORTModelForFeatureExtraction.from_pretrained(
+                str(self.model_path),
+                local_files_only=True,
+            )
+            self.tokenizer = AutoTokenizer.from_pretrained(
+                str(self.model_path),
+                local_files_only=True,
+            )
+        except Exception as e:
+            logger.error(f"❌ Failed to load ONNX model: {type(e).__name__}: {e}")
+            raise
+
+        # Derive dimension via test inference
+        import torch
+        inputs = self.tokenizer("test", return_tensors="pt")
+        with torch.no_grad():
+            outputs = self.model(**inputs)
+        self.dimension = outputs.last_hidden_state.shape[-1]
+
+        logger.info(f"✅ ONNX model loaded: dim={self.dimension}")
+        return self.model, self.tokenizer
+
     def get_dimension(self) -> int:
-        """Get model embedding dimension."""
         if self.dimension is None:
-            raise RuntimeError("Model not loaded yet")
+            raise RuntimeError("Model not loaded yet — call load() first")
         return self.dimension

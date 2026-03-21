@@ -3,7 +3,7 @@ aio-pika==9.3.0
 sentence-transformers==2.2.2
 huggingface-hub==0.19.4
 transformers==4.36.0
-torch==2.1.0
+torch==2.1.0+cpu
 numpy==1.26.0
 
 # HTTP API (for Swagger/testing)
