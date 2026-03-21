@@ -15,7 +15,7 @@ namespace AIModule.Infrastructure.Persistence.Contexts
                 .AddJsonFile("appsettings.json", optional: true)
                 .AddEnvironmentVariables()
                 .Build();
-            
+
             var dbConfig = new DatabaseConfig();
             configuration.GetSection("Database").Bind(dbConfig);
 
