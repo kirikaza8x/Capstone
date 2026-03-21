@@ -20,7 +20,17 @@ namespace AIModule.Infrastructure.Persistence.Contexts
             configuration.GetSection("Database").Bind(dbConfig);
 
             var optionsBuilder = new DbContextOptionsBuilder<AIModuleDbContext>();
-            optionsBuilder.UseNpgsql(dbConfig.ConnectionString);
+            optionsBuilder.UseNpgsql(dbConfig.ConnectionString, npgsqlOptions =>
+            {
+                npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", AI.Infrastructure.Constants.SchemaName);
+
+                if (dbConfig.MaxRetryCount > 0)
+                    npgsqlOptions.EnableRetryOnFailure(dbConfig.MaxRetryCount);
+
+                if (dbConfig.CommandTimeout > 0)
+                    npgsqlOptions.CommandTimeout(dbConfig.CommandTimeout);
+            })
+            .UseSnakeCaseNamingConvention();
 
             return new AIModuleDbContext(optionsBuilder.Options);
         }

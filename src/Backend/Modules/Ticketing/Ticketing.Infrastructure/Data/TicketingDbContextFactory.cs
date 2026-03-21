@@ -19,7 +19,18 @@ namespace Ticketing.Infrastructure.Data
             configuration.GetSection("Database").Bind(dbConfig);
 
             var optionsBuilder = new DbContextOptionsBuilder<TicketingDbContext>();
-            optionsBuilder.UseNpgsql(dbConfig.ConnectionString);
+
+            optionsBuilder.UseNpgsql(dbConfig.ConnectionString, npgsqlOptions =>
+            {
+                npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", Constants.SchemaName);
+
+                if (dbConfig.MaxRetryCount > 0)
+                    npgsqlOptions.EnableRetryOnFailure(dbConfig.MaxRetryCount);
+
+                if (dbConfig.CommandTimeout > 0)
+                    npgsqlOptions.CommandTimeout(dbConfig.CommandTimeout);
+            })
+            .UseSnakeCaseNamingConvention();
 
             return new TicketingDbContext(optionsBuilder.Options);
         }

@@ -7,16 +7,13 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace AI.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class init_default : Migration
+    public partial class migrate_auto_20260321120548 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.EnsureSchema(
                 name: "ai");
-
-            migrationBuilder.AlterDatabase()
-                .Annotation("Npgsql:PostgresExtension:vector", ",,");
 
             migrationBuilder.CreateTable(
                 name: "global_category_stat",

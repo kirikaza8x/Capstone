@@ -103,6 +103,7 @@ public class Program
         .UseEventModule()
         .UseAiModule()
         .UseTicketingModule()
+        .UsePaymentModule()
             ;
 
         app.Run();
