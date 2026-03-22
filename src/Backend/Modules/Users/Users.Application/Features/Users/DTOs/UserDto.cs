@@ -100,7 +100,7 @@ public class UpdateProfileRequestDto
     [DefaultValue("Doe")]
     public string? LastName { get; set; }
 
-    [DefaultValue("")]
+    [DefaultValue("2000-01-01T00:00:00Z")]
     public DateTime? Birthday { get; set; }
 
     [JsonConverter(typeof(JsonStringEnumConverter))]
