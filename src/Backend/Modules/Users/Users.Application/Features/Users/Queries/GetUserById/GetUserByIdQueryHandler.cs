@@ -20,7 +20,7 @@ namespace Users.Application.Features.Users.Queries
 
         public async Task<Result<UserResponseDto>> Handle(GetUserByIdQuery request, CancellationToken cancellationToken)
         {
-            var user = await _userRepository.GetByIdAsync(request.Id, cancellationToken);
+            var user = await _userRepository.GetByIdWithRoleAsync(request.Id, cancellationToken);
 
             if (user is null)
             {

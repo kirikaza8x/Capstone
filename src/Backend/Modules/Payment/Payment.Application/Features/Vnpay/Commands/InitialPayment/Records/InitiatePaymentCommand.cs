@@ -1,14 +1,18 @@
-using Payment.Application.Features.VnPay.Dtos;
 using Payment.Domain.Enums;
+using Payments.Application.DTOs.Payment;
 using Shared.Application.Abstractions.Messaging;
 
-namespace Payments.Application.Features.Commands.InitiatePayment;
+namespace Payments.Application.Features.Payments.Commands.InitiatePayment;
 
 public record InitiatePaymentCommand(
-    Guid UserId,
-    string IpAddress,
-    decimal Amount,
-    PaymentType Type,
-    Guid? EventId,          // required only for DirectPay
+    PaymentType Method,                         // BatchDirectPay or BatchWalletPay
+    IReadOnlyList<PaymentItemDto> Items,
     string? Description = null
-) : ICommand<InitiatePaymentResponseDto>;
+) : ICommand<InitiatePaymentResult>;
+
+public record InitiatePaymentResult(
+    Guid PaymentTransactionId,
+    string? PaymentUrl,                         // null for BatchWalletPay
+    decimal TotalAmount,
+    DateTime? CompletedAt                       // populated immediately for BatchWalletPay
+);

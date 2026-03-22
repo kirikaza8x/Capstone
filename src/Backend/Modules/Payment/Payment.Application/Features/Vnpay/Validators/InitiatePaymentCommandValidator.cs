@@ -1,6 +1,6 @@
 using FluentValidation;
 using Payment.Domain.Enums;
-using Payments.Application.Features.Commands.InitiatePayment;
+using Payments.Application.Features.Payments.Commands.InitiatePayment;
 
 namespace Payments.Application.Validators;
 
@@ -8,32 +8,35 @@ public class InitiatePaymentCommandValidator : AbstractValidator<InitiatePayment
 {
     public InitiatePaymentCommandValidator()
     {
-        RuleFor(x => x.UserId)
-            .NotEmpty()
-            .WithMessage("UserId is required.");
 
-        RuleFor(x => x.Amount)
-            .GreaterThan(0)
-            .WithMessage("Amount must be greater than zero.")
-            .LessThanOrEqualTo(500_000_000)
-            .WithMessage("Amount cannot exceed 500,000,000 VND per transaction.");
+        // RuleFor(x => x.IpAddress)
+        //     .NotEmpty().WithMessage("IP address is required.");
 
-        RuleFor(x => x.Type)
-            .IsInEnum()
-            .WithMessage("Invalid payment type.");
+        // RuleFor(x => x.Method)
+        //     .Must(m => m == PaymentType.BatchDirectPay || m == PaymentType.BatchWalletPay)
+        //     .WithMessage("Method must be BatchDirectPay or BatchWalletPay.");
 
-        RuleFor(x => x.IpAddress)
-            .NotEmpty()
-            .WithMessage("IP address is required.");
+        // RuleFor(x => x.Items)
+        //     .NotEmpty().WithMessage("At least one item is required.");
 
-        RuleFor(x => x.EventId)
-            .NotEmpty()
-            .WithMessage("EventId is required for Direct Pay.")
-            .When(x => x.Type == PaymentType.DirectPay);
+        // RuleForEach(x => x.Items).ChildRules(item =>
+        // {
+        //     item.RuleFor(i => i.EventId)
+        //         .NotEmpty().WithMessage("EventId is required.");
 
-        RuleFor(x => x.Description)
-            .MaximumLength(255)
-            .WithMessage("Description cannot exceed 255 characters.")
-            .When(x => x.Description != null);
+        //     item.RuleFor(i => i.Amount)
+        //         .GreaterThan(0).WithMessage("Amount must be greater than zero.")
+        //         .LessThanOrEqualTo(500_000_000)
+        //         .WithMessage("Item amount cannot exceed 500,000,000 VND.");
+        // });
+
+        // RuleFor(x => x.Items)
+        //     .Must(items => items.Select(i => i.EventId).Distinct().Count() == items.Count)
+        //     .WithMessage("Duplicate EventIds are not allowed in the same payment.")
+        //     .When(x => x.Items?.Count > 0);
+
+        // RuleFor(x => x.Description)
+        //     .MaximumLength(255).WithMessage("Description cannot exceed 255 characters.")
+        //     .When(x => x.Description != null);
     }
 }

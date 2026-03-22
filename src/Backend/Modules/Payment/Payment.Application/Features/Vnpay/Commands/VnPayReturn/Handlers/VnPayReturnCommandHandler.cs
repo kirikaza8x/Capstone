@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Logging;
-using Payment.Application.Features.VnPay.Dtos;
 using Payment.Domain.Enums;
 using Payments.Application.Abstractions;
 using Payments.Domain.Repositories;
@@ -14,97 +13,118 @@ public class VnPayReturnCommandHandler(
     IPaymentTransactionRepository transactionRepository,
     IWalletRepository walletRepository,
     IPaymentUnitOfWork unitOfWork,
-    ILogger<VnPayReturnCommandHandler> logger) : ICommandHandler<VnPayReturnCommand, VnPayResultDto>
+    ILogger<VnPayReturnCommandHandler> logger)
+    : ICommandHandler<VnPayReturnCommand, VnPayReturnResult>
 {
-    public async Task<Result<VnPayResultDto>> Handle(VnPayReturnCommand command, CancellationToken cancellationToken)
+    public async Task<Result<VnPayReturnResult>> Handle(
+        VnPayReturnCommand command, CancellationToken cancellationToken)
     {
         // 1. Validate hash
-        var vnPayResult = vnPayService.ValidateCallback(command.QueryParams);
+        var callback = vnPayService.ValidateCallback(command.QueryParams);
 
-        if (!vnPayResult.IsValid)
+        logger.LogInformation(
+            "VNPayReturnCommand received with QueryParams: {@QueryParams}",
+            command.QueryParams);
+
+        if (!callback.IsValid)
         {
             logger.LogWarning("VNPay callback hash validation failed.");
-            return Result.Failure<VnPayResultDto>(Error.Failure("VnPay.InvalidSignature", "Security check failed."));
+            return Result.Failure<VnPayReturnResult>(
+                Error.Failure("VnPay.InvalidSignature", "Security check failed."));
         }
 
-        // 2. Resolve transaction
-        if (string.IsNullOrEmpty(vnPayResult.OrderId))
-            return Result.Failure<VnPayResultDto>(Error.Validation("VnPay.MissingTxnRef", "No transaction reference provided."));
+        if (string.IsNullOrEmpty(callback.OrderId))
+            return Result.Failure<VnPayReturnResult>(
+                Error.Validation("VnPay.MissingTxnRef", "No transaction reference provided."));
 
-        var transaction = await transactionRepository.GetByTxnRefAsync(vnPayResult.OrderId, cancellationToken);
+        // 2. Load transaction with items — always with items
+        var txn = await transactionRepository
+            .GetByTxnRefWithItemsAsync(callback.OrderId, cancellationToken);
 
-        if (transaction == null)
+        if (txn == null)
         {
-            logger.LogError("Transaction not found for TxnRef: {TxnRef}", vnPayResult.OrderId);
-            return Result.Failure<VnPayResultDto>(Error.NotFound("Payment.NotFound", "Transaction reference not found."));
+            logger.LogError("Transaction not found for TxnRef={TxnRef}", callback.OrderId);
+            return Result.Failure<VnPayReturnResult>(
+                Error.NotFound("Payment.NotFound", "Transaction not found."));
         }
 
-        // 3. Always update gateway fields first — preserves real VNPay data regardless of outcome
-        var gatewayStatus = command.QueryParams.TryGetValue("vnp_TransactionStatus", out var s) ? s : null;
-        var bankCode = command.QueryParams.TryGetValue("vnp_BankCode", out var bc) ? bc : null;
-        var bankTranNo = command.QueryParams.TryGetValue("vnp_BankTranNo", out var btn) ? btn : null;
+        // 3. Extract every field VNPay sends back — store all of them
+        command.QueryParams.TryGetValue("vnp_TransactionStatus", out var gatewayStatus);
+        command.QueryParams.TryGetValue("vnp_BankCode",          out var bankCode);
+        command.QueryParams.TryGetValue("vnp_BankTranNo",        out var bankTranNo);
+        command.QueryParams.TryGetValue("vnp_CardType",          out var cardType);
+        command.QueryParams.TryGetValue("vnp_PayDate",           out var payDate);
+        command.QueryParams.TryGetValue("vnp_TmnCode",           out var tmnCode);
+        command.QueryParams.TryGetValue("vnp_SecureHash",        out var secureHash);
+        command.QueryParams.TryGetValue("vnp_OrderInfo",         out var orderInfo);
 
-        transaction.UpdateGatewayInfo(
-            responseCode: vnPayResult.ResponseCode,
-            status: gatewayStatus,
-            transactionNo: vnPayResult.TransactionNo,
-            bankCode: bankCode,
-            bankTranNo: bankTranNo
+        txn.UpdateGatewayInfo(
+            responseCode:  callback.ResponseCode,
+            status:        gatewayStatus,
+            transactionNo: callback.TransactionNo,
+            bankCode:      bankCode,
+            bankTranNo:    bankTranNo,
+            cardType:      cardType,
+            payDate:       payDate,
+            tmnCode:       tmnCode,
+            secureHash:    secureHash,
+            orderInfo:     orderInfo
         );
 
         // 4. Branch on outcome
-        if (vnPayResult.IsSuccess)
+        if (callback.IsSuccess)
         {
-            transaction.MarkCompleted();
+            txn.MarkCompleted(); // propagates to all BatchPaymentItems automatically
 
-            if (transaction.Type == PaymentType.DirectPay)
+            if (txn.Type == PaymentType.WalletTopUp)
             {
-                logger.LogInformation("Direct pay completed for EventId: {EventId}", transaction.EventId);
-                // TODO: publish domain event or send ticket generation command
-            }
-            else if (transaction.Type == PaymentType.WalletTopUp)
-            {
-                logger.LogInformation("Wallet top-up completed for WalletId: {WalletId}", transaction.WalletId);
-
-                var wallet = await walletRepository.GetByUserIdAsync(transaction.UserId, cancellationToken);
+                var wallet = await walletRepository
+                    .GetByUserIdAsync(txn.UserId, cancellationToken);
 
                 if (wallet == null)
-                {
-                    logger.LogError("Wallet not found for UserId: {UserId}", transaction.UserId);
-                    return Result.Failure<VnPayResultDto>(Error.NotFound("Wallet.NotFound", "Wallet not found."));
-                }
+                    return Result.Failure<VnPayReturnResult>(
+                        Error.NotFound("Wallet.NotFound", "Wallet not found."));
 
                 var walletTxn = wallet.Credit(
-                    transaction.Amount,
-                    $"VNPay top-up ref {vnPayResult.TransactionNo}"
-                );
+                    txn.Amount,
+                    $"VNPay top-up | TxnNo={callback.TransactionNo}");
 
-                walletTxn.MarkCompleted(); // Don't leave WalletTransaction in Pending
-
+                walletTxn.MarkCompleted();
                 walletRepository.Update(wallet);
+
+                logger.LogInformation(
+                    "WalletTopUp completed: UserId={UserId}, Amount={Amount}",
+                    txn.UserId, txn.Amount);
+            }
+            else
+            {
+                // BatchDirectPay — items already marked via MarkCompleted()
+                logger.LogInformation(
+                    "BatchDirectPay completed: TxnRef={TxnRef}, Items={Count}",
+                    callback.OrderId, txn.Items.Count);
             }
         }
         else
         {
-            transaction.MarkFailed(vnPayResult.Message);
+            txn.MarkFailed(callback.Message);
 
-            logger.LogWarning("Payment failed for TxnRef: {TxnRef}. Reason: {Reason}",
-                vnPayResult.OrderId, vnPayResult.Message);
+            logger.LogWarning(
+                "Payment failed: TxnRef={TxnRef}, Code={Code}, Reason={Reason}",
+                callback.OrderId, callback.ResponseCode, callback.Message);
         }
 
         // 5. Persist
-        transactionRepository.Update(transaction);
+        transactionRepository.Update(txn);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // 6. Return
-        return Result.Success(new VnPayResultDto
-        {
-            ItemId = transaction.EventId ?? transaction.WalletId ?? Guid.Empty,
-            PaymentSuccess = vnPayResult.IsSuccess,
-            PaymentMessage = vnPayResult.Message,
-            TransactionNo = vnPayResult.TransactionNo,
-            ResponseCode = vnPayResult.ResponseCode,
-            CheckedOutAt = transaction.CompletedAt ?? DateTime.UtcNow
-        });
+        return Result.Success(new VnPayReturnResult(
+            PaymentTransactionId: txn.Id,
+            IsSuccess:            callback.IsSuccess,
+            Message:              callback.Message,
+            ResponseCode:         callback.ResponseCode,
+            TransactionNo:        callback.TransactionNo,
+            Type:                 txn.Type,
+            CompletedAt:          txn.CompletedAt
+        ));
     }
 }

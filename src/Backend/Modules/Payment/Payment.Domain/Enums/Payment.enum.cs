@@ -2,19 +2,18 @@ namespace Payment.Domain.Enums;
 
 public enum PaymentType
 {
-    DirectPay,
+    BatchDirectPay,
+    BatchWalletPay,
     WalletTopUp,
-    WalletPay
 
 }
 
 public enum PaymentInternalStatus
 {
-    AwaitingGateway,  // Created, user redirected to VNPay
-    Completed,        // Gateway confirmed success
-    Failed,            // Gateway failure or internal error
-    Refunded    // wallet credit issued, VNPay bank refund deferred
-
+    AwaitingGateway,
+    Completed,
+    Failed,
+    Refunded
 }
 
 public enum VnPayTransactionStatus

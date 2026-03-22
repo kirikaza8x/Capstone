@@ -16,6 +16,7 @@ namespace Users.Domain.Repositories
         Task<User?> GetByExternalIdentityAsync(string provider, string providerKey, CancellationToken cancellationToken = default);
         Task<User?> GetByEmailOtpAsync(string email, CancellationToken cancellationToken = default);
         Task<User?> GetByIdWithOrganizerProfileAsync(Guid userId, CancellationToken cancellationToken = default);
+        Task<User?> GetByIdWithRoleAsync(Guid userId, CancellationToken cancellationToken = default);
         Task<User?> GetByIdWithTokenAsync(Guid userId, CancellationToken cancellationToken = default);
 
     }

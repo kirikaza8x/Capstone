@@ -50,7 +50,7 @@ public sealed class QdrantStartupService : IHostedService
                 await eventRepo.EnsureCollectionAsync(ct);
                 await behaviorRepo.EnsureCollectionAsync(ct);
 
-                _logger.LogInformation("✅ Qdrant collections ready");
+                _logger.LogInformation("Qdrant collections ready");
                 return; // exit loop once successful
             }
             catch (Exception ex)
