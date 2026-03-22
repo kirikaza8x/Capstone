@@ -31,7 +31,7 @@ public class CreateHashtagEndpoint : ICarterModule
         .WithName("CreateHashtag")
         .WithSummary("Create hashtag")
         .WithDescription("Create a new hashtag.")
-        .Produces<int>(StatusCodes.Status201Created)
+        .Produces<ApiResult<int>>(StatusCodes.Status201Created)
         .ProducesProblem(StatusCodes.Status409Conflict)
         .RequireRoles(Roles.AllExceptAttendee);
     }

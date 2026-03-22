@@ -39,7 +39,7 @@ public class CheckInEndpoint : ICarterModule
         .WithName("CheckIn")
         .WithSummary("Check in a ticket")
         .WithDescription("Validates QR code and marks ticket as used for the given session.")
-        .Produces<CheckInResponse>(StatusCodes.Status200OK)
+        .Produces<ApiResult<CheckInResponse>>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status401Unauthorized)
         .ProducesProblem(StatusCodes.Status404NotFound)

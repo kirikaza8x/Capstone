@@ -38,7 +38,7 @@ public class AddEventMemberEndpoint : ICarterModule
         .WithName("AddEventMember")
         .WithSummary("Add event member")
         .WithDescription("Add a registered Attendee as event member by email.")
-        .Produces<Guid>(StatusCodes.Status201Created)
+        .Produces<ApiResult<Guid>>(StatusCodes.Status201Created)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status403Forbidden)
         .ProducesProblem(StatusCodes.Status404NotFound)
