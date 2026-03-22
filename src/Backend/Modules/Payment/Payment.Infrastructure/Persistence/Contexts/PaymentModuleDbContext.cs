@@ -10,6 +10,8 @@ namespace Payments.Infrastructure.Persistence.Contexts
         public DbSet<Wallet> Wallets { get; set; } = null!;
         public DbSet<WalletTransaction> WalletTransactions { get; set; } = null!;
         public DbSet<PaymentTransaction> PaymentTransactions { get; set; } = null!;
+        public DbSet<BatchPaymentItem> BatchPaymentItems { get; set; } = null!;
+        public DbSet<RefundRequest> RefundRequests { get; set; } = null!;
 
         public PaymentModuleDbContext(DbContextOptions<PaymentModuleDbContext> options) : base(options) { }
 

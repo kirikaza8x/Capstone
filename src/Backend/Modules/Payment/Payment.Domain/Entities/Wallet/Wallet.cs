@@ -1,89 +1,111 @@
 using Payments.Domain.Enums;
 using Shared.Domain.DDD;
 
-namespace Payments.Domain.Entities
+namespace Payments.Domain.Entities;
+
+public class Wallet : AggregateRoot<Guid>
 {
-    public class Wallet : AggregateRoot<Guid>
+    public Guid UserId { get; private set; }
+    public decimal Balance { get; private set; }
+    public WalletStatus Status { get; private set; }
+
+    public ICollection<WalletTransaction> Transactions { get; private set; }
+        = new List<WalletTransaction>();
+
+    private Wallet() { }
+
+    public static Wallet Create(Guid userId, decimal initialBalance = 0)
     {
-        public Guid UserId { get; private set; }
-        public decimal Balance { get; private set; }
-        public WalletStatus Status { get; private set; }
+        if (initialBalance < 0)
+            throw new ArgumentException("Initial balance cannot be negative.", nameof(initialBalance));
 
-        public ICollection<WalletTransaction> Transactions { get; private set; } =
-            new List<WalletTransaction>();
-
-
-        private Wallet() { }
-
-        public static Wallet Create(Guid userId, decimal initialBalance = 0)
+        return new Wallet
         {
-            if (initialBalance < 0)
-                throw new ArgumentException("Initial balance cannot be negative.");
-
-            var wallet = new Wallet
-            {
-                Id = Guid.NewGuid(),
-                UserId = userId,
-                Balance = initialBalance,
-                Status = WalletStatus.Active
-            };
-
-            return wallet;
-        }
-
-        public WalletTransaction Credit(decimal amount, string? note = null)
-        {
-            if (amount <= 0)
-                throw new ArgumentException("Amount must be positive.");
-
-            var before = Balance;
-            Balance += amount;
-
-            var transaction = WalletTransaction.Create(
-                Id,
-                TransactionType.Deposit,
-                TransactionDirection.In,
-                amount,
-                before,
-                Balance,
-                note
-            );
-            Transactions.Add(transaction);
-            return transaction;
-        }
-
-        public WalletTransaction Debit(decimal amount, string? note = null)
-        {
-            if (amount <= 0)
-                throw new ArgumentException("Amount must be positive.");
-
-            if (Balance < amount)
-                throw new InvalidOperationException("Insufficient funds.");
-
-            var before = Balance;
-            Balance -= amount;
-
-            var transaction = WalletTransaction.Create(
-                Id,
-                TransactionType.Withdrawal,
-                TransactionDirection.Out,
-                amount,
-                before,
-                Balance,
-                note
-            );
-
-            Transactions.Add(transaction);
-            return transaction;
-        }
-
-        public void ChangeStatus(WalletStatus newStatus)
-        {
-            Status = newStatus;
-        }
-
-        protected override void Apply(IDomainEvent @event) { }
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            Balance = initialBalance,
+            Status = WalletStatus.Active,
+            CreatedAt = DateTime.UtcNow
+        };
     }
 
+    public WalletTransaction Credit(decimal amount, string? note = null)
+    {
+        if (amount <= 0)
+            throw new ArgumentException("Credit amount must be positive.", nameof(amount));
 
+        var before = Balance;
+        Balance += amount;
+
+        var txn = WalletTransaction.Create(
+            walletId: Id,
+            type: TransactionType.Deposit,
+            direction: TransactionDirection.In,
+            amount: amount,
+            balanceBefore: before,
+            balanceAfter: Balance,
+            note: note
+        );
+
+        Transactions.Add(txn);
+        return txn;
+    }
+
+    public WalletTransaction Debit(decimal amount, string? note = null)
+    {
+        if (amount <= 0)
+            throw new ArgumentException("Debit amount must be positive.", nameof(amount));
+
+        if (Balance < amount)
+            throw new InvalidOperationException(
+                $"Insufficient funds. Balance: {Balance:N0}, Required: {amount:N0}.");
+
+        var before = Balance;
+        Balance -= amount;
+
+        var txn = WalletTransaction.Create(
+            walletId: Id,
+            type: TransactionType.Withdrawal,
+            direction: TransactionDirection.Out,
+            amount: amount,
+            balanceBefore: before,
+            balanceAfter: Balance,
+            note: note
+        );
+
+        Transactions.Add(txn);
+        return txn;
+    }
+
+    public WalletTransaction Refund(decimal amount, string? note = null)
+    {
+        if (amount <= 0)
+            throw new ArgumentException("Refund amount must be positive.", nameof(amount));
+
+        var before = Balance;
+        Balance += amount;
+
+        var txn = WalletTransaction.Create(
+            walletId: Id,
+            type: TransactionType.Refund,
+            direction: TransactionDirection.In,
+            amount: amount,
+            balanceBefore: before,
+            balanceAfter: Balance,
+            note: note
+        );
+
+        Transactions.Add(txn);
+        return txn;
+    }
+
+    public void ChangeStatus(WalletStatus newStatus)
+    {
+        if (Status == WalletStatus.Closed)
+            throw new InvalidOperationException("A closed wallet cannot change status.");
+
+        Status = newStatus;
+    }
+
+    protected override void Apply(IDomainEvent @event) { }
 }

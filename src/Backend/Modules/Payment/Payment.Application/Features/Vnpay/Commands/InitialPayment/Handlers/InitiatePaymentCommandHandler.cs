@@ -1,114 +1,157 @@
 using Microsoft.Extensions.Logging;
-using Payment.Application.Features.VnPay.Dtos;
 using Payment.Domain.Enums;
 using Payments.Application.Abstractions;
-using Payments.Application.Features.Commands.InitiatePayment;
+using Payments.Application.DTOs.Payment;
 using Payments.Domain.Entities;
 using Payments.Domain.Enums;
 using Payments.Domain.Repositories;
 using Payments.Domain.UOW;
+using Shared.Application.Abstractions.Authentication;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
 
 namespace Payments.Application.Features.Payments.Commands.InitiatePayment;
 
 public class InitiatePaymentCommandHandler(
+    ICurrentUserService currentUser,
     IVnPayService vnPayService,
     IPaymentTransactionRepository transactionRepository,
     IWalletRepository walletRepository,
     IPaymentUnitOfWork unitOfWork,
-    ILogger<InitiatePaymentCommandHandler> logger) : ICommandHandler<InitiatePaymentCommand, InitiatePaymentResponseDto>
+    ILogger<InitiatePaymentCommandHandler> logger)
+    : ICommandHandler<InitiatePaymentCommand, InitiatePaymentResult>
 {
-    public async Task<Result<InitiatePaymentResponseDto>> Handle(InitiatePaymentCommand command, CancellationToken cancellationToken)
+    public async Task<Result<InitiatePaymentResult>> Handle(
+        InitiatePaymentCommand command, CancellationToken cancellationToken)
     {
-        // 1. Basic validation
-        if (command.Amount <= 0)
-            return Result.Failure<InitiatePaymentResponseDto>(
-                Error.Validation("Payment.InvalidAmount", "Amount must be greater than zero."));
+        // --- Common validation ---
+        if (command.Items.Count == 0)
+            return Result.Failure<InitiatePaymentResult>(
+                Error.Validation("Payment.Empty", "At least one item is required."));
 
-        string orderDescription = command.Description ?? $"Payment for {command.Type}";
-        string internalTxnRef = Guid.NewGuid().ToString("N");
+        if (command.Items.Any(i => i.Amount <= 0))
+            return Result.Failure<InitiatePaymentResult>(
+                Error.Validation("Payment.InvalidAmount", "All item amounts must be greater than zero."));
 
-        PaymentTransaction transaction;
+        if (command.Items.Select(i => i.EventId).Distinct().Count() != command.Items.Count)
+            return Result.Failure<InitiatePaymentResult>(
+                Error.Validation("Payment.DuplicateEvent", "Duplicate events in the same payment are not allowed."));
 
-        if (command.Type == PaymentType.DirectPay)
+        var totalAmount = command.Items.Sum(i => i.Amount);
+        var orderInfo = command.Description ?? $"Payment for {command.Items.Count} event(s)";
+        var itemTuples = command.Items.Select(i => (i.EventId, i.Amount));
+
+        return command.Method switch
         {
-            // 2a. DirectPay — EventId is required
-            if (!command.EventId.HasValue)
-                return Result.Failure<InitiatePaymentResponseDto>(
-                    Error.Validation("Payment.MissingEventId", "EventId is required for Direct Ticket Purchase."));
+            PaymentType.BatchDirectPay =>
+                await HandleBatchDirectPayAsync(
+                    command, totalAmount, orderInfo, itemTuples, cancellationToken),
 
-            transaction = PaymentTransaction.CreateDirectPay(
-                command.UserId,
-                command.EventId.Value,
-                command.Amount,
-                orderDescription,
-                internalTxnRef
-            );
-        }
-        else
-        {
-            var wallet = await ResolveOrCreateWalletAsync(command.UserId, cancellationToken);
+            PaymentType.BatchWalletPay =>
+                await HandleBatchWalletPayAsync(
+                    command, totalAmount, orderInfo, itemTuples, cancellationToken),
 
-            transaction = PaymentTransaction.CreateWalletTopUp(
-                command.UserId,
-                wallet.Id,
-                command.Amount,
-                orderDescription,
-                internalTxnRef
-            );
-        }
+            _ => Result.Failure<InitiatePaymentResult>(
+                Error.Validation("Payment.InvalidMethod",
+                    "Method must be BatchDirectPay or BatchWalletPay."))
+        };
+    }
 
-        transactionRepository.Add(transaction);
+    // -------------------------------------------------------------------------
+    private async Task<Result<InitiatePaymentResult>> HandleBatchDirectPayAsync(
+        InitiatePaymentCommand command,
+        decimal totalAmount,
+        string orderInfo,
+        IEnumerable<(Guid EventId, decimal Amount)> itemTuples,
+        CancellationToken cancellationToken)
+    {
+        var txnRef = Guid.NewGuid().ToString("N");
+
+        var txn = PaymentTransaction.CreateBatchDirectPay(
+            currentUser.UserId, itemTuples, orderInfo, txnRef);
+
+        transactionRepository.Add(txn);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         try
         {
-            var paymentUrl = vnPayService.CreatePaymentUrl(
-                transaction.Amount,
-                transaction.GatewayTxnRef!,
-                transaction.GatewayOrderInfo ?? "Order Payment",
-                command.IpAddress
-            );
+            var url = vnPayService.CreatePaymentUrl(
+                totalAmount, txnRef, orderInfo,currentUser.IpAddress);
 
-            return Result.Success(new InitiatePaymentResponseDto(paymentUrl));
+            logger.LogInformation(
+                "BatchDirectPay initiated: UserId={UserId}, Items={Count}, Total={Total}, TxnRef={TxnRef}",
+                currentUser.UserId, command.Items.Count, totalAmount, txnRef);
+
+            return Result.Success(new InitiatePaymentResult(
+                txn.Id, url, totalAmount, null));
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "VNPay URL generation failed for TxnRef: {TxnRef}", internalTxnRef);
-            transaction.MarkFailed($"Gateway error: {ex.Message}");
+            logger.LogError(ex, "VNPay URL generation failed TxnRef={TxnRef}", txnRef);
+            txn.MarkFailed($"Gateway error: {ex.Message}");
             await unitOfWork.SaveChangesAsync(cancellationToken);
 
-            return Result.Failure<InitiatePaymentResponseDto>(
-                Error.Failure("Payment.GatewayError", "Could not connect to the payment provider."));
+            return Result.Failure<InitiatePaymentResult>(
+                Error.Failure("Payment.GatewayError", "Could not connect to payment provider."));
         }
     }
 
-    // Finds the user's active wallet or creates one on the spot
-    private async Task<Wallet> ResolveOrCreateWalletAsync(Guid userId, CancellationToken cancellationToken)
+    // -------------------------------------------------------------------------
+    private async Task<Result<InitiatePaymentResult>> HandleBatchWalletPayAsync(
+        InitiatePaymentCommand command,
+        decimal totalAmount,
+        string orderInfo,
+        IEnumerable<(Guid EventId, decimal Amount)> itemTuples,
+        CancellationToken cancellationToken)
     {
-        var existing = await walletRepository.GetByUserIdAsync(userId, cancellationToken);
+        var wallet = await walletRepository.GetByUserIdAsync(currentUser.UserId, cancellationToken);
 
-        if (existing != null)
+        if (wallet == null)
+            return Result.Failure<InitiatePaymentResult>(
+                Error.NotFound("Payment.WalletNotFound",
+                    "No wallet found. Please top up first."));
+
+        if (wallet.Status == WalletStatus.Closed)
+            return Result.Failure<InitiatePaymentResult>(
+                Error.Failure("Payment.WalletClosed", "Wallet is closed."));
+
+        if (wallet.Status == WalletStatus.Suspended)
+            return Result.Failure<InitiatePaymentResult>(
+                Error.Failure("Payment.WalletSuspended",
+                    "Wallet is suspended. Please contact support."));
+
+        if (wallet.Balance < totalAmount)
+            return Result.Failure<InitiatePaymentResult>(
+                Error.Failure("Payment.InsufficientFunds",
+                    $"Balance {wallet.Balance:N0} VND is insufficient for {totalAmount:N0} VND."));
+
+        WalletTransaction walletTxn;
+        try
         {
-            if (existing.Status == WalletStatus.Suspended)
-            {
-                logger.LogInformation("Reactivating suspended wallet {WalletId} for user {UserId}",
-                    existing.Id, userId);
-                existing.ChangeStatus(WalletStatus.Active);
-                walletRepository.Update(existing);
-            }
-
-            return existing;
+            walletTxn = wallet.Debit(totalAmount,
+                $"Batch wallet payment | {command.Items.Count} event(s) | {orderInfo}");
+        }
+        catch (InvalidOperationException ex)
+        {
+            logger.LogWarning(ex, "Debit race for UserId={UserId}", currentUser.UserId);
+            return Result.Failure<InitiatePaymentResult>(
+                Error.Failure("Payment.DebitFailed", "Debit failed. Please try again."));
         }
 
-        logger.LogInformation("No wallet found for user {UserId} — creating one", userId);
+        walletTxn.MarkCompleted();
+        walletRepository.Update(wallet);
 
-        var wallet = Wallet.Create(userId, initialBalance: 0);
-        walletRepository.Add(wallet);
+        var txn = PaymentTransaction.CreateBatchWalletPay(
+            currentUser.UserId, wallet.Id, itemTuples, orderInfo);
 
+        transactionRepository.Add(txn);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return wallet;
+        logger.LogInformation(
+            "BatchWalletPay completed: UserId={UserId}, Items={Count}, Total={Total}, BalanceAfter={Balance}",
+            currentUser.UserId, command.Items.Count, totalAmount, wallet.Balance);
+
+        return Result.Success(new InitiatePaymentResult(
+            txn.Id, null, totalAmount, txn.CompletedAt));
     }
 }

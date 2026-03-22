@@ -23,6 +23,73 @@ namespace Payment.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Payments.Domain.Entities.BatchPaymentItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("amount");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("created_by");
+
+                    b.Property<Guid>("EventId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("event_id");
+
+                    b.Property<string>("InternalStatus")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasDefaultValue("AwaitingGateway")
+                        .HasColumnName("internal_status");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<DateTime?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modified_at");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("modified_by");
+
+                    b.Property<Guid>("PaymentTransactionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("payment_transaction_id");
+
+                    b.Property<DateTime?>("RefundedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("refunded_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_batch_payment_item");
+
+                    b.HasIndex("EventId")
+                        .HasDatabaseName("ix_batch_payment_item_event_id");
+
+                    b.HasIndex("PaymentTransactionId")
+                        .HasDatabaseName("ix_batch_payment_item_transaction_id");
+
+                    b.HasIndex("EventId", "InternalStatus")
+                        .HasDatabaseName("ix_batch_payment_item_event_status");
+
+                    b.ToTable("batch_payment_item", "payments");
+                });
+
             modelBuilder.Entity("Payments.Domain.Entities.PaymentTransaction", b =>
                 {
                     b.Property<Guid>("Id")
@@ -52,10 +119,6 @@ namespace Payment.Infrastructure.Persistence.Migrations
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)")
                         .HasColumnName("currency");
-
-                    b.Property<Guid?>("EventId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("event_id");
 
                     b.Property<DateTime?>("FailedAt")
                         .HasColumnType("timestamp with time zone")
@@ -188,17 +251,10 @@ namespace Payment.Infrastructure.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_payment_transaction");
 
-                    b.HasIndex("EventId")
-                        .HasDatabaseName("ix_payment_transaction_event_id");
-
                     b.HasIndex("GatewayResponseCode")
                         .HasDatabaseName("ix_payment_transaction_response_code");
 
-                    b.HasIndex("GatewayStatus")
-                        .HasDatabaseName("ix_payment_transaction_gateway_status");
-
                     b.HasIndex("GatewayTxnRef")
-                        .IsUnique()
                         .HasDatabaseName("ix_payment_transaction_txn_ref");
 
                     b.HasIndex("InternalStatus")
@@ -210,21 +266,117 @@ namespace Payment.Infrastructure.Persistence.Migrations
                     b.HasIndex("WalletId")
                         .HasDatabaseName("ix_payment_transaction_wallet_id");
 
-                    b.HasIndex("EventId", "InternalStatus")
-                        .HasDatabaseName("ix_payment_transaction_event_status");
+                    b.HasIndex("UserId", "InternalStatus")
+                        .HasDatabaseName("ix_payment_transaction_user_status");
 
                     b.ToTable("payment_transaction", "payments");
+                });
+
+            modelBuilder.Entity("Payments.Domain.Entities.RefundRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("created_by");
+
+                    b.Property<Guid?>("EventId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("event_id");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<DateTime?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modified_at");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("modified_by");
+
+                    b.Property<Guid>("PaymentTransactionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("payment_transaction_id");
+
+                    b.Property<decimal>("RequestedAmount")
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("requested_amount");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("reviewed_at");
+
+                    b.Property<Guid?>("ReviewedByAdminId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("reviewed_by_admin_id");
+
+                    b.Property<string>("ReviewerNote")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("reviewer_note");
+
+                    b.Property<string>("Scope")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("scope");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Pending")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<string>("UserReason")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("user_reason");
+
+                    b.HasKey("Id")
+                        .HasName("pk_refund_request");
+
+                    b.HasIndex("PaymentTransactionId")
+                        .HasDatabaseName("ix_refund_request_transaction_id");
+
+                    b.HasIndex("Status")
+                        .HasDatabaseName("ix_refund_request_status");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_refund_request_user_id");
+
+                    b.HasIndex("PaymentTransactionId", "EventId", "Status")
+                        .HasDatabaseName("ix_refund_request_txn_event_status");
+
+                    b.ToTable("refund_request", "payments");
                 });
 
             modelBuilder.Entity("Payments.Domain.Entities.Wallet", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("id");
 
                     b.Property<decimal>("Balance")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("numeric(18,2)")
+                        .HasDefaultValue(0m)
                         .HasColumnName("balance");
 
                     b.Property<DateTime?>("CreatedAt")
@@ -251,8 +403,10 @@ namespace Payment.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("Status")
                         .IsRequired()
+                        .ValueGeneratedOnAdd()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Active")
                         .HasColumnName("status");
 
                     b.Property<Guid>("UserId")
@@ -276,8 +430,7 @@ namespace Payment.Infrastructure.Persistence.Migrations
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("id");
 
                     b.Property<decimal>("Amount")
                         .HasColumnType("numeric(18,2)")
@@ -326,14 +479,16 @@ namespace Payment.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("Status")
                         .IsRequired()
+                        .ValueGeneratedOnAdd()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Pending")
                         .HasColumnName("status");
 
                     b.Property<string>("Type")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
                         .HasColumnName("type");
 
                     b.Property<Guid>("WalletId")
@@ -343,11 +498,11 @@ namespace Payment.Infrastructure.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_wallet_transaction");
 
-                    b.HasIndex("Status")
-                        .HasDatabaseName("ix_wallet_transaction_status");
-
                     b.HasIndex("WalletId")
                         .HasDatabaseName("ix_wallet_transaction_wallet_id");
+
+                    b.HasIndex("WalletId", "Type")
+                        .HasDatabaseName("ix_wallet_transaction_wallet_type");
 
                     b.ToTable("wallet_transaction", "payments");
                 });
@@ -392,6 +547,16 @@ namespace Payment.Infrastructure.Persistence.Migrations
                     b.ToTable("outbox_messages", "payments");
                 });
 
+            modelBuilder.Entity("Payments.Domain.Entities.BatchPaymentItem", b =>
+                {
+                    b.HasOne("Payments.Domain.Entities.PaymentTransaction", null)
+                        .WithMany("Items")
+                        .HasForeignKey("PaymentTransactionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_batch_payment_item_payment_transactions_payment_transaction");
+                });
+
             modelBuilder.Entity("Payments.Domain.Entities.WalletTransaction", b =>
                 {
                     b.HasOne("Payments.Domain.Entities.Wallet", null)
@@ -400,6 +565,11 @@ namespace Payment.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_wallet_transaction_wallet_wallet_id");
+                });
+
+            modelBuilder.Entity("Payments.Domain.Entities.PaymentTransaction", b =>
+                {
+                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("Payments.Domain.Entities.Wallet", b =>

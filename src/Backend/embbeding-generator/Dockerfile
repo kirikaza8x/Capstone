@@ -6,7 +6,7 @@
 # ─────────────────────────────────────────────────────────────
 
 # ── Stage 1: Builder ─────────────────────────────────────────
-FROM python:3.11-slim-bookworm AS builder
+FROM python:3.11.12-slim-bookworm AS builder
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -15,33 +15,30 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /build
 
-# Install build deps
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install ALL deps including torch (needed only for ONNX export)
 COPY requirements.txt .
 
-# torch needed at build time for ONNX export — NOT copied to runtime stage
+# Install to system (not --prefix) so scripts can find packages directly
 RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install --prefix=/install torch==2.2.2 \
+    pip install torch==2.2.2+cpu \
         --index-url https://download.pytorch.org/whl/cpu && \
-    pip install --prefix=/install -r requirements.txt
+    pip install -r requirements.txt
 
 # Copy source + scripts
 COPY src/ ./src/
 COPY scripts/ ./scripts/
 
-# Download snapshot + export to ONNX
-# torch is available here for the export step
+# PYTHONPATH=/build so src.* imports work inside download_model.py
 RUN --mount=type=cache,target=/tmp/hf_cache \
     PYTHONPATH=/build \
     MODEL_PATH=/build/models/bge-small-en-v1.5 \
     python scripts/download_model.py
 
 # ── Stage 2: Runtime ─────────────────────────────────────────
-FROM python:3.11-slim-bookworm AS runtime
+FROM python:3.11.12-slim-bookworm AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -61,7 +58,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
     curl tini \
     && rm -rf /var/lib/apt/lists/*
 
@@ -69,13 +66,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN groupadd -r appuser && \
     useradd -r -g appuser -d /app -s /sbin/nologin appuser
 
-# Copy ONLY installed packages from builder (no torch, no build cache)
-COPY --from=builder /install /usr/local
+# Copy installed packages from builder
+# Installs to system python so no --prefix path issues
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
 
 # Copy source code
 COPY --from=builder /build/src ./src/
 
-# Copy ONNX model (no safetensors, no pytorch weights)
+# Copy ONNX model only (~140MB)
 COPY --from=builder /build/models ./models/
 
 RUN mkdir -p /app/models /app/cache && \
@@ -84,7 +83,7 @@ RUN mkdir -p /app/models /app/cache && \
 USER appuser
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD curl -f http://localhost:8001/health || exit 1
+    CMD curl -f http://localhost:8001/health || exit 1
 
 EXPOSE 8001
 ENTRYPOINT ["/usr/bin/tini", "--"]
