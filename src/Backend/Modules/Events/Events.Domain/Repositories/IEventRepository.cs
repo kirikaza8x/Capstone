@@ -22,7 +22,10 @@ public interface IEventRepository : IRepository<Event, Guid>
     Task<EventSession?> GetEventSessionByIdAsync(Guid sessionId, CancellationToken cancellationToken = default);
 
     Task<Event?> GetByIdWithImagesAsync(Guid id, CancellationToken cancellationToken = default);
-    Task<PagedResult<Event>> GetPublishedWithCategoriesAsync(PagedQuery pagedQuery, CancellationToken cancellationToken = default);
+    Task<PagedResult<Event>> GetPublishedWithCategoriesAsync(
+        PagedQuery pagedQuery,
+        int? categoryId = null,
+        CancellationToken cancellationToken = default);
     Task<PagedResult<Event>> GetByOrganizerPagedAsync(Guid organizerId, EventStatus? status, PagedQuery pagedQuery, CancellationToken cancellationToken = default);
 
     Task<Event?> GetByIdWithMembersAsync(Guid id, CancellationToken cancellationToken = default);
@@ -30,9 +33,9 @@ public interface IEventRepository : IRepository<Event, Guid>
     Task<bool> HasPermissionAsync(Guid eventId, Guid userId, string permission, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<Event>> GetByCategoriesOrHashtagsAsync(
-    IEnumerable<string> categoryNames,
-    IEnumerable<string> hashtagNames,
-    CancellationToken cancellationToken = default);
+        IEnumerable<string> categoryNames,
+        IEnumerable<string> hashtagNames,
+        CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<Event>> GetPublishedEndedEventsAsync(
         DateTime utcNow,

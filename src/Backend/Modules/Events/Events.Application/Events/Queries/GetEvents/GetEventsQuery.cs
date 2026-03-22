@@ -7,7 +7,7 @@ namespace Events.Application.Events.Queries.GetEvents;
 
 public record GetEventsQuery : PagedQuery, IQuery<PagedResult<EventResponse>>
 {
-    public Guid? CategoryId { get; init; }
+    public int? CategoryId { get; init; }
 }
 
 public sealed record EventResponse
