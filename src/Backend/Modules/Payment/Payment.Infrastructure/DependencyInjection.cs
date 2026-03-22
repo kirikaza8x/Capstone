@@ -1,5 +1,4 @@
 
-using Infrastructure.Payments;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -10,6 +9,7 @@ using Payments.Application.Abstractions;
 using Payments.Domain.UOW;
 using Payments.Infrastructure.Data.UOW;
 using Payments.Infrastructure.Persistence.Contexts;
+using Payments.Infrastructure.Services;
 using Shared.Domain.Data.Repositories;
 using Shared.Infrastructure.Configs;
 using Shared.Infrastructure.Configs.Database;

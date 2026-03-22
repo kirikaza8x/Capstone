@@ -22,6 +22,10 @@ public class VnPayReturnCommandHandler(
         // 1. Validate hash
         var callback = vnPayService.ValidateCallback(command.QueryParams);
 
+        logger.LogInformation(
+            "VNPayReturnCommand received with QueryParams: {@QueryParams}",
+            command.QueryParams);
+
         if (!callback.IsValid)
         {
             logger.LogWarning("VNPay callback hash validation failed.");
@@ -44,17 +48,27 @@ public class VnPayReturnCommandHandler(
                 Error.NotFound("Payment.NotFound", "Transaction not found."));
         }
 
-        // 3. Always update gateway fields first — preserves real VNPay data
+        // 3. Extract every field VNPay sends back — store all of them
         command.QueryParams.TryGetValue("vnp_TransactionStatus", out var gatewayStatus);
-        command.QueryParams.TryGetValue("vnp_BankCode", out var bankCode);
-        command.QueryParams.TryGetValue("vnp_BankTranNo", out var bankTranNo);
+        command.QueryParams.TryGetValue("vnp_BankCode",          out var bankCode);
+        command.QueryParams.TryGetValue("vnp_BankTranNo",        out var bankTranNo);
+        command.QueryParams.TryGetValue("vnp_CardType",          out var cardType);
+        command.QueryParams.TryGetValue("vnp_PayDate",           out var payDate);
+        command.QueryParams.TryGetValue("vnp_TmnCode",           out var tmnCode);
+        command.QueryParams.TryGetValue("vnp_SecureHash",        out var secureHash);
+        command.QueryParams.TryGetValue("vnp_OrderInfo",         out var orderInfo);
 
         txn.UpdateGatewayInfo(
-            responseCode: callback.ResponseCode,
-            status: gatewayStatus,
+            responseCode:  callback.ResponseCode,
+            status:        gatewayStatus,
             transactionNo: callback.TransactionNo,
-            bankCode: bankCode,
-            bankTranNo: bankTranNo
+            bankCode:      bankCode,
+            bankTranNo:    bankTranNo,
+            cardType:      cardType,
+            payDate:       payDate,
+            tmnCode:       tmnCode,
+            secureHash:    secureHash,
+            orderInfo:     orderInfo
         );
 
         // 4. Branch on outcome
@@ -105,12 +119,12 @@ public class VnPayReturnCommandHandler(
 
         return Result.Success(new VnPayReturnResult(
             PaymentTransactionId: txn.Id,
-            IsSuccess: callback.IsSuccess,
-            Message: callback.Message,
-            ResponseCode: callback.ResponseCode,
-            TransactionNo: callback.TransactionNo,
-            Type: txn.Type,
-            CompletedAt: txn.CompletedAt
+            IsSuccess:            callback.IsSuccess,
+            Message:              callback.Message,
+            ResponseCode:         callback.ResponseCode,
+            TransactionNo:        callback.TransactionNo,
+            Type:                 txn.Type,
+            CompletedAt:          txn.CompletedAt
         ));
     }
 }

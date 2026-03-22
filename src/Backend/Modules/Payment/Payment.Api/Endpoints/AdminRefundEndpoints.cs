@@ -7,7 +7,9 @@ using Payments.Application.Features.Refunds.Commands.MassRefundByEvent;
 using Payments.Application.Features.Refunds.Commands.ReviewRefundRequest;
 using Payments.Application.Features.Refunds.Queries.GetPendingRefundRequests;
 using Payments.Domain.Enums;
+using Shared.Api.Results;
 using Shared.Application.Abstractions.Authentication;
+using Shared.Domain.Abstractions;
 
 namespace Payments.Api.Features.Refunds;
 
@@ -28,12 +30,10 @@ public class AdminRefundEndpoints : ICarterModule
             int page = 1,
             int pageSize = 20) =>
         {
-            var result = await sender.Send(
+            Result<GetPendingRefundRequestsResult> result = await sender.Send(
                 new GetPendingRefundRequestsQuery(status, page, pageSize), ct);
 
-            return result.IsSuccess
-                ? Results.Ok(result.Value)
-                : Results.BadRequest(result.Error);
+            return result.ToOk();
         })
         .WithName("GetRefundQueue")
         .WithSummary("Get refund requests queue")

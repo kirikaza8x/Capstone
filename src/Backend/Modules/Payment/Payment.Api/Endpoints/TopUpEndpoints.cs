@@ -4,7 +4,9 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Payments.Application.Features.Payments.Commands.InitiateTopUp;
+using Shared.Api.Results;
 using Shared.Application.Abstractions.Authentication;
+using Shared.Domain.Abstractions;
 
 namespace Payments.Api.Features.TopUp;
 
@@ -29,11 +31,9 @@ public class TopUpEndpoints : ICarterModule
                 Amount: request.Amount,
                 Description: request.Description);
 
-            var result = await sender.Send(command, ct);
+            Result<InitiateTopUpResult> result = await sender.Send(command, ct);
 
-            return result.IsSuccess
-                ? Results.Ok(result.Value)
-                : Results.BadRequest(result.Error);
+            return result.ToOk();
         })
         .WithName("InitiateTopUp")
         .WithSummary("Initiate a VNPay wallet top-up")

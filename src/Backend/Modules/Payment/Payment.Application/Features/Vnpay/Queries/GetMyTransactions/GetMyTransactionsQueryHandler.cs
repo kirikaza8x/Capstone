@@ -36,13 +36,13 @@ public class GetMyTransactionsQueryHandler(
             Amount: i.Amount,
             InternalStatus: i.InternalStatus,
             RefundedAt: i.RefundedAt,
-            CreatedAt: i.CreatedAt      // DateTime? — matches updated DTO
+            CreatedAt: i.CreatedAt     
         )).ToList(),
         GatewayTxnRef: t.GatewayTxnRef,
         GatewayTransactionNo: t.GatewayTransactionNo,
         GatewayResponseCode: t.GatewayResponseCode,
         GatewayBankCode: t.GatewayBankCode,
-        CreatedAt: t.CreatedAt,         // DateTime? — matches updated DTO
+        CreatedAt: t.CreatedAt,         
         CompletedAt: t.CompletedAt,
         FailedAt: t.FailedAt,
         RefundedAt: t.RefundedAt);

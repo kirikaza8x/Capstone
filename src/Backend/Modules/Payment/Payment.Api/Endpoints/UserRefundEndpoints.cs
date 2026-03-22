@@ -7,7 +7,9 @@ using Payments.Application.DTOs.Refund;
 using Payments.Application.Features.Refunds.Commands.SubmitRefundRequest;
 using Payments.Application.Features.Refunds.Queries.GetMyRefundRequests;
 using Payments.Domain.Enums;
+using Shared.Api.Results;
 using Shared.Application.Abstractions.Authentication;
+using Shared.Domain.Abstractions;
 
 namespace Payments.Api.Features.Refunds;
 
@@ -33,11 +35,9 @@ public class UserRefundEndpoints : ICarterModule
                 UserReason: request.UserReason,
                 EventId: request.EventId);
 
-            var result = await sender.Send(command, ct);
+            Result<RefundRequestDto> result = await sender.Send(command, ct);
 
-            return result.IsSuccess
-                ? Results.Ok(result.Value)
-                : Results.BadRequest(result.Error);
+            return result.ToOk();
         })
         .WithName("SubmitRefundRequest")
         .WithSummary("Submit a refund request for admin review")
@@ -58,13 +58,11 @@ public class UserRefundEndpoints : ICarterModule
             int page = 1,
             int pageSize = 20) =>
         {
-            var result = await sender.Send(
+            Result<GetMyRefundRequestsResult> result = await sender.Send(
                 new GetMyRefundRequestsQuery(
                      status, page, pageSize), ct);
 
-            return result.IsSuccess
-                ? Results.Ok(result.Value)
-                : Results.BadRequest(result.Error);
+            return result.ToOk();
         })
         .WithName("GetMyRefundRequests")
         .WithSummary("Get current user's refund request history")

@@ -3,64 +3,64 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Payment.Application.Features.VnPay.Dtos;
 using Payment.Infrastructure.Configs;
 using Payments.Application.Abstractions;
+using Payments.Application.DTOs.VnPay;
 
-namespace Infrastructure.Payments;
+namespace Payments.Infrastructure.Services;
 
-/// <summary>
-/// VNPay payment service - handles payment URL creation and response validation
-/// </summary>
 public class VnPayService : IVnPayService
 {
-    private readonly VnPayConfig _vnPay;
+    private readonly VnPayConfig _config;
     private readonly ILogger<VnPayService> _logger;
 
-    public VnPayService(IOptions<VnPayConfig> options, ILogger<VnPayService> logger)
+    public VnPayService(
+        IOptions<VnPayConfig> options,
+        ILogger<VnPayService> logger)
     {
-        _vnPay = options?.Value ?? throw new ArgumentNullException(nameof(options));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _config = options.Value ?? throw new ArgumentNullException(nameof(options));
+        _logger = logger;
 
-        if (!string.IsNullOrEmpty(_vnPay.HashSecret))
-        {
-            _vnPay.HashSecret = _vnPay.HashSecret.Trim();
-        }
+        if (!string.IsNullOrEmpty(_config.HashSecret))
+            _config.HashSecret = _config.HashSecret.Trim();
     }
 
     public string CreatePaymentUrl(
-    decimal amount,
-    string txnRef,
-    string orderDescription,
-    string? ipAddress,
-    string? customReturnUrl = null)
+        decimal amount,
+        string txnRef,
+        string orderDescription,
+        string? ipAddress,
+        string? customReturnUrl = null)
     {
-        var returnUrl = string.IsNullOrEmpty(customReturnUrl) ? _vnPay.ReturnUrl : customReturnUrl;
+        if (string.IsNullOrEmpty(_config.Url)
+         || string.IsNullOrEmpty(_config.TmnCode)
+         || string.IsNullOrEmpty(_config.HashSecret))
+            throw new InvalidOperationException("VNPay configuration is incomplete.");
 
-        if (string.IsNullOrEmpty(_vnPay.Url) || string.IsNullOrEmpty(_vnPay.TmnCode) || string.IsNullOrEmpty(_vnPay.HashSecret))
-            throw new InvalidOperationException("VNPay configuration is missing.");
+        if (amount <= 0)
+            throw new ArgumentException("Amount must be greater than zero.", nameof(amount));
 
-        if (amount <= 0) throw new ArgumentException("Amount must be greater than 0", nameof(amount));
-        if (string.IsNullOrWhiteSpace(txnRef)) throw new ArgumentException("txnRef is required", nameof(txnRef));
+        if (string.IsNullOrWhiteSpace(txnRef))
+            throw new ArgumentException("TxnRef is required.", nameof(txnRef));
 
-        // VNPay expects amount in VND * 100
-        var amountInt = (long)Math.Truncate(amount * 100M);
+        var returnUrl  = string.IsNullOrEmpty(customReturnUrl) ? _config.ReturnUrl : customReturnUrl;
+        var amountInt  = (long)Math.Truncate(amount * 100M);
         var createDate = GetVietnamNow().ToString("yyyyMMddHHmmss");
 
         var query = new SortedDictionary<string, string>(StringComparer.Ordinal)
         {
-            ["vnp_Version"] = "2.1.0",
-            ["vnp_Command"] = "pay",
-            ["vnp_TmnCode"] = _vnPay.TmnCode,
-            ["vnp_Amount"] = amountInt.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            ["vnp_Version"]    = "2.1.0",
+            ["vnp_Command"]    = "pay",
+            ["vnp_TmnCode"]    = _config.TmnCode,
+            ["vnp_Amount"]     = amountInt.ToString(System.Globalization.CultureInfo.InvariantCulture),
             ["vnp_CreateDate"] = createDate,
-            ["vnp_CurrCode"] = "VND",
-            ["vnp_IpAddr"] = NormalizeIpAddress(ipAddress),
-            ["vnp_Locale"] = "vn",
-            ["vnp_OrderInfo"] = orderDescription,
-            ["vnp_OrderType"] = "other",
-            ["vnp_ReturnUrl"] = returnUrl?.Trim() ?? string.Empty,
-            ["vnp_TxnRef"] = txnRef
+            ["vnp_CurrCode"]   = "VND",
+            ["vnp_IpAddr"]     = NormalizeIp(ipAddress),
+            ["vnp_Locale"]     = "vn",
+            ["vnp_OrderInfo"]  = orderDescription,
+            ["vnp_OrderType"]  = "other",
+            ["vnp_ReturnUrl"]  = returnUrl?.Trim() ?? string.Empty,
+            ["vnp_TxnRef"]     = txnRef
         };
 
         var sanitized = new SortedDictionary<string, string>(
@@ -68,260 +68,257 @@ public class VnPayService : IVnPayService
                  .ToDictionary(k => k.Key, v => v.Value),
             StringComparer.Ordinal);
 
-        var signData = string.Join("&", sanitized.Select(kvp =>
+        var signData   = string.Join("&", sanitized.Select(kvp =>
             $"{WebUtility.UrlEncode(kvp.Key)}={WebUtility.UrlEncode(kvp.Value.Trim())}"));
 
-        var secureHash = HmacSHA512(_vnPay.HashSecret, signData);
+        var secureHash = HmacSha512(_config.HashSecret, signData);
 
-        var urlEncoded = string.Join("&", sanitized.Select(kvp =>
+        var urlPart = string.Join("&", sanitized.Select(kvp =>
             $"{kvp.Key}={Uri.EscapeDataString(kvp.Value.Trim())}"));
 
-        return $"{_vnPay.Url}?{urlEncoded}&vnp_SecureHashType=HMACSHA512&vnp_SecureHash={secureHash}";
+        return $"{_config.Url}?{urlPart}&vnp_SecureHashType=HMACSHA512&vnp_SecureHash={secureHash}";
     }
 
-    public PaymentResponseResult ValidateCallback(IDictionary<string, string> queryParams)
+    public PaymentCallbackResult ValidateCallback(IDictionary<string, string> queryParams)
     {
-        if (string.IsNullOrEmpty(_vnPay.HashSecret))
-        {
-            return new PaymentResponseResult(false, false, "VNPay secret missing", null, null, null, null);
-        }
+        if (string.IsNullOrEmpty(_config.HashSecret))
+            return Fail("VNPay secret missing.");
 
-        if (!queryParams.TryGetValue("vnp_SecureHash", out var receivedHash) || string.IsNullOrEmpty(receivedHash))
+        if (!queryParams.TryGetValue("vnp_SecureHash", out var receivedHash)
+         || string.IsNullOrEmpty(receivedHash))
         {
-            _logger.LogWarning("VNPay callback missing secure hash");
-            return new PaymentResponseResult(false, false, "Missing secure hash", null, null, null, null);
+            _logger.LogWarning("VNPay callback missing secure hash.");
+            return Fail("Missing secure hash.");
         }
 
         var copy = new SortedDictionary<string, string>(
-            queryParams.Where(kvp => kvp.Key != "vnp_SecureHash" && kvp.Key != "vnp_SecureHashType" && !string.IsNullOrEmpty(kvp.Value))
-                       .ToDictionary(k => k.Key, v => v.Value),
+            queryParams
+                .Where(kvp => kvp.Key != "vnp_SecureHash"
+                           && kvp.Key != "vnp_SecureHashType"
+                           && !string.IsNullOrEmpty(kvp.Value))
+                .ToDictionary(k => k.Key, v => v.Value),
             StringComparer.Ordinal);
 
-        var signData = string.Join("&", copy.Select(kvp => $"{kvp.Key}={kvp.Value.Trim()}"));
-        var computedHash = HmacSHA512(_vnPay.HashSecret, signData);
-        var isValid = string.Equals(computedHash, receivedHash, StringComparison.OrdinalIgnoreCase);
+        var signData  = string.Join("&", copy.Select(kvp => $"{kvp.Key}={kvp.Value.Trim()}"));
+        var computed  = HmacSha512(_config.HashSecret, signData);
+        var isValid   = string.Equals(computed, receivedHash, StringComparison.OrdinalIgnoreCase);
 
         copy.TryGetValue("vnp_ResponseCode", out var responseCode);
         copy.TryGetValue("vnp_TransactionNo", out var transactionNo);
         copy.TryGetValue("vnp_TxnRef", out var orderId);
 
         decimal? amount = null;
-        if (copy.TryGetValue("vnp_Amount", out var amountStr) && long.TryParse(amountStr, out var amountValue))
-        {
-            amount = amountValue / 100M;
-        }
+        if (copy.TryGetValue("vnp_Amount", out var amountStr)
+         && long.TryParse(amountStr, out var amountVal))
+            amount = amountVal / 100M;
 
         var isSuccess = isValid && responseCode == "00";
 
-        _logger.LogInformation("VNPay response validation: IsValid={IsValid}, ResponseCode={ResponseCode}", isValid, responseCode);
+        _logger.LogInformation(
+            "VNPay callback: IsValid={IsValid}, ResponseCode={Code}",
+            isValid, responseCode);
 
-        return new PaymentResponseResult(
-            isValid,
-            isSuccess,
-            GetResponseMessage(responseCode, isValid),
-            responseCode,
-            transactionNo,
-            amount,
-            orderId
-        );
+        return new PaymentCallbackResult(
+            isValid, isSuccess,
+            GetMessage(responseCode, isValid),
+            responseCode, transactionNo, amount, orderId);
     }
 
-    public async Task<PaymentStatusQueryResult> QueryPaymentStatusAsync(string orderId, string transactionDate)
+    public async Task<PaymentStatusQueryResult> QueryPaymentStatusAsync(
+        string orderId,
+        string transactionDate,
+        CancellationToken cancellationToken = default)
     {
         try
         {
-            var queryUrl = _vnPay.ReturnUrl ?? "https://sandbox.vnpayment.vn/querydr/PaymentVerify.aspx";
+            if (string.IsNullOrEmpty(_config.TmnCode)
+             || string.IsNullOrEmpty(_config.HashSecret))
+                return new PaymentStatusQueryResult(
+                    false, "CONFIG_ERROR", "VNPay config missing.", null, null, null);
 
-            if (string.IsNullOrEmpty(_vnPay.TmnCode) || string.IsNullOrEmpty(_vnPay.HashSecret))
-            {
-                return new PaymentStatusQueryResult(false, "CONFIG_ERROR", "VNPay configuration is missing", null, null, null);
-            }
+            var requestId  = Guid.NewGuid().ToString("N")[..16];
+            var createDate = GetVietnamNow().ToString("yyyyMMddHHmmss");
 
-            var requestData = new Dictionary<string, string>
+            // querydr sign order is pipe-separated fixed field order — NOT sorted like pay URL
+            var signData = string.Join("|", new[]
             {
-                ["vnp_RequestId"] = Guid.NewGuid().ToString(),
-                ["vnp_Version"] = "2.1.0",
-                ["vnp_Command"] = "querydr",
-                ["vnp_TmnCode"] = _vnPay.TmnCode,
-                ["vnp_TxnRef"] = orderId,
-                ["vnp_OrderInfo"] = $"Query payment status for order {orderId}",
-                ["vnp_TransactionNo"] = "",
-                ["vnp_TransactionDate"] = transactionDate,
-                ["vnp_CreateDate"] = GetVietnamNow().ToString("yyyyMMddHHmmss"),
-                ["vnp_IpAddr"] = "127.0.0.1"
+                requestId,
+                "2.1.0",
+                "querydr",
+                _config.TmnCode,
+                orderId,
+                transactionDate,
+                createDate,
+                "127.0.0.1",
+                $"Query transaction {orderId}"
+            });
+
+            var secureHash = HmacSha512(_config.HashSecret, signData);
+
+            var requestBody = new
+            {
+                vnp_RequestId       = requestId,
+                vnp_Version         = "2.1.0",
+                vnp_Command         = "querydr",
+                vnp_TmnCode         = _config.TmnCode,
+                vnp_TxnRef          = orderId,
+                vnp_OrderInfo       = $"Query transaction {orderId}",
+                vnp_TransactionDate = transactionDate,
+                vnp_CreateDate      = createDate,
+                vnp_IpAddr          = "127.0.0.1",
+                vnp_SecureHash      = secureHash
             };
 
-            var sortedParams = requestData.OrderBy(x => x.Key).ToList();
-            var queryString = string.Join("&", sortedParams.Select(x => $"{x.Key}={x.Value}"));
+            using var client  = new HttpClient();
+            using var content = new StringContent(
+                System.Text.Json.JsonSerializer.Serialize(requestBody),
+                Encoding.UTF8,
+                "application/json");
 
-            requestData["vnp_SecureHash"] = HmacSHA512(_vnPay.HashSecret, queryString);
+            var response     = await client.PostAsync(_config.QueryDrUrl, content, cancellationToken);
+            var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
 
-            using var httpClient = new HttpClient();
-            using var formData = new FormUrlEncodedContent(requestData);
+            var data = ParseResponse(responseBody);
 
-            var response = await httpClient.PostAsync(queryUrl, formData);
-            var responseContent = await response.Content.ReadAsStringAsync();
-
-            var responseData = ParseVnPayResponse(responseContent);
-
-            if (responseData.TryGetValue("vnp_ResponseCode", out var respCode) && respCode == "00")
+            if (data.TryGetValue("vnp_ResponseCode", out var code) && code == "00")
             {
-                var isSuccess = responseData.TryGetValue("vnp_TransactionStatus", out var txnStatus) && txnStatus == "00";
+                var isSuccess = data.TryGetValue("vnp_TransactionStatus", out var s) && s == "00";
 
                 decimal? amount = null;
-                if (responseData.TryGetValue("vnp_Amount", out var amountStr) && decimal.TryParse(amountStr, out var amountValue))
-                {
-                    amount = amountValue / 100M;
-                }
+                if (data.TryGetValue("vnp_Amount", out var a)
+                 && long.TryParse(a, out var av))
+                    amount = av / 100M;
 
-                DateTime? transactionDateTime = null;
-                if (responseData.TryGetValue("vnp_PayDate", out var payDateStr) &&
-                    DateTime.TryParseExact(payDateStr, "yyyyMMddHHmmss", null, System.Globalization.DateTimeStyles.None, out var payDate))
-                {
-                    transactionDateTime = payDate;
-                }
+                DateTime? payDate = null;
+                if (data.TryGetValue("vnp_PayDate", out var pd)
+                 && DateTime.TryParseExact(pd, "yyyyMMddHHmmss", null,
+                        System.Globalization.DateTimeStyles.None, out var pdt))
+                    payDate = pdt;
 
-                _logger.LogInformation("Payment status queried successfully for order {OrderId}: {Status}", orderId, isSuccess ? "SUCCESS" : "FAILED");
+                _logger.LogInformation(
+                    "QueryDr success: OrderId={OrderId}, Status={Status}",
+                    orderId, isSuccess ? "SUCCESS" : "FAILED");
 
                 return new PaymentStatusQueryResult(
                     isSuccess,
                     isSuccess ? "SUCCESS" : "FAILED",
-                    responseData.GetValueOrDefault("vnp_Message", "Payment status queried successfully"),
+                    data.GetValueOrDefault("vnp_Message", "Query successful"),
                     amount,
-                    responseData.GetValueOrDefault("vnp_TransactionNo"),
-                    transactionDateTime
-                );
+                    data.GetValueOrDefault("vnp_TransactionNo"),
+                    payDate);
             }
 
-            _logger.LogWarning("Failed to query payment status for order {OrderId}: {Message}", orderId, responseData.GetValueOrDefault("vnp_Message"));
+            _logger.LogWarning(
+                "QueryDr failed: OrderId={OrderId}, Message={Message}",
+                orderId, data.GetValueOrDefault("vnp_Message"));
 
             return new PaymentStatusQueryResult(
-                false,
-                "QUERY_FAILED",
-                responseData.GetValueOrDefault("vnp_Message", "Failed to query payment status"),
-                null,
-                null,
-                null
-            );
+                false, "QUERY_FAILED",
+                data.GetValueOrDefault("vnp_Message", "Query failed"),
+                null, null, null);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error querying payment status for order {OrderId}", orderId);
-            return new PaymentStatusQueryResult(false, "ERROR", $"Error querying payment status: {ex.Message}", null, null, null);
+            _logger.LogError(ex, "QueryDr exception: OrderId={OrderId}", orderId);
+            return new PaymentStatusQueryResult(
+                false, "ERROR", ex.Message, null, null, null);
         }
+    }
+
+    // --------------------
+    // Helpers
+    // --------------------
+    private static PaymentCallbackResult Fail(string message) =>
+        new(false, false, message, null, null, null, null);
+
+    private static string HmacSha512(string key, string data)
+    {
+        var keyBytes  = Encoding.UTF8.GetBytes(key);
+        var dataBytes = Encoding.UTF8.GetBytes(data);
+        using var hmac = new HMACSHA512(keyBytes);
+        var hash = hmac.ComputeHash(dataBytes);
+        var sb = new StringBuilder(hash.Length * 2);
+        foreach (var b in hash) sb.Append(b.ToString("x2"));
+        return sb.ToString();
+    }
+
+    private static Dictionary<string, string> ParseResponse(string response)
+    {
+        var result = new Dictionary<string, string>();
+        try
+        {
+            var doc = System.Text.Json.JsonDocument.Parse(response);
+            foreach (var prop in doc.RootElement.EnumerateObject())
+                result[prop.Name] = prop.Value.GetString() ?? string.Empty;
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            foreach (var pair in response.Split('&', StringSplitOptions.RemoveEmptyEntries))
+            {
+                var kv = pair.Split('=', 2);
+                if (kv.Length == 2)
+                    result[kv[0]] = Uri.UnescapeDataString(kv[1]);
+            }
+        }
+        return result;
+    }
+
+    private static string GetMessage(string? code, bool isValid)
+    {
+        if (!isValid) return "Invalid signature.";
+        return code switch
+        {
+            "00" => "Transaction successful.",
+            "07" => "Transaction suspected of fraud.",
+            "09" => "Card not registered for internet banking.",
+            "10" => "Card authentication failed.",
+            "11" => "Transaction timeout.",
+            "12" => "Card is locked.",
+            "13" => "Invalid OTP.",
+            "24" => "Transaction cancelled.",
+            "51" => "Insufficient balance.",
+            "65" => "Daily transaction limit exceeded.",
+            "75" => "Bank under maintenance.",
+            "79" => "Wrong payment password.",
+            _    => $"Transaction failed. Code: {code}"
+        };
+    }
+
+    private static string NormalizeIp(string? ip)
+    {
+        if (string.IsNullOrWhiteSpace(ip)) return "127.0.0.1";
+        if (ip is "::1" or "[::1]")        return "127.0.0.1";
+
+        ip = ip.Trim('[', ']');
+
+        if (ip.Contains(':'))
+            return ip.StartsWith("::ffff:", StringComparison.OrdinalIgnoreCase)
+                ? ip[7..]
+                : "127.0.0.1";
+
+        return ip.Trim();
     }
 
     private static DateTime GetVietnamNow()
     {
         try
         {
-            // Windows TimeZone
-            var tzi = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
-            return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, tzi);
+            return TimeZoneInfo.ConvertTimeFromUtc(
+                DateTime.UtcNow,
+                TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
         }
         catch (TimeZoneNotFoundException)
         {
             try
             {
-                // Linux/macOS TimeZone
-                var tzi = TimeZoneInfo.FindSystemTimeZoneById("Asia/Ho_Chi_Minh");
-                return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, tzi);
+                return TimeZoneInfo.ConvertTimeFromUtc(
+                    DateTime.UtcNow,
+                    TimeZoneInfo.FindSystemTimeZoneById("Asia/Ho_Chi_Minh"));
             }
             catch (TimeZoneNotFoundException)
             {
-                // Hard fallback
                 return DateTime.UtcNow.AddHours(7);
             }
         }
-    }
-
-    private static string HmacSHA512(string key, string data)
-    {
-        var keyBytes = Encoding.UTF8.GetBytes(key);
-        var inputBytes = Encoding.UTF8.GetBytes(data);
-
-        using var hmac = new HMACSHA512(keyBytes);
-        var hashValue = hmac.ComputeHash(inputBytes);
-
-        var hash = new StringBuilder(hashValue.Length * 2);
-        foreach (var b in hashValue)
-        {
-            hash.Append(b.ToString("x2"));
-        }
-
-        return hash.ToString();
-    }
-
-    private static Dictionary<string, string> ParseVnPayResponse(string response)
-    {
-        var result = new Dictionary<string, string>();
-
-        try
-        {
-            var jsonDoc = System.Text.Json.JsonDocument.Parse(response);
-            foreach (var property in jsonDoc.RootElement.EnumerateObject())
-            {
-                result[property.Name] = property.Value.GetString() ?? string.Empty;
-            }
-        }
-        catch (System.Text.Json.JsonException)
-        {
-            // Fallback for non-JSON string
-            var pairs = response.Split('&', StringSplitOptions.RemoveEmptyEntries);
-            foreach (var pair in pairs)
-            {
-                var keyValue = pair.Split('=', 2);
-                if (keyValue.Length == 2)
-                {
-                    result[keyValue[0]] = Uri.UnescapeDataString(keyValue[1]);
-                }
-            }
-        }
-
-        return result;
-    }
-
-    private static string GetResponseMessage(string? responseCode, bool isHashValid)
-    {
-        if (!isHashValid) return "Invalid signature - payment verification failed";
-
-        return responseCode switch
-        {
-            "00" => "Transaction successful",
-            "07" => "Transaction suspected of fraud",
-            "09" => "Card not registered for Internet Banking",
-            "10" => "Card authentication failed",
-            "11" => "Transaction timeout",
-            "12" => "Card is locked",
-            "13" => "Invalid OTP",
-            "24" => "Transaction cancelled",
-            "51" => "Insufficient balance",
-            "65" => "Account exceeded daily transaction limit",
-            "75" => "Payment bank is under maintenance",
-            "79" => "Transaction exceeded limit",
-            _ => $"Transaction failed with code: {responseCode}"
-        };
-    }
-
-    private static string NormalizeIpAddress(string? ipAddress)
-    {
-        if (string.IsNullOrWhiteSpace(ipAddress))
-            return "127.0.0.1";
-
-        if (ipAddress == "::1" || ipAddress == "[::1]")
-            return "127.0.0.1";
-
-        ipAddress = ipAddress.Trim('[', ']');
-
-        if (ipAddress.Contains(':'))
-        {
-            if (ipAddress.StartsWith("::ffff:", StringComparison.OrdinalIgnoreCase))
-            {
-                return ipAddress.Substring(7);
-            }
-            return "127.0.0.1";
-        }
-
-        return ipAddress.Trim();
     }
 }
