@@ -13,6 +13,7 @@ namespace Events.Api.Events.Patch;
 
 public sealed record UpdateEventSettingsRequest(
     bool IsEmailReminderEnabled,
+    string? SpecImage,
     string? UrlPath,
     DateTime? TicketSaleStartAt,
     DateTime? TicketSaleEndAt,
@@ -33,6 +34,7 @@ public class UpdateEventSettingsEndpoint : ICarterModule
                 new UpdateEventSettingsCommand(
                     eventId,
                     request.IsEmailReminderEnabled,
+                    request.SpecImage,
                     request.UrlPath,
                     request.TicketSaleStartAt,
                     request.TicketSaleEndAt,

@@ -76,6 +76,12 @@ internal sealed class UpdateEventSettingsCommandHandler(
         var updateSettingsResult = @event.UpdateSettings(command.IsEmailReminderEnabled, command.UrlPath);
         if (updateSettingsResult.IsFailure)
             return updateSettingsResult;
+        if (command.SpecImage is not null)
+        {
+            var updateSpecImageResult = @event.UpdateSpecImage(command.SpecImage);
+            if (updateSpecImageResult.IsFailure)
+                return updateSpecImageResult;
+        }
 
         if (command.TicketSaleStartAt.HasValue &&
             command.TicketSaleEndAt.HasValue &&

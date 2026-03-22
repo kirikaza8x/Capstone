@@ -5,6 +5,7 @@ namespace Events.Application.Events.Commands.UpdateEventSettings;
 public sealed record UpdateEventSettingsCommand(
     Guid EventId,
     bool IsEmailReminderEnabled,
+    string? SpecImage,
     string? UrlPath,
     DateTime? TicketSaleStartAt,
     DateTime? TicketSaleEndAt,
