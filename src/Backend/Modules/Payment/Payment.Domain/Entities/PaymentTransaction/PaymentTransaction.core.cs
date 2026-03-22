@@ -182,8 +182,7 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
             txn.Items.Add(item);
         }
 
-        // Raise here — MarkCompleted() is never called for wallet pay
-        // since the transaction is born Completed
+        
         txn.RaiseDomainEvent(new PaymentSucceededDomainEvent(
             PaymentTransactionId: txn.Id,
             OrderId: orderId,
@@ -215,6 +214,25 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
 
         InternalStatus = PaymentInternalStatus.Refunded;
         RefundedAt = DateTime.UtcNow;
+    }
+
+    public void MarkCompleted()
+    {
+        InternalStatus = PaymentInternalStatus.Completed;
+        CompletedAt = DateTime.UtcNow;
+
+        foreach (var item in Items)
+            item.MarkCompleted();
+
+        // Only raise for order payments — WalletTopUp has no OrderId
+        if (OrderId.HasValue)
+        {
+            RaiseDomainEvent(new PaymentSucceededDomainEvent(
+                PaymentTransactionId: Id,
+                OrderId: OrderId.Value,
+                Amount: Amount,
+                CompletedAtUtc: CompletedAt.Value));
+        }
     }
 
     public void MarkItemRefunded(BatchPaymentItem item, Guid userId)
