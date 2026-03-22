@@ -7,21 +7,23 @@ using Shared.Domain.Abstractions;
 namespace Payments.Application.Features.Payments.Queries.GetMyWallet;
 
 public class GetMyWalletQueryHandler(
-    ICurrentUserService currentUser,
-    IWalletRepository walletRepository)
+    IWalletRepository walletRepository,
+    ICurrentUserService currentUserService)
     : IQueryHandler<GetMyWalletQuery, WalletWithTransactionsDto>
 {
     public async Task<Result<WalletWithTransactionsDto>> Handle(
         GetMyWalletQuery query, CancellationToken cancellationToken)
     {
-        
+        var userId = currentUserService.UserId;
+
         var wallet = await walletRepository
             .GetByUserIdWithTransactionsAsync(
-                currentUser.UserId, query.TransactionLimit, cancellationToken);
+                userId, query.TransactionLimit, cancellationToken);
 
         if (wallet == null)
             return Result.Failure<WalletWithTransactionsDto>(
-                Error.NotFound("Wallet.NotFound", "No wallet found for this user."));
+                Error.NotFound("Wallet.NotFound",
+                    "No wallet found for this user."));
 
         var dto = new WalletWithTransactionsDto(
             Id: wallet.Id,
@@ -39,9 +41,9 @@ public class GetMyWalletQueryHandler(
                     BalanceAfter: t.BalanceAfter,
                     Status: t.Status,
                     Note: t.Note,
-                    CreatedAt: t.CreatedAt))   // DateTime? — matches updated DTO
+                    CreatedAt: t.CreatedAt))
                 .ToList(),
-            CreatedAt: wallet.CreatedAt);       // DateTime? — matches updated DTO
+            CreatedAt: wallet.CreatedAt);
 
         return Result.Success(dto);
     }

@@ -10,6 +10,7 @@ public class UserResponseDto : BaseDto<Guid>
 {
     public string? Email { get; set; }
     public string UserName { get; set; } = default!;
+    public string? ProfileImageUrl { get; set; }
     public string? FirstName { get; set; }
     public string? LastName { get; set; }
     public string? PhoneNumber { get; set; }
@@ -100,7 +101,7 @@ public class UpdateProfileRequestDto
     [DefaultValue("Doe")]
     public string? LastName { get; set; }
 
-    [DefaultValue("")]
+    [DefaultValue("2000-01-01T00:00:00Z")]
     public DateTime? Birthday { get; set; }
 
     [JsonConverter(typeof(JsonStringEnumConverter))]

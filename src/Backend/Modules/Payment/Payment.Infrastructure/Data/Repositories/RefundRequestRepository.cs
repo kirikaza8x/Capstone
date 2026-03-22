@@ -2,8 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Payments.Domain.Entities;
 using Payments.Domain.Enums;
 using Payments.Domain.Repositories;
-using Shared.Infrastructure.Data;
 using Payments.Infrastructure.Persistence.Contexts;
+using Shared.Infrastructure.Data;
 
 namespace Payments.Infrastructure.Persistence.Repositories;
 
@@ -40,11 +40,12 @@ public class RefundRequestRepository
         return (items, totalCount);
     }
 
-    public async Task<(IReadOnlyList<RefundRequest> Items, int TotalCount)> GetPagedAsync(
-        RefundRequestStatus? statusFilter,
-        int page,
-        int pageSize,
-        CancellationToken cancellationToken = default)
+    public async Task<(IReadOnlyList<RefundRequest> Items, int TotalCount)>
+        GetPagedAsync(
+            RefundRequestStatus? statusFilter,
+            int page,
+            int pageSize,
+            CancellationToken cancellationToken = default)
     {
         var query = DbSet.AsQueryable();
 
@@ -54,7 +55,7 @@ public class RefundRequestRepository
         var totalCount = await query.CountAsync(cancellationToken);
 
         var items = await query
-            .OrderBy(x => x.CreatedAt)   // oldest first — review queue
+            .OrderBy(x => x.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .AsNoTracking()
@@ -65,11 +66,11 @@ public class RefundRequestRepository
 
     public async Task<bool> HasPendingRequestAsync(
         Guid paymentTransactionId,
-        Guid? eventId,
+        Guid? eventSessionId,
         CancellationToken cancellationToken = default)
         => await DbSet.AnyAsync(
             x => x.PaymentTransactionId == paymentTransactionId
-              && x.EventId == eventId
+              && x.EventSessionId == eventSessionId
               && x.Status == RefundRequestStatus.Pending,
             cancellationToken);
 }

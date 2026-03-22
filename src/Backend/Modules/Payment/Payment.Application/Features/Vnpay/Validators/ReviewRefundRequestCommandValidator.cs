@@ -11,9 +11,6 @@ public class ReviewRefundRequestCommandValidator
         RuleFor(x => x.RefundRequestId)
             .NotEmpty().WithMessage("RefundRequestId is required.");
 
-        RuleFor(x => x.AdminId)
-            .NotEmpty().WithMessage("AdminId is required.");
-
         RuleFor(x => x.ReviewerNote)
             .NotEmpty().WithMessage("A reviewer note is required.")
             .MinimumLength(10).WithMessage("Note must be at least 10 characters.")

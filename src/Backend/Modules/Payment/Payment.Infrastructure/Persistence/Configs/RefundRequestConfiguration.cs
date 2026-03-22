@@ -6,7 +6,8 @@ using Shared.Infrastructure.Extensions;
 
 namespace Payments.Infrastructure.Persistence.Configs;
 
-public class RefundRequestConfiguration : IEntityTypeConfiguration<RefundRequest>
+public class RefundRequestConfiguration
+    : IEntityTypeConfiguration<RefundRequest>
 {
     public void Configure(EntityTypeBuilder<RefundRequest> builder)
     {
@@ -27,8 +28,8 @@ public class RefundRequestConfiguration : IEntityTypeConfiguration<RefundRequest
                .HasColumnName("payment_transaction_id")
                .IsRequired();
 
-        builder.Property(x => x.EventId)
-               .HasColumnName("event_id");
+        builder.Property(x => x.EventSessionId)
+               .HasColumnName("event_session_id");
 
         builder.Property(x => x.Scope)
                .HasColumnName("scope")
@@ -75,7 +76,7 @@ public class RefundRequestConfiguration : IEntityTypeConfiguration<RefundRequest
         builder.HasIndex(x => x.Status)
                .HasDatabaseName("ix_refund_request_status");
 
-        builder.HasIndex(x => new { x.PaymentTransactionId, x.EventId, x.Status })
-               .HasDatabaseName("ix_refund_request_txn_event_status");
+        builder.HasIndex(x => new { x.PaymentTransactionId, x.EventSessionId, x.Status })
+               .HasDatabaseName("ix_refund_request_txn_session_status");
     }
 }

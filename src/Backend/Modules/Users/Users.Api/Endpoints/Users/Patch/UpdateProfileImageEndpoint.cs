@@ -33,6 +33,8 @@ public class UpdateProfileImageEndpoint : ICarterModule
         .Accepts<IFormFile>("multipart/form-data")
         .Produces<UserProfileDto>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status400BadRequest)
-        .ProducesProblem(StatusCodes.Status404NotFound);
+        .ProducesProblem(StatusCodes.Status404NotFound)
+        .DisableAntiforgery()
+        ;
     }
 }

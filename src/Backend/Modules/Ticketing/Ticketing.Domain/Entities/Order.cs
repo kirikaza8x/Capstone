@@ -50,7 +50,7 @@ public sealed class Order : AggregateRoot<Guid>
         Guid ticketTypeId,
         Guid? seatId,
         string qrCode,
-        Guid? orderTicketId = null, 
+        Guid? orderTicketId = null,
         DateTime? utcNow = null)
     {
         if (Status != OrderStatus.Pending)

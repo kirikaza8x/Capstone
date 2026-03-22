@@ -8,6 +8,7 @@ public record PaymentTransactionDto(
     PaymentInternalStatus InternalStatus,
     decimal Amount,
     string Currency,
+    Guid? OrderId,
     IReadOnlyList<BatchPaymentItemDto> Items,
     string? GatewayTxnRef,
     string? GatewayTransactionNo,
@@ -21,7 +22,8 @@ public record PaymentTransactionDto(
 
 public record BatchPaymentItemDto(
     Guid Id,
-    Guid EventId,
+    Guid OrderTicketId,
+    Guid EventSessionId,
     decimal Amount,
     PaymentInternalStatus InternalStatus,
     DateTime? RefundedAt,

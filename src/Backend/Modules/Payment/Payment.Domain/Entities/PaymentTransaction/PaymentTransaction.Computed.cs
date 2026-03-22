@@ -27,6 +27,6 @@ public partial class PaymentTransaction
     public bool IsCancelled()
         => VnPayResponseCode == VnPayResponseCode.Cancelled;
 
-    public IReadOnlyList<Guid> EventIds
-        => Items.Select(i => i.EventId).ToList();
+    // public IReadOnlyList<Guid> EventIds
+    //     => Items.Select(i => i.EventSessionId).ToList();
 }

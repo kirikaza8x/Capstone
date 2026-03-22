@@ -43,24 +43,24 @@ public class VnPayService : IVnPayService
         if (string.IsNullOrWhiteSpace(txnRef))
             throw new ArgumentException("TxnRef is required.", nameof(txnRef));
 
-        var returnUrl  = string.IsNullOrEmpty(customReturnUrl) ? _config.ReturnUrl : customReturnUrl;
-        var amountInt  = (long)Math.Truncate(amount * 100M);
+        var returnUrl = string.IsNullOrEmpty(customReturnUrl) ? _config.ReturnUrl : customReturnUrl;
+        var amountInt = (long)Math.Truncate(amount * 100M);
         var createDate = GetVietnamNow().ToString("yyyyMMddHHmmss");
 
         var query = new SortedDictionary<string, string>(StringComparer.Ordinal)
         {
-            ["vnp_Version"]    = "2.1.0",
-            ["vnp_Command"]    = "pay",
-            ["vnp_TmnCode"]    = _config.TmnCode,
-            ["vnp_Amount"]     = amountInt.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            ["vnp_Version"] = "2.1.0",
+            ["vnp_Command"] = "pay",
+            ["vnp_TmnCode"] = _config.TmnCode,
+            ["vnp_Amount"] = amountInt.ToString(System.Globalization.CultureInfo.InvariantCulture),
             ["vnp_CreateDate"] = createDate,
-            ["vnp_CurrCode"]   = "VND",
-            ["vnp_IpAddr"]     = NormalizeIp(ipAddress),
-            ["vnp_Locale"]     = "vn",
-            ["vnp_OrderInfo"]  = orderDescription,
-            ["vnp_OrderType"]  = "other",
-            ["vnp_ReturnUrl"]  = returnUrl?.Trim() ?? string.Empty,
-            ["vnp_TxnRef"]     = txnRef
+            ["vnp_CurrCode"] = "VND",
+            ["vnp_IpAddr"] = NormalizeIp(ipAddress),
+            ["vnp_Locale"] = "vn",
+            ["vnp_OrderInfo"] = orderDescription,
+            ["vnp_OrderType"] = "other",
+            ["vnp_ReturnUrl"] = returnUrl?.Trim() ?? string.Empty,
+            ["vnp_TxnRef"] = txnRef
         };
 
         var sanitized = new SortedDictionary<string, string>(
@@ -68,7 +68,7 @@ public class VnPayService : IVnPayService
                  .ToDictionary(k => k.Key, v => v.Value),
             StringComparer.Ordinal);
 
-        var signData   = string.Join("&", sanitized.Select(kvp =>
+        var signData = string.Join("&", sanitized.Select(kvp =>
             $"{WebUtility.UrlEncode(kvp.Key)}={WebUtility.UrlEncode(kvp.Value.Trim())}"));
 
         var secureHash = HmacSha512(_config.HashSecret, signData);
@@ -99,9 +99,9 @@ public class VnPayService : IVnPayService
                 .ToDictionary(k => k.Key, v => v.Value),
             StringComparer.Ordinal);
 
-        var signData  = string.Join("&", copy.Select(kvp => $"{kvp.Key}={kvp.Value.Trim()}"));
-        var computed  = HmacSha512(_config.HashSecret, signData);
-        var isValid   = string.Equals(computed, receivedHash, StringComparison.OrdinalIgnoreCase);
+        var signData = string.Join("&", copy.Select(kvp => $"{kvp.Key}={kvp.Value.Trim()}"));
+        var computed = HmacSha512(_config.HashSecret, signData);
+        var isValid = string.Equals(computed, receivedHash, StringComparison.OrdinalIgnoreCase);
 
         copy.TryGetValue("vnp_ResponseCode", out var responseCode);
         copy.TryGetValue("vnp_TransactionNo", out var transactionNo);
@@ -136,7 +136,7 @@ public class VnPayService : IVnPayService
                 return new PaymentStatusQueryResult(
                     false, "CONFIG_ERROR", "VNPay config missing.", null, null, null);
 
-            var requestId  = Guid.NewGuid().ToString("N")[..16];
+            var requestId = Guid.NewGuid().ToString("N")[..16];
             var createDate = GetVietnamNow().ToString("yyyyMMddHHmmss");
 
             // querydr sign order is pipe-separated fixed field order — NOT sorted like pay URL
@@ -157,25 +157,25 @@ public class VnPayService : IVnPayService
 
             var requestBody = new
             {
-                vnp_RequestId       = requestId,
-                vnp_Version         = "2.1.0",
-                vnp_Command         = "querydr",
-                vnp_TmnCode         = _config.TmnCode,
-                vnp_TxnRef          = orderId,
-                vnp_OrderInfo       = $"Query transaction {orderId}",
+                vnp_RequestId = requestId,
+                vnp_Version = "2.1.0",
+                vnp_Command = "querydr",
+                vnp_TmnCode = _config.TmnCode,
+                vnp_TxnRef = orderId,
+                vnp_OrderInfo = $"Query transaction {orderId}",
                 vnp_TransactionDate = transactionDate,
-                vnp_CreateDate      = createDate,
-                vnp_IpAddr          = "127.0.0.1",
-                vnp_SecureHash      = secureHash
+                vnp_CreateDate = createDate,
+                vnp_IpAddr = "127.0.0.1",
+                vnp_SecureHash = secureHash
             };
 
-            using var client  = new HttpClient();
+            using var client = new HttpClient();
             using var content = new StringContent(
                 System.Text.Json.JsonSerializer.Serialize(requestBody),
                 Encoding.UTF8,
                 "application/json");
 
-            var response     = await client.PostAsync(_config.QueryDrUrl, content, cancellationToken);
+            var response = await client.PostAsync(_config.QueryDrUrl, content, cancellationToken);
             var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
 
             var data = ParseResponse(responseBody);
@@ -233,7 +233,7 @@ public class VnPayService : IVnPayService
 
     private static string HmacSha512(string key, string data)
     {
-        var keyBytes  = Encoding.UTF8.GetBytes(key);
+        var keyBytes = Encoding.UTF8.GetBytes(key);
         var dataBytes = Encoding.UTF8.GetBytes(data);
         using var hmac = new HMACSHA512(keyBytes);
         var hash = hmac.ComputeHash(dataBytes);
@@ -280,14 +280,14 @@ public class VnPayService : IVnPayService
             "65" => "Daily transaction limit exceeded.",
             "75" => "Bank under maintenance.",
             "79" => "Wrong payment password.",
-            _    => $"Transaction failed. Code: {code}"
+            _ => $"Transaction failed. Code: {code}"
         };
     }
 
     private static string NormalizeIp(string? ip)
     {
         if (string.IsNullOrWhiteSpace(ip)) return "127.0.0.1";
-        if (ip is "::1" or "[::1]")        return "127.0.0.1";
+        if (ip is "::1" or "[::1]") return "127.0.0.1";
 
         ip = ip.Trim('[', ']');
 

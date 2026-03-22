@@ -9,6 +9,7 @@ public class GetPaymentUrlCommandValidator
     public GetPaymentUrlCommandValidator()
     {
         RuleFor(x => x.PaymentTransactionId)
-            .NotEmpty().WithMessage("PaymentTransactionId is required.");
+            .NotEmpty()
+            .WithMessage("PaymentTransactionId is required.");
     }
 }

@@ -26,7 +26,7 @@ public sealed class OrderTicket : Entity<Guid>
         Guid ticketTypeId,
         Guid? seatId,
         string qrCode,
-        Guid? id = null,        
+        Guid? id = null,
         DateTime? utcNow = null)
     {
         if (string.IsNullOrWhiteSpace(qrCode))
@@ -35,7 +35,7 @@ public sealed class OrderTicket : Entity<Guid>
         var now = utcNow ?? DateTime.UtcNow;
         var entity = new OrderTicket
         {
-            Id = id ?? Guid.NewGuid(), 
+            Id = id ?? Guid.NewGuid(),
             OrderId = orderId,
             EventSessionId = eventSessionId,
             TicketTypeId = ticketTypeId,

@@ -3,7 +3,8 @@ using Payments.Application.Features.Payments.Commands.VnPayReturn;
 
 namespace Payments.Application.Validators;
 
-public class VnPayReturnCommandValidator : AbstractValidator<VnPayReturnCommand>
+public class VnPayReturnCommandValidator
+    : AbstractValidator<VnPayReturnCommand>
 {
     private static readonly string[] RequiredKeys =
     [
@@ -17,7 +18,8 @@ public class VnPayReturnCommandValidator : AbstractValidator<VnPayReturnCommand>
     public VnPayReturnCommandValidator()
     {
         RuleFor(x => x.QueryParams)
-            .NotNull().WithMessage("Callback parameters are required.");
+            .NotNull()
+            .WithMessage("Callback parameters are required.");
 
         RuleFor(x => x.QueryParams)
             .Must(p => RequiredKeys.All(k =>

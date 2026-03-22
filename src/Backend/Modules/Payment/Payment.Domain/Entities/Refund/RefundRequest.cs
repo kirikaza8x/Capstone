@@ -5,23 +5,12 @@ namespace Payments.Domain.Entities;
 
 public class RefundRequest : AggregateRoot<Guid>
 {
-    // --------------------
-    // References
-    // --------------------
     public Guid UserId { get; private set; }
     public Guid PaymentTransactionId { get; private set; }
-    public Guid? EventId { get; private set; }          // null = FullBatch scope
+    public Guid? EventSessionId { get; private set; }     // null = FullBatch scope
     public RefundRequestScope Scope { get; private set; }
-
-    // --------------------
-    // State
-    // --------------------
     public RefundRequestStatus Status { get; private set; }
-    public decimal RequestedAmount { get; private set; } // snapshot at submission time
-
-    // --------------------
-    // Audit trail
-    // --------------------
+    public decimal RequestedAmount { get; private set; }
     public string UserReason { get; private set; } = string.Empty;
     public string? ReviewerNote { get; private set; }
     public Guid? ReviewedByAdminId { get; private set; }
@@ -29,13 +18,10 @@ public class RefundRequest : AggregateRoot<Guid>
 
     private RefundRequest() { }
 
-    // --------------------
-    // Factories
-    // --------------------
     public static RefundRequest CreateSingleItem(
         Guid userId,
         Guid paymentTransactionId,
-        Guid eventId,
+        Guid eventSessionId,
         decimal requestedAmount,
         string userReason)
     {
@@ -46,7 +32,7 @@ public class RefundRequest : AggregateRoot<Guid>
             Id = Guid.NewGuid(),
             UserId = userId,
             PaymentTransactionId = paymentTransactionId,
-            EventId = eventId,
+            EventSessionId = eventSessionId,
             Scope = RefundRequestScope.SingleItem,
             Status = RefundRequestStatus.Pending,
             RequestedAmount = requestedAmount,
@@ -68,7 +54,7 @@ public class RefundRequest : AggregateRoot<Guid>
             Id = Guid.NewGuid(),
             UserId = userId,
             PaymentTransactionId = paymentTransactionId,
-            EventId = null,
+            EventSessionId = null,
             Scope = RefundRequestScope.FullBatch,
             Status = RefundRequestStatus.Pending,
             RequestedAmount = requestedAmount,
@@ -77,9 +63,6 @@ public class RefundRequest : AggregateRoot<Guid>
         };
     }
 
-    // --------------------
-    // Domain behaviors
-    // --------------------
     public void Approve(Guid adminId, string reviewerNote)
     {
         EnsurePending();
@@ -102,9 +85,6 @@ public class RefundRequest : AggregateRoot<Guid>
         ReviewedAt = DateTime.UtcNow;
     }
 
-    // --------------------
-    // Guards
-    // --------------------
     private void EnsurePending()
     {
         if (Status != RefundRequestStatus.Pending)

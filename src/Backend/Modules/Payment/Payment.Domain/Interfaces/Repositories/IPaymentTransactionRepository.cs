@@ -22,14 +22,14 @@ public interface IPaymentTransactionRepository : IRepository<PaymentTransaction,
     Task<IEnumerable<PaymentTransaction>> GetPendingAsync(
         CancellationToken cancellationToken = default);
 
-    Task<IEnumerable<(PaymentTransaction Transaction, BatchPaymentItem Item)>>
-        GetAllCompletedItemsByEventIdAsync(
-            Guid eventId,
+    Task<(PaymentTransaction Transaction, BatchPaymentItem Item)?>
+        GetCompletedItemBySessionIdAsync(
+            Guid eventSessionId,
+            Guid userId,
             CancellationToken cancellationToken = default);
 
-    Task<(PaymentTransaction? Transaction, BatchPaymentItem? Item)>
-        GetCompletedItemByEventIdAsync(
-            Guid eventId,
-            Guid userId,
+    Task<IEnumerable<(PaymentTransaction Transaction, BatchPaymentItem Item)>>
+        GetAllCompletedItemsBySessionIdAsync(
+            Guid eventSessionId,
             CancellationToken cancellationToken = default);
 }

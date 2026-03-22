@@ -6,7 +6,7 @@ public record RefundRequestDto(
     Guid Id,
     Guid UserId,
     Guid PaymentTransactionId,
-    Guid? EventId,
+    Guid? EventSessionId,
     RefundRequestScope Scope,
     RefundRequestStatus Status,
     decimal RequestedAmount,
@@ -16,4 +16,3 @@ public record RefundRequestDto(
     DateTime? ReviewedAt,
     DateTime? CreatedAt
 );
-

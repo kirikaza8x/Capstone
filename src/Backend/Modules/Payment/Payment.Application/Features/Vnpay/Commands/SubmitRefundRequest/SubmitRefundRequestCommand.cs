@@ -8,5 +8,5 @@ public record SubmitRefundRequestCommand(
     Guid PaymentTransactionId,
     RefundRequestScope Scope,
     string UserReason,
-    Guid? EventId = null    // required when Scope = SingleItem
+    Guid? EventSessionId = null    // required when Scope = SingleItem
 ) : ICommand<RefundRequestDto>;

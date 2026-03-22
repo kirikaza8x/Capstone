@@ -5,8 +5,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Payments.Application.Features.Payments.Commands.InitiateTopUp;
 using Shared.Api.Results;
-using Shared.Application.Abstractions.Authentication;
-using Shared.Domain.Abstractions;
 
 namespace Payments.Api.Features.TopUp;
 
@@ -21,23 +19,22 @@ public class TopUpEndpoints : ICarterModule
 
         group.MapPost("", async (
             InitiateTopUpRequest request,
-            ICurrentUserService currentUser,
             ISender sender,
             CancellationToken ct) =>
         {
-            var command = new InitiateTopUpCommand(
-                UserId: currentUser.UserId,
-                IpAddress: currentUser.IpAddress ?? "127.0.0.1",
-                Amount: request.Amount,
-                Description: request.Description);
-
-            Result<InitiateTopUpResult> result = await sender.Send(command, ct);
+            var result = await sender.Send(
+                new InitiateTopUpCommand(
+                    Amount: request.Amount,
+                    Description: request.Description),
+                ct);
 
             return result.ToOk();
         })
         .WithName("InitiateTopUp")
         .WithSummary("Initiate a VNPay wallet top-up")
-        .WithDescription("Creates a PaymentTransaction and returns a VNPay redirect URL.")
+        .WithDescription(
+            "Creates a WalletTopUp transaction and returns a VNPay redirect URL. " +
+            "Wallet is auto-created if the user does not have one yet.")
         .Produces<InitiateTopUpResult>(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status400BadRequest);
     }

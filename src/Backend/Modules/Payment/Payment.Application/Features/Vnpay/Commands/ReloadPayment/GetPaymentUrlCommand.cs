@@ -1,3 +1,4 @@
+using Payment.Domain.Enums;
 using Shared.Application.Abstractions.Messaging;
 
 namespace Payments.Application.Features.Payments.Commands.GetPaymentUrl;
@@ -10,5 +11,5 @@ public record GetPaymentUrlResult(
     Guid PaymentTransactionId,
     string PaymentUrl,
     decimal Amount,
-    Payment.Domain.Enums.PaymentInternalStatus InternalStatus
+    PaymentInternalStatus InternalStatus
 );

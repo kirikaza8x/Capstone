@@ -6,7 +6,8 @@ using Shared.Infrastructure.Extensions;
 
 namespace Payments.Infrastructure.Persistence.Configs;
 
-public class BatchPaymentItemConfiguration : IEntityTypeConfiguration<BatchPaymentItem>
+public class BatchPaymentItemConfiguration
+    : IEntityTypeConfiguration<BatchPaymentItem>
 {
     public void Configure(EntityTypeBuilder<BatchPaymentItem> builder)
     {
@@ -23,8 +24,12 @@ public class BatchPaymentItemConfiguration : IEntityTypeConfiguration<BatchPayme
                .HasColumnName("payment_transaction_id")
                .IsRequired();
 
-        builder.Property(x => x.EventId)
-               .HasColumnName("event_id")
+        builder.Property(x => x.OrderTicketId)
+               .HasColumnName("order_ticket_id")
+               .IsRequired();
+
+        builder.Property(x => x.EventSessionId)
+               .HasColumnName("event_session_id")
                .IsRequired();
 
         builder.Property(x => x.Amount)
@@ -48,10 +53,13 @@ public class BatchPaymentItemConfiguration : IEntityTypeConfiguration<BatchPayme
         builder.HasIndex(x => x.PaymentTransactionId)
                .HasDatabaseName("ix_batch_payment_item_transaction_id");
 
-        builder.HasIndex(x => x.EventId)
-               .HasDatabaseName("ix_batch_payment_item_event_id");
+        builder.HasIndex(x => x.OrderTicketId)
+               .HasDatabaseName("ix_batch_payment_item_order_ticket_id");
 
-        builder.HasIndex(x => new { x.EventId, x.InternalStatus })
-               .HasDatabaseName("ix_batch_payment_item_event_status");
+        builder.HasIndex(x => x.EventSessionId)
+               .HasDatabaseName("ix_batch_payment_item_session_id");
+
+        builder.HasIndex(x => new { x.EventSessionId, x.InternalStatus })
+               .HasDatabaseName("ix_batch_payment_item_session_status");
     }
 }

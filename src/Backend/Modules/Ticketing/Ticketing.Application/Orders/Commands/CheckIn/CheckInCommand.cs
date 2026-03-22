@@ -3,13 +3,13 @@
 namespace Ticketing.Application.Orders.Commands.CheckIn;
 
 public sealed record CheckInCommand(
-    string QrCode,         
+    string QrCode,
     Guid EventSessionId) : ICommand<CheckInResponse>;
 
 public sealed record CheckInResponse(
     Guid OrderTicketId,
-    string TicketTypeName, 
-    string SessionTitle,     
+    string TicketTypeName,
+    string SessionTitle,
     DateTime SessionStartTime,
-    string? SeatCode,      
+    string? SeatCode,
     DateTime CheckedInAt);

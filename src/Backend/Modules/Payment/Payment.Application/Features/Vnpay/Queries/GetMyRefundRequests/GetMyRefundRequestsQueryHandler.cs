@@ -8,16 +8,22 @@ using Shared.Domain.Abstractions;
 namespace Payments.Application.Features.Refunds.Queries.GetMyRefundRequests;
 
 public class GetMyRefundRequestsQueryHandler(
-    ICurrentUserService currentUser,
-    IRefundRequestRepository refundRequestRepository)
+    IRefundRequestRepository refundRequestRepository,
+    ICurrentUserService currentUserService)
     : IQueryHandler<GetMyRefundRequestsQuery, GetMyRefundRequestsResult>
 {
     public async Task<Result<GetMyRefundRequestsResult>> Handle(
         GetMyRefundRequestsQuery query, CancellationToken cancellationToken)
     {
+        var userId = currentUserService.UserId;
+
         var (requests, totalCount) = await refundRequestRepository
             .GetPagedByUserIdAsync(
-                currentUser.UserId, query.StatusFilter, query.Page, query.PageSize, cancellationToken);
+                userId,
+                query.StatusFilter,
+                query.Page,
+                query.PageSize,
+                cancellationToken);
 
         var dtos = requests
             .Select(r => MapToDto(r))
@@ -31,7 +37,7 @@ public class GetMyRefundRequestsQueryHandler(
         Id: r.Id,
         UserId: r.UserId,
         PaymentTransactionId: r.PaymentTransactionId,
-        EventId: r.EventId,
+        EventSessionId: r.EventSessionId,
         Scope: r.Scope,
         Status: r.Status,
         RequestedAmount: r.RequestedAmount,

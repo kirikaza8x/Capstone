@@ -15,16 +15,30 @@ public class GetPendingRefundRequestsQueryHandler(
     {
         var (requests, totalCount) = await refundRequestRepository
             .GetPagedAsync(
-                query.StatusFilter, query.Page, query.PageSize, cancellationToken);
+                query.StatusFilter,
+                query.Page,
+                query.PageSize,
+                cancellationToken);
 
-        var dtos = requests.Select(MapToDto).ToList();
+        var dtos = requests
+            .Select(r => MapToDto(r))
+            .ToList();
 
         return Result.Success(new GetPendingRefundRequestsResult(
             dtos, totalCount, query.Page, query.PageSize));
     }
 
     private static RefundRequestDto MapToDto(RefundRequest r) => new(
-        r.Id, r.UserId, r.PaymentTransactionId, r.EventId,
-        r.Scope, r.Status, r.RequestedAmount, r.UserReason,
-        r.ReviewerNote, r.ReviewedByAdminId, r.ReviewedAt, r.CreatedAt);
+        Id: r.Id,
+        UserId: r.UserId,
+        PaymentTransactionId: r.PaymentTransactionId,
+        EventSessionId: r.EventSessionId,
+        Scope: r.Scope,
+        Status: r.Status,
+        RequestedAmount: r.RequestedAmount,
+        UserReason: r.UserReason,
+        ReviewerNote: r.ReviewerNote,
+        ReviewedByAdminId: r.ReviewedByAdminId,
+        ReviewedAt: r.ReviewedAt,
+        CreatedAt: r.CreatedAt);
 }

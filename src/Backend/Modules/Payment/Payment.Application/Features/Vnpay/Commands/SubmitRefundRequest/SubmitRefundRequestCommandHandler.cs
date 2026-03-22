@@ -12,9 +12,9 @@ using Shared.Domain.Abstractions;
 namespace Payments.Application.Features.Refunds.Commands.SubmitRefundRequest;
 
 public class SubmitRefundRequestCommandHandler(
-    ICurrentUserService currentUser,
     IPaymentTransactionRepository transactionRepository,
     IRefundRequestRepository refundRequestRepository,
+    ICurrentUserService currentUserService,
     IPaymentUnitOfWork unitOfWork,
     ILogger<SubmitRefundRequestCommandHandler> logger)
     : ICommandHandler<SubmitRefundRequestCommand, RefundRequestDto>
@@ -22,17 +22,20 @@ public class SubmitRefundRequestCommandHandler(
     public async Task<Result<RefundRequestDto>> Handle(
         SubmitRefundRequestCommand command, CancellationToken cancellationToken)
     {
+        var userId = currentUserService.UserId;
+
         // 1. Load transaction with items
         var txn = await transactionRepository
-            .GetByIdWithItemsAsync(command.PaymentTransactionId, cancellationToken);
+            .GetByIdWithItemsAsync(
+                command.PaymentTransactionId, cancellationToken);
 
         if (txn == null)
             return Result.Failure<RefundRequestDto>(
                 Error.NotFound("Refund.TransactionNotFound",
                     "Payment transaction not found."));
 
-        // 2. Must belong to requesting user
-        if (txn.UserId != currentUser.UserId)
+        // 2. Ownership check
+        if (txn.UserId != userId)
             return Result.Failure<RefundRequestDto>(
                 Error.Forbidden("Refund.Forbidden",
                     "You do not have access to this transaction."));
@@ -43,28 +46,28 @@ public class SubmitRefundRequestCommandHandler(
                 Error.Failure("Refund.NotCompleted",
                     "Only completed payments can be refunded."));
 
-        // 4. Resolve scope + amount
+        // 4. Resolve scope and amount
         decimal requestedAmount;
-        Guid? eventId = null;
+        Guid? eventSessionId = null;
 
         if (command.Scope == RefundRequestScope.SingleItem)
         {
-            if (!command.EventId.HasValue)
+            if (!command.EventSessionId.HasValue)
                 return Result.Failure<RefundRequestDto>(
-                    Error.Validation("Refund.MissingEventId",
-                        "EventId is required for single item refund."));
+                    Error.Validation("Refund.MissingEventSessionId",
+                        "EventSessionId is required for single item refund."));
 
             var item = txn.Items.FirstOrDefault(i =>
-                i.EventId == command.EventId.Value &&
+                i.EventSessionId == command.EventSessionId.Value &&
                 i.InternalStatus == PaymentInternalStatus.Completed);
 
             if (item == null)
                 return Result.Failure<RefundRequestDto>(
                     Error.NotFound("Refund.ItemNotFound",
-                        "No refundable item found for this event."));
+                        "No refundable item found for this session."));
 
             requestedAmount = item.Amount;
-            eventId = item.EventId;
+            eventSessionId = item.EventSessionId;
         }
         else
         {
@@ -82,7 +85,8 @@ public class SubmitRefundRequestCommandHandler(
 
         // 5. Duplicate pending guard
         var hasPending = await refundRequestRepository
-            .HasPendingRequestAsync(txn.Id, eventId, cancellationToken);
+            .HasPendingRequestAsync(
+                txn.Id, eventSessionId, cancellationToken);
 
         if (hasPending)
             return Result.Failure<RefundRequestDto>(
@@ -92,24 +96,35 @@ public class SubmitRefundRequestCommandHandler(
         // 6. Create — no money moves yet
         var refundRequest = command.Scope == RefundRequestScope.SingleItem
             ? RefundRequest.CreateSingleItem(
-                currentUser.UserId, txn.Id, eventId!.Value,
+                userId, txn.Id, eventSessionId!.Value,
                 requestedAmount, command.UserReason)
             : RefundRequest.CreateFullBatch(
-                currentUser.UserId, txn.Id,
+                userId, txn.Id,
                 requestedAmount, command.UserReason);
 
         refundRequestRepository.Add(refundRequest);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         logger.LogInformation(
-            "RefundRequest submitted: Id={Id}, UserId={UserId}, Scope={Scope}, Amount={Amount}",
-            refundRequest.Id, currentUser.UserId, command.Scope, requestedAmount);
+            "RefundRequest submitted: Id={Id}, UserId={UserId}, " +
+            "Scope={Scope}, Amount={Amount}",
+            refundRequest.Id, userId,
+            command.Scope, requestedAmount);
 
         return Result.Success(MapToDto(refundRequest));
     }
 
     private static RefundRequestDto MapToDto(RefundRequest r) => new(
-        r.Id, r.UserId, r.PaymentTransactionId, r.EventId,
-        r.Scope, r.Status, r.RequestedAmount, r.UserReason,
-        r.ReviewerNote, r.ReviewedByAdminId, r.ReviewedAt, r.CreatedAt);
+        Id: r.Id,
+        UserId: r.UserId,
+        PaymentTransactionId: r.PaymentTransactionId,
+        EventSessionId: r.EventSessionId,
+        Scope: r.Scope,
+        Status: r.Status,
+        RequestedAmount: r.RequestedAmount,
+        UserReason: r.UserReason,
+        ReviewerNote: r.ReviewerNote,
+        ReviewedByAdminId: r.ReviewedByAdminId,
+        ReviewedAt: r.ReviewedAt,
+        CreatedAt: r.CreatedAt);
 }

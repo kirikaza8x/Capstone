@@ -2,8 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Payment.Domain.Enums;
 using Payments.Domain.Entities;
 using Payments.Domain.Repositories;
-using Shared.Infrastructure.Data;
 using Payments.Infrastructure.Persistence.Contexts;
+using Shared.Infrastructure.Data;
 
 namespace Payments.Infrastructure.Persistence.Repositories;
 
@@ -18,7 +18,8 @@ public class PaymentTransactionRepository
         CancellationToken cancellationToken = default)
         => await DbSet
             .Include(x => x.Items)
-            .FirstOrDefaultAsync(x => x.GatewayTxnRef == txnRef, cancellationToken);
+            .FirstOrDefaultAsync(
+                x => x.GatewayTxnRef == txnRef, cancellationToken);
 
     public async Task<PaymentTransaction?> GetByIdWithItemsAsync(
         Guid id,
@@ -54,7 +55,6 @@ public class PaymentTransactionRepository
         CancellationToken cancellationToken = default)
     {
         var cutoff = DateTime.UtcNow.AddDays(-1);
-
         return await DbSet
             .Where(x => x.InternalStatus == PaymentInternalStatus.AwaitingGateway
                      && x.CreatedAt > cutoff)
@@ -62,31 +62,9 @@ public class PaymentTransactionRepository
             .ToListAsync(cancellationToken);
     }
 
-    // Used by mass refund — all users, all completed items for a given event
-    public async Task<IEnumerable<(PaymentTransaction Transaction, BatchPaymentItem Item)>>
-        GetAllCompletedItemsByEventIdAsync(
-            Guid eventId,
-            CancellationToken cancellationToken = default)
-    {
-        var txns = await DbSet
-            .Include(x => x.Items)
-            .Where(x => x.InternalStatus == PaymentInternalStatus.Completed
-                     && x.Items.Any(i => i.EventId == eventId
-                                      && i.InternalStatus == PaymentInternalStatus.Completed))
-            .AsNoTracking()
-            .ToListAsync(cancellationToken);
-
-        return txns.SelectMany(txn =>
-            txn.Items
-               .Where(i => i.EventId == eventId
-                        && i.InternalStatus == PaymentInternalStatus.Completed)
-               .Select(i => (txn, i)));
-    }
-
-    // Used by single-user refund request submission
-    public async Task<(PaymentTransaction? Transaction, BatchPaymentItem? Item)>
-        GetCompletedItemByEventIdAsync(
-            Guid eventId,
+    public async Task<(PaymentTransaction Transaction, BatchPaymentItem Item)?>
+        GetCompletedItemBySessionIdAsync(
+            Guid eventSessionId,
             Guid userId,
             CancellationToken cancellationToken = default)
     {
@@ -94,17 +72,39 @@ public class PaymentTransactionRepository
             .Include(x => x.Items)
             .Where(x => x.UserId == userId
                      && x.InternalStatus == PaymentInternalStatus.Completed
-                     && x.Items.Any(i => i.EventId == eventId
-                                      && i.InternalStatus == PaymentInternalStatus.Completed))
+                     && x.Items.Any(i =>
+                         i.EventSessionId == eventSessionId &&
+                         i.InternalStatus == PaymentInternalStatus.Completed))
             .OrderByDescending(x => x.CompletedAt)
             .FirstOrDefaultAsync(cancellationToken);
 
-        if (txn == null) return (null, null);
+        if (txn == null) return null;
 
         var item = txn.Items.First(i =>
-            i.EventId == eventId &&
+            i.EventSessionId == eventSessionId &&
             i.InternalStatus == PaymentInternalStatus.Completed);
 
         return (txn, item);
+    }
+
+    public async Task<IEnumerable<(PaymentTransaction Transaction, BatchPaymentItem Item)>>
+        GetAllCompletedItemsBySessionIdAsync(
+            Guid eventSessionId,
+            CancellationToken cancellationToken = default)
+    {
+        var txns = await DbSet
+            .Include(x => x.Items)
+            .Where(x => x.InternalStatus == PaymentInternalStatus.Completed
+                     && x.Items.Any(i =>
+                         i.EventSessionId == eventSessionId &&
+                         i.InternalStatus == PaymentInternalStatus.Completed))
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+
+        return txns.SelectMany(txn =>
+            txn.Items
+               .Where(i => i.EventSessionId == eventSessionId
+                        && i.InternalStatus == PaymentInternalStatus.Completed)
+               .Select(i => (txn, i)));
     }
 }
