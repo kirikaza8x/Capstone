@@ -32,7 +32,7 @@ public class VnPayService : IVnPayService
     decimal amount,
     string txnRef,
     string orderDescription,
-    string ipAddress,
+    string? ipAddress,
     string? customReturnUrl = null)
     {
         var returnUrl = string.IsNullOrEmpty(customReturnUrl) ? _vnPay.ReturnUrl : customReturnUrl;

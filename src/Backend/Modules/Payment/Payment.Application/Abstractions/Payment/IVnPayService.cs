@@ -10,7 +10,7 @@ public interface IVnPayService
         decimal amount,
         string txnRef,
         string orderDescription,
-        string ipAddress,
+        string? ipAddress,
         string? customReturnUrl = null);
 
     /// <summary>

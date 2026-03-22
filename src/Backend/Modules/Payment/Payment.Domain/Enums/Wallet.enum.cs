@@ -1,4 +1,3 @@
-
 namespace Payments.Domain.Enums;
 
 public enum WalletStatus
@@ -12,8 +11,7 @@ public enum TransactionType
 {
     Deposit,
     Withdrawal,
-    Transfer,
-    Adjustment
+    Refund
 }
 
 public enum TransactionDirection

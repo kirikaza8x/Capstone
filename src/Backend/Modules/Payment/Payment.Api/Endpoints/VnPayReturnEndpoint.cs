@@ -3,37 +3,42 @@ using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using Payment.Application.Features.VnPay.Dtos;
+using Payments.Application.Features.Payments.Commands.VnPayReturn;
 
-namespace Payments.Api.Features;
+namespace Payments.Api.Features.VnPay;
 
-public class VnPayReturnEndpoint : ICarterModule
+public class VnPayReturnEndpoints : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapGet("api/payments/vnpay/return", async (
+        var group = app.MapGroup("api/payments/vnpay")
+            .WithTags("Payments — VNPay");
+
+        // No auth — VNPay calls this directly as a redirect
+        group.MapGet("return", async (
             HttpContext context,
             ISender sender,
-            CancellationToken cancellationToken) =>
+            CancellationToken ct) =>
         {
-            // Extract all VNPay query parameters into a dictionary
-            var queryDictionary = context.Request.Query
+            var queryParams = context.Request.Query
                 .ToDictionary(q => q.Key, q => q.Value.ToString());
 
-            var command = new VnPayReturnCommand(queryDictionary);
+            var result = await sender.Send(
+                new VnPayReturnCommand(queryParams), ct);
 
-            var result = await sender.Send(command, cancellationToken);
-
-            return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
+            return result.IsSuccess
+                ? Results.Ok(result.Value)
+                : Results.BadRequest(result.Error);
         })
-        .WithTags("Payments")
         .WithName("VnPayReturn")
-        .WithSummary("Handle VNPay return callback")
+        .WithSummary("Handle VNPay payment return callback")
         .WithDescription("""
-            Handles VNPay's redirect after payment.
-            Validates the callback hash securely via Dictionary and processes business logic based on transaction Type.
+            VNPay redirects the user here after payment.
+            Validates HMAC hash, updates PaymentTransaction and BatchPaymentItem statuses.
+            For WalletTopUp: credits the wallet.
+            For BatchDirectPay: marks all items completed.
             """)
-        .Produces<VnPayResultDto>(StatusCodes.Status200OK)
+        .Produces<VnPayReturnResult>(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status400BadRequest);
     }
 }

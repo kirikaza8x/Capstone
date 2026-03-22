@@ -1,7 +1,23 @@
 using Payment.Application.Features.VnPay.Dtos;
+using Payment.Domain.Enums;
+using Payments.Application.DTOs.Payment;
 using Shared.Application.Abstractions.Messaging;
 
-public record VnPayReturnCommand(IDictionary<string, string> QueryParams) : ICommand<VnPayResultDto>;
+namespace Payments.Application.Features.Payments.Commands.VnPayReturn;
+
+public record VnPayReturnCommand(
+    IDictionary<string, string> QueryParams
+) : ICommand<VnPayReturnResult>;
+
+public record VnPayReturnResult(
+    Guid PaymentTransactionId,
+    bool IsSuccess,
+    string? Message,
+    string? ResponseCode,
+    string? TransactionNo,
+    PaymentType Type,
+    DateTime? CompletedAt
+);
 
 
 public class VnPayReturnQueriesCommand : ICommand<VnPayResultDto>
