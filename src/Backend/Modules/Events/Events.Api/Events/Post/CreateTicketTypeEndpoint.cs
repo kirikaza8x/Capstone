@@ -38,7 +38,7 @@ public class CreateTicketTypeEndpoint : ICarterModule
         .WithName("CreateTicketType")
         .WithSummary("Create a new ticket type")
         .WithDescription("Creates a new ticket type for an event. Assign area separately after seatmap is created.")
-        .Produces<Guid>(StatusCodes.Status201Created)
+        .Produces<ApiResult<Guid>>(StatusCodes.Status201Created)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status404NotFound)
         .RequireRoles(Roles.Organizer);

@@ -50,7 +50,7 @@ public class CreateOrderEndpoint : ICarterModule
         .WithName("CreateOrder")
         .WithSummary("Create a pending order")
         .WithDescription("Creates a pending order with server-side inventory validation and redis lock.")
-        .Produces<Guid>(StatusCodes.Status201Created)
+        .Produces<ApiResult<Guid>>(StatusCodes.Status201Created)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status401Unauthorized)
         .ProducesProblem(StatusCodes.Status409Conflict)

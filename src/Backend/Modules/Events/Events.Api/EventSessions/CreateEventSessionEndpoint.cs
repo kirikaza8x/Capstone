@@ -51,7 +51,7 @@ public class CreateEventSessionEndpoint : ICarterModule
         .WithName("CreateEventSession")
         .WithSummary("Create event sessions")
         .WithDescription("Creates one or more sessions for an event in a single request.")
-        .Produces<List<Guid>>(StatusCodes.Status201Created)
+        .Produces<ApiResult<List<Guid>>>(StatusCodes.Status201Created)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status404NotFound);
     }

@@ -31,7 +31,7 @@ public class CreateCategoryEndpoint : ICarterModule
         .WithName("CreateCategory")
         .WithSummary("Create category")
         .WithDescription("Create a new event category.")
-        .Produces<int>(StatusCodes.Status201Created)
+        .Produces<ApiResult<int>>(StatusCodes.Status201Created)
         .ProducesProblem(StatusCodes.Status409Conflict)
         .RequireRoles(Roles.AdminAndStaff);
     }
