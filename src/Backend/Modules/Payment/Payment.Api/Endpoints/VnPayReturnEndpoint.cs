@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Payments.Application.Features.Payments.Commands.VnPayReturn;
 using Shared.Api.Results;
-using Shared.Domain.Abstractions;
 
 namespace Payments.Api.Features.VnPay;
 
@@ -25,11 +24,11 @@ public class VnPayReturnEndpoints : ICarterModule
             var queryParams = context.Request.Query
                 .ToDictionary(q => q.Key, q => q.Value.ToString());
 
-            Result<VnPayReturnResult> result = await sender.Send(
+            var result = await sender.Send(
                 new VnPayReturnCommand(queryParams), ct);
 
             return result.ToOk();
-                
+
         })
         .WithName("VnPayReturn")
         .WithSummary("Handle VNPay payment return callback")

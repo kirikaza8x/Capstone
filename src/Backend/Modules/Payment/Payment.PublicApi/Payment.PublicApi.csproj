@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\Payment.Application\Payment.Application.csproj" />
     <ProjectReference Include="..\Payment.IntegrationEvents\Payment.IntegrationEvents.csproj" />
   </ItemGroup>
 

@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Routing;
 using Payments.Application.DTOs.Wallet;
 using Payments.Application.Features.Payments.Queries.GetMyWallet;
 using Shared.Api.Results;
-using Shared.Domain.Abstractions;
 
 namespace Payments.Api.Features.Wallet;
 
@@ -24,13 +23,13 @@ public class WalletEndpoints : ICarterModule
             CancellationToken ct,
             int transactionLimit = 10) =>
         {
-            Result<WalletWithTransactionsDto> result = await sender.Send(
+            var result = await sender.Send(
                 new GetMyWalletQuery(transactionLimit), ct);
 
             return result.ToOk();
         })
         .WithName("GetMyWallet")
-        .WithSummary("Get current user's wallet balance and recent transactions")
+        .WithSummary("Get current user's wallet and recent transactions")
         .Produces<WalletWithTransactionsDto>(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status404NotFound);
     }

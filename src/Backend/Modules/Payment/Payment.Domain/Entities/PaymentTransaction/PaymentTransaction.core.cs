@@ -1,4 +1,5 @@
 using Payment.Domain.Enums;
+using Payments.Domain.Events;
 using Shared.Domain.DDD;
 
 namespace Payments.Domain.Entities;
@@ -10,6 +11,7 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
     // --------------------
     public Guid UserId { get; private set; }
     public Guid? WalletId { get; private set; }
+    public Guid? OrderId { get; private set; }    // links to Order in Ticketing module
     public PaymentType Type { get; private set; }
 
     // --------------------
@@ -63,7 +65,7 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
     private PaymentTransaction() { }
 
     // --------------------
-    // Factory — WalletTopUp
+    // Factory — WalletTopUp (unchanged)
     // --------------------
     public static PaymentTransaction CreateWalletTopUp(
         Guid userId,
@@ -74,7 +76,8 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
         string? ipAddress = null)
     {
         if (amount <= 0)
-            throw new ArgumentException("Amount must be greater than zero.", nameof(amount));
+            throw new ArgumentException(
+                "Amount must be greater than zero.", nameof(amount));
 
         return new PaymentTransaction
         {
@@ -99,7 +102,8 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
     // --------------------
     public static PaymentTransaction CreateBatchDirectPay(
         Guid userId,
-        IEnumerable<(Guid EventId, decimal Amount)> items,
+        Guid orderId,
+        IEnumerable<(Guid OrderTicketId, Guid EventSessionId, decimal Amount)> items,
         string? gatewayOrderInfo,
         string? gatewayTxnRef,
         string? ipAddress = null)
@@ -116,6 +120,7 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
         {
             Id = Guid.NewGuid(),
             UserId = userId,
+            OrderId = orderId,
             Type = PaymentType.BatchDirectPay,
             Amount = itemList.Sum(i => i.Amount),
             InternalStatus = PaymentInternalStatus.AwaitingGateway,
@@ -128,20 +133,21 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
             CreatedAt = DateTime.UtcNow
         };
 
-        foreach (var (eventId, amount) in itemList)
-            txn.Items.Add(BatchPaymentItem.Create(txn.Id, eventId, amount));
+        foreach (var (orderTicketId, eventSessionId, amount) in itemList)
+            txn.Items.Add(BatchPaymentItem.Create(
+                txn.Id, orderTicketId, eventSessionId, amount));
 
         return txn;
     }
 
     // --------------------
     // Factory — BatchWalletPay
-    // Born Completed — no gateway involved
     // --------------------
     public static PaymentTransaction CreateBatchWalletPay(
         Guid userId,
         Guid walletId,
-        IEnumerable<(Guid EventId, decimal Amount)> items,
+        Guid orderId,
+        IEnumerable<(Guid OrderTicketId, Guid EventSessionId, decimal Amount)> items,
         string? orderInfo = null)
     {
         var itemList = items.ToList();
@@ -159,6 +165,7 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
             Id = Guid.NewGuid(),
             UserId = userId,
             WalletId = walletId,
+            OrderId = orderId,
             Type = PaymentType.BatchWalletPay,
             Amount = itemList.Sum(i => i.Amount),
             InternalStatus = PaymentInternalStatus.Completed,
@@ -167,9 +174,10 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
             CreatedAt = now
         };
 
-        foreach (var (eventId, amount) in itemList)
+        foreach (var (orderTicketId, eventSessionId, amount) in itemList)
         {
-            var item = BatchPaymentItem.Create(txn.Id, eventId, amount);
+            var item = BatchPaymentItem.Create(
+                txn.Id, orderTicketId, eventSessionId, amount);
             item.MarkCompleted();
             txn.Items.Add(item);
         }
@@ -178,13 +186,12 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
     }
 
     // --------------------
-    // Domain behaviors
+    // Domain behaviors — all unchanged
     // --------------------
     public void MarkCompleted()
     {
         InternalStatus = PaymentInternalStatus.Completed;
         CompletedAt = DateTime.UtcNow;
-
         foreach (var item in Items)
             item.MarkCompleted();
     }
@@ -213,6 +220,23 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
         RefundedAt = DateTime.UtcNow;
     }
 
+    public void MarkItemRefunded(BatchPaymentItem item, Guid userId)
+    {
+        item.MarkRefunded();
+
+        RaiseDomainEvent(new RefundIssuedDomainEvent(
+            PaymentTransactionId: Id,
+            OrderId: OrderId ?? Guid.Empty,
+            OrderTicketId: item.OrderTicketId,
+            EventSessionId: item.EventSessionId,
+            UserId: userId,
+            Amount: item.Amount,
+            RefundedAtUtc: item.RefundedAt!.Value));
+
+        if (IsFullyRefunded())
+            MarkRefunded();
+    }
+
     public void UpdateGatewayInfo(
         string? responseCode,
         string? status,
@@ -227,15 +251,15 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
         string? secureHashType = null,
         string? locale = null)
     {
-        GatewayResponseCode   = responseCode;
-        GatewayStatus         = status;
-        GatewayTransactionNo  = transactionNo;
-        GatewayBankCode       = bankCode;
-        GatewayBankTranNo     = bankTranNo;
-        GatewayCardType       = cardType;
-        GatewayPayDate        = payDate;
-        GatewayTmnCode        = tmnCode;
-        GatewaySecureHash     = secureHash;
+        GatewayResponseCode = responseCode;
+        GatewayStatus = status;
+        GatewayTransactionNo = transactionNo;
+        GatewayBankCode = bankCode;
+        GatewayBankTranNo = bankTranNo;
+        GatewayCardType = cardType;
+        GatewayPayDate = payDate;
+        GatewayTmnCode = tmnCode;
+        GatewaySecureHash = secureHash;
         GatewaySecureHashType = secureHashType;
 
         if (!string.IsNullOrWhiteSpace(locale))
@@ -278,7 +302,7 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
     private static string NormalizeIp(string? ip)
     {
         if (string.IsNullOrWhiteSpace(ip)) return "127.0.0.1";
-        if (ip is "::1" or "[::1]")        return "127.0.0.1";
+        if (ip is "::1" or "[::1]") return "127.0.0.1";
 
         ip = ip.Trim('[', ']');
 

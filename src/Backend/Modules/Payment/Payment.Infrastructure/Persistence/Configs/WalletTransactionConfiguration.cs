@@ -6,7 +6,8 @@ using Shared.Infrastructure.Extensions;
 
 namespace Payments.Infrastructure.Persistence.Configs;
 
-public class WalletTransactionConfiguration : IEntityTypeConfiguration<WalletTransaction>
+public class WalletTransactionConfiguration
+    : IEntityTypeConfiguration<WalletTransaction>
 {
     public void Configure(EntityTypeBuilder<WalletTransaction> builder)
     {

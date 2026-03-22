@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Payments.Domain.Entities;
 using Payments.Domain.Repositories;
-using Shared.Infrastructure.Data;
 using Payments.Infrastructure.Persistence.Contexts;
+using Shared.Infrastructure.Data;
 
 namespace Payments.Infrastructure.Persistence.Repositories;
 

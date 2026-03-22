@@ -1,14 +1,14 @@
 using Shared.Application.Abstractions.Messaging;
 
-namespace Payments.Application.Features.Refunds.Commands.MassRefundByEvent;
+namespace Payments.Application.Features.Refunds.Commands.MassRefundBySession;
 
-public record MassRefundByEventCommand(
-    Guid EventId,
+public record MassRefundBySessionCommand(
+    Guid EventSessionId,
     Guid AdminId
 ) : ICommand<MassRefundResult>;
 
 public record MassRefundResult(
-    Guid EventId,
+    Guid EventSessionId,
     int TotalFound,
     int Succeeded,
     int Skipped,

@@ -6,7 +6,8 @@ using Shared.Infrastructure.Extensions;
 
 namespace Payments.Infrastructure.Persistence.Configs;
 
-public class PaymentTransactionConfiguration : IEntityTypeConfiguration<PaymentTransaction>
+public class PaymentTransactionConfiguration
+    : IEntityTypeConfiguration<PaymentTransaction>
 {
     public void Configure(EntityTypeBuilder<PaymentTransaction> builder)
     {
@@ -27,6 +28,9 @@ public class PaymentTransactionConfiguration : IEntityTypeConfiguration<PaymentT
 
         builder.Property(t => t.WalletId)
                .HasColumnName("wallet_id");
+
+        builder.Property(t => t.OrderId)
+               .HasColumnName("order_id");
 
         builder.Property(t => t.Type)
                .HasColumnName("type")
@@ -150,6 +154,9 @@ public class PaymentTransactionConfiguration : IEntityTypeConfiguration<PaymentT
 
         builder.HasIndex(t => t.WalletId)
                .HasDatabaseName("ix_payment_transaction_wallet_id");
+
+        builder.HasIndex(t => t.OrderId)
+               .HasDatabaseName("ix_payment_transaction_order_id");
 
         builder.HasIndex(t => t.InternalStatus)
                .HasDatabaseName("ix_payment_transaction_internal_status");

@@ -4,13 +4,10 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Payment.Domain.Enums;
-using Payments.Application.DTOs.Payment;
 using Payments.Application.Features.Payments.Commands.GetPaymentUrl;
 using Payments.Application.Features.Payments.Commands.InitiatePayment;
 using Payments.Application.Features.Payments.Queries.GetMyTransactions;
 using Shared.Api.Results;
-using Shared.Application.Abstractions.Authentication;
-using Shared.Domain.Abstractions;
 
 namespace Payments.Api.Features.Payments;
 
@@ -23,30 +20,30 @@ public class PaymentEndpoints : ICarterModule
             // .RequireAuthorization()
             ;
 
-        // --- Initiate payment (VNPay or wallet, 1 to N events) ---
+        // --- Initiate payment ---
         group.MapPost("", async (
             InitiatePaymentRequest request,
             ISender sender,
             CancellationToken ct) =>
         {
-            var command = new InitiatePaymentCommand(
-                Method: request.Method,
-                Items: request.Items,
-                Description: request.Description);
-
-            Result<InitiatePaymentResult> result = await sender.Send(command, ct);
+            var result = await sender.Send(
+                new InitiatePaymentCommand(
+                    OrderId: request.OrderId,
+                    Method: request.Method,
+                    Description: request.Description),
+                ct);
 
             return result.ToOk();
         })
         .WithName("InitiatePayment")
-        .WithSummary("Initiate a payment for one or more events")
-        .WithDescription("""
-            Method = BatchDirectPay  → returns a VNPay redirect URL.
-            Method = BatchWalletPay  → deducts from wallet immediately, returns CompletedAt.
-            Items can contain a single event (1-item batch) or multiple events.
-            """)
+        .WithSummary("Initiate payment for an order")
+        .WithDescription(
+            "Method = BatchDirectPay  → returns VNPay redirect URL.\n" +
+            "Method = BatchWalletPay  → deducts from wallet immediately.\n" +
+            "Order tickets are fetched from Ticketing module automatically.")
         .Produces<InitiatePaymentResult>(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status400BadRequest);
+        .Produces(StatusCodes.Status400BadRequest)
+        .Produces(StatusCodes.Status404NotFound);
 
         // --- My transaction history ---
         group.MapGet("my", async (
@@ -55,7 +52,7 @@ public class PaymentEndpoints : ICarterModule
             int page = 1,
             int pageSize = 20) =>
         {
-            Result<GetMyTransactionsResult> result = await sender.Send(
+            var result = await sender.Send(
                 new GetMyTransactionsQuery(page, pageSize), ct);
 
             return result.ToOk();
@@ -65,7 +62,7 @@ public class PaymentEndpoints : ICarterModule
         .Produces<GetMyTransactionsResult>(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status400BadRequest);
 
-        // --- Reload payment page for a stuck AwaitingGateway transaction ---
+        // --- Reload payment page ---
         group.MapGet("{transactionId:guid}/payment-url", async (
             Guid transactionId,
             ISender sender,
@@ -79,14 +76,11 @@ public class PaymentEndpoints : ICarterModule
                 : Results.BadRequest(result.Error);
         })
         .WithName("GetPaymentUrl")
-        .WithSummary("Reload the VNPay payment page for a pending transaction")
-        .WithDescription("""
-    Returns a fresh VNPay redirect URL for a transaction still in AwaitingGateway.
-    Use this when the user accidentally closed the payment page.
-    The same TxnRef is reused — no new transaction is created on VNPay's side.
-    Returns 409 if the transaction is already Completed, Failed, or Refunded.
-    Not applicable for BatchWalletPay — wallet payments complete immediately.
-    """)
+        .WithSummary("Reload VNPay payment page for a pending transaction")
+        .WithDescription(
+            "Returns a fresh VNPay redirect URL for an AwaitingGateway transaction. " +
+            "Returns 409 if session expired (15 min limit) — initiate a new payment instead. " +
+            "Not applicable for BatchWalletPay.")
         .Produces<GetPaymentUrlResult>(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status400BadRequest)
         .Produces(StatusCodes.Status404NotFound)
@@ -95,7 +89,7 @@ public class PaymentEndpoints : ICarterModule
 }
 
 public record InitiatePaymentRequest(
+    Guid OrderId,
     PaymentType Method,
-    IReadOnlyList<PaymentItemDto> Items,
     string? Description = null
 );

@@ -1,9 +1,11 @@
 using Microsoft.Extensions.Logging;
 using Payment.Domain.Enums;
+using Payment.IntegrationEvents;
 using Payments.Domain.Entities;
 using Payments.Domain.Enums;
 using Payments.Domain.Repositories;
 using Payments.Domain.UOW;
+using Shared.Application.Abstractions.Authentication;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
 
@@ -14,19 +16,23 @@ public class ReviewRefundRequestCommandHandler(
     IPaymentTransactionRepository transactionRepository,
     IWalletRepository walletRepository,
     IPaymentUnitOfWork unitOfWork,
+    ICurrentUserService currentUserService,
     ILogger<ReviewRefundRequestCommandHandler> logger)
     : ICommandHandler<ReviewRefundRequestCommand, ReviewRefundRequestResult>
 {
     public async Task<Result<ReviewRefundRequestResult>> Handle(
         ReviewRefundRequestCommand command, CancellationToken cancellationToken)
     {
+        var adminId = currentUserService.UserId;
+
         // 1. Load refund request
         var refundRequest = await refundRequestRepository
             .GetByIdAsync(command.RefundRequestId, cancellationToken);
 
         if (refundRequest == null)
             return Result.Failure<ReviewRefundRequestResult>(
-                Error.NotFound("Review.NotFound", "Refund request not found."));
+                Error.NotFound("Review.NotFound",
+                    "Refund request not found."));
 
         if (refundRequest.Status != RefundRequestStatus.Pending)
             return Result.Failure<ReviewRefundRequestResult>(
@@ -36,32 +42,38 @@ public class ReviewRefundRequestCommandHandler(
         // 2. Rejection — no money moves
         if (!command.Approved)
         {
-            refundRequest.Reject(command.AdminId, command.ReviewerNote);
+            refundRequest.Reject(adminId, command.ReviewerNote);
             refundRequestRepository.Update(refundRequest);
             await unitOfWork.SaveChangesAsync(cancellationToken);
 
             logger.LogInformation(
                 "RefundRequest rejected: Id={Id}, AdminId={AdminId}",
-                refundRequest.Id, command.AdminId);
+                refundRequest.Id, adminId);
 
             return Result.Success(new ReviewRefundRequestResult(
-                refundRequest.Id, refundRequest.Status,
-                null, null, refundRequest.ReviewedAt!.Value));
+                RefundRequestId: refundRequest.Id,
+                Status: refundRequest.Status,
+                AmountCredited: null,
+                WalletBalanceAfter: null,
+                ReviewedAt: refundRequest.ReviewedAt!.Value));
         }
 
-        // 3. Approval — load transaction with items
+        // 3. Load transaction with items
         var txn = await transactionRepository
-            .GetByIdWithItemsAsync(refundRequest.PaymentTransactionId, cancellationToken);
+            .GetByIdWithItemsAsync(
+                refundRequest.PaymentTransactionId, cancellationToken);
 
         if (txn == null)
             return Result.Failure<ReviewRefundRequestResult>(
                 Error.NotFound("Review.TransactionNotFound",
                     "Original transaction not found."));
 
-        // 4. Resolve items to refund based on scope
+        // 4. Resolve items based on scope
+        //    SingleItem — find the specific session item
+        //    FullBatch  — all completed items
         var itemsToRefund = refundRequest.Scope == RefundRequestScope.SingleItem
             ? txn.Items
-                .Where(i => i.EventId == refundRequest.EventId
+                .Where(i => i.EventSessionId == refundRequest.EventSessionId
                          && i.InternalStatus == PaymentInternalStatus.Completed)
                 .ToList()
             : txn.Items
@@ -79,7 +91,7 @@ public class ReviewRefundRequestCommandHandler(
         var wallet = await ResolveWalletAsync(
             refundRequest.UserId, cancellationToken);
 
-        // 6. Credit uses Refund method — distinct from top-up in history
+        // 6. Credit wallet — Refund type keeps it distinct from top-up in history
         var walletTxn = wallet.Refund(
             actualAmount,
             $"Refund approved | RequestId={refundRequest.Id}");
@@ -88,16 +100,12 @@ public class ReviewRefundRequestCommandHandler(
 
         // 7. Mark each item refunded
         foreach (var item in itemsToRefund)
-            item.MarkRefunded();
-
-        // 8. Roll up parent if all items are now refunded
-        if (txn.IsFullyRefunded())
-            txn.MarkRefunded();
+            txn.MarkItemRefunded(item, refundRequest.UserId);
 
         // 9. Approve the request
-        refundRequest.Approve(command.AdminId, command.ReviewerNote);
+        refundRequest.Approve(adminId, command.ReviewerNote);
 
-        // 10. Persist all in one unit
+        // 10. Persist everything
         transactionRepository.Update(txn);
         walletRepository.Update(wallet);
         refundRequestRepository.Update(refundRequest);
@@ -105,18 +113,21 @@ public class ReviewRefundRequestCommandHandler(
 
         logger.LogInformation(
             "RefundRequest approved: Id={Id}, AdminId={AdminId}, Amount={Amount}",
-            refundRequest.Id, command.AdminId, actualAmount);
+            refundRequest.Id, adminId, actualAmount);
 
         return Result.Success(new ReviewRefundRequestResult(
-            refundRequest.Id, refundRequest.Status,
-            actualAmount, wallet.Balance,
-            refundRequest.ReviewedAt!.Value));
+            RefundRequestId: refundRequest.Id,
+            Status: refundRequest.Status,
+            AmountCredited: actualAmount,
+            WalletBalanceAfter: wallet.Balance,
+            ReviewedAt: refundRequest.ReviewedAt!.Value));
     }
 
     private async Task<Wallet> ResolveWalletAsync(
         Guid userId, CancellationToken cancellationToken)
     {
-        var wallet = await walletRepository.GetByUserIdAsync(userId, cancellationToken);
+        var wallet = await walletRepository
+            .GetByUserIdAsync(userId, cancellationToken);
 
         if (wallet == null)
         {

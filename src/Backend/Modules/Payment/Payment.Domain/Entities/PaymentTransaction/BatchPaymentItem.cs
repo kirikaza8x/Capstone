@@ -6,7 +6,8 @@ namespace Payments.Domain.Entities;
 public class BatchPaymentItem : Entity<Guid>
 {
     public Guid PaymentTransactionId { get; private set; }
-    public Guid EventId { get; private set; }
+    public Guid OrderTicketId { get; private set; }
+    public Guid EventSessionId { get; private set; }
     public decimal Amount { get; private set; }
     public PaymentInternalStatus InternalStatus { get; private set; }
     public DateTime? RefundedAt { get; private set; }
@@ -15,17 +16,20 @@ public class BatchPaymentItem : Entity<Guid>
 
     public static BatchPaymentItem Create(
         Guid paymentTransactionId,
-        Guid eventId,
+        Guid orderTicketId,
+        Guid eventSessionId,
         decimal amount)
     {
         if (amount <= 0)
-            throw new ArgumentException("Item amount must be greater than zero.", nameof(amount));
+            throw new ArgumentException(
+                "Item amount must be greater than zero.", nameof(amount));
 
         return new BatchPaymentItem
         {
             Id = Guid.NewGuid(),
             PaymentTransactionId = paymentTransactionId,
-            EventId = eventId,
+            OrderTicketId = orderTicketId,
+            EventSessionId = eventSessionId,
             Amount = amount,
             InternalStatus = PaymentInternalStatus.AwaitingGateway,
             CreatedAt = DateTime.UtcNow

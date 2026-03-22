@@ -8,8 +8,6 @@ using Payments.Application.Features.Refunds.Commands.SubmitRefundRequest;
 using Payments.Application.Features.Refunds.Queries.GetMyRefundRequests;
 using Payments.Domain.Enums;
 using Shared.Api.Results;
-using Shared.Application.Abstractions.Authentication;
-using Shared.Domain.Abstractions;
 
 namespace Payments.Api.Features.Refunds;
 
@@ -25,29 +23,28 @@ public class UserRefundEndpoints : ICarterModule
         // --- Submit refund request ---
         group.MapPost("", async (
             SubmitRefundRequestBody request,
-            // ICurrentUserService currentUser,
             ISender sender,
             CancellationToken ct) =>
         {
-            var command = new SubmitRefundRequestCommand(
-                PaymentTransactionId: request.PaymentTransactionId,
-                Scope: request.Scope,
-                UserReason: request.UserReason,
-                EventId: request.EventId);
-
-            Result<RefundRequestDto> result = await sender.Send(command, ct);
+            var result = await sender.Send(
+                new SubmitRefundRequestCommand(
+                    PaymentTransactionId: request.PaymentTransactionId,
+                    Scope: request.Scope,
+                    UserReason: request.UserReason,
+                    EventSessionId: request.EventSessionId),
+                ct);
 
             return result.ToOk();
         })
         .WithName("SubmitRefundRequest")
         .WithSummary("Submit a refund request for admin review")
-        .WithDescription("""
-            Scope = SingleItem → EventId required. Refunds one event's amount.
-            Scope = FullBatch  → EventId not required. Refunds all non-refunded items.
-            No money moves until an admin approves the request.
-            """)
+        .WithDescription(
+            "Scope = SingleItem → EventSessionId required. Refunds one ticket amount.\n" +
+            "Scope = FullBatch  → EventSessionId not required. Refunds all non-refunded items.\n" +
+            "No money moves until an admin approves.")
         .Produces<RefundRequestDto>(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status400BadRequest)
+        .Produces(StatusCodes.Status404NotFound)
         .Produces(StatusCodes.Status409Conflict);
 
         // --- My refund requests ---
@@ -58,9 +55,8 @@ public class UserRefundEndpoints : ICarterModule
             int page = 1,
             int pageSize = 20) =>
         {
-            Result<GetMyRefundRequestsResult> result = await sender.Send(
-                new GetMyRefundRequestsQuery(
-                     status, page, pageSize), ct);
+            var result = await sender.Send(
+                new GetMyRefundRequestsQuery(status, page, pageSize), ct);
 
             return result.ToOk();
         })
@@ -75,5 +71,5 @@ public record SubmitRefundRequestBody(
     Guid PaymentTransactionId,
     RefundRequestScope Scope,
     string UserReason,
-    Guid? EventId = null
+    Guid? EventSessionId = null
 );

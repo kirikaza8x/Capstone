@@ -30,12 +30,14 @@ public class VnPayReturnCommandHandler(
         {
             logger.LogWarning("VNPay callback hash validation failed.");
             return Result.Failure<VnPayReturnResult>(
-                Error.Failure("VnPay.InvalidSignature", "Security check failed."));
+                Error.Failure("VnPay.InvalidSignature",
+                    "Security check failed."));
         }
 
         if (string.IsNullOrEmpty(callback.OrderId))
             return Result.Failure<VnPayReturnResult>(
-                Error.Validation("VnPay.MissingTxnRef", "No transaction reference provided."));
+                Error.Validation("VnPay.MissingTxnRef",
+                    "No transaction reference provided."));
 
         // 2. Load transaction with items — always with items
         var txn = await transactionRepository
@@ -43,38 +45,45 @@ public class VnPayReturnCommandHandler(
 
         if (txn == null)
         {
-            logger.LogError("Transaction not found for TxnRef={TxnRef}", callback.OrderId);
+            logger.LogError(
+                "Transaction not found for TxnRef={TxnRef}", callback.OrderId);
             return Result.Failure<VnPayReturnResult>(
-                Error.NotFound("Payment.NotFound", "Transaction not found."));
+                Error.NotFound("Payment.NotFound",
+                    "Transaction not found."));
         }
 
         // 3. Extract every field VNPay sends back — store all of them
         command.QueryParams.TryGetValue("vnp_TransactionStatus", out var gatewayStatus);
-        command.QueryParams.TryGetValue("vnp_BankCode",          out var bankCode);
-        command.QueryParams.TryGetValue("vnp_BankTranNo",        out var bankTranNo);
-        command.QueryParams.TryGetValue("vnp_CardType",          out var cardType);
-        command.QueryParams.TryGetValue("vnp_PayDate",           out var payDate);
-        command.QueryParams.TryGetValue("vnp_TmnCode",           out var tmnCode);
-        command.QueryParams.TryGetValue("vnp_SecureHash",        out var secureHash);
-        command.QueryParams.TryGetValue("vnp_OrderInfo",         out var orderInfo);
+        command.QueryParams.TryGetValue("vnp_BankCode", out var bankCode);
+        command.QueryParams.TryGetValue("vnp_BankTranNo", out var bankTranNo);
+        command.QueryParams.TryGetValue("vnp_CardType", out var cardType);
+        command.QueryParams.TryGetValue("vnp_PayDate", out var payDate);
+        command.QueryParams.TryGetValue("vnp_TmnCode", out var tmnCode);
+        command.QueryParams.TryGetValue("vnp_SecureHash", out var secureHash);
+        command.QueryParams.TryGetValue("vnp_SecureHashType", out var secureHashType);
+        command.QueryParams.TryGetValue("vnp_Locale", out var locale);
+        command.QueryParams.TryGetValue("vnp_OrderInfo", out var orderInfo);
 
         txn.UpdateGatewayInfo(
-            responseCode:  callback.ResponseCode,
-            status:        gatewayStatus,
+            responseCode: callback.ResponseCode,
+            status: gatewayStatus,
             transactionNo: callback.TransactionNo,
-            bankCode:      bankCode,
-            bankTranNo:    bankTranNo,
-            cardType:      cardType,
-            payDate:       payDate,
-            tmnCode:       tmnCode,
-            secureHash:    secureHash,
-            orderInfo:     orderInfo
+            bankCode: bankCode,
+            bankTranNo: bankTranNo,
+            cardType: cardType,
+            payDate: payDate,
+            tmnCode: tmnCode,
+            secureHash: secureHash,
+            orderInfo: orderInfo,
+            secureHashType: secureHashType,
+            locale: locale
         );
 
         // 4. Branch on outcome
         if (callback.IsSuccess)
         {
-            txn.MarkCompleted(); // propagates to all BatchPaymentItems automatically
+            // MarkCompleted propagates to all BatchPaymentItems automatically
+            txn.MarkCompleted();
 
             if (txn.Type == PaymentType.WalletTopUp)
             {
@@ -83,7 +92,8 @@ public class VnPayReturnCommandHandler(
 
                 if (wallet == null)
                     return Result.Failure<VnPayReturnResult>(
-                        Error.NotFound("Wallet.NotFound", "Wallet not found."));
+                        Error.NotFound("Wallet.NotFound",
+                            "Wallet not found."));
 
                 var walletTxn = wallet.Credit(
                     txn.Amount,
@@ -119,12 +129,11 @@ public class VnPayReturnCommandHandler(
 
         return Result.Success(new VnPayReturnResult(
             PaymentTransactionId: txn.Id,
-            IsSuccess:            callback.IsSuccess,
-            Message:              callback.Message,
-            ResponseCode:         callback.ResponseCode,
-            TransactionNo:        callback.TransactionNo,
-            Type:                 txn.Type,
-            CompletedAt:          txn.CompletedAt
-        ));
+            IsSuccess: callback.IsSuccess,
+            Message: callback.Message,
+            ResponseCode: callback.ResponseCode,
+            TransactionNo: callback.TransactionNo,
+            Type: txn.Type,
+            CompletedAt: txn.CompletedAt));
     }
 }

@@ -21,6 +21,6 @@ public interface IRefundRequestRepository : IRepository<RefundRequest, Guid>
 
     Task<bool> HasPendingRequestAsync(
         Guid paymentTransactionId,
-        Guid? eventId,
+        Guid? EventSessionId,
         CancellationToken cancellationToken = default);
 }
