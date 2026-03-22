@@ -3,6 +3,7 @@ using Shared.Domain.DDD;
 using Ticketing.Domain.DomainEvents;
 using Ticketing.Domain.Enums;
 using Ticketing.Domain.Errors;
+using static Ticketing.Domain.Errors.TicketingErrors;
 
 namespace Ticketing.Domain.Entities;
 
@@ -49,6 +50,7 @@ public sealed class Order : AggregateRoot<Guid>
         Guid ticketTypeId,
         Guid? seatId,
         string qrCode,
+        Guid? orderTicketId = null, 
         DateTime? utcNow = null)
     {
         if (Status != OrderStatus.Pending)
@@ -60,6 +62,7 @@ public sealed class Order : AggregateRoot<Guid>
             ticketTypeId,
             seatId,
             qrCode,
+            orderTicketId,
             utcNow);
 
         if (ticketResult.IsFailure)
@@ -104,7 +107,16 @@ public sealed class Order : AggregateRoot<Guid>
         Status = OrderStatus.Paid;
         ModifiedAt = utcNow ?? DateTime.UtcNow;
 
-        RaiseDomainEvent(new OrderPaidDomainEvent(Id, UserId, TotalPrice));
+        var items = _tickets
+            .Select(t => new OrderPaidTicketItem(
+                t.Id,
+                t.TicketTypeId,
+                t.EventSessionId,
+                t.SeatId,
+                t.QrCode))
+            .ToList();
+
+        RaiseDomainEvent(new OrderPaidDomainEvent(Id, UserId, TotalPrice, items));
         return Result.Success();
     }
 
@@ -128,6 +140,18 @@ public sealed class Order : AggregateRoot<Guid>
 
         RaiseDomainEvent(new OrderCancelledDomainEvent(Id, UserId));
         return Result.Success();
+    }
+
+    public Result CheckIn(Guid orderTicketId, Guid staffUserId, DateTime utcNow)
+    {
+        if (Status != OrderStatus.Paid)
+            return Result.Failure(TicketingErrors.Order.NotPaid);
+
+        var ticket = _tickets.FirstOrDefault(t => t.Id == orderTicketId);
+        if (ticket is null)
+            return Result.Failure(TicketingErrors.CheckIn.TicketNotFound);
+
+        return ticket.CheckIn(staffUserId, utcNow);
     }
 
     protected override void Apply(IDomainEvent @event) { }

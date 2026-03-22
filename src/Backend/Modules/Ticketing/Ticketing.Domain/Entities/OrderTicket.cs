@@ -26,16 +26,16 @@ public sealed class OrderTicket : Entity<Guid>
         Guid ticketTypeId,
         Guid? seatId,
         string qrCode,
+        Guid? id = null,        
         DateTime? utcNow = null)
     {
         if (string.IsNullOrWhiteSpace(qrCode))
             return Result.Failure<OrderTicket>(TicketingErrors.OrderTicket.InvalidQrCode);
 
         var now = utcNow ?? DateTime.UtcNow;
-
         var entity = new OrderTicket
         {
-            Id = Guid.NewGuid(),
+            Id = id ?? Guid.NewGuid(), 
             OrderId = orderId,
             EventSessionId = eventSessionId,
             TicketTypeId = ticketTypeId,
@@ -44,20 +44,7 @@ public sealed class OrderTicket : Entity<Guid>
             Status = OrderTicketStatus.Valid,
             CreatedAt = now
         };
-
         return Result.Success(entity);
-    }
-
-    public Result MarkUsed(Guid checkedInBy, DateTime? utcNow = null)
-    {
-        if (Status != OrderTicketStatus.Valid)
-            return Result.Failure(TicketingErrors.OrderTicket.CannotUse(Status));
-
-        Status = OrderTicketStatus.Used;
-        CheckedInBy = checkedInBy;
-        CheckedInAt = utcNow ?? DateTime.UtcNow;
-        ModifiedAt = CheckedInAt;
-        return Result.Success();
     }
 
     public Result Cancel(DateTime? utcNow = null)
@@ -70,6 +57,24 @@ public sealed class OrderTicket : Entity<Guid>
 
         Status = OrderTicketStatus.Cancelled;
         ModifiedAt = utcNow ?? DateTime.UtcNow;
+        return Result.Success();
+    }
+
+    public Result CheckIn(Guid staffUserId, DateTime utcNow)
+    {
+        if (Status == OrderTicketStatus.Used)
+            return Result.Failure(TicketingErrors.CheckIn.AlreadyCheckedIn);
+
+        if (Status == OrderTicketStatus.Cancelled)
+            return Result.Failure(TicketingErrors.CheckIn.TicketCancelled);
+
+        if (Status != OrderTicketStatus.Valid)
+            return Result.Failure(TicketingErrors.CheckIn.InvalidTicketStatus);
+
+        Status = OrderTicketStatus.Used;
+        CheckedInAt = utcNow;
+        CheckedInBy = staffUserId;
+
         return Result.Success();
     }
 }

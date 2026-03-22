@@ -13,5 +13,6 @@ internal static class Constants
 
         public const string Orders = $"{BaseApi}/orders";
         public const string OrderById = $"{Orders}/{{orderId:guid}}";
+        public const string CheckIn = $"{BaseApi}/check-in";
     }
 }

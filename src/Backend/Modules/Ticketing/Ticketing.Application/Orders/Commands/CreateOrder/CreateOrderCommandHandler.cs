@@ -7,10 +7,12 @@ using Shared.Application.Abstractions.Messaging;
 using Shared.Application.Abstractions.Time;
 using Shared.Domain.Abstractions;
 using Ticketing.Application.Abstractions.Locks;
+using Ticketing.Application.Helpers;
 using Ticketing.Domain.Entities;
 using Ticketing.Domain.Errors;
 using Ticketing.Domain.Repositories;
 using Ticketing.Domain.Uow;
+using static Ticketing.Domain.Errors.TicketingErrors;
 
 namespace Ticketing.Application.Orders.Commands.CreateOrder;
 
@@ -141,24 +143,23 @@ internal sealed class CreateOrderCommandHandler(
             }
 
             // Build order
-            var order = Order.Create(userId, utcNow);
+            var order = Domain.Entities.Order.Create(userId, utcNow);
             var totalPrice = 0m;
 
             foreach (var ticket in command.Tickets)
             {
                 var item = itemMap[(ticket.EventSessionId, ticket.TicketTypeId)];
 
-                // build QR codde
-                var qrCode = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32))
-                    .Replace("+", "-")
-                    .Replace("/", "_")
-                    .TrimEnd('=');
+                // build QR code
+                var orderTicketId = Guid.NewGuid();
+                var qrCode = QrCodeHelper.Generate(orderTicketId);
 
                 var addResult = order.AddTicket(
                     ticket.EventSessionId,
                     ticket.TicketTypeId,
                     ticket.SeatId,
                     qrCode,
+                    orderTicketId,
                     utcNow);
 
                 if (addResult.IsFailure)

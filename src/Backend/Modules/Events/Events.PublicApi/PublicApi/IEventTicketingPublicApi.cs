@@ -12,4 +12,10 @@ public interface IEventTicketingPublicApi
     Task<IReadOnlyDictionary<Guid, EventSeatDto>> GetSeatsBatchAsync(
         IReadOnlyCollection<Guid> seatIds,
         CancellationToken cancellationToken = default);
+
+    Task<TicketCheckInInfoDto?> GetTicketCheckInInfoAsync(
+        Guid ticketTypeId,
+        Guid eventSessionId,
+        Guid? seatId,
+        CancellationToken cancellationToken = default);
 }

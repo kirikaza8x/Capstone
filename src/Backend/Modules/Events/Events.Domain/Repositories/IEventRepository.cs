@@ -57,4 +57,7 @@ public interface IEventRepository : IRepository<Event, Guid>
 
     Task<Event?> GetByIdForReIndexAsync(Guid id, CancellationToken ct = default);
 
+    Task<IReadOnlyList<TicketType>> GetTicketTypesByIdsAsync(
+        IReadOnlyList<Guid> ids,
+        CancellationToken cancellationToken = default);
 }

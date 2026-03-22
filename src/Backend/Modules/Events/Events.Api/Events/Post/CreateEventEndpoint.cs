@@ -69,7 +69,7 @@ public class CreateEventEndpoint : ICarterModule
         .Produces<Guid>(StatusCodes.Status201Created)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status409Conflict)
-        // .RequireRoles(Roles.Organizer)
+        .RequireRoles(Roles.Organizer)
         ;
     }
 }
