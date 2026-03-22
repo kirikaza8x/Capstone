@@ -144,11 +144,11 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
     // Factory — BatchWalletPay
     // --------------------
     public static PaymentTransaction CreateBatchWalletPay(
-        Guid userId,
-        Guid walletId,
-        Guid orderId,
-        IEnumerable<(Guid OrderTicketId, Guid EventSessionId, decimal Amount)> items,
-        string? orderInfo = null)
+    Guid userId,
+    Guid walletId,
+    Guid orderId,
+    IEnumerable<(Guid OrderTicketId, Guid EventSessionId, decimal Amount)> items,
+    string? orderInfo = null)
     {
         var itemList = items.ToList();
 
@@ -182,18 +182,15 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
             txn.Items.Add(item);
         }
 
-        return txn;
-    }
+        // Raise here — MarkCompleted() is never called for wallet pay
+        // since the transaction is born Completed
+        txn.RaiseDomainEvent(new PaymentSucceededDomainEvent(
+            PaymentTransactionId: txn.Id,
+            OrderId: orderId,
+            Amount: txn.Amount,
+            CompletedAtUtc: now));
 
-    // --------------------
-    // Domain behaviors — all unchanged
-    // --------------------
-    public void MarkCompleted()
-    {
-        InternalStatus = PaymentInternalStatus.Completed;
-        CompletedAt = DateTime.UtcNow;
-        foreach (var item in Items)
-            item.MarkCompleted();
+        return txn;
     }
 
     public void MarkFailed(string? reason = null)
