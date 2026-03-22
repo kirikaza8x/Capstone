@@ -24,10 +24,9 @@ internal sealed class VoucherConfiguration : IEntityTypeConfiguration<Voucher>
             .HasMaxLength(20)
             .IsRequired();
 
-        builder.Property(x => x.Condition).HasColumnType("text").IsRequired();
         builder.Property(x => x.Value).HasPrecision(18, 2).IsRequired();
         builder.Property(x => x.TotalUse).IsRequired();
-        builder.Property(x => x.MaxUsePerUser).IsRequired();
+        builder.Property(x => x.MaxUse).IsRequired();
         builder.Property(x => x.StartDate).IsRequired();
         builder.Property(x => x.EndDate).IsRequired();
 

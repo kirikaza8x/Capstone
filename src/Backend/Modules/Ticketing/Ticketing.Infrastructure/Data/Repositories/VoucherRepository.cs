@@ -10,15 +10,27 @@ internal sealed class VoucherRepository(TicketingDbContext context)
 {
     private readonly TicketingDbContext _context = context;
 
-    public async Task<Voucher?> GetByCouponCodeAsync(string couponCode, CancellationToken cancellationToken = default)
-    {
-        return await _context.Vouchers
-            .FirstOrDefaultAsync(x => x.CouponCode == couponCode, cancellationToken);
-    }
+    public async Task<Voucher?> GetByCouponCodeAsync(
+        string couponCode,
+        CancellationToken cancellationToken = default) =>
+        await _context.Vouchers
+            .FirstOrDefaultAsync(
+                v => v.CouponCode == couponCode,
+                cancellationToken);
 
-    public async Task<bool> ExistsCouponCodeAsync(string couponCode, CancellationToken cancellationToken = default)
-    {
-        return await _context.Vouchers
-            .AnyAsync(x => x.CouponCode == couponCode, cancellationToken);
-    }
+    public async Task<bool> HasUserUsedVoucherAsync(
+        Guid voucherId,
+        Guid userId,
+        CancellationToken cancellationToken = default) =>
+        await _context.OrderVouchers
+            .AnyAsync(
+                ov => ov.VoucherId == voucherId &&
+                      ov.Order.UserId == userId,
+                cancellationToken);
+
+    public async Task<Voucher?> GetByIdAsync(
+        Guid id,
+        CancellationToken cancellationToken = default) =>
+        await _context.Vouchers
+            .FirstOrDefaultAsync(v => v.Id == id, cancellationToken);
 }

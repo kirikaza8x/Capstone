@@ -66,4 +66,11 @@ internal sealed class OrderRepository(TicketingDbContext context)
             .FirstOrDefaultAsync(
                 o => o.Tickets.Any(t => t.Id == orderTicketId),
                 cancellationToken);
+
+    public async Task<Order?> GetByIdWithVouchersAsync(
+        Guid id,
+        CancellationToken cancellationToken = default) =>
+        await _context.Orders
+            .Include(o => o.OrderVouchers)
+            .FirstOrDefaultAsync(o => o.Id == id, cancellationToken);
 }

@@ -22,7 +22,9 @@ public sealed class EventProfile : Profile
 
         CreateMap<Event, EventResponse>()
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
-            .ForMember(dest => dest.Categories, opt => opt.MapFrom(src => src.EventCategories));
+            .ForMember(dest => dest.Categories, opt => opt.MapFrom(src => src.EventCategories))
+            .ForMember(dest => dest.MinPrice, opt => opt.MapFrom(src => src.TicketTypes.Any() ? src.TicketTypes.Min(t => t.Price) : (decimal?)null))
+            .ForMember(dest => dest.MaxPrice, opt => opt.MapFrom(src => src.TicketTypes.Any() ? src.TicketTypes.Max(t => t.Price) : (decimal?)null));
 
         CreateMap<Event, EventsByOrganizerResponse>()
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()));
@@ -36,7 +38,8 @@ public sealed class EventProfile : Profile
 
         CreateMap<TicketType, TicketTypeDto>()
             .ForMember(dest => dest.AreaName, opt => opt.MapFrom(src => src.Area != null ? src.Area.Name : null))
-            .ForMember(dest => dest.AreaType, opt => opt.MapFrom(src => src.Area != null ? src.Area.Type.ToString() : null));
+            .ForMember(dest => dest.AreaType, opt => opt.MapFrom(src => src.Area != null ? src.Area.Type.ToString() : null))
+            .ForMember(dest => dest.RemainingQuantity, opt => opt.MapFrom(src => src.Quantity - src.SoldQuantity));
 
         CreateMap<EventSession, EventSessionDto>();
 

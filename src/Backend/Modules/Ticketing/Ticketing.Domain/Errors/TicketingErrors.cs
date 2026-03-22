@@ -70,6 +70,10 @@ public static class TicketingErrors
         public static readonly Error NotPaid = Error.Conflict(
             "Order.NotPaid",
             "Order is not in paid status.");
+
+        public static readonly Error NotPending = Error.Conflict(
+            "Order.NotPending",
+            "Order is not in pending status.");
     }
 
     public static class OrderTicket
@@ -90,24 +94,39 @@ public static class TicketingErrors
             "OrderTicket.InvalidQrCode",
             "QR code is required.");
     }
-
     public static class Voucher
     {
-        public static Error NotFound(Guid voucherId) => Error.NotFound(
+        public static Error NotFound(string couponCode) => Error.NotFound(
             "Voucher.NotFound",
-            $"Voucher '{voucherId}' was not found.");
+            $"Voucher with coupon code '{couponCode}' not found.");
 
-        public static readonly Error NotActive = Error.Validation(
-            "Voucher.NotActive",
-            "Voucher is not active in the current time window.");
+        public static readonly Error Expired = Error.Conflict(
+            "Voucher.Expired",
+            "Voucher is expired or not yet active.");
+
+        public static readonly Error ExceededMaxUse = Error.Conflict(
+            "Voucher.ExceededMaxUse",
+            "Voucher has reached its usage limit.");
+
+        public static readonly Error AlreadyUsedByUser = Error.Conflict(
+            "Voucher.AlreadyUsedByUser",
+            "You have already used this voucher.");
+
+        public static readonly Error InvalidCouponCode = Error.Validation(
+            "Voucher.InvalidCouponCode",
+            "Coupon code is required.");
 
         public static readonly Error InvalidValue = Error.Validation(
             "Voucher.InvalidValue",
-            "Voucher value is invalid.");
+            "Voucher value must be greater than 0.");
+
+        public static readonly Error InvalidMaxUse = Error.Validation(
+            "Voucher.InvalidMaxUse",
+            "Max use must be greater than 0.");
 
         public static readonly Error InvalidDateRange = Error.Validation(
             "Voucher.InvalidDateRange",
-            "Voucher date range is invalid.");
+            "Start date must be before end date.");
     }
 
     public static class CheckIn

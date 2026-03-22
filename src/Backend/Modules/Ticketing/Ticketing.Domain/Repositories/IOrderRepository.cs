@@ -20,4 +20,8 @@ public interface IOrderRepository : IRepository<Order, Guid>
     Task<Order?> GetByOrderTicketIdAsync(
         Guid orderTicketId,
         CancellationToken cancellationToken = default);
+
+    Task<Order?> GetByIdWithVouchersAsync(
+        Guid id,
+        CancellationToken cancellationToken = default);
 }
