@@ -12,7 +12,8 @@ internal static class Constants
         private const string BaseApi = "api/ticketing";
 
         public const string Orders = $"{BaseApi}/orders";
-        public const string OrderById = $"{Orders}/{{orderId:guid}}";
+        public const string OrderById = $"{BaseApi}/{{orderId:guid}}";
         public const string CheckIn = $"{BaseApi}/check-in";
+        public const string ApplyVoucher = $"{BaseApi}/{{orderId:guid}}/apply-voucher";
     }
 }

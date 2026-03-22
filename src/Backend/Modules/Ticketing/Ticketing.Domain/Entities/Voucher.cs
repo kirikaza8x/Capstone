@@ -9,10 +9,9 @@ public sealed class Voucher : Entity<Guid>
 {
     public string CouponCode { get; private set; } = string.Empty;
     public VoucherType Type { get; private set; }
-    public string Condition { get; private set; } = string.Empty;
     public decimal Value { get; private set; }
     public int TotalUse { get; private set; }
-    public short MaxUsePerUser { get; private set; }
+    public int MaxUse { get; private set; }
     public DateTime StartDate { get; private set; }
     public DateTime EndDate { get; private set; }
 
@@ -21,19 +20,20 @@ public sealed class Voucher : Entity<Guid>
     public static Result<Voucher> Create(
         string couponCode,
         VoucherType type,
-        string condition,
         decimal value,
-        int totalUse,
-        short maxUsePerUser,
+        int maxUse,
         DateTime startDate,
         DateTime endDate,
         DateTime? utcNow = null)
     {
         if (string.IsNullOrWhiteSpace(couponCode))
+            return Result.Failure<Voucher>(TicketingErrors.Voucher.InvalidCouponCode);
+
+        if (value <= 0)
             return Result.Failure<Voucher>(TicketingErrors.Voucher.InvalidValue);
 
-        if (value <= 0 || totalUse < 0 || maxUsePerUser < 0)
-            return Result.Failure<Voucher>(TicketingErrors.Voucher.InvalidValue);
+        if (maxUse <= 0)
+            return Result.Failure<Voucher>(TicketingErrors.Voucher.InvalidMaxUse);
 
         if (startDate >= endDate)
             return Result.Failure<Voucher>(TicketingErrors.Voucher.InvalidDateRange);
@@ -43,10 +43,9 @@ public sealed class Voucher : Entity<Guid>
             Id = Guid.NewGuid(),
             CouponCode = couponCode.Trim(),
             Type = type,
-            Condition = condition,
             Value = value,
-            TotalUse = totalUse,
-            MaxUsePerUser = maxUsePerUser,
+            TotalUse = 0,    
+            MaxUse = maxUse,
             StartDate = startDate,
             EndDate = endDate,
             CreatedAt = utcNow ?? DateTime.UtcNow
@@ -55,11 +54,14 @@ public sealed class Voucher : Entity<Guid>
         return Result.Success(entity);
     }
 
-    public Result EnsureActive(DateTime utcNow)
+    public void IncrementUsage()
     {
-        if (utcNow < StartDate || utcNow > EndDate)
-            return Result.Failure(TicketingErrors.Voucher.NotActive);
+        TotalUse++;
+    }
 
-        return Result.Success();
+    public void DecrementUsage()
+    {
+        if (TotalUse > 0)
+            TotalUse--;
     }
 }

@@ -78,11 +78,18 @@ public sealed class Order : AggregateRoot<Guid>
         decimal discountAmount,
         DateTime appliedAtUtc)
     {
-        if (_orderVouchers.Any(x => x.VoucherId == voucherId))
-            return Result.Failure(TicketingErrors.Order.DuplicateVoucher);
+        if (Status != OrderStatus.Pending)
+            return Result.Failure(TicketingErrors.Order.NotPending);
 
         if (discountAmount < 0)
             return Result.Failure(TicketingErrors.Order.InvalidTotalPrice);
+
+        var existing = _orderVouchers.FirstOrDefault();
+        if (existing is not null)
+        {
+            TotalPrice += existing.DiscountAmount;
+            _orderVouchers.Remove(existing);
+        }
 
         var orderVoucher = OrderVoucher.Create(
             orderId: Id,

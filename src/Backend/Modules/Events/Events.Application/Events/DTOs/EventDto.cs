@@ -33,6 +33,7 @@ public sealed record TicketTypeDto
     public decimal Price { get; init; }
     public int Quantity { get; init; }
     public int SoldQuantity { get; init; }
+    public int RemainingQuantity { get; set; }
     public Guid? AreaId { get; init; }
     public string? AreaName { get; init; }
     public string? AreaType { get; init; }
