@@ -9,13 +9,13 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
     // References
     // --------------------
     public Guid UserId { get; private set; }
-    public Guid? WalletId { get; private set; }   // set for WalletTopUp + BatchWalletPay
+    public Guid? WalletId { get; private set; }
     public PaymentType Type { get; private set; }
 
     // --------------------
     // Core
     // --------------------
-    public decimal Amount { get; private set; }   // total — always sum of items for batch types
+    public decimal Amount { get; private set; }
     public string Currency { get; private set; } = "VND";
 
     // --------------------
@@ -25,15 +25,15 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
 
     // --------------------
     // Items
-    // WalletTopUp      → always empty
-    // BatchDirectPay   → populated, AwaitingGateway until VNPay return
-    // BatchWalletPay   → populated, Completed immediately
+    // WalletTopUp    → always empty
+    // BatchDirectPay → populated, AwaitingGateway until VNPay return
+    // BatchWalletPay → populated, Completed immediately
     // --------------------
     public ICollection<BatchPaymentItem> Items { get; private set; }
         = new List<BatchPaymentItem>();
 
     // --------------------
-    // Gateway fields — null for BatchWalletPay
+    // Gateway fields
     // --------------------
     public string? GatewayTransactionNo { get; private set; }
     public string? GatewayResponseCode { get; private set; }
@@ -70,7 +70,8 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
         Guid walletId,
         decimal amount,
         string? gatewayOrderInfo,
-        string? gatewayTxnRef)
+        string? gatewayTxnRef,
+        string? ipAddress = null)
     {
         if (amount <= 0)
             throw new ArgumentException("Amount must be greater than zero.", nameof(amount));
@@ -85,6 +86,10 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
             InternalStatus = PaymentInternalStatus.AwaitingGateway,
             GatewayOrderInfo = gatewayOrderInfo,
             GatewayTxnRef = gatewayTxnRef,
+            GatewayCreateDate = GetVietnamCreateDate(),
+            GatewayLocale = "vn",
+            GatewayIpAddr = NormalizeIp(ipAddress),
+            GatewayOrderType = "other",
             CreatedAt = DateTime.UtcNow
         };
     }
@@ -96,7 +101,8 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
         Guid userId,
         IEnumerable<(Guid EventId, decimal Amount)> items,
         string? gatewayOrderInfo,
-        string? gatewayTxnRef)
+        string? gatewayTxnRef,
+        string? ipAddress = null)
     {
         var itemList = items.ToList();
 
@@ -115,6 +121,10 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
             InternalStatus = PaymentInternalStatus.AwaitingGateway,
             GatewayOrderInfo = gatewayOrderInfo,
             GatewayTxnRef = gatewayTxnRef,
+            GatewayCreateDate = GetVietnamCreateDate(),
+            GatewayLocale = "vn",
+            GatewayIpAddr = NormalizeIp(ipAddress),
+            GatewayOrderType = "other",
             CreatedAt = DateTime.UtcNow
         };
 
@@ -193,7 +203,6 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
             item.MarkFailed();
     }
 
-    // Only called when ALL items are refunded — use IsFullyRefunded() to check first
     public void MarkRefunded()
     {
         if (InternalStatus != PaymentInternalStatus.Completed)
@@ -209,20 +218,77 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
         string? status,
         string? transactionNo,
         string? bankCode,
-        string? bankTranNo)
+        string? bankTranNo,
+        string? cardType,
+        string? payDate,
+        string? tmnCode,
+        string? secureHash,
+        string? orderInfo,
+        string? secureHashType = null,
+        string? locale = null)
     {
-        GatewayResponseCode = responseCode;
-        GatewayStatus = status;
-        GatewayTransactionNo = transactionNo;
-        GatewayBankCode = bankCode;
-        GatewayBankTranNo = bankTranNo;
+        GatewayResponseCode   = responseCode;
+        GatewayStatus         = status;
+        GatewayTransactionNo  = transactionNo;
+        GatewayBankCode       = bankCode;
+        GatewayBankTranNo     = bankTranNo;
+        GatewayCardType       = cardType;
+        GatewayPayDate        = payDate;
+        GatewayTmnCode        = tmnCode;
+        GatewaySecureHash     = secureHash;
+        GatewaySecureHashType = secureHashType;
+
+        if (!string.IsNullOrWhiteSpace(locale))
+            GatewayLocale = locale;
+
+        if (!string.IsNullOrWhiteSpace(orderInfo))
+            GatewayOrderInfo = orderInfo;
     }
 
-    // True when every item has been individually refunded
-    // WalletTopUp has no items so this returns false — it is never "refunded" via items
     public bool IsFullyRefunded()
         => Items.Count > 0
         && Items.All(i => i.InternalStatus == PaymentInternalStatus.Refunded);
+
+    // --------------------
+    // Private helpers
+    // --------------------
+    private static string GetVietnamCreateDate()
+    {
+        try
+        {
+            var tzi = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+            return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, tzi)
+                               .ToString("yyyyMMddHHmmss");
+        }
+        catch (TimeZoneNotFoundException)
+        {
+            try
+            {
+                var tzi = TimeZoneInfo.FindSystemTimeZoneById("Asia/Ho_Chi_Minh");
+                return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, tzi)
+                                   .ToString("yyyyMMddHHmmss");
+            }
+            catch (TimeZoneNotFoundException)
+            {
+                return DateTime.UtcNow.AddHours(7).ToString("yyyyMMddHHmmss");
+            }
+        }
+    }
+
+    private static string NormalizeIp(string? ip)
+    {
+        if (string.IsNullOrWhiteSpace(ip)) return "127.0.0.1";
+        if (ip is "::1" or "[::1]")        return "127.0.0.1";
+
+        ip = ip.Trim('[', ']');
+
+        if (ip.Contains(':'))
+            return ip.StartsWith("::ffff:", StringComparison.OrdinalIgnoreCase)
+                ? ip[7..]
+                : "127.0.0.1";
+
+        return ip.Trim();
+    }
 
     protected override void Apply(IDomainEvent @event) { }
 }
