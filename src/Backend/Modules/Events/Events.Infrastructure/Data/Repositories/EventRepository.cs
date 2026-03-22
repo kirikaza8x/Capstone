@@ -95,14 +95,19 @@ internal sealed class EventRepository(EventsDbContext context)
 
     public async Task<PagedResult<Event>> GetPublishedWithCategoriesAsync(
         PagedQuery pagedQuery,
+        int? categoryId = null,
         CancellationToken cancellationToken = default)
     {
         var query = _context.Events
-            .AsNoTracking()
-            .Where(e => e.Status == EventStatus.Published)
-            .Include(e => e.EventCategories)
-                .ThenInclude(ec => ec.Category)
-            .AsSplitQuery();
+                .AsNoTracking()
+                .Where(e => e.Status == EventStatus.Published)
+                .Include(e => e.EventCategories)
+                    .ThenInclude(ec => ec.Category)
+                .AsSplitQuery();
+
+        if (categoryId.HasValue)
+            query = query.Where(e =>
+                e.EventCategories.Any(ec => ec.CategoryId == categoryId.Value));
 
         return await query.ToPagedResultAsync(pagedQuery, cancellationToken);
     }
@@ -260,4 +265,11 @@ internal sealed class EventRepository(EventsDbContext context)
             .AsSplitQuery()
             .FirstOrDefaultAsync(ct);
     }
+
+    public async Task<IReadOnlyList<TicketType>> GetTicketTypesByIdsAsync(
+        IReadOnlyList<Guid> ids,
+        CancellationToken cancellationToken = default) =>
+        await _context.TicketTypes
+            .Where(tt => ids.Contains(tt.Id))
+            .ToListAsync(cancellationToken);
 }

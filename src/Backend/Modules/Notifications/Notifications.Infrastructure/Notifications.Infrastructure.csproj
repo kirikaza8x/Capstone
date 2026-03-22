@@ -13,4 +13,8 @@
     <ProjectReference Include="..\Notifications.Application\Notifications.Application.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="IntegrationEventHandlers\" />
+  </ItemGroup>
+
 </Project>

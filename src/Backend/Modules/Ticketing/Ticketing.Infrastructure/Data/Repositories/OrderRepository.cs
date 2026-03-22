@@ -57,4 +57,13 @@ internal sealed class OrderRepository(TicketingDbContext context)
             .Select(x => (x.EventSessionId, x.SeatId))
             .ToHashSet();
     }
+
+    public async Task<Order?> GetByOrderTicketIdAsync(
+        Guid orderTicketId,
+        CancellationToken cancellationToken = default) =>
+        await _context.Orders
+            .Include(o => o.Tickets)
+            .FirstOrDefaultAsync(
+                o => o.Tickets.Any(t => t.Id == orderTicketId),
+                cancellationToken);
 }

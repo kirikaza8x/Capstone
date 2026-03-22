@@ -53,17 +53,10 @@ public sealed class TicketType : Entity<Guid>
         ModifiedAt = DateTime.UtcNow;
     }
 
-    public Result IncreaseSoldQuantity(int amount = 1)
+    public void IncreaseSoldQuantity(int quantity)
     {
-        if (amount <= 0)
-            return Result.Failure(EventErrors.TicketTypeErrors.InvalidSoldQuantityAmount);
-
-        if (SoldQuantity + amount > Quantity)
-            return Result.Failure(EventErrors.TicketTypeErrors.ExceedQuantity(Quantity, SoldQuantity + amount));
-
-        SoldQuantity += amount;
-        ModifiedAt = DateTime.UtcNow;
-        return Result.Success();
+        if (quantity <= 0) return;
+        SoldQuantity = Math.Min(SoldQuantity + quantity, Quantity);
     }
 
     public Result DecreaseSoldQuantity(int amount = 1)

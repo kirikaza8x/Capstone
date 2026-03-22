@@ -15,6 +15,8 @@ using Ticketing.Infrastructure.Data.Repositories;
 using Ticketing.Infrastructure.Data.Uow;
 using Ticketing.Infrastructure.Jobs;
 using Ticketing.Infrastructure.Locks;
+using Ticketing.Infrastructure.PublicApi;
+using Ticketing.PublicApi.PublicApi;
 
 namespace Ticketing.Infrastructure;
 
@@ -26,6 +28,7 @@ public static class TicketingModule
         services.TryAddScoped<IVoucherRepository, VoucherRepository>();
         services.TryAddScoped<ITicketingUnitOfWork, TicketingUnitOfWork>();
         services.AddScoped<ITicketLockService, TicketLockService>();
+        services.AddScoped<ITicketingSeatStatusPublicApi, TicketingSeatStatusPublicApi>();
 
         services.AddDbContext<TicketingDbContext>((sp, options) =>
         {

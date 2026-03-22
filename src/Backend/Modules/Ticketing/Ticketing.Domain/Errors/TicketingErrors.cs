@@ -66,6 +66,10 @@ public static class TicketingErrors
         public static readonly Error ZoneSoldOut = Error.Conflict(
             "Order.ZoneSoldOut",
             "Ticket zone is sold out.");
+
+        public static readonly Error NotPaid = Error.Conflict(
+            "Order.NotPaid",
+            "Order is not in paid status.");
     }
 
     public static class OrderTicket
@@ -104,5 +108,26 @@ public static class TicketingErrors
         public static readonly Error InvalidDateRange = Error.Validation(
             "Voucher.InvalidDateRange",
             "Voucher date range is invalid.");
+    }
+
+    public static class CheckIn
+    {
+        public static Error InvalidQrCode => Error.Validation(
+            "CheckIn.InvalidQrCode", "QR code is invalid.");
+
+        public static Error TicketNotFound => Error.NotFound(
+            "CheckIn.TicketNotFound", "Ticket not found.");
+
+        public static Error SessionMismatch => Error.Validation(
+            "CheckIn.SessionMismatch", "Ticket does not belong to current session.");
+
+        public static Error AlreadyCheckedIn => Error.Conflict(
+            "CheckIn.AlreadyCheckedIn", "Ticket has already been checked in.");
+
+        public static Error TicketCancelled => Error.Conflict(
+            "CheckIn.TicketCancelled", "Ticket has been cancelled.");
+
+        public static Error InvalidTicketStatus => Error.Conflict(
+            "CheckIn.InvalidTicketStatus", "Ticket status is invalid for check-in.");
     }
 }

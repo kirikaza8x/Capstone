@@ -16,4 +16,8 @@ public interface IOrderRepository : IRepository<Order, Guid>
     Task<IReadOnlySet<(Guid SessionId, Guid SeatId)>> GetCommittedSeatsAsync(
         IReadOnlyCollection<(Guid SessionId, Guid SeatId)> pairs,
         CancellationToken cancellationToken = default);
+
+    Task<Order?> GetByOrderTicketIdAsync(
+        Guid orderTicketId,
+        CancellationToken cancellationToken = default);
 }

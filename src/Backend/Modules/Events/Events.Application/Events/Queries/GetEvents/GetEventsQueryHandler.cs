@@ -14,7 +14,10 @@ internal sealed class GetEventsQueryHandler(
 {
     public async Task<Result<PagedResult<EventResponse>>> Handle(GetEventsQuery request, CancellationToken cancellationToken)
     {
-        var pagedEvents = await eventRepository.GetPublishedWithCategoriesAsync(request, cancellationToken);
+        var pagedEvents = await eventRepository.GetPublishedWithCategoriesAsync(
+            request,
+            request.CategoryId,
+            cancellationToken);
 
         var responseItems = mapper.Map<IReadOnlyList<EventResponse>>(pagedEvents.Items);
 

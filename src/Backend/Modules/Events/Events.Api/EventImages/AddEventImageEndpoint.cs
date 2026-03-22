@@ -32,7 +32,7 @@ public class AddEventImageEndpoint : ICarterModule
         .WithSummary("Add image to event")
         .WithDescription("Upload and add a new image to the specified event. Allowed types: JPEG, PNG, GIF, WebP. Max size: 10MB.")
         .DisableAntiforgery()
-        .Produces<Guid>(StatusCodes.Status201Created)
+        .Produces<ApiResult<Guid>>(StatusCodes.Status201Created)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status404NotFound);
     }

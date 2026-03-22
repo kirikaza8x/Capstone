@@ -1,13 +1,23 @@
+using System.Text.Json;
+using Events.Application.Events.Commands.UpdateEventSpec;
 using Events.Domain.Errors;
 using Events.Domain.Repositories;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
+using Ticketing.PublicApi.PublicApi;
 
 namespace Events.Application.Events.Queries.GetEventSpec;
 
 internal sealed class GetEventSpecQueryHandler(
-    IEventRepository eventRepository) : IQueryHandler<GetEventSpecQuery, GetEventSpecResponse>
+    IEventRepository eventRepository,
+    ITicketingSeatStatusPublicApi ticketingSeatStatusPublicApi) : IQueryHandler<GetEventSpecQuery, GetEventSpecResponse>
 {
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        WriteIndented = false
+    };
+
     public async Task<Result<GetEventSpecResponse>> Handle(
         GetEventSpecQuery query,
         CancellationToken cancellationToken)
@@ -17,6 +27,71 @@ internal sealed class GetEventSpecQueryHandler(
         if (@event is null)
             return Result.Failure<GetEventSpecResponse>(EventErrors.Event.NotFound(query.EventId));
 
-        return Result.Success(new GetEventSpecResponse(@event.Id, @event.Spec));
+        if (string.IsNullOrWhiteSpace(@event.Spec))
+        {
+            return Result.Success(new GetEventSpecResponse(
+                @event.Id,
+                query.EventSessionId,
+                @event.Spec));
+        }
+
+        SeatMapModel? seatMap;
+        try
+        {
+            seatMap = JsonSerializer.Deserialize<SeatMapModel>(@event.Spec, JsonOptions);
+        }
+        catch (JsonException ex)
+        {
+            return Result.Failure<GetEventSpecResponse>(Error.Validation(
+                "Event.InvalidSpec",
+                $"Spec JSON parse error: {ex.Message}"));
+        }
+
+        if (seatMap?.Areas is null || seatMap.Areas.Count == 0)
+        {
+            return Result.Success(new GetEventSpecResponse(
+                @event.Id,
+                query.EventSessionId,
+                @event.Spec));
+        }
+
+        var seatIds = seatMap.Areas
+            .Where(a => a.Seats is { Count: > 0 })
+            .SelectMany(a => a.Seats!)
+            .Select(s => Guid.TryParse(s.Id, out var seatId) ? seatId : Guid.Empty)
+            .Where(id => id != Guid.Empty)
+            .Distinct()
+            .ToList();
+
+        if (seatIds.Count > 0)
+        {
+            var unavailableSeatIds = await ticketingSeatStatusPublicApi.GetUnavailableSeatIdsAsync(
+                query.EventSessionId,
+                seatIds,
+                cancellationToken);
+
+            foreach (var area in seatMap.Areas)
+            {
+                if (area.Seats is null || area.Seats.Count == 0)
+                    continue;
+
+                foreach (var seat in area.Seats)
+                {
+                    if (!Guid.TryParse(seat.Id, out var seatId))
+                        continue;
+
+                    seat.Status = unavailableSeatIds.Contains(seatId)
+                        ? "blocked"
+                        : "available";
+                }
+            }
+        }
+
+        var enrichedSpec = JsonSerializer.Serialize(seatMap, JsonOptions);
+
+        return Result.Success(new GetEventSpecResponse(
+            @event.Id,
+            query.EventSessionId,
+            enrichedSpec));
     }
 }

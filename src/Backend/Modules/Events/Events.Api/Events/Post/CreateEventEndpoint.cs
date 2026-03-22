@@ -66,10 +66,10 @@ public class CreateEventEndpoint : ICarterModule
         .WithName("CreateEvent")
         .WithSummary("Create a new event")
         .WithDescription("Creates a new event with basic information. The event will be created in Draft status.")
-        .Produces<Guid>(StatusCodes.Status201Created)
+        .Produces<ApiResult<Guid>>(StatusCodes.Status201Created)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status409Conflict)
-        // .RequireRoles(Roles.Organizer)
+        .RequireRoles(Roles.Organizer)
         ;
     }
 }

@@ -35,6 +35,7 @@ internal sealed class ConfirmOrderCommandHandler(
             return Result.Success();
         }
 
+        // mark order as paid
         var result = order.MarkPaid(command.PaidAtUtc);
         if (result.IsFailure)
             return result;

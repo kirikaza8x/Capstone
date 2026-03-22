@@ -26,6 +26,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\Shared\Shared.Application\Shared.Application.csproj" />
+    <ProjectReference Include="..\..\Ticketing\Ticketing.IntegrationEvents\Ticketing.IntegrationEvents.csproj" />
+    <ProjectReference Include="..\..\Ticketing\Ticketing.PublicApi\Ticketing.PublicApi.csproj" />
     <ProjectReference Include="..\..\Users\Users.PublicApi\Users.PublicApi.csproj" />
     <ProjectReference Include="..\Events.Domain\Events.Domain.csproj" />
     <ProjectReference Include="..\Events.IntegrationEvents\Events.IntegrationEvents.csproj" />
