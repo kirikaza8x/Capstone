@@ -7,7 +7,9 @@ using Payment.Domain.Enums;
 using Payments.Application.DTOs.Payment;
 using Payments.Application.Features.Payments.Commands.InitiatePayment;
 using Payments.Application.Features.Payments.Queries.GetMyTransactions;
+using Shared.Api.Results;
 using Shared.Application.Abstractions.Authentication;
+using Shared.Domain.Abstractions;
 
 namespace Payments.Api.Features.Payments;
 
@@ -54,12 +56,10 @@ public class PaymentEndpoints : ICarterModule
             int page = 1,
             int pageSize = 20) =>
         {
-            var result = await sender.Send(
+            Result<GetMyTransactionsResult> result = await sender.Send(
                 new GetMyTransactionsQuery(page, pageSize), ct);
 
-            return result.IsSuccess
-                ? Results.Ok(result.Value)
-                : Results.BadRequest(result.Error);
+            return result.ToOk();
         })
         .WithName("GetMyTransactions")
         .WithSummary("Get current user's payment transaction history")
