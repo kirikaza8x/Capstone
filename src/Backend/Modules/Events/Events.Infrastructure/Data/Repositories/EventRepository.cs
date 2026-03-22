@@ -103,6 +103,7 @@ internal sealed class EventRepository(EventsDbContext context)
                 .Where(e => e.Status == EventStatus.Published)
                 .Include(e => e.EventCategories)
                     .ThenInclude(ec => ec.Category)
+                .Include(e => e.TicketTypes)
                 .AsSplitQuery();
 
         if (categoryId.HasValue)

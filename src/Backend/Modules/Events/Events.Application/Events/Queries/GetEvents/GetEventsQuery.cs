@@ -20,7 +20,8 @@ public sealed record EventResponse
     public DateTime? EventStartAt { get; init; }
     public DateTime? EventEndAt { get; init; }
     public string UrlPath { get; init; } = string.Empty;
+    public decimal? MinPrice { get; init; }
+    public decimal? MaxPrice { get; init; }
     public DateTime CreatedAt { get; init; }
-
     public IReadOnlyList<EventCategoryDto> Categories { get; init; } = [];
 }

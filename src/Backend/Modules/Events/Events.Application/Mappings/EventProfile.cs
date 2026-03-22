@@ -22,7 +22,9 @@ public sealed class EventProfile : Profile
 
         CreateMap<Event, EventResponse>()
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
-            .ForMember(dest => dest.Categories, opt => opt.MapFrom(src => src.EventCategories));
+            .ForMember(dest => dest.Categories, opt => opt.MapFrom(src => src.EventCategories))
+            .ForMember(dest => dest.MinPrice, opt => opt.MapFrom(src => src.TicketTypes.Any() ? src.TicketTypes.Min(t => t.Price) : (decimal?)null))
+            .ForMember(dest => dest.MaxPrice, opt => opt.MapFrom(src => src.TicketTypes.Any() ? src.TicketTypes.Max(t => t.Price) : (decimal?)null));
 
         CreateMap<Event, EventsByOrganizerResponse>()
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()));

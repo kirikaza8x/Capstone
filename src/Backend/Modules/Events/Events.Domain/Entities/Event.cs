@@ -22,6 +22,7 @@ public sealed class Event : AggregateRoot<Guid>
     public DateTime? EventEndAt { get; private set; }
     public string Policy { get; private set; } = string.Empty;
     public string? Spec { get; private set; }
+    public string? SpecImage { get; private set; }
     public bool IsEmailReminderEnabled { get; private set; } = false;
     public DateTime? ReminderTriggeredAt { get; private set; }
     public string? CancellationReason { get; private set; }
