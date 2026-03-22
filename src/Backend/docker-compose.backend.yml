@@ -64,11 +64,14 @@ services:
       - Qdrant__Port=${QDRANT_PORT}
       - Qdrant__UseHttps=${QDRANT_USE_HTTPS}
       - Qdrant__ApiKey=${QDRANT_API_KEY}
-      # MinIO
-      - MinIO__Endpoint=${MINIO_ENDPOINT}
-      - MinIO__AccessKey=${MINIO_ACCESS_KEY}
-      - MinIO__SecretKey=${MINIO_SECRET_KEY}
-      - MinIO__UseSsl=${MINIO_USE_SSL}
+      # Storage (MinIO)
+      - Storage__Endpoint=${STORAGE_ENDPOINT:-http://minio:9000}
+      - Storage__AccessKey=${STORAGE_ACCESS_KEY:-minioadmin}
+      - Storage__SecretKey=${STORAGE_SECRET_KEY:-minioadmin}
+      - Storage__BucketName=${STORAGE_BUCKET_NAME:-aipromo}
+      - Storage__Region=${STORAGE_REGION:-us-east-1}
+      - Storage__UseSSL=${STORAGE_USE_SSL:-false}
+      - Storage__PublicUrl=${STORAGE_PUBLIC_URL:-http://localhost:9000/aipromo}
       # Logging
       - Logging__LogLevel__Default=${LOG_LEVEL_DEFAULT:-Information}
       - Logging__LogLevel__Microsoft.AspNetCore=${LOG_LEVEL_MICROSOFT:-Warning}
