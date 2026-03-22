@@ -260,4 +260,11 @@ internal sealed class EventRepository(EventsDbContext context)
             .AsSplitQuery()
             .FirstOrDefaultAsync(ct);
     }
+
+    public async Task<IReadOnlyList<TicketType>> GetTicketTypesByIdsAsync(
+        IReadOnlyList<Guid> ids,
+        CancellationToken cancellationToken = default) =>
+        await _context.TicketTypes
+            .Where(tt => ids.Contains(tt.Id))
+            .ToListAsync(cancellationToken);
 }

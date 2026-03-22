@@ -5,7 +5,10 @@ using Shared.Domain.Queries;
 
 namespace Events.Application.Events.Queries.GetEvents;
 
-public record GetEventsQuery : PagedQuery, IQuery<PagedResult<EventResponse>>;
+public record GetEventsQuery : PagedQuery, IQuery<PagedResult<EventResponse>>
+{
+    public Guid? CategoryId { get; init; }
+}
 
 public sealed record EventResponse
 {

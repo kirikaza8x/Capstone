@@ -99,4 +99,43 @@ internal sealed class EventTicketingPublicApi(EventsDbContext dbContext) : IEven
         AreaType.Seat => EventAreaType.Seat,
         _ => EventAreaType.Default
     };
+
+    public async Task<TicketCheckInInfoDto?> GetTicketCheckInInfoAsync(
+        Guid ticketTypeId,
+        Guid eventSessionId,
+        Guid? seatId,
+        CancellationToken cancellationToken = default)
+    {
+        var data = await dbContext.TicketTypes
+            .AsNoTracking()
+            .Where(tt => tt.Id == ticketTypeId)
+            .Select(tt => new
+            {
+                TicketTypeName = tt.Name,
+                Session = tt.Event.Sessions
+                    .Where(s => s.Id == eventSessionId)
+                    .Select(s => new { s.Title, s.StartTime })
+                    .FirstOrDefault()
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (data?.Session is null)
+            return null;
+
+        string? seatCode = null;
+        if (seatId.HasValue)
+        {
+            seatCode = await dbContext.Seats
+                .AsNoTracking()
+                .Where(s => s.Id == seatId.Value)
+                .Select(s => s.SeatCode)
+                .FirstOrDefaultAsync(cancellationToken);
+        }
+
+        return new TicketCheckInInfoDto(
+            data.TicketTypeName,
+            data.Session.Title,
+            data.Session.StartTime,
+            seatCode);
+    }
 }
