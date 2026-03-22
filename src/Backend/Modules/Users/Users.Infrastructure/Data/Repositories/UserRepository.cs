@@ -160,6 +160,12 @@ namespace Users.Infrastructure.Data.Repositories
                 .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
         }
 
+        public async Task<User?> GetByIdWithRoleAsync(Guid userId, CancellationToken cancellationToken = default)
+        {
+            return await DbSet
+                .Include(u => u.Roles)
+                .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+        }
         public async Task<User?> GetByIdWithTokenAsync(Guid userId, CancellationToken cancellationToken = default)
         {
             return await DbSet
