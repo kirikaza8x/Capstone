@@ -135,6 +135,17 @@ public sealed class Event : AggregateRoot<Guid>
         return Result.Success();
     }
 
+    public Result UpdateSpecImage(string? specImage)
+    {
+        var canEdit = EnsureCanEdit();
+        if (canEdit.IsFailure)
+            return canEdit;
+
+        SpecImage = specImage;
+        ModifiedAt = DateTime.UtcNow;
+        return Result.Success();
+    }
+
     public void UpdateBannerUrl(string? bannerUrl)
     {
         BannerUrl = bannerUrl;
