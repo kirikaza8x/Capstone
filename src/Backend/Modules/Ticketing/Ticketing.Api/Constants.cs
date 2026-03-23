@@ -16,5 +16,6 @@ internal static class Constants
         public const string CheckIn = $"{BaseApi}/check-in";
         public const string ApplyVoucher = $"{BaseApi}/{{orderId:guid}}/apply-voucher";
         public const string MyOrders = $"{BaseApi}/orders/me";
+        public const string CancelOrder = $"{Orders}/{{orderId:guid}}/cancel";
     }
 }
