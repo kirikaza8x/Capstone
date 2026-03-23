@@ -39,7 +39,7 @@ public sealed class EventProfile : Profile
         CreateMap<TicketType, TicketTypeDto>()
             .ForMember(dest => dest.AreaName, opt => opt.MapFrom(src => src.Area != null ? src.Area.Name : null))
             .ForMember(dest => dest.AreaType, opt => opt.MapFrom(src => src.Area != null ? src.Area.Type.ToString() : null))
-            .ForMember(dest => dest.RemainingQuantity, opt => opt.MapFrom(src => src.Quantity - src.SoldQuantity));
+            .ForMember(dest => dest.RemainingQuantity, opt => opt.Ignore());
 
         CreateMap<EventSession, EventSessionDto>();
 

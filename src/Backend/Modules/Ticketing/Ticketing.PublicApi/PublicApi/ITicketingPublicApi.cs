@@ -1,3 +1,5 @@
+using Ticketing.PublicApi.Records;
+
 namespace Ticketing.PublicApi;
 
 public interface ITicketingPublicApi
@@ -8,17 +10,15 @@ public interface ITicketingPublicApi
         Guid orderId,
         Guid userId,
         CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyDictionary<Guid, int>> GetZoneLockedCountsAsync(
+        Guid eventSessionId,
+        IReadOnlyCollection<Guid> ticketTypeIds,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyDictionary<Guid, int>> GetSeatLockedCountsByTicketTypeAsync(
+        Guid eventSessionId,
+        IReadOnlyCollection<Guid> ticketTypeIds,
+        CancellationToken cancellationToken = default);
 }
 
-public record OrderDetails(
-    Guid OrderId,
-    Guid UserId,
-    decimal TotalAmount,
-    IReadOnlyList<OrderTicketDetail> Tickets
-);
-
-public record OrderTicketDetail(
-    Guid OrderTicketId,
-    Guid EventSessionId,
-    decimal Amount
-);
