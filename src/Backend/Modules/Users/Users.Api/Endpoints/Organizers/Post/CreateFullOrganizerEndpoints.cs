@@ -20,12 +20,26 @@ public class CreateFullOrganizerEndpoints : ICarterModule
             ISender sender,
             CancellationToken cancellationToken) =>
         {
-            var command = new CreateFullOrganizerProfileCommand(
-                requestDto.Type,
-                requestDto.BusinessInfo,
-                requestDto.BankInfo
-            );
-
+                var command = new CreateFullOrganizerProfileCommand(
+                    requestDto.Type,
+                    new OrganizerBusinessInfoDto(
+                        requestDto.Logo,
+                        requestDto.DisplayName,
+                        requestDto.Description,
+                        requestDto.Address,
+                        requestDto.SocialLink,
+                        requestDto.BusinessType,
+                        requestDto.TaxCode,
+                        requestDto.IdentityNumber,
+                        requestDto.CompanyName
+                    ),
+                    new OrganizerBankInfoDto(
+                        requestDto.AccountName,
+                        requestDto.AccountNumber,
+                        requestDto.BankCode,
+                        requestDto.Branch
+                    )
+                );
             Result<Guid> result = await sender.Send(command, cancellationToken);
 
             return result.ToOk();
@@ -42,6 +56,17 @@ public class CreateFullOrganizerEndpoints : ICarterModule
 
 public record CreateFullOrganizerProfileRequestDto(
     OrganizerType Type,
-    OrganizerBusinessInfoDto BusinessInfo,
-    OrganizerBankInfoDto BankInfo
+    string? Logo,
+    string? DisplayName,
+    string? Description,
+    string? Address,
+    string? SocialLink,
+    BusinessType? BusinessType,
+    string? TaxCode,
+    string? IdentityNumber,
+    string? CompanyName,
+    string? AccountName,
+    string? AccountNumber,
+    string? BankCode,
+    string? Branch
 );
