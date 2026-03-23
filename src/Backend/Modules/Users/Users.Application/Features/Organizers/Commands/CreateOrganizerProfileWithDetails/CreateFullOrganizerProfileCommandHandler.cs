@@ -28,7 +28,6 @@ public class CreateFullOrganizerProfileCommandHandler
         CreateFullOrganizerProfileCommand command,
         CancellationToken cancellationToken)
     {
-        // 1. Get current user
         var userId = _currentUserService.UserId;
         var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
 
@@ -38,8 +37,7 @@ public class CreateFullOrganizerProfileCommandHandler
                 Error.NotFound("User.NotFound", "User not found"));
         }
 
-        // 2. Map Command DTOs to Domain Value Objects
-        // Assuming your Value Objects have constructors or initialization logic
+       
         var businessInfo = new OrganizerBusinessInfo(
             command.BusinessInfo.Logo,
             command.BusinessInfo.DisplayName,
@@ -52,7 +50,6 @@ public class CreateFullOrganizerProfileCommandHandler
             command.BusinessInfo.CompanyName
         );
 
-        // Assuming OrganizerBankInfo follows the same immutable pattern
         var bankInfo = new OrganizerBankInfo(
             command.BankInfo.AccountName,
             command.BankInfo.AccountNumber,
@@ -60,15 +57,11 @@ public class CreateFullOrganizerProfileCommandHandler
             command.BankInfo.Branch
         );
 
-        // 3. Execute Domain Logic
         user.CreateFullOrganizerProfile(command.Type, businessInfo, bankInfo);
 
-        // 4. Save Changes
         _userRepository.Update(user);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // 5. Get the newly created draft profile
-        // Note: Used DraftProfile here because the factory sets Status = OrganizerStatus.Draft
         var draftProfile = user.DraftProfile;
 
         if (draftProfile == null)
