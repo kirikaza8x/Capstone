@@ -51,6 +51,7 @@ public sealed class EventVectorRepository : QdrantRepositoryBase, IEventVectorRe
     {
         await UpsertRawAsync(evt.EventId, embedding, BuildPayload(evt), ct);
         Logger.LogDebug("Upserted event vector {EventId}", evt.EventId);
+        // Note: UpsertRawAsync handles both insert and update — Qdrant will create or overwrite the point with the given ID.
     }
 
     public async Task UpsertBatchAsync(
