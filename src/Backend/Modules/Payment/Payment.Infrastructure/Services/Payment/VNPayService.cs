@@ -99,7 +99,8 @@ public class VnPayService : IVnPayService
                 .ToDictionary(k => k.Key, v => v.Value),
             StringComparer.Ordinal);
 
-        var signData = string.Join("&", copy.Select(kvp => $"{kvp.Key}={kvp.Value.Trim()}"));
+        var signData = string.Join("&", copy.Select(kvp =>
+     $"{WebUtility.UrlEncode(kvp.Key)}={WebUtility.UrlEncode(kvp.Value.Trim())}"));
         var computed = HmacSha512(_config.HashSecret, signData);
         var isValid = string.Equals(computed, receivedHash, StringComparison.OrdinalIgnoreCase);
 
