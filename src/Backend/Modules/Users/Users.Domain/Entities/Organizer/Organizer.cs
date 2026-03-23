@@ -70,6 +70,20 @@ namespace Users.Domain.Entities
             };
         }
 
+        internal static OrganizerProfile CreateWithDetails(
+            Guid userId, 
+            OrganizerType type, 
+            int version, 
+            OrganizerBusinessInfo businessInfo, 
+            OrganizerBankInfo bankInfo)
+        {
+            var profile = Create(userId, type, version);
+
+            profile.UpdateProfile(businessInfo);
+            profile.UpdateBankInformation(bankInfo);
+
+            return profile;
+        }
         internal static OrganizerProfile CreateNewVersion(OrganizerProfile current, int nextVersion)
         {
             var profile = Create(current.UserId, current.Type, nextVersion);

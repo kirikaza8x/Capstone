@@ -36,6 +36,18 @@ public partial class User
     // Creation
     // --------------------
 
+    public void CreateFullOrganizerProfile(
+        OrganizerType type, 
+        OrganizerBusinessInfo businessInfo, 
+        OrganizerBankInfo bankInfo)
+    {
+        if (_organizerProfiles.Any())
+            throw new InvalidOperationException("User already has an organizer profile.");
+
+        var profile = OrganizerProfile.CreateWithDetails(Id, type, 1, businessInfo, bankInfo);
+        _organizerProfiles.Add(profile);
+    }
+
     public void CreateOrganizerProfile(OrganizerType type)
     {
         if (_organizerProfiles.Any())
