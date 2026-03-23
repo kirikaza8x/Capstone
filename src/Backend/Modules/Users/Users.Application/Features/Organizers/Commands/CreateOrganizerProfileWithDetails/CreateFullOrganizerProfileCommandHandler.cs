@@ -1,25 +1,23 @@
-using FluentValidation;
 using Shared.Application.Abstractions.Authentication;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
-using Users.Application.Features.Organizers.Commands;
 using Users.Domain.Repositories;
 using Users.Domain.UOW;
+using Users.Domain.ValueObjects; // Added to access OrganizerBusinessInfo & OrganizerBankInfo
 
 namespace Users.Application.Features.Organizers.Handlers;
 
-public class CreateOrganizerProfileCommandHandler
-    : ICommandHandler<CreateOrganizerProfileCommand, Guid>
+public class CreateFullOrganizerProfileCommandHandler 
+    : ICommandHandler<CreateFullOrganizerProfileCommand, Guid>
 {
     private readonly IUserRepository _userRepository;
     private readonly ICurrentUserService _currentUserService;
     private readonly IUserUnitOfWork _unitOfWork;
 
-    public CreateOrganizerProfileCommandHandler(
+    public CreateFullOrganizerProfileCommandHandler(
         IUserRepository userRepository,
         ICurrentUserService currentUserService,
-        IUserUnitOfWork unitOfWork
-        )
+        IUserUnitOfWork unitOfWork)
     {
         _userRepository = userRepository;
         _currentUserService = currentUserService;
@@ -27,15 +25,10 @@ public class CreateOrganizerProfileCommandHandler
     }
 
     public async Task<Result<Guid>> Handle(
-        CreateOrganizerProfileCommand command,
+        CreateFullOrganizerProfileCommand command,
         CancellationToken cancellationToken)
     {
-
-
-
-        // Get current user
         var userId = _currentUserService.UserId;
-
         var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
 
         if (user == null)
@@ -44,19 +37,37 @@ public class CreateOrganizerProfileCommandHandler
                 Error.NotFound("User.NotFound", "User not found"));
         }
 
-        user.CreateOrganizerProfile(command.Type);
+       
+        var businessInfo = new OrganizerBusinessInfo(
+            command.BusinessInfo.Logo,
+            command.BusinessInfo.DisplayName,
+            command.BusinessInfo.Description,
+            command.BusinessInfo.Address,
+            command.BusinessInfo.SocialLink,
+            command.BusinessInfo.BusinessType,
+            command.BusinessInfo.TaxCode,
+            command.BusinessInfo.IdentityNumber,
+            command.BusinessInfo.CompanyName
+        );
+
+        var bankInfo = new OrganizerBankInfo(
+            command.BankInfo.AccountName,
+            command.BankInfo.AccountNumber,
+            command.BankInfo.BankCode,
+            command.BankInfo.Branch
+        );
+
+        user.CreateFullOrganizerProfile(command.Type, businessInfo, bankInfo);
 
         _userRepository.Update(user);
-
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // Get the newly created draft profile
-        var draftProfile = user.PendingProfile;
+        var draftProfile = user.DraftProfile;
 
         if (draftProfile == null)
         {
             return Result.Failure<Guid>(
-                Error.Failure("Organizer.Create.Failed", "Failed to create organizer profile."));
+                Error.Failure("Organizer.Create.Failed", "Failed to create full organizer profile."));
         }
 
         return Result.Success(draftProfile.Id);
