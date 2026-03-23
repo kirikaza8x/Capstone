@@ -3,13 +3,13 @@ using Shared.Domain.DDD;
 using Ticketing.Domain.DomainEvents;
 using Ticketing.Domain.Enums;
 using Ticketing.Domain.Errors;
-using static Ticketing.Domain.Errors.TicketingErrors;
 
 namespace Ticketing.Domain.Entities;
 
 public sealed class Order : AggregateRoot<Guid>
 {
     public Guid UserId { get; private set; }
+    public Guid EventId { get; private set; }
     public decimal TotalPrice { get; private set; }
     public OrderStatus Status { get; private set; }
 
@@ -21,7 +21,7 @@ public sealed class Order : AggregateRoot<Guid>
 
     private Order() { }
 
-    public static Order Create(Guid userId, DateTime? utcNow = null)
+    public static Order Create(Guid userId, Guid eventId, DateTime? utcNow = null)
     {
         var now = utcNow ?? DateTime.UtcNow;
 
@@ -29,6 +29,7 @@ public sealed class Order : AggregateRoot<Guid>
         {
             Id = Guid.NewGuid(),
             UserId = userId,
+            EventId = eventId,
             Status = OrderStatus.Pending,
             TotalPrice = 0,
             CreatedAt = now

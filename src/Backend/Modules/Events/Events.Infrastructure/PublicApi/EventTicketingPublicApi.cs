@@ -1,4 +1,4 @@
-using Events.Domain.Enums;
+﻿using Events.Domain.Enums;
 using Events.Infrastructure.Data;
 using Events.PublicApi.PublicApi;
 using Events.PublicApi.Records;
@@ -137,5 +137,95 @@ internal sealed class EventTicketingPublicApi(EventsDbContext dbContext) : IEven
             data.Session.Title,
             data.Session.StartTime,
             seatCode);
+    }
+
+    public async Task<IReadOnlyDictionary<Guid, OrderTicketDetailDto>> GetOrderTicketDetailsAsync(
+        IReadOnlyCollection<(Guid TicketTypeId, Guid EventSessionId, Guid? SeatId)> items,
+        CancellationToken cancellationToken = default)
+    {
+        if (items.Count == 0)
+            return new Dictionary<Guid, OrderTicketDetailDto>();
+
+        var ticketTypeIds = items.Select(i => i.TicketTypeId).Distinct().ToList();
+        var sessionIds = items.Select(i => i.EventSessionId).Distinct().ToList();
+        var seatIds = items
+            .Where(i => i.SeatId.HasValue)
+            .Select(i => i.SeatId!.Value)
+            .Distinct()
+            .ToList();
+
+        // Batch fetch ticket types + sessions
+        var ticketTypes = await dbContext.TicketTypes
+            .AsNoTracking()
+            .Where(tt => ticketTypeIds.Contains(tt.Id))
+            .Select(tt => new { tt.Id, tt.Name })
+            .ToListAsync(cancellationToken);
+
+        var sessions = await dbContext.EventSessions
+            .AsNoTracking()
+            .Where(s => sessionIds.Contains(s.Id))
+            .Select(s => new { s.Id, s.Title, s.StartTime })
+            .ToListAsync(cancellationToken);
+
+        // Batch fetch seats nếu có
+        var seatCodeMap = new Dictionary<Guid, string>();
+        if (seatIds.Count > 0)
+        {
+            var seats = await dbContext.Seats
+                .AsNoTracking()
+                .Where(s => seatIds.Contains(s.Id))
+                .Select(s => new { s.Id, s.SeatCode })
+                .ToListAsync(cancellationToken);
+
+            seatCodeMap = seats.ToDictionary(s => s.Id, s => s.SeatCode);
+        }
+
+        var ticketTypeMap = ticketTypes.ToDictionary(tt => tt.Id, tt => tt.Name);
+        var sessionMap = sessions.ToDictionary(s => s.Id, s => (s.Title, s.StartTime));
+
+        // Build result — key = TicketTypeId + SessionId combo
+        var result = new Dictionary<Guid, OrderTicketDetailDto>();
+        foreach (var item in items)
+        {
+            var ticketTypeName = ticketTypeMap.TryGetValue(item.TicketTypeId, out var name)
+                ? name : string.Empty;
+
+            var (sessionTitle, sessionStartTime) = sessionMap.TryGetValue(item.EventSessionId, out var session)
+                ? session : (string.Empty, DateTime.MinValue);
+
+            var seatCode = item.SeatId.HasValue && seatCodeMap.TryGetValue(item.SeatId.Value, out var code)
+                ? code : null;
+
+            result[item.TicketTypeId] = new OrderTicketDetailDto(
+                ticketTypeName,
+                sessionTitle,
+                sessionStartTime,
+                seatCode);
+        }
+
+        return result;
+    }
+
+    public async Task<IReadOnlyDictionary<Guid, OrderEventSummaryDto>> GetEventSummaryByEventIdsAsync(
+        IReadOnlyCollection<Guid> eventIds,
+        CancellationToken cancellationToken = default)
+    {
+        if (eventIds.Count == 0)
+            return new Dictionary<Guid, OrderEventSummaryDto>();
+
+        var rows = await dbContext.Events
+            .AsNoTracking()
+            .Where(e => eventIds.Contains(e.Id))
+            .Select(e => new
+            {
+                e.Id,
+                e.Title,
+                e.BannerUrl
+            })
+            .ToListAsync(cancellationToken);
+
+        return rows.ToDictionary(
+            r => r.Id,
+            r => new OrderEventSummaryDto(r.Id, r.Title, r.BannerUrl));
     }
 }

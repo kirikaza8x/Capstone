@@ -18,4 +18,12 @@ public interface IEventTicketingPublicApi
         Guid eventSessionId,
         Guid? seatId,
         CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyDictionary<Guid, OrderTicketDetailDto>> GetOrderTicketDetailsAsync(
+        IReadOnlyCollection<(Guid TicketTypeId, Guid EventSessionId, Guid? SeatId)> items,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyDictionary<Guid, OrderEventSummaryDto>> GetEventSummaryByEventIdsAsync(
+        IReadOnlyCollection<Guid> eventIds,
+        CancellationToken cancellationToken = default);
 }
