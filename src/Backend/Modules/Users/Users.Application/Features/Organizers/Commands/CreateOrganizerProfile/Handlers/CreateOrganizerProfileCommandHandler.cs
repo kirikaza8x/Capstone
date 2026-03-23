@@ -14,34 +14,24 @@ public class CreateOrganizerProfileCommandHandler
     private readonly IUserRepository _userRepository;
     private readonly ICurrentUserService _currentUserService;
     private readonly IUserUnitOfWork _unitOfWork;
-    private readonly IValidator<CreateOrganizerProfileCommand> _validator;
 
     public CreateOrganizerProfileCommandHandler(
         IUserRepository userRepository,
         ICurrentUserService currentUserService,
-        IUserUnitOfWork unitOfWork,
-        IValidator<CreateOrganizerProfileCommand> validator)
+        IUserUnitOfWork unitOfWork
+        )
     {
         _userRepository = userRepository;
         _currentUserService = currentUserService;
         _unitOfWork = unitOfWork;
-        _validator = validator;
     }
 
     public async Task<Result<Guid>> Handle(
         CreateOrganizerProfileCommand command,
         CancellationToken cancellationToken)
     {
-        // Validate request
-        var validationResult = await _validator.ValidateAsync(command, cancellationToken);
 
-        if (!validationResult.IsValid)
-        {
-            var error = validationResult.Errors.First();
 
-            return Result.Failure<Guid>(
-                Error.Validation("Organizer.Create.Validation", error.ErrorMessage));
-        }
 
         // Get current user
         var userId = _currentUserService.UserId;
