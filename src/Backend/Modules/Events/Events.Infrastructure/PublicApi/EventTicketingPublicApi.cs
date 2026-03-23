@@ -1,4 +1,4 @@
-using Events.Domain.Enums;
+﻿using Events.Domain.Enums;
 using Events.Infrastructure.Data;
 using Events.PublicApi.PublicApi;
 using Events.PublicApi.Records;
@@ -137,5 +137,103 @@ internal sealed class EventTicketingPublicApi(EventsDbContext dbContext) : IEven
             data.Session.Title,
             data.Session.StartTime,
             seatCode);
+    }
+
+    public async Task<IReadOnlyDictionary<Guid, OrderEventSummaryDto>> GetEventSummaryByEventIdsAsync(
+        IReadOnlyCollection<Guid> eventIds,
+        CancellationToken cancellationToken = default)
+    {
+        if (eventIds.Count == 0)
+            return new Dictionary<Guid, OrderEventSummaryDto>();
+
+        var rows = await dbContext.Events
+            .AsNoTracking()
+            .Where(e => eventIds.Contains(e.Id))
+            .Select(e => new
+            {
+                e.Id,
+                e.Title,
+                e.BannerUrl
+            })
+            .ToListAsync(cancellationToken);
+
+        return rows.ToDictionary(
+            r => r.Id,
+            r => new OrderEventSummaryDto(r.Id, r.Title, r.BannerUrl));
+    }
+
+    public async Task<IReadOnlyDictionary<(Guid TicketTypeId, Guid EventSessionId), OrderTicketDetailDto>> GetOrderTicketDetailsAsync(
+    IReadOnlyCollection<(Guid TicketTypeId, Guid EventSessionId, Guid? SeatId)> items,
+    CancellationToken cancellationToken = default)
+    {
+        if (items.Count == 0)
+            return new Dictionary<(Guid, Guid), OrderTicketDetailDto>();
+
+        var ticketTypeIds = items.Select(i => i.TicketTypeId).Distinct().ToList();
+        var sessionIds = items.Select(i => i.EventSessionId).Distinct().ToList();
+        var seatIds = items
+            .Where(i => i.SeatId.HasValue)
+            .Select(i => i.SeatId!.Value)
+            .Distinct()
+            .ToList();
+
+        var ticketTypesTask = dbContext.TicketTypes
+            .AsNoTracking()
+            .Where(tt => ticketTypeIds.Contains(tt.Id))
+            .Select(tt => new { tt.Id, tt.Name, tt.Price })
+            .ToListAsync(cancellationToken);
+
+        var sessionsTask = dbContext.EventSessions
+            .AsNoTracking()
+            .Where(s => sessionIds.Contains(s.Id))
+            .Select(s => new { s.Id, s.Title, s.StartTime })
+            .ToListAsync(cancellationToken);
+
+        await Task.WhenAll(ticketTypesTask, sessionsTask);
+
+        var ticketTypeMap = (await ticketTypesTask)
+            .ToDictionary(tt => tt.Id, tt => (tt.Name, tt.Price));
+
+        var sessionMap = (await sessionsTask)
+            .ToDictionary(s => s.Id, s => (s.Title, s.StartTime));
+
+        var seatCodeMap = new Dictionary<Guid, string>();
+        if (seatIds.Count > 0)
+        {
+            var seats = await dbContext.Seats
+                .AsNoTracking()
+                .Where(s => seatIds.Contains(s.Id))
+                .Select(s => new { s.Id, s.SeatCode })
+                .ToListAsync(cancellationToken);
+
+            seatCodeMap = seats.ToDictionary(s => s.Id, s => s.SeatCode);
+        }
+
+        // Build result — key = (TicketTypeId, EventSessionId)
+        var result = new Dictionary<(Guid, Guid), OrderTicketDetailDto>();
+
+        foreach (var item in items)
+        {
+            var (ticketTypeName, price) = ticketTypeMap.TryGetValue(
+                item.TicketTypeId, out var tt)
+                ? tt : (string.Empty, 0m);
+
+            var (sessionTitle, sessionStartTime) = sessionMap.TryGetValue(
+                item.EventSessionId, out var session)
+                ? session : (string.Empty, DateTime.MinValue);
+
+            var seatCode = item.SeatId.HasValue &&
+                seatCodeMap.TryGetValue(item.SeatId.Value, out var code)
+                ? code : null;
+
+            result[(item.TicketTypeId, item.EventSessionId)] = new OrderTicketDetailDto(
+                ticketTypeName,
+                price,        
+                sessionTitle,
+                sessionStartTime,
+                seatCode);
+        }
+
+        return result;
     }
 }

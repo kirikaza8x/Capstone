@@ -22,6 +22,10 @@ internal sealed class OrderTicketConfiguration : IEntityTypeConfiguration<OrderT
             .HasColumnType("text")
             .IsRequired();
 
+        builder.Property(e => e.Price)
+            .HasColumnType("decimal(18,2)")
+            .IsRequired();
+
         builder.Property(x => x.Status)
             .HasConversion(
                 v => v.ToString().ToLowerInvariant(),

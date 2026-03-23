@@ -12,6 +12,7 @@ public sealed class OrderTicket : Entity<Guid>
     public Guid TicketTypeId { get; private set; }
     public Guid? SeatId { get; private set; }
     public string QrCode { get; private set; } = string.Empty;
+    public decimal Price { get; private set; }
     public OrderTicketStatus Status { get; private set; }
     public DateTime? CheckedInAt { get; private set; }
     public Guid? CheckedInBy { get; private set; }
@@ -26,11 +27,15 @@ public sealed class OrderTicket : Entity<Guid>
         Guid ticketTypeId,
         Guid? seatId,
         string qrCode,
+        decimal price,
         Guid? id = null,
         DateTime? utcNow = null)
     {
         if (string.IsNullOrWhiteSpace(qrCode))
             return Result.Failure<OrderTicket>(TicketingErrors.OrderTicket.InvalidQrCode);
+
+        if (price < 0)
+            return Result.Failure<OrderTicket>(TicketingErrors.OrderTicket.InvalidPrice);
 
         var now = utcNow ?? DateTime.UtcNow;
         var entity = new OrderTicket
@@ -41,6 +46,7 @@ public sealed class OrderTicket : Entity<Guid>
             TicketTypeId = ticketTypeId,
             SeatId = seatId,
             QrCode = qrCode.Trim(),
+            Price = price,
             Status = OrderTicketStatus.Valid,
             CreatedAt = now
         };

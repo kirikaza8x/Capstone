@@ -1,6 +1,4 @@
-﻿
-using System.Security.Cryptography;
-using Events.PublicApi.PublicApi;
+﻿using Events.PublicApi.PublicApi;
 using Events.PublicApi.Records;
 using Shared.Application.Abstractions.Authentication;
 using Shared.Application.Abstractions.Messaging;
@@ -8,11 +6,9 @@ using Shared.Application.Abstractions.Time;
 using Shared.Domain.Abstractions;
 using Ticketing.Application.Abstractions.Locks;
 using Ticketing.Application.Helpers;
-using Ticketing.Domain.Entities;
 using Ticketing.Domain.Errors;
 using Ticketing.Domain.Repositories;
 using Ticketing.Domain.Uow;
-using static Ticketing.Domain.Errors.TicketingErrors;
 
 namespace Ticketing.Application.Orders.Commands.CreateOrder;
 
@@ -143,7 +139,7 @@ internal sealed class CreateOrderCommandHandler(
             }
 
             // Build order
-            var order = Domain.Entities.Order.Create(userId, utcNow);
+            var order = Domain.Entities.Order.Create(userId, command.EventId, utcNow);
             var totalPrice = 0m;
 
             foreach (var ticket in command.Tickets)
@@ -159,6 +155,7 @@ internal sealed class CreateOrderCommandHandler(
                     ticket.TicketTypeId,
                     ticket.SeatId,
                     qrCode,
+                    item.Price,
                     orderTicketId,
                     utcNow);
 
