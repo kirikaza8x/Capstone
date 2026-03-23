@@ -1,5 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using Shared.Domain.Pagination;
+using Shared.Domain.Queries;
 using Shared.Infrastructure.Data;
+using Shared.Infrastructure.Extensions;
 using Ticketing.Domain.Entities;
 using Ticketing.Domain.Enums;
 using Ticketing.Domain.Repositories;
@@ -73,4 +76,16 @@ internal sealed class OrderRepository(TicketingDbContext context)
         await _context.Orders
             .Include(o => o.OrderVouchers)
             .FirstOrDefaultAsync(o => o.Id == id, cancellationToken);
+
+    public async Task<PagedResult<Order>> GetPagedByUserIdAsync(
+        Guid userId,
+        PagedQuery query,
+        CancellationToken cancellationToken = default) =>
+        await _context.Orders
+            .AsNoTracking()
+            .Include(o => o.Tickets)
+            .Include(o => o.OrderVouchers)
+            .Where(o => o.UserId == userId)
+            .OrderByDescending(o => o.CreatedAt)
+            .ToPagedResultAsync(query, cancellationToken);
 }

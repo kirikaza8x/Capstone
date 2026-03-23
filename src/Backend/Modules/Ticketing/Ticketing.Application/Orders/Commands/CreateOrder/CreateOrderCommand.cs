@@ -8,4 +8,5 @@ public sealed record CreateOrderTicketItem(
     Guid? SeatId);
 
 public sealed record CreateOrderCommand(
+    Guid EventId,
     List<CreateOrderTicketItem> Tickets) : ICommand<Guid>;

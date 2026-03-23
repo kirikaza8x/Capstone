@@ -1,4 +1,6 @@
 using Shared.Domain.Data.Repositories;
+using Shared.Domain.Pagination;
+using Shared.Domain.Queries;
 using Ticketing.Domain.Entities;
 
 namespace Ticketing.Domain.Repositories;
@@ -23,5 +25,10 @@ public interface IOrderRepository : IRepository<Order, Guid>
 
     Task<Order?> GetByIdWithVouchersAsync(
         Guid id,
+        CancellationToken cancellationToken = default);
+
+    Task<PagedResult<Order>> GetPagedByUserIdAsync(
+        Guid userId,
+        PagedQuery query,
         CancellationToken cancellationToken = default);
 }
