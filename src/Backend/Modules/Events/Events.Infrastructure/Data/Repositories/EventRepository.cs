@@ -273,4 +273,22 @@ internal sealed class EventRepository(EventsDbContext context)
         await _context.TicketTypes
             .Where(tt => ids.Contains(tt.Id))
             .ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<Event>> GetMiniByIdsAsync(
+    IEnumerable<Guid> ids,
+    CancellationToken ct = default)
+    {
+        var idList = ids.ToList();
+        if (idList.Count == 0)
+            return Array.Empty<Event>();
+
+        return await _context.Events
+            .AsNoTracking()
+            .Where(e => idList.Contains(e.Id) && e.IsActive)
+            .Include(e => e.EventCategories).ThenInclude(ec => ec.Category)
+            .Include(e => e.EventHashtags).ThenInclude(eh => eh.Hashtag)
+            .Include(e => e.TicketTypes)
+            .AsSplitQuery()
+            .ToListAsync(ct);
+    }
 }

@@ -63,4 +63,7 @@ public interface IEventRepository : IRepository<Event, Guid>
     Task<IReadOnlyList<TicketType>> GetTicketTypesByIdsAsync(
         IReadOnlyList<Guid> ids,
         CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<Event>> GetMiniByIdsAsync(
+    IEnumerable<Guid> ids, CancellationToken ct = default);
 }
