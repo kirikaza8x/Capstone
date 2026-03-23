@@ -51,6 +51,7 @@ public sealed class Order : AggregateRoot<Guid>
         Guid ticketTypeId,
         Guid? seatId,
         string qrCode,
+        decimal price,
         Guid? orderTicketId = null,
         DateTime? utcNow = null)
     {
@@ -63,6 +64,7 @@ public sealed class Order : AggregateRoot<Guid>
             ticketTypeId,
             seatId,
             qrCode,
+            price,
             orderTicketId,
             utcNow);
 

@@ -1,6 +1,4 @@
-﻿
-using System.Security.Cryptography;
-using Events.PublicApi.PublicApi;
+﻿using Events.PublicApi.PublicApi;
 using Events.PublicApi.Records;
 using Shared.Application.Abstractions.Authentication;
 using Shared.Application.Abstractions.Messaging;
@@ -157,6 +155,7 @@ internal sealed class CreateOrderCommandHandler(
                     ticket.TicketTypeId,
                     ticket.SeatId,
                     qrCode,
+                    item.Price,
                     orderTicketId,
                     utcNow);
 

@@ -93,6 +93,10 @@ public static class TicketingErrors
         public static readonly Error InvalidQrCode = Error.Validation(
             "OrderTicket.InvalidQrCode",
             "QR code is required.");
+
+        public static readonly Error InvalidPrice = Error.Validation(
+            "OrderTicket.InvalidPrice",
+            "Price must be greater than or equal to 0.");
     }
     public static class Voucher
     {

@@ -19,7 +19,7 @@ public interface IEventTicketingPublicApi
         Guid? seatId,
         CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyDictionary<Guid, OrderTicketDetailDto>> GetOrderTicketDetailsAsync(
+    Task<IReadOnlyDictionary<(Guid TicketTypeId, Guid EventSessionId), OrderTicketDetailDto>> GetOrderTicketDetailsAsync(
         IReadOnlyCollection<(Guid TicketTypeId, Guid EventSessionId, Guid? SeatId)> items,
         CancellationToken cancellationToken = default);
 
