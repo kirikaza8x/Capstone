@@ -52,6 +52,9 @@ internal sealed class UpdateEventSpecCommandHandler(
 
         foreach (var specArea in seatMap.Areas)
         {
+            if (!specArea.IsAreaType)
+                continue;
+
             Guid areaId;
 
             if (!string.IsNullOrWhiteSpace(specArea.Id))
@@ -109,7 +112,10 @@ internal sealed class UpdateEventSpecCommandHandler(
         }
 
         var enrichedSpecJson = JsonSerializer.Serialize(seatMap, JsonOptions);
-        @event.UpdateSpec(enrichedSpecJson);
+        var updateResult = @event.UpdateSpec(enrichedSpecJson);
+
+        if (updateResult.IsFailure)
+            return updateResult;
 
         eventRepository.Update(@event);
         await unitOfWork.SaveChangesAsync(cancellationToken);
