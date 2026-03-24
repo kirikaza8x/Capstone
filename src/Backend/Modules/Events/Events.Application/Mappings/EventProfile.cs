@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Events.Application.Events.DTOs;
 using Events.Application.Events.Queries.GetEventById;
+using Events.Application.Events.Queries.GetEventByUrlPath;
 using Events.Application.Events.Queries.GetEvents;
 using Events.Application.Events.Queries.GetEventsByOrganizer;
 using Events.Application.Events.Queries.GetEventsForAdmin;
@@ -25,6 +26,13 @@ public sealed class EventProfile : Profile
             .ForMember(dest => dest.Categories, opt => opt.MapFrom(src => src.EventCategories))
             .ForMember(dest => dest.MinPrice, opt => opt.MapFrom(src => src.TicketTypes.Any() ? src.TicketTypes.Min(t => t.Price) : (decimal?)null))
             .ForMember(dest => dest.MaxPrice, opt => opt.MapFrom(src => src.TicketTypes.Any() ? src.TicketTypes.Max(t => t.Price) : (decimal?)null));
+
+        CreateMap<Event, GetEventByUrlPathResponse>()
+            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
+            .ForMember(dest => dest.Hashtags, opt => opt.MapFrom(src => src.EventHashtags))
+            .ForMember(dest => dest.Categories, opt => opt.MapFrom(src => src.EventCategories))
+            .ForMember(dest => dest.ActorImages, opt => opt.MapFrom(src => src.ActorImages))
+            .ForMember(dest => dest.TicketTypes, opt => opt.MapFrom(src => src.TicketTypes));
 
         CreateMap<Event, EventsByOrganizerResponse>()
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()));

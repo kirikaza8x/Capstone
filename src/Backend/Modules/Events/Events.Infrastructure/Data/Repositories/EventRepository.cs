@@ -71,6 +71,16 @@ internal sealed class EventRepository(EventsDbContext context)
     public async Task<Event?> GetByUrlPathAsync(string urlPath, CancellationToken cancellationToken = default)
     {
         return await _context.Events
+            .Include(e => e.Images)
+            .Include(e => e.ActorImages)
+            .Include(e => e.Sessions)
+            .Include(e => e.TicketTypes)
+                .ThenInclude(t => t.Area)
+            .Include(e => e.EventHashtags)
+                .ThenInclude(eh => eh.Hashtag)
+            .Include(e => e.EventCategories)
+                .ThenInclude(ec => ec.Category)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(e => e.UrlPath == urlPath, cancellationToken);
     }
 
