@@ -31,7 +31,7 @@ namespace Users.Domain.Entities
         public DateTimeOffset? VerifiedAt { get; private set; }
 
         public OrganizerType Type { get; private set; }
-
+        public User User { get; private set; } = null!;
         private OrganizerProfile() { }
 
         // --------------------

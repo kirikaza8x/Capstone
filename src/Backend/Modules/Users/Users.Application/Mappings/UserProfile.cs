@@ -2,7 +2,6 @@ using AutoMapper;
 using Shared.Application.Dtos.Queries;
 using Shared.Domain.Queries;
 using Users.Application.Features.Organizers.Dtos;
-using Users.Application.Features.Organizers.Queries.GetOrganizerProfile;
 using Users.Application.Features.Users.Dtos;
 using Users.Application.Features.Users.Queries;
 using Users.Domain.Entities;

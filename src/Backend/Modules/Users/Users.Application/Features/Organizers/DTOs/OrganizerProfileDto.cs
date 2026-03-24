@@ -124,7 +124,6 @@ public sealed class MyOrganizerProfileDto
 
     public string? RejectionReason { get; init; }
 
-    // 🔥 UX flags (VERY IMPORTANT)
     public bool CanEdit { get; init; }
     public bool CanSubmit { get; init; }
 }
