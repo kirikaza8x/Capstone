@@ -8,6 +8,7 @@ using Shared.Domain.Pagination;
 using Users.Application.Features.Organizers.Dtos;
 using Users.Domain.Enums;
 using Shared.Domain.Queries;
+using System.ComponentModel;
 namespace Users.Api.Organizers;
 
 public class GetAllOrganizersEndpoint : ICarterModule
@@ -46,18 +47,27 @@ public class GetAllOrganizersEndpoint : ICarterModule
 public sealed record GetAllOrganizersRequestDto
 {
     // Paging
+    [DefaultValue(1)]
     public int PageNumber { get; init; } = 1;
+
+    [DefaultValue(10)]
     public int PageSize { get; init; } = 10;
 
     // Sorting
+    [DefaultValue("CreatedAt")]
     public string SortColumn { get; init; } = "CreatedAt";
+
+    [DefaultValue("desc")]
     public string SortOrder { get; init; } = "desc";
 
     // Filters
     public string? Keyword { get; init; }
+
     public OrganizerStatus? Status { get; init; }
+
     public BusinessType? BusinessType { get; init; }
 
     public DateTime? CreatedFrom { get; init; }
+
     public DateTime? CreatedTo { get; init; }
 }
