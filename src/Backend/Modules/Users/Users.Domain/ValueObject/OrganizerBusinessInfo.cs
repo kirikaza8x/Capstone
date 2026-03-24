@@ -16,7 +16,6 @@ public sealed class OrganizerBusinessInfo : ValueObject
     public string? CompanyName { get; }
 
     public OrganizerBusinessInfo(
-        string? logo,
         string? displayName,
         string? description,
         string? address,
@@ -26,7 +25,6 @@ public sealed class OrganizerBusinessInfo : ValueObject
         string? identityNumber,
         string? companyName)
     {
-        Logo = logo;
         DisplayName = displayName;
         Description = description;
         Address = address;

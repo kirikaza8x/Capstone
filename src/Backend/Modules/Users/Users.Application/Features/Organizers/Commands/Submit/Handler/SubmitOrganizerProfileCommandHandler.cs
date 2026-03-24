@@ -4,6 +4,8 @@ using Shared.Domain.Abstractions;
 using Users.Domain.Repositories;
 using Users.Domain.UOW;
 
+namespace Users.Application.Features.Organizers.Handlers;
+
 public class SubmitOrganizerProfileCommandHandler
     : ICommandHandler<SubmitOrganizerProfileCommand>
 {
@@ -25,7 +27,7 @@ public class SubmitOrganizerProfileCommandHandler
         SubmitOrganizerProfileCommand command,
         CancellationToken cancellationToken)
     {
-        var user = await _userRepository.GetByIdAsync(
+        var user = await _userRepository.GetByIdWithOrganizerProfileAsync(
             _currentUserService.UserId,
             cancellationToken);
 
@@ -35,16 +37,23 @@ public class SubmitOrganizerProfileCommandHandler
                 Error.NotFound("User.NotFound", "User not found"));
         }
 
-        if (user.OrganizerProfiles == null)
+        if (user.DraftProfile == null)
         {
             return Result.Failure(
-                Error.NotFound("Organizer.NotFound", "Organizer profile not found"));
+                Error.Failure("Organizer.NoDraft", "No draft profile to submit"));
         }
 
-        user.SubmitOrganizerProfile();
+        try
+        {
+            user.SubmitProfile();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Result.Failure(
+                Error.Failure("Organizer.Submit.Invalid", ex.Message));
+        }
 
         _userRepository.Update(user);
-
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Success();

@@ -3,11 +3,11 @@ using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
 using Users.Domain.Repositories;
 using Users.Domain.UOW;
-using Users.Domain.ValueObjects; // Added to access OrganizerBusinessInfo & OrganizerBankInfo
+using Users.Domain.ValueObjects; 
 
 namespace Users.Application.Features.Organizers.Handlers;
 
-public class CreateFullOrganizerProfileCommandHandler 
+public class CreateFullOrganizerProfileCommandHandler
     : ICommandHandler<CreateFullOrganizerProfileCommand, Guid>
 {
     private readonly IUserRepository _userRepository;
@@ -25,11 +25,13 @@ public class CreateFullOrganizerProfileCommandHandler
     }
 
     public async Task<Result<Guid>> Handle(
-        CreateFullOrganizerProfileCommand command,
-        CancellationToken cancellationToken)
+    CreateFullOrganizerProfileCommand command,
+    CancellationToken cancellationToken)
     {
         var userId = _currentUserService.UserId;
-        var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
+
+        var user = await _userRepository
+            .GetByIdWithOrganizerProfileAsync(userId, cancellationToken);
 
         if (user == null)
         {
@@ -37,9 +39,32 @@ public class CreateFullOrganizerProfileCommandHandler
                 Error.NotFound("User.NotFound", "User not found"));
         }
 
-       
+
+        if (user.PendingProfile != null)
+        {
+            return Result.Failure<Guid>(
+                Error.Conflict(
+                    "Organizer.Pending",
+                    "Your profile is under review."));
+        }
+
+        if (string.IsNullOrWhiteSpace(command.BusinessInfo.DisplayName))
+        {
+            return Result.Failure<Guid>(
+                Error.Validation(
+                    "Organizer.DisplayName.Required",
+                    "Display name is required."));
+        }
+
+        if (string.IsNullOrWhiteSpace(command.BankInfo.AccountNumber))
+        {
+            return Result.Failure<Guid>(
+                Error.Validation(
+                    "Organizer.Bank.Required",
+                    "Bank account is required."));
+        }
+
         var businessInfo = new OrganizerBusinessInfo(
-            command.BusinessInfo.Logo,
             command.BusinessInfo.DisplayName,
             command.BusinessInfo.Description,
             command.BusinessInfo.Address,
@@ -57,19 +82,28 @@ public class CreateFullOrganizerProfileCommandHandler
             command.BankInfo.Branch
         );
 
-        user.CreateFullOrganizerProfile(command.Type, businessInfo, bankInfo);
+        
+        user.StartOrUpdateOrganizerProfile(
+            command.Type,
+            businessInfo,
+            bankInfo);
 
+        // --------------------
+        // Persist
+        // --------------------
         _userRepository.Update(user);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        var draftProfile = user.DraftProfile;
+        var draft = user.DraftProfile;
 
-        if (draftProfile == null)
+        if (draft == null)
         {
             return Result.Failure<Guid>(
-                Error.Failure("Organizer.Create.Failed", "Failed to create full organizer profile."));
+                Error.Failure(
+                    "Organizer.Profile.Missing",
+                    "Draft profile not found after operation."));
         }
 
-        return Result.Success(draftProfile.Id);
+        return Result.Success(draft.Id);
     }
 }

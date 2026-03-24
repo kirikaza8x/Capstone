@@ -23,7 +23,7 @@ public class CreateFullOrganizerEndpoints : ICarterModule
                 var command = new CreateFullOrganizerProfileCommand(
                     requestDto.Type,
                     new OrganizerBusinessInfoDto(
-                        requestDto.Logo,
+                        null,
                         requestDto.DisplayName,
                         requestDto.Description,
                         requestDto.Address,
@@ -56,7 +56,7 @@ public class CreateFullOrganizerEndpoints : ICarterModule
 
 public record CreateFullOrganizerProfileRequestDto(
     OrganizerType Type,
-    string? Logo,
+    // string? Logo,
     string? DisplayName,
     string? Description,
     string? Address,

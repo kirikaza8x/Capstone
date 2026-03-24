@@ -3,6 +3,8 @@ using Shared.Domain.Abstractions;
 using Users.Domain.Repositories;
 using Users.Domain.UOW;
 
+namespace Users.Application.Features.Organizers.Handlers;
+
 public class RejectOrganizerProfileCommandHandler
     : ICommandHandler<RejectOrganizerProfileCommand>
 {
@@ -21,7 +23,7 @@ public class RejectOrganizerProfileCommandHandler
         RejectOrganizerProfileCommand command,
         CancellationToken cancellationToken)
     {
-        var user = await _userRepository.GetByIdAsync(
+        var user = await _userRepository.GetByIdWithOrganizerProfileAsync(
             command.UserId,
             cancellationToken);
 
@@ -31,16 +33,23 @@ public class RejectOrganizerProfileCommandHandler
                 Error.NotFound("User.NotFound", "User not found"));
         }
 
-        if (user.OrganizerProfiles == null)
+        if (user.PendingProfile == null)
         {
             return Result.Failure(
-                Error.NotFound("Organizer.NotFound", "Organizer profile not found"));
+                Error.Failure("Organizer.NoPending", "No pending profile to reject"));
         }
 
-        user.RejectOrganizerProfile(command.Reason);
+        try
+        {
+            user.RejectProfile(command.Reason);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Result.Failure(
+                Error.Failure("Organizer.Reject.Invalid", ex.Message));
+        }
 
         _userRepository.Update(user);
-
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Success();

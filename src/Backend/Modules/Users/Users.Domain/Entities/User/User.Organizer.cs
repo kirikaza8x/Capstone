@@ -7,119 +7,90 @@ public partial class User
 {
     private readonly List<OrganizerProfile> _organizerProfiles = new();
 
-    // --------------------
-    // Organizer Profiles
-    // --------------------
-    public virtual IReadOnlyCollection<OrganizerProfile> OrganizerProfiles
-        => _organizerProfiles.AsReadOnly();
+    public IReadOnlyCollection<OrganizerProfile> OrganizerProfiles => _organizerProfiles;
 
-    // --------------------
-    // Query Helpers
-    // --------------------
+    public OrganizerProfile? DraftProfile =>
+        _organizerProfiles.FirstOrDefault(x => x.Status == OrganizerStatus.Draft);
 
-    // Current live public profile
+    public OrganizerProfile? PendingProfile =>
+        _organizerProfiles.FirstOrDefault(x => x.Status == OrganizerStatus.Pending);
+
     public OrganizerProfile? PublishedProfile =>
         _organizerProfiles
-            .Where(p => p.Status == OrganizerStatus.Verified)
-            .OrderByDescending(p => p.VersionNumber)
+            .Where(x => x.Status == OrganizerStatus.Verified)
+            .OrderByDescending(x => x.VersionNumber)
             .FirstOrDefault();
 
-    // Profile currently being edited
-    public OrganizerProfile? DraftProfile =>
-        _organizerProfiles.FirstOrDefault(p => p.Status == OrganizerStatus.Draft);
-
-    // Profile waiting admin approval
-    public OrganizerProfile? PendingProfile =>
-        _organizerProfiles.FirstOrDefault(p => p.Status == OrganizerStatus.Pending);
-
     // --------------------
-    // Creation
+    // MAIN ENTRY 
     // --------------------
-
-    public void CreateFullOrganizerProfile(
-        OrganizerType type, 
-        OrganizerBusinessInfo businessInfo, 
-        OrganizerBankInfo bankInfo)
+    public void StartOrUpdateOrganizerProfile(
+        OrganizerType type,
+        OrganizerBusinessInfo business,
+        OrganizerBankInfo bank)
     {
-        if (_organizerProfiles.Any())
-            throw new InvalidOperationException("User already has an organizer profile.");
+        if (DraftProfile != null)
+        {
+            DraftProfile.UpdateProfile(business);
+            DraftProfile.UpdateBank(bank);
+            return;
+        }
 
-        var profile = OrganizerProfile.CreateWithDetails(Id, type, 1, businessInfo, bankInfo);
+        if (PendingProfile != null)
+            throw new InvalidOperationException("Under review.");
+
+        var rejected = _organizerProfiles
+            .FirstOrDefault(x => x.Status == OrganizerStatus.Rejected);
+
+        if (rejected != null)
+        {
+            rejected.Reopen();
+            rejected.UpdateProfile(business);
+            rejected.UpdateBank(bank);
+            return;
+        }
+
+        if (PublishedProfile != null)
+        {
+            BeginUpdate();
+            DraftProfile!.UpdateProfile(business);
+            DraftProfile.UpdateBank(bank);
+            return;
+        }
+
+        var profile = OrganizerProfile.CreateWithDetails(Id, type, 1, business, bank);
         _organizerProfiles.Add(profile);
     }
 
-    public void CreateOrganizerProfile(OrganizerType type)
-    {
-        if (_organizerProfiles.Any())
-            throw new InvalidOperationException("User already has an organizer profile.");
-
-        var profile = OrganizerProfile.Create(Id, type, 1);
-        _organizerProfiles.Add(profile);
-    }
-
-    // --------------------
-    // Update Workflow
-    // --------------------
-
-    public void BeginProfileUpdate()
+    public void BeginUpdate()
     {
         if (DraftProfile != null || PendingProfile != null)
-            throw new InvalidOperationException("A profile update is already in progress.");
+            throw new InvalidOperationException("Already editing.");
 
         var current = PublishedProfile
-            ?? throw new InvalidOperationException("No verified profile exists to update.");
+            ?? throw new InvalidOperationException("No verified profile.");
 
-        int nextVersion = _organizerProfiles.Max(p => p.VersionNumber) + 1;
+        int version = _organizerProfiles.Max(x => x.VersionNumber) + 1;
 
-        var newVersion = OrganizerProfile.CreateNewVersion(current, nextVersion);
-
-        _organizerProfiles.Add(newVersion);
+        _organizerProfiles.Add(
+            OrganizerProfile.CreateNewVersion(current, version));
     }
 
-    public void UpdateOrganizerProfile(OrganizerBusinessInfo businessInfo)
-    {
-        GetDraft().UpdateProfile(businessInfo);
-    }
+    public void SubmitProfile() => GetDraft().Submit();
 
-    public void UpdateOrganizerBank(OrganizerBankInfo bankInfo)
-    {
-        GetDraft().UpdateBankInformation(bankInfo);
-    }
-
-    public void SubmitOrganizerProfile()
-    {
-        GetDraft().SubmitForVerification();
-    }
-
-    // --------------------
-    // Moderation
-    // --------------------
-
-    public void VerifyOrganizerProfile()
+    public void VerifyProfile()
     {
         var pending = GetPending();
-
-        // Archive the current verified version
         PublishedProfile?.Archive();
-
-        // Approve new version
         pending.Verify();
     }
 
-    public void RejectOrganizerProfile(string? reason = null)
-    {
+    public void RejectProfile(string? reason) =>
         GetPending().Reject(reason);
-    }
-
-    // --------------------
-    // Helpers
-    // --------------------
 
     private OrganizerProfile GetDraft() =>
-        DraftProfile ?? throw new InvalidOperationException(
-            "No draft profile. Call BeginProfileUpdate first.");
+        DraftProfile ?? throw new InvalidOperationException("No draft.");
 
     private OrganizerProfile GetPending() =>
-        PendingProfile ?? throw new InvalidOperationException(
-            "No pending profile available.");
+        PendingProfile ?? throw new InvalidOperationException("No pending.");
 }
