@@ -11,15 +11,15 @@ internal sealed class GetOrderByIdQueryHandler(
     IOrderRepository orderRepository,
     IEventTicketingPublicApi eventTicketingPublicApi,
     ICurrentUserService currentUserService)
-    : IQueryHandler<GetOrderByIdQuery, IReadOnlyList<OrderTicketResponse>>
+    : IQueryHandler<GetOrderByIdQuery, OrderDetailResponse>
 {
-    public async Task<Result<IReadOnlyList<OrderTicketResponse>>> Handle(
+    public async Task<Result<OrderDetailResponse>> Handle(
         GetOrderByIdQuery query,
         CancellationToken cancellationToken)
     {
         var userId = currentUserService.UserId;
         if (userId == Guid.Empty)
-            return Result.Failure<IReadOnlyList<OrderTicketResponse>>(Error.Unauthorized(
+            return Result.Failure<OrderDetailResponse>(Error.Unauthorized(
                 "GetOrderById.Unauthorized",
                 "Current user is not authenticated."));
 
@@ -28,11 +28,11 @@ internal sealed class GetOrderByIdQueryHandler(
             cancellationToken);
 
         if (order is null)
-            return Result.Failure<IReadOnlyList<OrderTicketResponse>>(
+            return Result.Failure<OrderDetailResponse>(
                 TicketingErrors.Order.NotFound(query.OrderId));
 
         if (order.UserId != userId)
-            return Result.Failure<IReadOnlyList<OrderTicketResponse>>(Error.Forbidden(
+            return Result.Failure<OrderDetailResponse>(Error.Forbidden(
                 "GetOrderById.Forbidden",
                 "You are not allowed to view this order."));
 
@@ -58,6 +58,35 @@ internal sealed class GetOrderByIdQueryHandler(
                 detail?.SeatCode);
         }).ToList();
 
-        return Result.Success<IReadOnlyList<OrderTicketResponse>>(ticketResponses);
+        // get event summary for event info
+        var eventSummaryMap = await eventTicketingPublicApi.GetEventSummaryByEventIdsAsync(
+            new[] { order.EventId }, cancellationToken);
+
+        var eventSummary = eventSummaryMap.TryGetValue(order.EventId, out var summary) ? summary : null;
+        var eventId = eventSummary?.EventId ?? Guid.Empty;
+        var eventTitle = eventSummary?.EventTitle ?? string.Empty;
+        var bannerUrl = eventSummary?.BannerUrl;
+        var location = eventSummary?.Location;
+        var eventStartAt = eventSummary?.EventStartAt;
+
+        var subTotal = ticketResponses.Sum(t => t.Price);
+        var discountAmount = order.OrderVouchers.FirstOrDefault()?.DiscountAmount ?? 0m;
+        var totalPrice = subTotal - discountAmount;
+
+        var response = new OrderDetailResponse(
+            order.Id,
+            order.Status.ToString(),
+            subTotal,
+            totalPrice,
+            discountAmount,
+            order.CreatedAt,
+            eventId,
+            eventTitle,
+            bannerUrl,
+            location,
+            eventStartAt,
+            ticketResponses);
+
+        return Result.Success(response);
     }
 }
