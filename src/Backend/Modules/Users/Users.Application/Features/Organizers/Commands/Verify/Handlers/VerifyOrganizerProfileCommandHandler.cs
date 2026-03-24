@@ -4,6 +4,8 @@ using Users.Application.Features.Organizers.Commands;
 using Users.Domain.Repositories;
 using Users.Domain.UOW;
 
+namespace Users.Application.Features.Organizers.Handlers;
+
 public class VerifyOrganizerProfileCommandHandler
     : ICommandHandler<VerifyOrganizerProfileCommand>
 {
@@ -22,7 +24,7 @@ public class VerifyOrganizerProfileCommandHandler
         VerifyOrganizerProfileCommand command,
         CancellationToken cancellationToken)
     {
-        var user = await _userRepository.GetByIdAsync(
+        var user = await _userRepository.GetByIdWithOrganizerProfileAsync(
             command.UserId,
             cancellationToken);
 
@@ -32,16 +34,23 @@ public class VerifyOrganizerProfileCommandHandler
                 Error.NotFound("User.NotFound", "User not found"));
         }
 
-        if (user.OrganizerProfiles == null)
+        if (user.PendingProfile == null)
         {
             return Result.Failure(
-                Error.NotFound("Organizer.NotFound", "Organizer profile not found"));
+                Error.Failure("Organizer.NoPending", "No pending profile to verify"));
         }
 
-        user.VerifyOrganizerProfile();
+        try
+        {
+            user.VerifyProfile();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Result.Failure(
+                Error.Failure("Organizer.Verify.Invalid", ex.Message));
+        }
 
         _userRepository.Update(user);
-
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Success();

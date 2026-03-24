@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Shared.Api.Results;
 using Users.Application.Features.Organizers.Dtos;
+using Users.Application.Features.Organizers.Queries;
 namespace Users.Api.Organizers;
 
 public class GetOrganizerPublicProfileEndpoints : ICarterModule

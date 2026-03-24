@@ -1,4 +1,3 @@
-using System;
 using Shared.Domain.DDD;
 using Users.Domain.Enums;
 using Users.Domain.ValueObjects;
@@ -7,20 +6,9 @@ namespace Users.Domain.Entities
 {
     public class OrganizerProfile : Entity<Guid>
     {
-        // --------------------
-        // Identity
-        // --------------------
         public Guid UserId { get; private set; }
-        public virtual User User { get; private set; } = null!;
-
-        // --------------------
-        // Versioning
-        // --------------------
         public int VersionNumber { get; private set; }
 
-        // --------------------
-        // Profile Info
-        // --------------------
         public string? Logo { get; private set; }
         public string? DisplayName { get; private set; }
         public string? Description { get; private set; }
@@ -34,29 +22,27 @@ namespace Users.Domain.Entities
 
         public string? RejectionReason { get; private set; }
 
-        // --------------------
-        // Bank
-        // --------------------
         public string? AccountName { get; private set; }
         public string? AccountNumber { get; private set; }
         public string? BankCode { get; private set; }
         public string? Branch { get; private set; }
 
-        // --------------------
-        // Status
-        // --------------------
         public OrganizerStatus Status { get; private set; }
         public DateTimeOffset? VerifiedAt { get; private set; }
 
         public OrganizerType Type { get; private set; }
-
+        public User User { get; private set; } = null!;
         private OrganizerProfile() { }
 
         // --------------------
         // Factory
         // --------------------
-
-        internal static OrganizerProfile Create(Guid userId, OrganizerType type, int version)
+        internal static OrganizerProfile CreateWithDetails(
+            Guid userId,
+            OrganizerType type,
+            int version,
+            OrganizerBusinessInfo business,
+            OrganizerBankInfo bank)
         {
             return new OrganizerProfile
             {
@@ -66,51 +52,57 @@ namespace Users.Domain.Entities
                 VersionNumber = version,
                 Status = OrganizerStatus.Draft,
                 CreatedAt = DateTime.UtcNow,
-                IsActive = true
+                IsActive = true,
+
+                Logo = business.Logo,
+                DisplayName = business.DisplayName,
+                Description = business.Description,
+                Address = business.Address,
+                SocialLink = business.SocialLink,
+                BusinessType = business.BusinessType ?? default,
+                TaxCode = business.TaxCode,
+                IdentityNumber = business.IdentityNumber,
+                CompanyName = business.CompanyName,
+
+                AccountName = bank.AccountName,
+                AccountNumber = bank.AccountNumber,
+                BankCode = bank.BankCode,
+                Branch = bank.Branch
             };
         }
 
-        internal static OrganizerProfile CreateWithDetails(
-            Guid userId, 
-            OrganizerType type, 
-            int version, 
-            OrganizerBusinessInfo businessInfo, 
-            OrganizerBankInfo bankInfo)
+        internal static OrganizerProfile CreateNewVersion(OrganizerProfile current, int version)
         {
-            var profile = Create(userId, type, version);
+            return new OrganizerProfile
+            {
+                Id = Guid.NewGuid(),
+                UserId = current.UserId,
+                Type = current.Type,
+                VersionNumber = version,
+                Status = OrganizerStatus.Draft,
+                CreatedAt = DateTime.UtcNow,
+                IsActive = true,
 
-            profile.UpdateProfile(businessInfo);
-            profile.UpdateBankInformation(bankInfo);
+                Logo = current.Logo,
+                DisplayName = current.DisplayName,
+                Description = current.Description,
+                Address = current.Address,
+                SocialLink = current.SocialLink,
+                BusinessType = current.BusinessType,
+                TaxCode = current.TaxCode,
+                IdentityNumber = current.IdentityNumber,
+                CompanyName = current.CompanyName,
 
-            return profile;
-        }
-        internal static OrganizerProfile CreateNewVersion(OrganizerProfile current, int nextVersion)
-        {
-            var profile = Create(current.UserId, current.Type, nextVersion);
-
-            profile.Logo = current.Logo;
-            profile.DisplayName = current.DisplayName;
-            profile.Description = current.Description;
-            profile.Address = current.Address;
-            profile.SocialLink = current.SocialLink;
-
-            profile.BusinessType = current.BusinessType;
-            profile.TaxCode = current.TaxCode;
-            profile.IdentityNumber = current.IdentityNumber;
-            profile.CompanyName = current.CompanyName;
-
-            profile.AccountName = current.AccountName;
-            profile.AccountNumber = current.AccountNumber;
-            profile.BankCode = current.BankCode;
-            profile.Branch = current.Branch;
-
-            return profile;
+                AccountName = current.AccountName,
+                AccountNumber = current.AccountNumber,
+                BankCode = current.BankCode,
+                Branch = current.Branch
+            };
         }
 
         // --------------------
         // Behaviors
         // --------------------
-
         public void UpdateProfile(OrganizerBusinessInfo info)
         {
             EnsureDraft();
@@ -127,10 +119,9 @@ namespace Users.Domain.Entities
             TaxCode = info.TaxCode ?? TaxCode;
             IdentityNumber = info.IdentityNumber ?? IdentityNumber;
             CompanyName = info.CompanyName ?? CompanyName;
-
         }
 
-        public void UpdateBankInformation(OrganizerBankInfo bank)
+        public void UpdateBank(OrganizerBankInfo bank)
         {
             EnsureDraft();
 
@@ -138,46 +129,46 @@ namespace Users.Domain.Entities
             AccountNumber = bank.AccountNumber ?? AccountNumber;
             BankCode = bank.BankCode ?? BankCode;
             Branch = bank.Branch ?? Branch;
-
         }
 
-        public void SubmitForVerification()
+        public void Submit()
         {
             EnsureDraft();
-            // if (string.IsNullOrWhiteSpace(DisplayName))
-            //     throw new InvalidOperationException("Display name required.");
-
-            // if (string.IsNullOrWhiteSpace(AccountNumber))
-            //     throw new InvalidOperationException("Bank account required.");
-
             Status = OrganizerStatus.Pending;
         }
 
         public void Verify()
         {
             if (Status != OrganizerStatus.Pending)
-                throw new InvalidOperationException("Profile must be pending.");
+                throw new InvalidOperationException("Must be pending.");
 
             Status = OrganizerStatus.Verified;
             VerifiedAt = DateTimeOffset.UtcNow;
             RejectionReason = null;
-
         }
 
         public void Reject(string? reason)
         {
             if (Status != OrganizerStatus.Pending)
-                throw new InvalidOperationException("Only pending profiles can be rejected.");
+                throw new InvalidOperationException("Must be pending.");
 
             Status = OrganizerStatus.Rejected;
             RejectionReason = reason;
+        }
 
+        public void Reopen()
+        {
+            if (Status != OrganizerStatus.Rejected)
+                throw new InvalidOperationException("Only rejected can reopen.");
+
+            Status = OrganizerStatus.Draft;
+            RejectionReason = null;
         }
 
         public void Archive()
         {
             if (Status != OrganizerStatus.Verified)
-                throw new InvalidOperationException("Only verified profiles can be archived.");
+                throw new InvalidOperationException("Only verified can archive.");
 
             Status = OrganizerStatus.Archived;
         }
@@ -185,7 +176,12 @@ namespace Users.Domain.Entities
         private void EnsureDraft()
         {
             if (Status != OrganizerStatus.Draft)
-                throw new InvalidOperationException("Changes allowed only in Draft.");
+                throw new InvalidOperationException("Only draft editable.");
+        }
+        public void UpdateLogo(string logo)
+        {
+            EnsureDraft();
+            Logo = logo;
         }
     }
 }

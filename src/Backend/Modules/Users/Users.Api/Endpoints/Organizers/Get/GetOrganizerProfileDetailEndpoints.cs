@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Shared.Api.Results;
 using Users.Application.Features.Organizers.Dtos;
+using Users.Application.Features.Organizers.Queries;
 
 namespace Users.Api.Organizers;
 
@@ -18,7 +19,7 @@ public class GetOrganizerProfileDetailEndpoints : ICarterModule
             ISender sender,
             CancellationToken cancellationToken) =>
         {
-            var query = new GetOrganizerProfileDetailQuery(id);
+            var query = new GetOrganizerPublicProfileQuery(id);
 
             var result = await sender.Send(query, cancellationToken);
 
