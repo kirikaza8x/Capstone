@@ -451,3 +451,12 @@ models/
 # OS
 .DS_Store
 Thumbs.db
+
+# Terraform
+Terraform/**/.terraform/
+Terraform/**/*.tfstate
+Terraform/**/*.tfstate.backup
+Terraform/**/.terraform.lock.hcl
+Terraform/**/terraform.tfvars
+Terraform/**/*.tfvars.json
+Terraform/**/*.auto.tfvars

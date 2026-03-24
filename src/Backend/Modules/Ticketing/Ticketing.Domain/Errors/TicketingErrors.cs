@@ -104,6 +104,14 @@ public static class TicketingErrors
             "Voucher.NotFound",
             $"Voucher with coupon code '{couponCode}' not found.");
 
+        public static Error NotFound(Guid couponId) => Error.NotFound(
+            "Voucher.NotFound",
+            $"Voucher '{couponId}' not found.");
+
+        public static Error CouponCodeAlreadyExists(string couponCode) => Error.Conflict(
+            "Voucher.NotFound",
+            $"Voucher with coupon code '{couponCode}' not found.");
+
         public static readonly Error Expired = Error.Conflict(
             "Voucher.Expired",
             "Voucher is expired or not yet active.");
@@ -131,6 +139,18 @@ public static class TicketingErrors
         public static readonly Error InvalidDateRange = Error.Validation(
             "Voucher.InvalidDateRange",
             "Start date must be before end date.");
+
+        public static readonly Error CannotUpdateUsedVoucher = Error.Conflict(
+            "Voucher.CannotUpdateUsedVoucher",
+            "Cannot update voucher that has already been used.");
+
+        public static readonly Error CannotDeleteUsedVoucher = Error.Conflict(
+            "Voucher.CannotDeleteUsedVoucher",
+            "Cannot delete voucher that has already been used.");
+
+        public static readonly Error NotOwner = Error.Forbidden(
+            "Voucher.NotOwner",
+            "You are not the owner of this voucher.");
     }
 
     public static class CheckIn

@@ -27,6 +27,7 @@ internal static class Constants
         // Events
         public const string Events = $"{BaseApi}/events";
         public const string EventById = $"{Events}/{{eventId:guid}}";
+        public const string EventByUrlPath = $"{Events}/url/{{urlPath}}";
 
         // Images
         public const string EventImages = $"{EventById}/images";

@@ -19,13 +19,13 @@ public class AuditableEntityInterceptor : SaveChangesInterceptor
     {
         if (context == null) return;
 
-        var name = _currentUser.Name ?? "System";
+        var id = _currentUser.UserId.ToString() ?? "System";
 
         foreach (var entry in context.ChangeTracker.Entries<IEntity>())
         {
             if (entry.State == EntityState.Added)
             {
-                entry.Entity.CreatedBy = name;
+                entry.Entity.CreatedBy = id;
                 entry.Entity.CreatedAt = DateTime.UtcNow;
                 entry.Entity.IsActive = true;
             }
@@ -35,7 +35,7 @@ public class AuditableEntityInterceptor : SaveChangesInterceptor
                 entry.HasChangeOwnedEntities()
                 )
             {
-                entry.Entity.ModifiedBy = name;
+                entry.Entity.ModifiedBy = id;
                 entry.Entity.ModifiedAt = DateTime.UtcNow;
             }
         }

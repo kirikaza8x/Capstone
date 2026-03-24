@@ -77,6 +77,16 @@ public class Program
             .AddPaymentModule(Configuration)
         ;
 
+        builder.Services.AddCors(options =>
+        {
+            options.AddDefaultPolicy(policy =>
+            {
+                policy.AllowAnyOrigin()
+                      .AllowAnyMethod()
+                      .AllowAnyHeader();
+            });
+        });
+
         builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
         builder.Services.AddProblemDetails();
 
@@ -88,8 +98,13 @@ public class Program
             app.UseSwaggerDocumentation();
         }
 
-        app.UseHttpsRedirection();
+        if (!app.Environment.IsDevelopment())
+        {
+            app.UseHttpsRedirection();
+        }
+
         app.UseCors();
+        app.UseHttpsRedirection();
         app.UseAuthentication();
         app.UseAuthorization();
         app.UseExceptionHandler();

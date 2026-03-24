@@ -158,6 +158,10 @@ public static class EventErrors
         public static readonly Error SuspendByRequired = Error.Validation(
             "Event.SuspendByRequired",
             "Suspended by is required.");
+
+        public static Error NotFoundByUrlPath(string urlPath) => Error.NotFound(
+            "Event.NotFoundByUrlPath",
+            $"Event with url path '{urlPath}' not found.");
     }
 
 

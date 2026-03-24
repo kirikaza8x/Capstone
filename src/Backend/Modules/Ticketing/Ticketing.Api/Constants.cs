@@ -5,6 +5,7 @@ internal static class Constants
     internal static class Tags
     {
         public const string Orders = "Ticketing - Orders";
+        public const string Vouchers = "Ticketing - Vouchers";
     }
 
     internal static class Routes
@@ -16,5 +17,10 @@ internal static class Constants
         public const string CheckIn = $"{BaseApi}/check-in";
         public const string ApplyVoucher = $"{BaseApi}/{{orderId:guid}}/apply-voucher";
         public const string MyOrders = $"{BaseApi}/orders/me";
+        public const string CancelOrder = $"{Orders}/{{orderId:guid}}/cancel";
+
+        // voucher
+        public const string Vouchers = $"{BaseApi}/vouchers";
+        public const string VoucherById = $"{Vouchers}/{{voucherId:guid}}";
     }
 }

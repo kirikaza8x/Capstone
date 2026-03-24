@@ -1,5 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using Shared.Domain.Pagination;
+using Shared.Domain.Queries;
 using Shared.Infrastructure.Data;
+using Shared.Infrastructure.Extensions;
 using Ticketing.Domain.Entities;
 using Ticketing.Domain.Repositories;
 
@@ -28,9 +31,25 @@ internal sealed class VoucherRepository(TicketingDbContext context)
                       ov.Order.UserId == userId,
                 cancellationToken);
 
-    public async Task<Voucher?> GetByIdAsync(
-        Guid id,
+    public async Task<bool> IsCouponCodeExistsAsync(
+        string couponCode,
         CancellationToken cancellationToken = default) =>
         await _context.Vouchers
-            .FirstOrDefaultAsync(v => v.Id == id, cancellationToken);
+            .AnyAsync(v => v.CouponCode == couponCode, cancellationToken);
+
+    public async Task<PagedResult<Voucher>> GetPagedAsync(
+        Guid? eventId,
+        PagedQuery query,
+        CancellationToken cancellationToken = default)
+    {
+        var queryable = _context.Vouchers.AsNoTracking();
+
+        if (eventId.HasValue)
+            queryable = queryable.Where(v =>
+                v.EventId == eventId.Value || v.EventId == null);
+
+        return await queryable
+            .OrderByDescending(v => v.CreatedAt)
+            .ToPagedResultAsync(query, cancellationToken);
+    }
 }

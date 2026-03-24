@@ -25,19 +25,19 @@ public sealed class SeatMapArea
     public SeatMapAreaType Type { get; set; }
 
     [JsonPropertyName("x")]
-    public int X { get; set; }
+    public float X { get; set; }
 
     [JsonPropertyName("y")]
-    public int Y { get; set; }
+    public float Y { get; set; }
 
     [JsonPropertyName("width")]
-    public int Width { get; set; }
+    public float Width { get; set; }
 
     [JsonPropertyName("height")]
-    public int Height { get; set; }
+    public float Height { get; set; }
 
     [JsonPropertyName("rotation")]
-    public int Rotation { get; set; }
+    public float Rotation { get; set; }
 
     [JsonPropertyName("stroke")]
     public string? Stroke { get; set; }
@@ -85,19 +85,19 @@ public sealed class SeatMapSeat
     public int Number { get; set; }
 
     [JsonPropertyName("x")]
-    public int X { get; set; }
+    public float X { get; set; }
 
     [JsonPropertyName("y")]
-    public int Y { get; set; }
+    public float Y { get; set; }
 
     [JsonPropertyName("width")]
-    public int Width { get; set; }
+    public float Width { get; set; }
 
     [JsonPropertyName("height")]
-    public int Height { get; set; }
+    public float Height { get; set; }
 
     [JsonPropertyName("rotation")]
-    public int Rotation { get; set; }
+    public float Rotation { get; set; }
 
     [JsonPropertyName("status")]
     public string Status { get; set; } = "available";
@@ -128,5 +128,10 @@ public enum SeatMapSeatStatus
 public enum SeatMapAreaType
 {
     rect,
+    square,
+    circle,
+    triagle,
+    parallelogram,
+    trapezoid,
     polygon
 }
