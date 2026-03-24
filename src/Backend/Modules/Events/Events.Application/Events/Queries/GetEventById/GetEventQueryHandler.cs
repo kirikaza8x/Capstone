@@ -7,7 +7,7 @@ using Shared.Domain.Abstractions;
 
 namespace Events.Application.Events.Queries.GetEventById;
 
-internal sealed class GetEventQueryHandler(
+internal sealed class GetEventByUrlPathQueryHandler(
     IEventRepository eventRepository,
     IMapper mapper
     ) : IQueryHandler<GetEventQuery, GetEventResponse>
