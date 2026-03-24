@@ -7,28 +7,23 @@ public sealed class OrganizerProfileDto
     public Guid UserId { get; init; }
 
     public string? Logo { get; init; }
-
     public string DisplayName { get; init; } = default!;
-
     public string? Description { get; init; }
-
     public string? Address { get; init; }
-
     public string? SocialLink { get; init; }
 
     public BusinessType? BusinessType { get; init; }
-
     public string? TaxCode { get; init; }
-
     public string? IdentityNumber { get; init; }
-
     public string? CompanyName { get; init; }
 
     public OrganizerStatus Status { get; init; }
-
     public string? RejectionReason { get; init; }
 
     public OrganizerBankDto? Bank { get; init; }
+
+    public bool CanEdit { get; init; }
+    public bool CanSubmit { get; init; }
 }
 
 public sealed class OrganizerBankDto
@@ -116,3 +111,21 @@ public record OrganizerBankInfoDto(
     string? Branch
 );
 
+public sealed class MyOrganizerProfileDto
+{
+    public Guid ProfileId { get; init; }
+
+    public Guid UserId { get; init; }
+
+    public string? DisplayName { get; init; }
+
+    public string? Logo { get; init; }
+
+    public OrganizerStatus Status { get; init; }
+
+    public string? RejectionReason { get; init; }
+
+    // 🔥 UX flags (VERY IMPORTANT)
+    public bool CanEdit { get; init; }
+    public bool CanSubmit { get; init; }
+}

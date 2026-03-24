@@ -1,25 +1,45 @@
 using AutoMapper;
 using Users.Application.Features.Organizers.Dtos;
 using Users.Domain.Entities;
+using Users.Domain.Enums;
 
 public class OrganizersProfile : Profile
 {
     public OrganizersProfile()
     {
+        // ========================
+        // ADMIN LIST
+        // ========================
         CreateMap<OrganizerProfile, OrganizerAdminListItemDto>()
             .ForMember(dest => dest.ProfileId, opt => opt.MapFrom(src => src.Id))
-            .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId))
-            .ForMember(dest => dest.DisplayName, opt => opt.MapFrom(src => src.DisplayName))
-            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status))
-            .ForMember(dest => dest.BusinessType, opt => opt.MapFrom(src => src.BusinessType))
-            .ForMember(dest => dest.VersionNumber, opt => opt.MapFrom(src => src.VersionNumber))
-            .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.CreatedAt));
+            .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId));
 
+        // ========================
+        // FULL RESPONSE (ADMIN DETAIL)
+        // ========================
         CreateMap<OrganizerProfile, OrganizerProfileResponseDto>()
             .ForMember(d => d.BusinessType, o => o.MapFrom(s => s.BusinessType.ToString()))
             .ForMember(d => d.Status, o => o.MapFrom(s => s.Status.ToString()))
-            .ForMember(d => d.Type, o => o.MapFrom(s => s.Type.ToString()));
+            .ForMember(d => d.Type, o => o.MapFrom(s => s.Type.ToString()))
+            .ForMember(d => d.AccountName, o => o.MapFrom(s => s.AccountName))
+            .ForMember(d => d.AccountNumber, o => o.MapFrom(s => s.AccountNumber))
+            .ForMember(d => d.BankCode, o => o.MapFrom(s => s.BankCode))
+            .ForMember(d => d.Branch, o => o.MapFrom(s => s.Branch));
 
+        // ========================
+        // ORGANIZER SELF VIEW
+        // ========================
+        CreateMap<OrganizerProfile, MyOrganizerProfileDto>()
+            .ForMember(d => d.ProfileId, o => o.MapFrom(s => s.Id))
+            .ForMember(d => d.CanEdit, o => o.MapFrom(s =>
+                s.Status == OrganizerStatus.Draft ||
+                s.Status == OrganizerStatus.Rejected))
+            .ForMember(d => d.CanSubmit, o => o.MapFrom(s =>
+                s.Status == OrganizerStatus.Draft));
+
+        // ========================
+        // PUBLIC VIEW
+        // ========================
         CreateMap<OrganizerProfile, OrganizerPublicProfileDto>();
     }
 }

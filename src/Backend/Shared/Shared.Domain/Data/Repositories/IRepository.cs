@@ -55,4 +55,6 @@ public partial interface IRepository<TEntity, TId>
         Expression<Func<TEntity, bool>>? predicate = null,
         IEnumerable<Expression<Func<TEntity, object>>>? includes = null,
         CancellationToken cancellationToken = default);
+
+      IQueryable<TEntity> Query();
 }
