@@ -128,5 +128,10 @@ public enum SeatMapSeatStatus
 public enum SeatMapAreaType
 {
     rect,
+    square,
+    circle,
+    triagle,
+    parallelogram,
+    trapezoid,
     polygon
 }
