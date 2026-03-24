@@ -14,12 +14,12 @@ public class GetOrganizerProfileDetailEndpoints : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapGet("api/organizers/detail/{id}", async (
-            [FromRoute] Guid id,
+        app.MapGet("api/organizers/detail/{userId}", async (
+            [FromRoute] Guid userId,
             ISender sender,
             CancellationToken cancellationToken) =>
         {
-            var query = new GetOrganizerPublicProfileQuery(id);
+            var query = new GetOrganizerDetailQuery(userId);
 
             var result = await sender.Send(query, cancellationToken);
 
