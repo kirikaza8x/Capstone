@@ -14,6 +14,7 @@ public sealed class Voucher : Entity<Guid>
     public int MaxUse { get; private set; }
     public DateTime StartDate { get; private set; }
     public DateTime EndDate { get; private set; }
+    public Guid? EventId { get; private set; }
 
     private Voucher() { }
 
@@ -24,6 +25,7 @@ public sealed class Voucher : Entity<Guid>
         int maxUse,
         DateTime startDate,
         DateTime endDate,
+        Guid? eventId = null,
         DateTime? utcNow = null)
     {
         if (string.IsNullOrWhiteSpace(couponCode))
@@ -48,12 +50,53 @@ public sealed class Voucher : Entity<Guid>
             MaxUse = maxUse,
             StartDate = startDate,
             EndDate = endDate,
+            EventId = eventId,
             CreatedAt = utcNow ?? DateTime.UtcNow
         };
 
         return Result.Success(entity);
     }
 
+    public Result Update(
+        string couponCode,
+        VoucherType type,
+        decimal value,
+        int maxUse,
+        DateTime startDate,
+        DateTime endDate)
+    {
+        if (TotalUse > 0)
+            return Result.Failure(TicketingErrors.Voucher.CannotUpdateUsedVoucher);
+
+        if (string.IsNullOrWhiteSpace(couponCode))
+            return Result.Failure(TicketingErrors.Voucher.InvalidCouponCode);
+
+        if (value <= 0)
+            return Result.Failure(TicketingErrors.Voucher.InvalidValue);
+
+        if (maxUse <= 0)
+            return Result.Failure(TicketingErrors.Voucher.InvalidMaxUse);
+
+        if (startDate >= endDate)
+            return Result.Failure(TicketingErrors.Voucher.InvalidDateRange);
+
+        CouponCode = couponCode.Trim().ToUpperInvariant();
+        Type = type;
+        Value = value;
+        MaxUse = maxUse;
+        StartDate = startDate;
+        EndDate = endDate;
+
+        return Result.Success();
+    }
+
+    public Result CanDelete()
+    {
+        if (TotalUse > 0)
+            return Result.Failure(TicketingErrors.Voucher.CannotDeleteUsedVoucher);
+
+        return Result.Success();
+    }
     public void IncrementUsage()
     {
         TotalUse++;

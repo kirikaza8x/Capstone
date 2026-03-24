@@ -33,4 +33,11 @@ public static class Roles
         Attendee,
         Organizer
     };
+
+
+    public static readonly string[] AdminAndOrganizer = new[]
+    {
+        Admin,
+        Organizer
+    };
 }
