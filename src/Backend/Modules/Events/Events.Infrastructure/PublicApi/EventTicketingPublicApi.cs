@@ -153,13 +153,15 @@ internal sealed class EventTicketingPublicApi(EventsDbContext dbContext) : IEven
             {
                 e.Id,
                 e.Title,
-                e.BannerUrl
+                e.BannerUrl,
+                e.Location,
+                e.EventStartAt
             })
             .ToListAsync(cancellationToken);
 
         return rows.ToDictionary(
             r => r.Id,
-            r => new OrderEventSummaryDto(r.Id, r.Title, r.BannerUrl));
+            r => new OrderEventSummaryDto(r.Id, r.Title, r.BannerUrl, r.Location, r.EventStartAt));
     }
 
     public async Task<IReadOnlyDictionary<(Guid TicketTypeId, Guid EventSessionId), OrderTicketDetailDto>> GetOrderTicketDetailsAsync(

@@ -3,4 +3,6 @@
 public sealed record OrderEventSummaryDto(
     Guid EventId,
     string EventTitle,
-    string? BannerUrl);
+    string? BannerUrl,
+    string? Location,
+    DateTime? EventStartAt);
