@@ -93,7 +93,6 @@ public sealed record OrganizerProfileResponseDto(
 
 
 public record OrganizerBusinessInfoDto(
-    string? Logo,
     string? DisplayName,
     string? Description,
     string? Address,

@@ -3,10 +3,10 @@ using Users.Application.Features.Organizers.Commands;
 
 namespace Users.Application.Features.Organizers.Validators;
 
-public class CreateFullOrganizerProfileCommandValidator 
-    : AbstractValidator<CreateFullOrganizerProfileCommand>
+public class StartOrUpdateOrganizerProfileCommandValidator 
+    : AbstractValidator<StartOrUpdateOrganizerProfileCommand>
 {
-    public CreateFullOrganizerProfileCommandValidator()
+    public StartOrUpdateOrganizerProfileCommandValidator()
     {
         // --------------------
         // Type

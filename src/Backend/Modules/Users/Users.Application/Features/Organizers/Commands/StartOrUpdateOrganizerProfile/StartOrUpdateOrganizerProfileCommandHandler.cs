@@ -7,14 +7,14 @@ using Users.Domain.ValueObjects;
 
 namespace Users.Application.Features.Organizers.Handlers;
 
-public class CreateFullOrganizerProfileCommandHandler
-    : ICommandHandler<CreateFullOrganizerProfileCommand, Guid>
+public class StartOrUpdateOrganizerProfileCommandHandler
+    : ICommandHandler<StartOrUpdateOrganizerProfileCommand, Guid>
 {
     private readonly IUserRepository _userRepository;
     private readonly ICurrentUserService _currentUserService;
     private readonly IUserUnitOfWork _unitOfWork;
 
-    public CreateFullOrganizerProfileCommandHandler(
+    public StartOrUpdateOrganizerProfileCommandHandler(
         IUserRepository userRepository,
         ICurrentUserService currentUserService,
         IUserUnitOfWork unitOfWork)
@@ -25,7 +25,7 @@ public class CreateFullOrganizerProfileCommandHandler
     }
 
     public async Task<Result<Guid>> Handle(
-    CreateFullOrganizerProfileCommand command,
+    StartOrUpdateOrganizerProfileCommand command,
     CancellationToken cancellationToken)
     {
         var userId = _currentUserService.UserId;

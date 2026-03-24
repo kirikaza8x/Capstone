@@ -178,5 +178,10 @@ namespace Users.Domain.Entities
             if (Status != OrganizerStatus.Draft)
                 throw new InvalidOperationException("Only draft editable.");
         }
+        public void UpdateLogo(string logo)
+        {
+            EnsureDraft();
+            Logo = logo;
+        }
     }
 }

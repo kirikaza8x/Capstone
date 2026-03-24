@@ -85,6 +85,12 @@ public partial class User
         pending.Verify();
     }
 
+    public void UpdateDraftLogo(string logo)
+    {
+        var draft = GetDraft(); // already protected
+        draft.UpdateLogo(logo);
+    }
+
     public void RejectProfile(string? reason) =>
         GetPending().Reject(reason);
 
