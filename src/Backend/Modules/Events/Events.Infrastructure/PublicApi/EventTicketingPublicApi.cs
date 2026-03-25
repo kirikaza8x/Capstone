@@ -1,7 +1,9 @@
-﻿using Events.Domain.Enums;
+﻿using Events.Domain.Entities;
+using Events.Domain.Enums;
 using Events.Infrastructure.Data;
 using Events.PublicApi.PublicApi;
 using Events.PublicApi.Records;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace Events.Infrastructure.PublicApi;
@@ -179,25 +181,20 @@ internal sealed class EventTicketingPublicApi(EventsDbContext dbContext) : IEven
             .Distinct()
             .ToList();
 
-        var ticketTypesTask = dbContext.TicketTypes
+        var ticketTypes = await dbContext.TicketTypes
             .AsNoTracking()
             .Where(tt => ticketTypeIds.Contains(tt.Id))
             .Select(tt => new { tt.Id, tt.Name, tt.Price })
             .ToListAsync(cancellationToken);
 
-        var sessionsTask = dbContext.EventSessions
+        var sessions = await dbContext.EventSessions
             .AsNoTracking()
             .Where(s => sessionIds.Contains(s.Id))
             .Select(s => new { s.Id, s.Title, s.StartTime })
             .ToListAsync(cancellationToken);
 
-        await Task.WhenAll(ticketTypesTask, sessionsTask);
-
-        var ticketTypeMap = (await ticketTypesTask)
-            .ToDictionary(tt => tt.Id, tt => (tt.Name, tt.Price));
-
-        var sessionMap = (await sessionsTask)
-            .ToDictionary(s => s.Id, s => (s.Title, s.StartTime));
+        var ticketTypeMap = ticketTypes.ToDictionary(tt => tt.Id, tt => (tt.Name, tt.Price));
+        var sessionMap = sessions.ToDictionary(s => s.Id, s => (s.Title, s.StartTime));
 
         var seatCodeMap = new Dictionary<Guid, string>();
         if (seatIds.Count > 0)
