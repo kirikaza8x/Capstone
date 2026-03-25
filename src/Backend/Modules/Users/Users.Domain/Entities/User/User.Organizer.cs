@@ -1,4 +1,5 @@
 using Users.Domain.Enums;
+using Users.Domain.Events;
 using Users.Domain.ValueObjects;
 
 namespace Users.Domain.Entities;
@@ -83,6 +84,7 @@ public partial class User
         var pending = GetPending();
         PublishedProfile?.Archive();
         pending.Verify();
+        RaiseDomainEvent(new OrganizerProfileVerifiedEvent(Id));
     }
 
     public void UpdateDraftLogo(string logo)

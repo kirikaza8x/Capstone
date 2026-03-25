@@ -19,6 +19,6 @@ public class GetMyOrganizerProfileEndpoint : ICarterModule
             return result.ToOk();
         })
         .WithName("GetMyOrganizerProfile")
-        .WithTags("Organizer");
+        .WithTags("Organizers");
     }
 }

@@ -168,9 +168,7 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
             OrderId = orderId,
             Type = PaymentType.BatchWalletPay,
             Amount = itemList.Sum(i => i.Amount),
-            InternalStatus = PaymentInternalStatus.Completed,
             GatewayOrderInfo = orderInfo,
-            CompletedAt = now,
             CreatedAt = now
         };
 
@@ -178,16 +176,11 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
         {
             var item = BatchPaymentItem.Create(
                 txn.Id, orderTicketId, eventSessionId, amount);
-            item.MarkCompleted();
+
             txn.Items.Add(item);
         }
 
-        
-        txn.RaiseDomainEvent(new PaymentSucceededDomainEvent(
-            PaymentTransactionId: txn.Id,
-            OrderId: orderId,
-            Amount: txn.Amount,
-            CompletedAtUtc: now));
+        txn.MarkCompleted();
 
         return txn;
     }
@@ -218,13 +211,15 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
 
     public void MarkCompleted()
     {
+        if (InternalStatus == PaymentInternalStatus.Completed)
+            return;
+
         InternalStatus = PaymentInternalStatus.Completed;
         CompletedAt = DateTime.UtcNow;
 
         foreach (var item in Items)
             item.MarkCompleted();
 
-        // Only raise for order payments — WalletTopUp has no OrderId
         if (OrderId.HasValue)
         {
             RaiseDomainEvent(new PaymentSucceededDomainEvent(

@@ -47,7 +47,7 @@ public class StartOrUpdateOrganizerProfileEndpoint : ICarterModule
             return result.ToOk();
         })
         .WithName("StartOrUpdateOrganizerProfile")
-        .WithTags("Organizer")
+        .WithTags("Organizers")
         .WithSummary("Start or update organizer profile draft")
         .WithDescription("Creates a new organizer profile draft if none exists. Updates an existing draft if present. Returns conflict if a pending profile exists.")
         .Produces<Guid>(StatusCodes.Status201Created)
