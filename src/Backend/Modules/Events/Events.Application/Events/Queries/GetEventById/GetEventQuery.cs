@@ -20,6 +20,7 @@ public sealed record GetEventResponse
     public DateTime? TicketSaleEndAt { get; init; }
     public DateTime? EventStartAt { get; init; }
     public DateTime? EventEndAt { get; init; }
+    public string? SpecImage { get; init; } = string.Empty;
     public string Policy { get; init; } = string.Empty;
     public bool IsEmailReminderEnabled { get; init; }
     public DateTime CreatedAt { get; init; }
