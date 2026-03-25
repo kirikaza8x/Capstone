@@ -31,4 +31,10 @@ public interface IOrderRepository : IRepository<Order, Guid>
         Guid userId,
         PagedQuery query,
         CancellationToken cancellationToken = default);
+
+    Task<PagedResult<Order>> GetPagedByEventIdAsync(
+        Guid eventId,
+        string? status,
+        PagedQuery query,
+        CancellationToken cancellationToken = default);
 }

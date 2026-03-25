@@ -88,4 +88,31 @@ internal sealed class OrderRepository(TicketingDbContext context)
             .Where(o => o.UserId == userId)
             .OrderByDescending(o => o.CreatedAt)
             .ToPagedResultAsync(query, cancellationToken);
+
+    public async Task<PagedResult<Order>> GetPagedByEventIdAsync(
+        Guid eventId,
+        string? status,
+        PagedQuery query,
+        CancellationToken cancellationToken = default)
+    {
+        var ordersQuery = _context.Orders
+            .AsNoTracking()
+            .Include(o => o.Tickets)
+            .Include(o => o.OrderVouchers)
+            .Where(o => o.EventId == eventId);
+
+        // Filter by status if provided
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            if (Enum.TryParse<OrderStatus>(status, true, out var orderStatus))
+            {
+                ordersQuery = ordersQuery.Where(o => o.Status == orderStatus);
+            }
+        }
+
+        // Sort, page, and return
+        return await ordersQuery
+            .OrderByDescending(o => o.CreatedAt)
+            .ToPagedResultAsync(query, cancellationToken);
+    }
 }

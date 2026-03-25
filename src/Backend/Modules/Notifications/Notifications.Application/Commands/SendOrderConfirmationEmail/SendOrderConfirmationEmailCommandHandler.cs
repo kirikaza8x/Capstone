@@ -3,7 +3,7 @@ using Notifications.Domain.Errors;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Application.Abstractions.Notifications;
 using Shared.Domain.Abstractions;
-using Users.PublicApi.Services;
+using Users.PublicApi.PublicApi;
 
 namespace Notifications.Application.Commands.SendOrderConfirmationEmail;
 
