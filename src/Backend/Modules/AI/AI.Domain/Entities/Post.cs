@@ -148,7 +148,7 @@ public sealed class PostMarketing : AggregateRoot<Guid>
 
         post.RaiseDomainEvent(new PostCreatedDomainEvent(
             PostId: post.Id,
-            @eventId: post.EventId,
+            TargetId: post.EventId,
             OrganizerId: post.OrganizerId,
             CreatedAt: post.CreatedAt!.Value));
 
@@ -211,7 +211,7 @@ public sealed class PostMarketing : AggregateRoot<Guid>
 
         RaiseDomainEvent(new PostSubmittedDomainEvent(
             PostId: Id,
-            @eventId: EventId,
+            TargetId: EventId,
             OrganizerId: OrganizerId,
             SubmittedAt: ModifiedAt!.Value));
 
@@ -233,7 +233,7 @@ public sealed class PostMarketing : AggregateRoot<Guid>
 
         RaiseDomainEvent(new PostPublishedDomainEvent(
             PostId: Id,
-            @eventId: EventId,
+            TargetId: EventId,
             OrganizerId: OrganizerId,
             PublishedAt: PublishedAt.Value));
 
@@ -283,7 +283,7 @@ public sealed class PostMarketing : AggregateRoot<Guid>
 
         RaiseDomainEvent(new PostApprovedDomainEvent(
             PostId: Id,
-            @eventId: EventId,
+            TargetId: EventId,
             OrganizerId: OrganizerId,
             AdminId: adminId,
             ApprovedAt: ReviewedAt.Value));
@@ -314,7 +314,7 @@ public sealed class PostMarketing : AggregateRoot<Guid>
 
         RaiseDomainEvent(new PostRejectedDomainEvent(
             PostId: Id,
-            @eventId: EventId,
+            TargetId: EventId,
             OrganizerId: OrganizerId,
             AdminId: adminId,
             Reason: RejectionReason,
@@ -346,7 +346,7 @@ public sealed class PostMarketing : AggregateRoot<Guid>
 
         RaiseDomainEvent(new PostForceRemovedDomainEvent(
             PostId: Id,
-            @eventId: EventId,
+            TargetId: EventId,
             AdminId: adminId,
             Reason: RejectionReason,
             RemovedAt: ReviewedAt.Value));

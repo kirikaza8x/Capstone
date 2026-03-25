@@ -1,4 +1,5 @@
 // File: Marketing.Infrastructure/Persistence/Repositories/PostRepository.cs
+using AI.Infrastructure.Data;
 using Marketing.Domain.Entities;
 using Marketing.Domain.Enums;
 using Marketing.Domain.Repositories;
@@ -11,7 +12,7 @@ public class PostRepository
     : RepositoryBase<PostMarketing, Guid>,
       IPostRepository
 {
-    public PostRepository(DbContext dbContext)
+    public PostRepository(AIModuleDbContext dbContext)
         : base(dbContext)
     {
     }
