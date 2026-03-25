@@ -4,7 +4,7 @@ using Events.Domain.Repositories;
 using Shared.Application.Abstractions.Authentication;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
-using Users.PublicApi.Services;
+using Users.PublicApi.PublicApi;
 
 namespace Events.Application.Events.Queries.GetEventMembers;
 

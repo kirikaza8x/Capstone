@@ -29,7 +29,7 @@ using Users.Infrastructure.PublicApi;
 using Users.Infrastructure.Services.Authentication;
 using Users.Infrastructure.Services.Report;
 using Users.Infrastructure.Services.Sms;
-using Users.PublicApi.Services;
+using Users.PublicApi.PublicApi;
 
 namespace Users.Infrastructure
 {

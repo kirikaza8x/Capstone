@@ -140,7 +140,7 @@ internal sealed class CreateOrderCommandHandler(
 
             // Build order
             var order = Domain.Entities.Order.Create(userId, command.EventId, utcNow);
-            var totalPrice = 0m;
+            var originalTotalPrice = 0m;
 
             foreach (var ticket in command.Tickets)
             {
@@ -162,10 +162,10 @@ internal sealed class CreateOrderCommandHandler(
                 if (addResult.IsFailure)
                     return Result.Failure<Guid>(addResult.Error);
 
-                totalPrice += item.Price;
+                originalTotalPrice += item.Price;
             }
 
-            var setPriceResult = order.SetTotalPrice(totalPrice, utcNow);
+            var setPriceResult = order.SetOriginalTotalPrice(originalTotalPrice, utcNow);
             if (setPriceResult.IsFailure)
                 return Result.Failure<Guid>(setPriceResult.Error);
 
