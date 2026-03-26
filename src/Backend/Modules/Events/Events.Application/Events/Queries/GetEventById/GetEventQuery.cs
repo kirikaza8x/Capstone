@@ -23,9 +23,15 @@ public sealed record GetEventResponse
     public string? SpecImage { get; init; } = string.Empty;
     public string Policy { get; init; } = string.Empty;
     public bool IsEmailReminderEnabled { get; init; }
+    public string? CancellationReason { get; private set; }
+    public string? PublishRejectionReason { get; private set; }
+    public string? CancellationRejectionReason { get; private set; }
+    public string? SuspensionReason { get; private set; }
+    public DateTime? SuspendedAt { get; private set; }
+    public DateTime? SuspendedUntilAt { get; private set; }
+    public Guid? SuspendedBy { get; private set; }
     public DateTime CreatedAt { get; init; }
     public DateTime? ModifiedAt { get; init; }
-
     public IReadOnlyList<EventCategoryDto> Categories { get; init; } = [];
     public IReadOnlyList<EventImageDto> Images { get; init; } = [];
     public IReadOnlyList<EventSessionDto> Sessions { get; init; } = [];

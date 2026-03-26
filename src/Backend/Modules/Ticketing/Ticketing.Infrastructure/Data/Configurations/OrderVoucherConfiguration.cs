@@ -11,6 +11,7 @@ internal sealed class OrderVoucherConfiguration : IEntityTypeConfiguration<Order
         builder.ToTable("order_vouchers");
 
         builder.HasKey(x => x.Id);
+        builder.Property(e => e.Id).ValueGeneratedNever();
 
         builder.Property(x => x.OrderId).IsRequired();
         builder.Property(x => x.VoucherId).IsRequired();

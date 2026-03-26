@@ -12,6 +12,7 @@ internal sealed class OrderTicketConfiguration : IEntityTypeConfiguration<OrderT
         builder.ToTable("order_tickets");
 
         builder.HasKey(x => x.Id);
+        builder.Property(e => e.Id).ValueGeneratedNever();
 
         builder.Property(x => x.OrderId).IsRequired();
         builder.Property(x => x.EventSessionId).IsRequired();
