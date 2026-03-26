@@ -42,5 +42,9 @@ internal sealed class OrderTicketConfiguration : IEntityTypeConfiguration<OrderT
         builder.HasIndex(x => x.TicketTypeId);
         builder.HasIndex(x => x.SeatId);
         builder.HasIndex(x => x.QrCode).IsUnique();
+
+        // Composite index for querying tickets by session, ticket type, and status
+        builder.HasIndex(t => new { t.EventSessionId, t.TicketTypeId, t.Status })
+               .HasDatabaseName("IX_OrderTicket_Session_TicketType_Status");
     }
 }

@@ -127,4 +127,46 @@ internal sealed class OrderRepository(TicketingDbContext context)
             .OrderByDescending(o => o.CreatedAt)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<Dictionary<(Guid SessionId, Guid TicketTypeId), int>> GetSoldZoneTicketsCountAsync(
+        IEnumerable<(Guid SessionId, Guid TicketTypeId)> sessionTicketTypePairs,
+        CancellationToken cancellationToken = default)
+    {
+        var pairsList = sessionTicketTypePairs.ToList();
+        if (pairsList.Count == 0)
+        {
+            return [];
+        }
+
+        // Get list ID for filtering
+        var sessionIds = pairsList.Select(p => p.SessionId).Distinct().ToList();
+        var ticketTypeIds = pairsList.Select(p => p.TicketTypeId).Distinct().ToList();
+
+        // Query
+        var counts = await context.Set<OrderTicket>()
+            .Where(t => sessionIds.Contains(t.EventSessionId)
+                     && ticketTypeIds.Contains(t.TicketTypeId)
+                     && (t.Status == OrderTicketStatus.Valid || t.Status == OrderTicketStatus.Used))
+            .GroupBy(t => new { t.EventSessionId, t.TicketTypeId })
+            .Select(g => new
+            {
+                g.Key.EventSessionId,
+                g.Key.TicketTypeId,
+                Count = g.Count()
+            })
+            .ToListAsync(cancellationToken);
+
+        // Convert to dictionary
+        var result = new Dictionary<(Guid SessionId, Guid TicketTypeId), int>();
+
+        foreach (var item in counts)
+        {
+            if (pairsList.Contains((item.EventSessionId, item.TicketTypeId)))
+            {
+                result[(item.EventSessionId, item.TicketTypeId)] = item.Count;
+            }
+        }
+
+        return result;
+    }
 }

@@ -11,7 +11,6 @@ public sealed class EventSession : Entity<Guid>
     public string? Description { get; private set; }
     public DateTime StartTime { get; private set; }
     public DateTime EndTime { get; private set; }
-
     public Event Event { get; private set; } = null!;
 
     public static EventSession Create(

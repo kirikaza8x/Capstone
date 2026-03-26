@@ -209,28 +209,9 @@ public static class EventErrors
             "TicketType.NotEnoughTickets",
             $"Requested {requested} tickets but only {available} available.");
 
-        public static readonly Error InvalidSoldQuantityAmount = Error.Validation(
-            "TicketType.InvalidSoldQuantityAmount",
-            "Sold quantity amount must be greater than zero.");
-
-        public static readonly Error CannotDecreaseSoldBelowZero = Error.Validation(
-            "TicketType.CannotDecreaseSoldBelowZero",
-            "Cannot decrease sold quantity below zero.");
-
         public static Error ExceedQuantity(int quantity, int attemptedSold) => Error.Conflict(
             "TicketType.ExceedQuantity",
             $"Sold quantity cannot exceed total quantity. Quantity: {quantity}, attempted sold: {attemptedSold}.");
-    }
-
-    public static class SessionTicketQuotaErrors
-    {
-        public static Error NotFound(Guid sessionId, Guid ticketTypeId) => Error.NotFound(
-            "SessionTicketQuota.NotFound",
-            $"No quota found for session '{sessionId}' and ticket type '{ticketTypeId}'.");
-
-        public static Error TicketTypeNotZone() => Error.Validation(
-            "SessionTicketQuota.TicketTypeNotZone",
-            "Session ticket quota only applies to zone-type areas.");
     }
 
     public static class Area

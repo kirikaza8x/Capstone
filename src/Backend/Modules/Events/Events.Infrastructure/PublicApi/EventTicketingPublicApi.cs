@@ -32,7 +32,6 @@ internal sealed class EventTicketingPublicApi(EventsDbContext dbContext) : IEven
                 tt.AreaId,
                 tt.Price,
                 tt.Quantity,
-                tt.SoldQuantity,
                 AreaType = tt.Area != null ? tt.Area.Type : AreaType.Zone,
                 tt.Event.Status,
                 tt.Event.TicketSaleStartAt,
@@ -71,7 +70,7 @@ internal sealed class EventTicketingPublicApi(EventsDbContext dbContext) : IEven
                     AreaType: MapAreaType(row.AreaType),
                     Price: row.Price,
                     Quantity: row.Quantity,
-                    SoldQuantity: row.SoldQuantity,
+                    //SoldQuantity: row.SoldQuantity,
                     IsPurchasable: isPurchasable);
             }
         }

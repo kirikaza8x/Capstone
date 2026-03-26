@@ -85,6 +85,22 @@ internal sealed class CreateOrderCommandHandler(
                 }
             }
 
+            var zoneTicketsToBuy = command.Tickets
+                .Where(t => itemMap.TryGetValue((t.EventSessionId, t.TicketTypeId), out var item) && item.AreaType == EventAreaType.Zone)
+                .ToList();
+
+            // Khởi tạo dictionary chứa số lượng vé đã bán cho mỗi cặp (SessionId, TicketTypeId)
+            var soldZoneCounts = new Dictionary<(Guid SessionId, Guid TicketTypeId), int>();
+
+            if (zoneTicketsToBuy.Count > 0)
+            {
+                // Gọi repository để đếm số lượng vé Zone đã bán (Status = Valid/Used)
+                // Bạn cần implement hàm này trong IOrderRepository
+                soldZoneCounts = await orderRepository.GetSoldZoneTicketsCountAsync(
+                    zoneTicketsToBuy.Select(t => (t.EventSessionId, t.TicketTypeId)).Distinct().ToList(),
+                    cancellationToken);
+            }
+
             // Acquire Redis locks 
             foreach (var ticket in command.Tickets)
             {
@@ -106,8 +122,9 @@ internal sealed class CreateOrderCommandHandler(
                 }
                 else
                 {
-                    // check sold quantity as guard before locking to reduce unnecessary Redis calls
-                    var maxAllowed = item.Quantity - item.SoldQuantity;
+                    soldZoneCounts.TryGetValue((ticket.EventSessionId, ticket.TicketTypeId), out var soldQuantity);
+                    // calculate max allowed to lock based on sold quantity, if soldQuantity is not found in dictionary, it means 0 tickets sold
+                    var maxAllowed = item.Quantity - soldQuantity;
 
                     var increased = await ticketLockService.TryIncreaseZoneLockAsync(
                         ticket.EventSessionId,

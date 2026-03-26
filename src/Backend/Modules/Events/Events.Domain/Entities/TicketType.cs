@@ -1,6 +1,4 @@
-﻿using Events.Domain.Errors;
-using Shared.Domain.Abstractions;
-using Shared.Domain.DDD;
+﻿using Shared.Domain.DDD;
 
 namespace Events.Domain.Entities;
 
@@ -51,24 +49,5 @@ public sealed class TicketType : Entity<Guid>
     {
         AreaId = null;
         ModifiedAt = DateTime.UtcNow;
-    }
-
-    public void IncreaseSoldQuantity(int quantity)
-    {
-        if (quantity <= 0) return;
-        SoldQuantity = Math.Min(SoldQuantity + quantity, Quantity);
-    }
-
-    public Result DecreaseSoldQuantity(int amount = 1)
-    {
-        if (amount <= 0)
-            return Result.Failure(EventErrors.TicketTypeErrors.InvalidSoldQuantityAmount);
-
-        if (SoldQuantity - amount < 0)
-            return Result.Failure(EventErrors.TicketTypeErrors.CannotDecreaseSoldBelowZero);
-
-        SoldQuantity -= amount;
-        ModifiedAt = DateTime.UtcNow;
-        return Result.Success();
     }
 }
