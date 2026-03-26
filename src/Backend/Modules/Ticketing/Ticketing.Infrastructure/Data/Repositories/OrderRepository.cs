@@ -115,4 +115,16 @@ internal sealed class OrderRepository(TicketingDbContext context)
             .OrderByDescending(o => o.CreatedAt)
             .ToPagedResultAsync(query, cancellationToken);
     }
+
+    public async Task<IReadOnlyList<Order>> GetAllByEventIdAsync(
+        Guid eventId,
+        CancellationToken cancellationToken = default)
+    {
+        return await context.Orders
+            .AsNoTracking()
+            .Include(o => o.OrderVouchers)
+            .Where(o => o.EventId == eventId)
+            .OrderByDescending(o => o.CreatedAt)
+            .ToListAsync(cancellationToken);
+    }
 }

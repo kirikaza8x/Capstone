@@ -76,6 +76,13 @@ public static class TicketingErrors
             "Order is not in pending status.");
     }
 
+    public static class Event
+    {
+        public static readonly Error NotOwner = Error.Forbidden(
+            "Event.NotOwner",
+            "You are not the owner of this event.");
+    }
+
     public static class OrderTicket
     {
         public static Error NotFound(Guid orderTicketId) => Error.NotFound(

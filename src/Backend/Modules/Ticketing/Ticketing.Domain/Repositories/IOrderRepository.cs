@@ -37,4 +37,6 @@ public interface IOrderRepository : IRepository<Order, Guid>
         string? status,
         PagedQuery query,
         CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<Order>> GetAllByEventIdAsync(Guid eventId, CancellationToken cancellationToken = default);
 }

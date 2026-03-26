@@ -5,9 +5,12 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
+using Shared.Application.Abstractions.Report;
 using Shared.Infrastructure.Configs.Database;
 using Shared.Infrastructure.Extensions;
+using Shared.Infrastructure.Service.Report;
 using Ticketing.Application.Abstractions.Locks;
+using Ticketing.Application.Orders.Queries.ExportOrdersSheet;
 using Ticketing.Domain.Repositories;
 using Ticketing.Domain.Uow;
 using Ticketing.Infrastructure.Data;
@@ -16,6 +19,7 @@ using Ticketing.Infrastructure.Data.Uow;
 using Ticketing.Infrastructure.Jobs;
 using Ticketing.Infrastructure.Locks;
 using Ticketing.Infrastructure.PublicApi;
+using Ticketing.Infrastructure.Services.Reports;
 using Ticketing.PublicApi;
 using Ticketing.PublicApi.PublicApi;
 
@@ -31,6 +35,15 @@ public static class TicketingModule
         services.AddScoped<ITicketLockService, TicketLockService>();
         services.AddScoped<ITicketingSeatStatusPublicApi, TicketingSeatStatusPublicApi>();
         services.AddScoped<ITicketingPublicApi, TicketingPublicApi>();
+        services.AddScoped<ISheetMappings<OrderExportDto>, OrderSheetMappings>();
+        services.AddScoped<IFileImportExportService<OrderExportDto>>(sp =>
+        {
+            var mappings = sp.GetRequiredService<ISheetMappings<OrderExportDto>>();
+            return new ClosedXmlImportExportService<OrderExportDto>(
+                mappings.GetRowMapper(),
+                mappings.Exporter
+            );
+        });
 
         services.AddDbContext<TicketingDbContext>((sp, options) =>
         {
