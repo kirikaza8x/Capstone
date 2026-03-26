@@ -15,7 +15,7 @@ public class GetEventsForStaffEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapGet($"{Constants.Routes.Events}/pending", async (
+        app.MapGet($"{Constants.Routes.StaffEvents}/pending", async (
             [AsParameters] GetEventsForStaffQuery query,
             ISender sender,
             CancellationToken cancellationToken) =>

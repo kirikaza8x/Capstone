@@ -5,7 +5,9 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using Shared.Api.Extensions;
 using Shared.Api.Results;
+using Users.PublicApi.Constants;
 
 namespace Events.Api.EventImages;
 
@@ -13,7 +15,7 @@ public class UpdateEventImageEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPut(Constants.Routes.EventImageById, async (
+        app.MapPut(Constants.Routes.OrganizerEventImageById, async (
             [FromRoute] Guid eventId,
             [FromRoute] Guid imageId,
             IFormFile file,
@@ -26,13 +28,14 @@ public class UpdateEventImageEndpoint : ICarterModule
 
             return result.ToOk("Event image updated successfully.");
         })
-        .WithTags(Constants.Tags.Events)
+        .WithTags(Constants.Tags.EventImages)
         .WithName("UpdateEventImage")
         .WithSummary("Update event image")
         .WithDescription("Replace an existing event image with a new one. Allowed types: JPEG, PNG, GIF, WebP. Max size: 10MB.")
         .DisableAntiforgery()
         .Produces(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status400BadRequest)
-        .ProducesProblem(StatusCodes.Status404NotFound);
+        .ProducesProblem(StatusCodes.Status404NotFound)
+        .RequireRoles(Roles.Organizer);
     }
 }

@@ -24,7 +24,7 @@ public class UpdateEventSettingsEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPatch(Constants.Routes.EventById + "/settings", async (
+        app.MapPatch(Constants.Routes.OrganizerEventById + "/settings", async (
             [FromRoute] Guid eventId,
             [FromBody] UpdateEventSettingsRequest request,
             ISender sender,

@@ -15,7 +15,7 @@ public class DeleteEventSessionEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapDelete(Constants.Routes.SessionById, async (
+        app.MapDelete(Constants.Routes.OrganizerSessionById, async (
             [FromRoute] Guid eventId,
             [FromRoute] Guid sessionId,
             ISender sender,

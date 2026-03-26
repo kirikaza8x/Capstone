@@ -17,7 +17,7 @@ public class RejectPublishEventEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPatch($"{Constants.Routes.EventById}/reject-publish", async (
+        app.MapPatch($"{Constants.Routes.StaffEventById}/reject-publish", async (
             Guid eventId,
             [FromBody] RejectPublishEventRequest request,
             ISender sender,

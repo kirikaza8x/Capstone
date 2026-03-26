@@ -29,7 +29,7 @@ public class UpdateEventEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPatch(Constants.Routes.EventById, async (
+        app.MapPatch(Constants.Routes.OrganizerEventById, async (
             [FromRoute] Guid eventId,
             [FromBody] UpdateEventRequest request,
             ISender sender,

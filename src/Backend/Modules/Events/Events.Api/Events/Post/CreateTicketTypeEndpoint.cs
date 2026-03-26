@@ -17,7 +17,7 @@ public class CreateTicketTypeEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPost(Constants.Routes.TicketTypes, async (
+        app.MapPost(Constants.Routes.OrganizerTicketTypes, async (
             [FromRoute] Guid eventId,
             [FromBody] CreateTicketTypeRequest request,
             ISender sender,

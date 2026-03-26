@@ -15,7 +15,7 @@ public class GetEventsForAdminEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapGet($"{Constants.Routes.Events}/admin", async (
+        app.MapGet(Constants.Routes.AdminEvents, async (
             [AsParameters] GetEventsForAdminQuery query,
             ISender sender,
             CancellationToken cancellationToken) =>

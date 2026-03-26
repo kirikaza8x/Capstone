@@ -17,7 +17,7 @@ public class CancelEventEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPatch($"{Constants.Routes.EventById}/cancel", async (
+        app.MapPatch($"{Constants.Routes.StaffEventById}/cancel", async (
             Guid eventId,
             [FromBody] CancelEventRequest request,
             ISender sender,

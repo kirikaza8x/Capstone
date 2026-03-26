@@ -5,7 +5,9 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using Shared.Api.Extensions;
 using Shared.Api.Results;
+using Users.PublicApi.Constants;
 
 namespace Events.Api.EventSessions;
 
@@ -22,7 +24,7 @@ public class CreateEventSessionEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPost(Constants.Routes.Sessions, async (
+        app.MapPost(Constants.Routes.OrganizerSessions, async (
             [FromRoute] Guid eventId,
             [FromBody] CreateEventSessionRequest request,
             ISender sender,
@@ -53,6 +55,7 @@ public class CreateEventSessionEndpoint : ICarterModule
         .WithDescription("Creates one or more sessions for an event in a single request.")
         .Produces<ApiResult<List<Guid>>>(StatusCodes.Status201Created)
         .ProducesProblem(StatusCodes.Status400BadRequest)
-        .ProducesProblem(StatusCodes.Status404NotFound);
+        .ProducesProblem(StatusCodes.Status404NotFound)
+        .RequireRoles(Roles.Organizer);
     }
 }

@@ -22,7 +22,7 @@ public class AssignAreaToTicketTypeEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPatch(Constants.Routes.TicketTypes + "/assign-area", async (
+        app.MapPatch(Constants.Routes.OrganizerTicketTypes + "/assign-area", async (
             [FromRoute] Guid eventId,
             [FromBody] AssignAreaToTicketTypeRequest request,
             ISender sender,

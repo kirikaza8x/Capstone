@@ -62,7 +62,7 @@ public class CreateEventEndpoint : ICarterModule
                 $"{Constants.Routes.Events}/{result.Value}",
                 "Event created successfully.");
         })
-        .WithTags(Constants.Tags.Events)
+        .WithTags(Constants.Tags.EventForOrganizer)
         .WithName("CreateEvent")
         .WithSummary("Create a new event")
         .WithDescription("Creates a new event with basic information. The event will be created in Draft status.")

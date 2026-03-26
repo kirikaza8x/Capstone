@@ -17,15 +17,15 @@ public class UpdateEventMemberPermissionsEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPatch(Constants.Routes.StaffById, async (
+        app.MapPatch(Constants.Routes.OrganizerEventMemberById, async (
             [FromRoute] Guid eventId,
-            [FromRoute] Guid staffId,
+            [FromRoute] Guid memberId,
             [FromBody] UpdateEventMemberPermissionsRequest request,
             ISender sender,
             CancellationToken cancellationToken) =>
         {
             var result = await sender.Send(
-                new UpdateEventMemberPermissionsCommand(eventId, staffId, request.Permissions),
+                new UpdateEventMemberPermissionsCommand(eventId, memberId, request.Permissions),
                 cancellationToken);
 
             return result.ToOk("Permissions updated successfully.");

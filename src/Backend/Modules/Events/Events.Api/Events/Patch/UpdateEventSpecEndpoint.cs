@@ -16,7 +16,7 @@ public class UpdateEventSpecEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPatch($"{Constants.Routes.EventById}/spec", async (
+        app.MapPatch($"{Constants.Routes.OrganizerEventById}/spec", async (
             Guid eventId,
             [FromBody] JsonDocument spec,
             ISender sender,

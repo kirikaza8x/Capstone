@@ -17,7 +17,7 @@ public class RequestCancelEventEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPatch($"{Constants.Routes.EventById}/request-cancellation", async (
+        app.MapPatch($"{Constants.Routes.OrganizerEventById}/request-cancellation", async (
             Guid eventId,
             [FromBody] RequestCancelEventRequest request,
             ISender sender,
@@ -29,7 +29,7 @@ public class RequestCancelEventEndpoint : ICarterModule
 
             return result.ToOk("Send request successfully");
         })
-        .WithTags(Constants.Tags.Events)
+        .WithTags(Constants.Tags.EventForOrganizer)
         .WithName("RequestCancelEvent")
         .WithSummary("Request event cancellation")
         .WithDescription("Organizer submits a cancellation request with a reason.")

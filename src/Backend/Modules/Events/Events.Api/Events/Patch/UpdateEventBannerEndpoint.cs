@@ -15,7 +15,7 @@ public class UpdateEventBannerEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPatch(Constants.Routes.EventById + "/banner", async (
+        app.MapPatch(Constants.Routes.OrganizerEventById + "/banner", async (
             [FromRoute] Guid eventId,
             IFormFile file,
             ISender sender,

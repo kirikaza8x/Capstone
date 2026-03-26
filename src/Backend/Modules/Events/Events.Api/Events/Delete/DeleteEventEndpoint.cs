@@ -25,13 +25,13 @@ public class DeleteEventEndpoint : ICarterModule
 
             return result.ToOk("Delete event successfully.");
         })
-        .WithTags(Constants.Tags.Events)
+        .WithTags(Constants.Tags.EventForOrganizer)
         .WithName("DeleteEvent")
         .WithSummary("Delete an event")
         .WithDescription("Permanently deletes the event. Only draft events can be deleted.")
         .Produces(StatusCodes.Status204NoContent)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status404NotFound)
-        .RequireRoles(Roles.AllExceptAttendee);
+        .RequireRoles(Roles.AdminAndOrganizer);
     }
 }
