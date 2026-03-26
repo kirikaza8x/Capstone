@@ -36,7 +36,6 @@ public class GetVoucherByIdEndpoint : ICarterModule
         .WithDescription("Retrieve voucher detail by ID.")
         .Produces<ApiResult<VoucherDto>>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status401Unauthorized)
-        .ProducesProblem(StatusCodes.Status404NotFound)
-        .RequireRoles(Roles.AdminAndOrganizer);
+        .ProducesProblem(StatusCodes.Status404NotFound);
     }
 }
