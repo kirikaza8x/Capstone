@@ -4,18 +4,17 @@ using Shared.Domain.Abstractions;
 using Marketing.Application.Posts.Dtos;
 using Marketing.Application.Posts.Queries;
 using Marketing.Domain.Repositories;
-using Marketing.Domain.Enums;
-using Marketing.Domain.Errors;
+using Shared.Domain.Pagination;
 
 namespace Marketing.Application.Posts.Handlers;
 
-public class GetPostsByOrganizerQueryHandler
-    : IQueryHandler<GetPostsByOrganizerQuery, IReadOnlyList<PostDto>>
+public class GetOrganizerPostsQueryHandler
+    : IQueryHandler<GetOrganizerPostsQuery, PagedResult<PostDto>>
 {
     private readonly IPostRepository _postRepository;
     private readonly IMapper _mapper;
 
-    public GetPostsByOrganizerQueryHandler(
+    public GetOrganizerPostsQueryHandler(
         IPostRepository postRepository,
         IMapper mapper)
     {
@@ -23,40 +22,75 @@ public class GetPostsByOrganizerQueryHandler
         _mapper = mapper;
     }
 
-    public async Task<Result<IReadOnlyList<PostDto>>> Handle(
-        GetPostsByOrganizerQuery query,
-        CancellationToken cancellationToken)
+    public async Task<Result<PagedResult<PostDto>>> Handle(
+    GetOrganizerPostsQuery query,
+    CancellationToken cancellationToken)
     {
-        // ─────────────────────────────────────────────────────────────
-        // Authorization: Only organizer can view their own posts
-        // ─────────────────────────────────────────────────────────────
-        if (query.OrganizerId != query.RequesterId)
-        {
-            return Result.Failure<IReadOnlyList<PostDto>>(
-                MarketingErrors.Post.NotAuthorized(query.RequesterId));
-        }
+        var posts = await _postRepository.GetAllWithPagingAsync(
+            query,
+            p =>
+                // REQUIRED
+                p.OrganizerId == query.OrganizerId
 
-        // ─────────────────────────────────────────────────────────────
-        // Fetch with optional status filter
-        // ─────────────────────────────────────────────────────────────
-        PostStatus? statusFilter = null;
+                // Identity
+                && (query.EventId == null || p.EventId == query.EventId)
 
-        if (!string.IsNullOrWhiteSpace(query.StatusFilter) &&
-            Enum.TryParse<PostStatus>(query.StatusFilter, true, out var parsedStatus))
-        {
-            statusFilter = parsedStatus;
-        }
+                // Status
+                && (query.Status == null || p.Status == query.Status)
 
-        var posts = await _postRepository.GetByOrganizerAsync(
-            query.OrganizerId,
-            statusFilter,
-            cancellationToken);
+                // Search
+                && (
+                    string.IsNullOrWhiteSpace(query.Search) ||
+                    p.Title.Contains(query.Search) ||
+                    (p.Summary != null && p.Summary.Contains(query.Search))
+                )
 
-        // ─────────────────────────────────────────────────────────────
-        // Map to DTOs
-        // ─────────────────────────────────────────────────────────────
-        var dtos = _mapper.Map<IReadOnlyList<PostDto>>(posts);
+                // Submitted range
+                && (
+                    query.SubmittedFrom == null ||
+                    (p.SubmittedAt != null && p.SubmittedAt >= query.SubmittedFrom)
+                )
+                && (
+                    query.SubmittedTo == null ||
+                    (p.SubmittedAt != null && p.SubmittedAt <= query.SubmittedTo)
+                )
 
-        return Result.Success(dtos);
+                // Published range
+                && (
+                    query.PublishedFrom == null ||
+                    (p.PublishedAt != null && p.PublishedAt >= query.PublishedFrom)
+                )
+                && (
+                    query.PublishedTo == null ||
+                    (p.PublishedAt != null && p.PublishedAt <= query.PublishedTo)
+                )
+
+                // IsPublished
+                && (
+                    query.IsPublished == null ||
+                    (query.IsPublished == true
+                        ? p.PublishedAt != null
+                        : p.PublishedAt == null)
+                )
+
+                // External URL
+                // && (
+                //     query.HasExternalPostUrl == null ||
+                //     (query.HasExternalPostUrl == true
+                //         ? p.ExternalPostUrl != null
+                //         : p.ExternalPostUrl == null)
+                // )
+                ,
+            cancellationToken: cancellationToken);
+
+        var dtoItems = _mapper.Map<IReadOnlyList<PostDto>>(posts.Items);
+
+        var dtoPagedResult = new PagedResult<PostDto>(
+            dtoItems,
+            posts.PageNumber,
+            posts.PageSize,
+            posts.TotalCount);
+
+        return Result.Success(dtoPagedResult);
     }
 }
