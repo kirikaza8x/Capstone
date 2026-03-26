@@ -5,7 +5,6 @@ using AI.Infrastructure.Data;
 using AI.Infrastructure.Embedding;
 using AI.Infrastructure.ExternalServices;
 using AI.Infrastructure.Qdrant;
-using Events.IntegrationEvents;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
@@ -13,14 +12,15 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Npgsql;
 using Qdrant.Client;
+using Shared.Application.Abstractions;
 using Shared.Application.Abstractions.Embbeding;
-using Shared.Application.Abstractions.EventBus;
 using Shared.Domain.Data;
 using Shared.Domain.Data.Repositories;
 using Shared.Infrastructure.Configs;
 using Shared.Infrastructure.Configs.Database;
 using Shared.Infrastructure.Configs.Qdrant;
 using Shared.Infrastructure.Data.Seeds;
+using Shared.Infrastructure.Services;
 
 namespace AI.Infrastructure;
 
@@ -82,7 +82,7 @@ public static class DependencyInjection
             .UseSnakeCaseNamingConvention()
             .AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
         });
-
+        services.AddScoped<ITrackingTokenGenerator, TrackingTokenGenerator>();
         // ── 3. External AI services ───────────────────────────────
         services.AddHttpClient<IImageGenerationService, OpenRouterImageService>();
         services.AddScoped<IGeminiService, GeminiService>();
