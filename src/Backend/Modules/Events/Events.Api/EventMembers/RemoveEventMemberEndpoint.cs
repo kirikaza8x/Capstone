@@ -15,7 +15,7 @@ public class RemoveEventMemberEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapDelete(Constants.Routes.StaffById, async (
+        app.MapDelete(Constants.Routes.OrganizerEventMemberById, async (
             [FromRoute] Guid eventId,
             [FromRoute] Guid staffId,
             ISender sender,

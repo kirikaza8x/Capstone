@@ -17,7 +17,7 @@ public class UpdateEventPolicyEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPatch($"{Constants.Routes.EventById}/policy", async (
+        app.MapPatch($"{Constants.Routes.OrganizerEventById}/policy", async (
             [FromRoute] Guid eventId,
             [FromBody] UpdateEventPolicyRequest request,
             ISender sender,

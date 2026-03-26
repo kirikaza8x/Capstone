@@ -16,7 +16,7 @@ public class GetEventsByOrganizerEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapGet($"{Constants.Routes.Events}/me", async (
+        app.MapGet($"{Constants.Routes.OrganizerEvents}/me", async (
             [AsParameters] GetEventsByOrganizerQuery query,
             ISender sender,
             CancellationToken cancellationToken) =>

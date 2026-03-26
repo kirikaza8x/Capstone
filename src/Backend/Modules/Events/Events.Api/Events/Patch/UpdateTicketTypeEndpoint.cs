@@ -17,7 +17,7 @@ public class UpdateTicketTypeEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPatch(Constants.Routes.TicketTypeById, async (
+        app.MapPatch(Constants.Routes.OrganizerTicketTypeById, async (
             [FromRoute] Guid eventId,
             [FromRoute] Guid ticketTypeId,
             [FromBody] UpdateTicketTypeRequest request,

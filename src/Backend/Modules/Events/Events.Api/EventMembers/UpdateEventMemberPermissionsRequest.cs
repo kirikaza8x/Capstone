@@ -17,7 +17,7 @@ public class UpdateEventMemberPermissionsEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPatch(Constants.Routes.StaffById, async (
+        app.MapPatch(Constants.Routes.OrganizerEventMemberById, async (
             [FromRoute] Guid eventId,
             [FromRoute] Guid staffId,
             [FromBody] UpdateEventMemberPermissionsRequest request,

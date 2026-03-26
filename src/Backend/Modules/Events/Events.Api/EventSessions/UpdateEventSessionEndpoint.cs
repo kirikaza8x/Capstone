@@ -21,7 +21,7 @@ public class UpdateEventSessionEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPatch(Constants.Routes.SessionById, async (
+        app.MapPatch(Constants.Routes.OrganizerSessionById, async (
             [FromRoute] Guid eventId,
             [FromRoute] Guid sessionId,
             [FromBody] UpdateEventSessionRequest request,

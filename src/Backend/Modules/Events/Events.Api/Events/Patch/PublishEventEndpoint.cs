@@ -14,7 +14,7 @@ public class PublishEventEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPatch($"{Constants.Routes.EventById}/publish", async (
+        app.MapPatch($"{Constants.Routes.StaffEventById}/publish", async (
             Guid eventId,
             ISender sender,
             CancellationToken cancellationToken) =>

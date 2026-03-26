@@ -5,8 +5,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Events.Application.EventMembers.Queries.ExportEventMembers;
-using Users.PublicApi.Constants;
 using Shared.Api.Extensions;
+using Users.PublicApi.Constants;
 
 namespace Events.Api.EventMembers.Get;
 
@@ -27,6 +27,6 @@ public class ExportEventMembersEndpoint : ICarterModule
         .WithName("ExportEventMembers")
         .WithSummary("Export event members to Excel")
         .WithDescription("Exports all event members into an Excel file")
-        .RequireRoles("Organizer");
+        .RequireRoles(Roles.Organizer);
     }
 }

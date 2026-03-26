@@ -14,7 +14,7 @@ public class RequestPublishEventEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPatch($"{Constants.Routes.EventById}/request-publish", async (
+        app.MapPatch($"{Constants.Routes.OrganizerEventById}/request-publish", async (
             Guid eventId,
             ISender sender,
             CancellationToken cancellationToken) =>
@@ -25,7 +25,7 @@ public class RequestPublishEventEndpoint : ICarterModule
 
             return result.ToOk("Event submitted for review successfully.");
         })
-        .WithTags(Constants.Tags.Events)
+        .WithTags(Constants.Tags.EventForOrganizer)
         .WithName("RequestPublishEvent")
         .WithSummary("Request event publish")
         .WithDescription("Organizer submits a draft event for admin review.")

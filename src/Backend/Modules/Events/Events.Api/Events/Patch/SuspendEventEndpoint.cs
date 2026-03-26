@@ -17,7 +17,7 @@ public class SuspendEventEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPatch($"{Constants.Routes.EventById}/suspend", async (
+        app.MapPatch($"{Constants.Routes.StaffEventById}/suspend", async (
             Guid eventId,
             [FromBody] SuspendEventRequest request,
             ISender sender,

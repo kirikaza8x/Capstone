@@ -15,7 +15,7 @@ public class GetEventMembersEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapGet(Constants.Routes.Staff, async (
+        app.MapGet(Constants.Routes.OrganizerEventMember, async (
             [FromRoute] Guid eventId,
             ISender sender,
             CancellationToken cancellationToken) =>

@@ -17,7 +17,7 @@ public class AddEventMemberEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPost(Constants.Routes.Staff, async (
+        app.MapPost(Constants.Routes.OrganizerEventMember, async (
             [FromRoute] Guid eventId,
             [FromBody] AddEventMemberRequest request,
             ISender sender,
