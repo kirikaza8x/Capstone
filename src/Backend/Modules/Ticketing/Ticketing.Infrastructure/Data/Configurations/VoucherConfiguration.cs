@@ -12,6 +12,7 @@ internal sealed class VoucherConfiguration : IEntityTypeConfiguration<Voucher>
         builder.ToTable("vouchers");
 
         builder.HasKey(x => x.Id);
+        builder.Property(e => e.Id).ValueGeneratedNever();
 
         builder.Property(x => x.CouponCode)
             .HasMaxLength(100)

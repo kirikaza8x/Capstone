@@ -21,4 +21,11 @@ public sealed record EventsByOrganizerResponse
     public DateTime? EventEndAt { get; init; }
     public string UrlPath { get; init; } = string.Empty;
     public DateTime CreatedAt { get; init; }
+    public string? CancellationReason { get; private set; }
+    public string? PublishRejectionReason { get; private set; }
+    public string? CancellationRejectionReason { get; private set; }
+    public string? SuspensionReason { get; private set; }
+    public DateTime? SuspendedAt { get; private set; }
+    public DateTime? SuspendedUntilAt { get; private set; }
+    public Guid? SuspendedBy { get; private set; }
 }
