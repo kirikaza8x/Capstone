@@ -11,6 +11,7 @@ using Shared.Infrastructure.Extensions;
 using Shared.Infrastructure.Service.Report;
 using Ticketing.Application.Abstractions.Locks;
 using Ticketing.Application.Orders.Queries.ExportOrdersSheet;
+using Ticketing.Application.Orders.Queries.ExportVoucherSheet;
 using Ticketing.Domain.Repositories;
 using Ticketing.Domain.Uow;
 using Ticketing.Infrastructure.Data;
@@ -35,11 +36,22 @@ public static class TicketingModule
         services.AddScoped<ITicketLockService, TicketLockService>();
         services.AddScoped<ITicketingSeatStatusPublicApi, TicketingSeatStatusPublicApi>();
         services.AddScoped<ITicketingPublicApi, TicketingPublicApi>();
+
+        // Report services
         services.AddScoped<ISheetMappings<OrderExportDto>, OrderSheetMappings>();
         services.AddScoped<IFileImportExportService<OrderExportDto>>(sp =>
         {
             var mappings = sp.GetRequiredService<ISheetMappings<OrderExportDto>>();
             return new ClosedXmlImportExportService<OrderExportDto>(
+                mappings.GetRowMapper(),
+                mappings.Exporter
+            );
+        });
+        services.AddScoped<ISheetMappings<VoucherExportDto>, VoucherSheetMappings>();
+        services.AddScoped<IFileImportExportService<VoucherExportDto>>(sp =>
+        {
+            var mappings = sp.GetRequiredService<ISheetMappings<VoucherExportDto>>();
+            return new ClosedXmlImportExportService<VoucherExportDto>(
                 mappings.GetRowMapper(),
                 mappings.Exporter
             );

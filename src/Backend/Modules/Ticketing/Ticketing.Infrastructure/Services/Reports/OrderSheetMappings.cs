@@ -46,5 +46,7 @@ public class OrderSheetMappings : ISheetMappings<OrderExportDto>
             ws.Cell(row, 12).Value = order.CreatedBy;
             row++;
         }
+
+        ws.Columns().AdjustToContents();
     };
 }
