@@ -26,4 +26,7 @@ public interface IEventTicketingPublicApi
     Task<IReadOnlyDictionary<Guid, OrderEventSummaryDto>> GetEventSummaryByEventIdsAsync(
         IReadOnlyCollection<Guid> eventIds,
         CancellationToken cancellationToken = default);
+    Task<EventDetailDto?> GetEventDetailAsync(
+        Guid eventId,
+        CancellationToken cancellationToken = default);
 }

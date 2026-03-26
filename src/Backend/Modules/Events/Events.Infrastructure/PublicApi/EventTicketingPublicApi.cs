@@ -236,4 +236,26 @@ internal sealed class EventTicketingPublicApi(EventsDbContext dbContext) : IEven
 
         return result;
     }
+
+    public async Task<EventDetailDto?> GetEventDetailAsync(
+        Guid eventId,
+        CancellationToken cancellationToken = default)
+    {
+        var ev = await dbContext.Events
+            .AsNoTracking()
+            .Where(e => e.Id == eventId)
+            .Select(e => new EventDetailDto(
+                e.Id,
+                e.OrganizerId,
+                e.Title,
+                e.Description,
+                e.EventStartAt,
+                e.Location,
+                e.EventHashtags.Select(h => h.Hashtag.Name).ToList(),
+                e.EventCategories.Select(c => c.Category.Name).ToList()
+            ))
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return ev;
+    }
 }
