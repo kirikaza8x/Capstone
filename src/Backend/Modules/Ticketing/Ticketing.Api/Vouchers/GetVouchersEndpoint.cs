@@ -3,12 +3,10 @@ using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using Shared.Api.Extensions;
 using Shared.Api.Results;
 using Shared.Domain.Pagination;
 using Ticketing.Application.Vouchers.Queries.Dto;
 using Ticketing.Application.Vouchers.Queries.GetVouchers;
-using Users.PublicApi.Constants;
 
 namespace Ticketing.Api.Vouchers;
 
@@ -34,7 +32,6 @@ public class GetVouchersEndpoint : ICarterModule
         .WithSummary("Get vouchers")
         .WithDescription("Retrieve paginated vouchers.")
         .Produces<ApiResult<PagedResult<VoucherDto>>>(StatusCodes.Status200OK)
-        .ProducesProblem(StatusCodes.Status401Unauthorized)
-        .RequireRoles(Roles.AdminAndOrganizer);
+        .ProducesProblem(StatusCodes.Status401Unauthorized);
     }
 }
