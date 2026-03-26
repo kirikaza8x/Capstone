@@ -24,4 +24,6 @@ public interface IVoucherRepository : IRepository<Voucher, Guid>
         CancellationToken cancellationToken = default);
 
     Task<Dictionary<Guid, Voucher>> GetVoucherMapByIdsAsync(IEnumerable<Guid> voucherIds, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<Voucher>> GetByEventAndCreatorAsync(Guid eventId, Guid createdBy, CancellationToken cancellationToken = default);
 }

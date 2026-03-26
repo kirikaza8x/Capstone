@@ -100,6 +100,8 @@ namespace Users.Infrastructure.Services.Report
                 ws.Cell(row, 13).Value = user.IsActive;
                 row++;
             }
+
+            ws.Columns().AdjustToContents();
         };
     }
 }

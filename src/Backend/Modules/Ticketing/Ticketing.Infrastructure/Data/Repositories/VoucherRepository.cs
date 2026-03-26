@@ -62,4 +62,13 @@ internal sealed class VoucherRepository(TicketingDbContext context)
 
         return vouchers.ToDictionary(v => v.Id);
     }
+
+    public async Task<IReadOnlyList<Voucher>> GetByEventAndCreatorAsync(Guid eventId, Guid createdBy, CancellationToken cancellationToken = default)
+    {
+        return await _context.Vouchers
+            .AsNoTracking()
+            .Where(v => v.EventId == eventId && v.CreatedBy == createdBy.ToString())
+            .OrderByDescending(v => v.CreatedAt)
+            .ToListAsync(cancellationToken);
+    }
 }
