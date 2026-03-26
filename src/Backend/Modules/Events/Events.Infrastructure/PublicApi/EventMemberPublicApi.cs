@@ -20,7 +20,7 @@ internal class EventMemberPublicApi(
         string            permission,
         CancellationToken cancellationToken = default)
     {
-        if (!EventPermissions.All.Contains(permission))
+        if (!EventMemberPermission.All.Contains(permission))
             return false;
 
         var cacheKey    = EventPermissionCacheKeys.Permission(eventId, userId, permission);

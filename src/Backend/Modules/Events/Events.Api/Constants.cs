@@ -1,4 +1,6 @@
-﻿namespace Events.Api;
+﻿using Microsoft.Extensions.Logging;
+
+namespace Events.Api;
 
 internal static class Constants
 {
@@ -7,6 +9,7 @@ internal static class Constants
         public const string Events = "Events";
         public const string EventForStaff = "Events - Staff";
         public const string EventForAdmin = "Events - Admin";
+        public const string EventForOrganizer = "Events - Organizer";
 
         public const string EventImages = "Event Images";
         public const string Sessions = "Sessions";
@@ -69,5 +72,8 @@ internal static class Constants
         public const string Search = $"{Events}/search";
         public const string Trending = $"{Events}/trending";
         public const string Upcoming = $"{Events}/upcoming";
+
+        // Event Members
+        public const string ExportEventMembers = $"{BaseApi}/organizer/events/{{eventId:guid}}/members/export";
     }
 }

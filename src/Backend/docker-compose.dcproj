@@ -10,9 +10,6 @@
     <None Include="docker-compose.backend.yml" />
     <None Include="docker-compose.embedding.yml" />
     <None Include="docker-compose.infrastructure.yml" />
-    <None Include="docker-compose.override.yml">
-      <DependentUpon>docker-compose.yml</DependentUpon>
-    </None>
     <None Include="docker-compose.yml" />
     <None Include=".dockerignore" />
   </ItemGroup>

@@ -1,6 +1,6 @@
 ﻿namespace Events.PublicApi.Constants;
 
-public static class EventPermissions
+public static class EventMemberPermission
 {
     public const string CheckIn = "CheckIn";
     public const string ViewReports = "ViewReports";
