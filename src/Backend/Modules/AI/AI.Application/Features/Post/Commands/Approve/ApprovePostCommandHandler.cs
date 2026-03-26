@@ -25,40 +25,24 @@ public class ApprovePostCommandHandler
         ApprovePostCommand command,
         CancellationToken cancellationToken)
     {
-        // ─────────────────────────────────────────────────────────────
-        // Fetch aggregate
-        // ─────────────────────────────────────────────────────────────
+        // Fetch
         var post = await _postRepository.GetByIdAsync(
             command.PostId,
             cancellationToken);
 
-        if (post == null)
+        if (post is null)
         {
             return Result.Failure(
                 MarketingErrors.Post.NotFound(command.PostId));
         }
 
-        // ─────────────────────────────────────────────────────────────
-        // Execute domain logic (admin action - no organizer check)
-        // ─────────────────────────────────────────────────────────────
-        try
-        {
-            var approveResult = post.Approve(command.AdminId);
+        // Domain logic (admin action)
+        var result = post.Approve(command.AdminId);
 
-            if (approveResult.IsFailure)
-            {
-                return Result.Failure(approveResult.Error);
-            }
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Result.Failure(
-                MarketingErrors.Post.ApproveFailed(ex.Message));
-        }
+        if (result.IsFailure)
+            return result;
 
-        // ─────────────────────────────────────────────────────────────
         // Persist
-        // ─────────────────────────────────────────────────────────────
         _postRepository.Update(post);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 

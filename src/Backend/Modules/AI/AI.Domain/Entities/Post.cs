@@ -6,34 +6,13 @@ using Shared.Domain.DDD;
 
 namespace Marketing.Domain.Entities;
 
-/// <summary>
-/// Represents an AI-generated marketing post for an Event on the AIPromo platform.
-///
-/// LIFECYCLE:
-///   Draft → Pending → Approved → Published → Archived
-///                  ↘ Rejected  → (Organizer edits) → Pending (resubmit)
-///
-/// RESPONSIBILITY:
-///   - Owns the content and its moderation state.
-///   - Stores a TrackingToken used by UserBehaviorLog to attribute event interactions
-///     back to this post (post itself does NOT own analytics — the event does).
-///   - External distribution (Facebook, etc.) is handled downstream by n8n; this
-///     entity only tracks whether that handoff succeeded.
-///
-/// LOOSE COUPLING:
-///   - Stores EventId (Guid) only. Event details fetched via Events.PublicApi.
-///   - Stores OrganizerId (Guid) only. User details fetched via Users.PublicApi.
-/// </summary>
 public sealed class PostMarketing : AggregateRoot<Guid>
 {
     // =========================================================
     // Identity & Ownership
     // =========================================================
 
-    /// <summary>The event this post is promoting.</summary>
     public Guid EventId { get; private set; }
-
-    /// <summary>The organizer who created this post.</summary>
     public Guid OrganizerId { get; private set; }
 
     // =========================================================
@@ -42,16 +21,20 @@ public sealed class PostMarketing : AggregateRoot<Guid>
 
     public string Title { get; private set; } = string.Empty;
     public string Body { get; private set; } = string.Empty;
+    public string? Summary { get; private set; }
+    public string Slug { get; private set; } = string.Empty;
     public string? ImageUrl { get; private set; }
+
+    // public List<string> Tags { get; private set; } = new();
 
     // =========================================================
     // AI Metadata
     // =========================================================
 
-    /// <summary>The prompt the organizer submitted to the AI.</summary>
     public string? PromptUsed { get; private set; }
     public string? AiModel { get; private set; }
     public int? AiTokensUsed { get; private set; }
+    public decimal? AiCost { get; private set; }
 
     // =========================================================
     // Moderation
@@ -59,7 +42,6 @@ public sealed class PostMarketing : AggregateRoot<Guid>
 
     public PostStatus Status { get; private set; }
 
-    /// <summary>Admin who reviewed this post. Null until reviewed.</summary>
     public Guid? ReviewedBy { get; private set; }
     public DateTime? ReviewedAt { get; private set; }
     public string? RejectionReason { get; private set; }
@@ -71,24 +53,16 @@ public sealed class PostMarketing : AggregateRoot<Guid>
     public DateTime? PublishedAt { get; private set; }
     public DateTime? SubmittedAt { get; private set; }
 
-    /// <summary>
-    /// Opaque token embedded in post links.
-    /// When a user clicks the post → navigates to event,
-    /// UserBehaviorLog records: targetId=EventId, metadata={post_token}.
-    /// This is how we attribute event traffic back to the post without
-    /// Post owning any analytics counters itself.
-    /// </summary>
     public string TrackingToken { get; private set; } = string.Empty;
 
     /// <summary>
-    /// Set once n8n (or any downstream automation) confirms
-    /// the post was distributed to an external platform.
-    /// Null = AIPromo platform only.
+    /// MVP version: single external distribution
+    /// (can evolve later into collection)
     /// </summary>
     public string? ExternalPostUrl { get; private set; }
 
     // =========================================================
-    // Versioning (supports edit-after-rejection pattern)
+    // Versioning
     // =========================================================
 
     public int Version { get; private set; }
@@ -103,29 +77,33 @@ public sealed class PostMarketing : AggregateRoot<Guid>
     // Factory
     // =========================================================
 
-    /// <summary>
-    /// Create a new AI-generated post in Draft status.
-    /// Called after the AI service returns generated content.
-    /// </summary>
     public static PostMarketing CreateDraft(
         Guid eventId,
         Guid organizerId,
         string title,
         string body,
         string trackingToken,
+        string? summary = null,
+        string? slug = null,
         string? imageUrl = null,
+        List<string>? tags = null,
         string? promptUsed = null,
         string? aiModel = null,
-        int? aiTokensUsed = null)
+        int? aiTokensUsed = null,
+        decimal? aiCost = null)
     {
         if (eventId == Guid.Empty)
             throw new ArgumentException("EventId is required.", nameof(eventId));
+
         if (organizerId == Guid.Empty)
             throw new ArgumentException("OrganizerId is required.", nameof(organizerId));
+
         if (string.IsNullOrWhiteSpace(title))
             throw new ArgumentException("Title is required.", nameof(title));
+
         if (string.IsNullOrWhiteSpace(body))
             throw new ArgumentException("Body is required.", nameof(body));
+
         if (string.IsNullOrWhiteSpace(trackingToken))
             throw new ArgumentException("TrackingToken is required.", nameof(trackingToken));
 
@@ -136,14 +114,18 @@ public sealed class PostMarketing : AggregateRoot<Guid>
             OrganizerId = organizerId,
             Title = title.Trim(),
             Body = body.Trim(),
+            Summary = summary?.Trim(),
+            Slug = slug ?? GenerateSlug(title),
             ImageUrl = imageUrl?.Trim(),
+            // Tags = tags ?? new List<string>(),
             PromptUsed = promptUsed?.Trim(),
             AiModel = aiModel?.Trim(),
             AiTokensUsed = aiTokensUsed,
+            AiCost = aiCost,
             TrackingToken = trackingToken.Trim().ToLowerInvariant(),
             Status = PostStatus.Draft,
             Version = 1,
-            CreatedAt = DateTime.UtcNow,
+            CreatedAt = DateTime.UtcNow
         };
 
         post.RaiseDomainEvent(new PostCreatedDomainEvent(
@@ -159,14 +141,13 @@ public sealed class PostMarketing : AggregateRoot<Guid>
     // Organizer Behaviors
     // =========================================================
 
-    /// <summary>
-    /// Organizer edits draft content before submitting.
-    /// Also allowed after rejection (reopen → edit → resubmit).
-    /// </summary>
     public Result Update(
         string? title,
         string? body,
-        string? imageUrl)
+        string? summary,
+        string? imageUrl,
+        string? slug = null
+        )
     {
         if (Status is not (PostStatus.Draft or PostStatus.Rejected))
             return Result.Failure(MarketingErrors.Post.CannotEditInStatus(Status));
@@ -175,61 +156,76 @@ public sealed class PostMarketing : AggregateRoot<Guid>
         {
             if (string.IsNullOrWhiteSpace(title))
                 return Result.Failure(MarketingErrors.Post.TitleCannotBeEmpty);
+
             Title = title.Trim();
+            Slug = GenerateSlug(Title);
         }
 
         if (body is not null)
         {
             if (string.IsNullOrWhiteSpace(body))
                 return Result.Failure(MarketingErrors.Post.BodyCannotBeEmpty);
+
             Body = body.Trim();
         }
 
-        ImageUrl = imageUrl?.Trim() ?? ImageUrl;
-        ModifiedAt = DateTime.UtcNow;
+        if (summary is not null)
+            Summary = summary.Trim();
 
+        // if (tags is not null)
+        //     Tags = tags;
+
+        if (slug is not null)
+        {
+
+            Slug = slug.Trim().ToLowerInvariant();
+        }
+
+        ImageUrl = imageUrl?.Trim() ?? ImageUrl;
+
+        Version++;
+        ModifiedAt = DateTime.UtcNow;
+        if (Status == PostStatus.Approved || Status == PostStatus.Published)
+        {
+            Status = PostStatus.Draft;
+        }
         return Result.Success();
     }
 
-    /// <summary>
-    /// Organizer submits the draft for admin review.
-    /// Can also resubmit after rejection.
-    /// </summary>
     public Result Submit()
     {
         if (Status is not (PostStatus.Draft or PostStatus.Rejected))
             return Result.Failure(MarketingErrors.Post.CannotSubmitInStatus(Status));
 
-        // Guard: must have content before submitting
         if (string.IsNullOrWhiteSpace(Title) || string.IsNullOrWhiteSpace(Body))
             return Result.Failure(MarketingErrors.Post.ContentIncompleteForSubmit);
 
-        Status = PostStatus.Pending;
-        RejectionReason = null; // clear previous rejection when resubmitting
-        ModifiedAt = DateTime.UtcNow;
         SubmittedAt = DateTime.UtcNow;
+        ModifiedAt = SubmittedAt;
+
+        Status = PostStatus.Pending;
+        RejectionReason = null;
 
         RaiseDomainEvent(new PostSubmittedDomainEvent(
             PostId: Id,
             TargetId: EventId,
             OrganizerId: OrganizerId,
-            SubmittedAt: ModifiedAt!.Value));
+            SubmittedAt: SubmittedAt.Value));
 
         return Result.Success();
     }
 
-    /// <summary>
-    /// Organizer publishes the post to the AIPromo platform.
-    /// Only allowed after admin approval.
-    /// </summary>
     public Result Publish()
     {
         if (Status != PostStatus.Approved)
             return Result.Failure(MarketingErrors.Post.CannotPublishInStatus(Status));
 
+        if (PublishedAt is not null)
+            return Result.Failure(MarketingErrors.Post.PublishFailed("Post is already published."));
+
         Status = PostStatus.Published;
         PublishedAt = DateTime.UtcNow;
-        ModifiedAt = DateTime.UtcNow;
+        ModifiedAt = PublishedAt;
 
         RaiseDomainEvent(new PostPublishedDomainEvent(
             PostId: Id,
@@ -240,14 +236,10 @@ public sealed class PostMarketing : AggregateRoot<Guid>
         return Result.Success();
     }
 
-    /// <summary>
-    /// Organizer soft-deletes the post (draft/rejected only).
-    /// Published posts must be archived, not deleted.
-    /// </summary>
     public Result Archive()
     {
         if (Status == PostStatus.Archived)
-            return Result.Success(); // idempotent
+            return Result.Success();
 
         if (Status == PostStatus.Pending)
             return Result.Failure(MarketingErrors.Post.CannotArchiveWhilePending);
@@ -264,9 +256,6 @@ public sealed class PostMarketing : AggregateRoot<Guid>
     // Admin Behaviors
     // =========================================================
 
-    /// <summary>
-    /// Admin approves the post — organizer can now publish it.
-    /// </summary>
     public Result Approve(Guid adminId)
     {
         if (Status != PostStatus.Pending)
@@ -279,7 +268,7 @@ public sealed class PostMarketing : AggregateRoot<Guid>
         ReviewedBy = adminId;
         ReviewedAt = DateTime.UtcNow;
         RejectionReason = null;
-        ModifiedAt = DateTime.UtcNow;
+        ModifiedAt = ReviewedAt;
 
         RaiseDomainEvent(new PostApprovedDomainEvent(
             PostId: Id,
@@ -291,10 +280,6 @@ public sealed class PostMarketing : AggregateRoot<Guid>
         return Result.Success();
     }
 
-    /// <summary>
-    /// Admin rejects the post with a mandatory reason.
-    /// Organizer can edit and resubmit after rejection.
-    /// </summary>
     public Result Reject(Guid adminId, string reason)
     {
         if (Status != PostStatus.Pending)
@@ -310,7 +295,7 @@ public sealed class PostMarketing : AggregateRoot<Guid>
         ReviewedBy = adminId;
         ReviewedAt = DateTime.UtcNow;
         RejectionReason = reason.Trim();
-        ModifiedAt = DateTime.UtcNow;
+        ModifiedAt = ReviewedAt;
 
         RaiseDomainEvent(new PostRejectedDomainEvent(
             PostId: Id,
@@ -323,14 +308,10 @@ public sealed class PostMarketing : AggregateRoot<Guid>
         return Result.Success();
     }
 
-    /// <summary>
-    /// Admin force-removes a published post that violates platform policy.
-    /// Different from Archive (which is organizer-initiated).
-    /// </summary>
-    public Result ForceRemove(Guid adminId, string reason)
+    public Result AdminRemove(Guid adminId, string reason)
     {
         if (Status == PostStatus.Archived)
-            return Result.Success(); // idempotent
+            return Result.Success();
 
         if (adminId == Guid.Empty)
             return Result.Failure(MarketingErrors.Post.ReviewerRequired);
@@ -342,7 +323,7 @@ public sealed class PostMarketing : AggregateRoot<Guid>
         ReviewedBy = adminId;
         ReviewedAt = DateTime.UtcNow;
         RejectionReason = reason.Trim();
-        ModifiedAt = DateTime.UtcNow;
+        ModifiedAt = ReviewedAt;
 
         RaiseDomainEvent(new PostForceRemovedDomainEvent(
             PostId: Id,
@@ -355,13 +336,9 @@ public sealed class PostMarketing : AggregateRoot<Guid>
     }
 
     // =========================================================
-    // External Distribution (n8n callback)
+    // External Distribution
     // =========================================================
 
-    /// <summary>
-    /// Called when n8n confirms the post was distributed to an external platform.
-    /// This is informational only — the post lifecycle is already complete at Published.
-    /// </summary>
     public Result RecordExternalDistribution(string externalUrl)
     {
         if (Status != PostStatus.Published)
@@ -385,8 +362,17 @@ public sealed class PostMarketing : AggregateRoot<Guid>
     public bool IsDistributedExternally() => !string.IsNullOrWhiteSpace(ExternalPostUrl);
 
     // =========================================================
-    // Event sourcing stub (not used — state managed directly)
+    // Helpers
     // =========================================================
+
+    private static string GenerateSlug(string title)
+    {
+        return title
+            .ToLowerInvariant()
+            .Replace(" ", "-")
+            .Replace(".", "")
+            .Replace(",", "");
+    }
 
     protected override void Apply(IDomainEvent @event) { }
 }

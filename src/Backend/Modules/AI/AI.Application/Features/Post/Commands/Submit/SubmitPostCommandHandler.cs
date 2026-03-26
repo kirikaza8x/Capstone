@@ -25,49 +25,28 @@ public class SubmitPostCommandHandler
         SubmitPostCommand command,
         CancellationToken cancellationToken)
     {
-        // ─────────────────────────────────────────────────────────────
-        // Fetch aggregate
-        // ─────────────────────────────────────────────────────────────
+        // Fetch
         var post = await _postRepository.GetByIdAsync(
             command.PostId,
             cancellationToken);
 
-        if (post == null)
+        if (post is null)
         {
             return Result.Failure(
                 MarketingErrors.Post.NotFound(command.PostId));
         }
 
-        // ─────────────────────────────────────────────────────────────
-        // Authorization: Only organizer can submit their post
-        // ─────────────────────────────────────────────────────────────
         if (post.OrganizerId != command.OrganizerId)
         {
             return Result.Failure(
                 MarketingErrors.Post.NotAuthorized(command.OrganizerId));
         }
 
-        // ─────────────────────────────────────────────────────────────
-        // Execute domain logic
-        // ─────────────────────────────────────────────────────────────
-        try
-        {
-            var submitResult = post.Submit();
+        var result = post.Submit();
 
-            if (submitResult.IsFailure)
-            {
-                return Result.Failure(submitResult.Error);
-            }
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Result.Failure(
-                MarketingErrors.Post.SubmitFailed(ex.Message));
-        }
+        if (result.IsFailure)
+            return result;
 
-        // ─────────────────────────────────────────────────────────────
-        // Persist
-        // ─────────────────────────────────────────────────────────────
         _postRepository.Update(post);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 

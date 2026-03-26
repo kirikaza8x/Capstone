@@ -1,9 +1,10 @@
 using Shared.Application.Abstractions.Messaging;
+using Shared.Application.Helpers;
 using Shared.Domain.Abstractions;
 using Marketing.Domain.Repositories;
 using Marketing.Domain.Errors;
-using AI.Domain.Interfaces.UOW;
 using Marketing.Application.Posts.Commands;
+using AI.Domain.Interfaces.UOW;
 
 namespace Marketing.Application.Posts.Handlers;
 
@@ -25,55 +26,67 @@ public class UpdatePostCommandHandler
         UpdatePostCommand command,
         CancellationToken cancellationToken)
     {
-        // ─────────────────────────────────────────────────────────────
-        // Fetch aggregate
-        // ─────────────────────────────────────────────────────────────
         var post = await _postRepository.GetByIdAsync(
             command.PostId,
             cancellationToken);
 
-        if (post == null)
+        if (post is null)
         {
             return Result.Failure(
                 MarketingErrors.Post.NotFound(command.PostId));
         }
 
-        // ─────────────────────────────────────────────────────────────
-        // Authorization: Only organizer can edit their post
-        // ─────────────────────────────────────────────────────────────
+        // Authorization
         if (post.OrganizerId != command.OrganizerId)
         {
             return Result.Failure(
                 MarketingErrors.Post.NotAuthorized(command.OrganizerId));
         }
 
-        // ─────────────────────────────────────────────────────────────
-        // Execute domain logic
-        // ─────────────────────────────────────────────────────────────
-        try
-        {
-            var updateResult = post.Update(
-                title: command.Title,
-                body: command.Body,
-                imageUrl: null);
+        // ─────────────────────────────────────────────
+        // Regenerate slug (if title changed)
+        // ─────────────────────────────────────────────
+        string? newSlug = null;
 
-            if (updateResult.IsFailure)
-            {
-                return Result.Failure(updateResult.Error);
-            }
-        }
-        catch (InvalidOperationException ex)
+        if (!string.Equals(post.Title, command.Title, StringComparison.Ordinal))
         {
-            return Result.Failure(
-                MarketingErrors.Post.UpdateFailed(ex.Message));
+            var baseSlug = SlugHelper.Generate(command.Title ?? post.Title);
+            newSlug = await GenerateUniqueSlug(baseSlug, cancellationToken);
         }
 
-        // ─────────────────────────────────────────────────────────────
-        // Persist
-        // ─────────────────────────────────────────────────────────────
+        // ─────────────────────────────────────────────
+        // Domain logic
+        // ─────────────────────────────────────────────
+        var result = post.Update(
+            title: command.Title,
+            body: command.Body,
+            summary: command.Summary ?? null,   // <-- required
+            imageUrl: null,
+            slug: newSlug
+        );
+
+        if (result.IsFailure)
+            return result;
+
         _postRepository.Update(post);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Success();
+    }
+
+    private async Task<string> GenerateUniqueSlug(
+        string baseSlug,
+        CancellationToken cancellationToken)
+    {
+        var slug = baseSlug;
+        int counter = 1;
+
+        while (await _postRepository.SlugExistsAsync(slug, cancellationToken))
+        {
+            slug = $"{baseSlug}-{counter}";
+            counter++;
+        }
+
+        return slug;
     }
 }

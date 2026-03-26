@@ -1,4 +1,6 @@
+using Shared.Application.Abstractions;
 using Shared.Application.Abstractions.Messaging;
+using Shared.Application.Helpers;
 using Shared.Domain.Abstractions;
 using Marketing.Domain.Entities;
 using Marketing.Domain.Repositories;
@@ -13,13 +15,16 @@ public class CreatePostDraftCommandHandler
 {
     private readonly IPostRepository _postRepository;
     private readonly IAiUnitOfWork _unitOfWork;
+    private readonly ITrackingTokenGenerator _tokenGenerator;
 
     public CreatePostDraftCommandHandler(
         IPostRepository postRepository,
-        IAiUnitOfWork unitOfWork)
+        IAiUnitOfWork unitOfWork,
+        ITrackingTokenGenerator tokenGenerator)
     {
         _postRepository = postRepository;
         _unitOfWork = unitOfWork;
+        _tokenGenerator = tokenGenerator;
     }
 
     public async Task<Result<Guid>> Handle(
@@ -27,43 +32,40 @@ public class CreatePostDraftCommandHandler
         CancellationToken cancellationToken)
     {
         // ─────────────────────────────────────────────────────────────
-        // Guard: Tracking token must be unique
+        // Generate Tracking Token (retry if collision)
         // ─────────────────────────────────────────────────────────────
-        var tokenExists = await _postRepository.TrackingTokenExistsAsync(
-            command.TrackingToken,
-            cancellationToken);
+        string trackingToken;
+        int retry = 0;
 
-        if (tokenExists)
+        do
+        {
+            trackingToken = _tokenGenerator.Generate();
+
+            var exists = await _postRepository.TrackingTokenExistsAsync(
+                trackingToken,
+                cancellationToken);
+
+            if (!exists) break;
+
+            retry++;
+        }
+        while (retry < 3);
+
+        if (retry == 3)
         {
             return Result.Failure<Guid>(
-                MarketingErrors.Post.TrackingTokenAlreadyExists(command.TrackingToken));
+                MarketingErrors.Post.TrackingTokenAlreadyExists("Failed to generate unique tracking token after multiple attempts."));
         }
 
         // ─────────────────────────────────────────────────────────────
-        // Guard: Validate required fields
+        // Generate Slug
         // ─────────────────────────────────────────────────────────────
-        if (command.EventId == Guid.Empty)
-        {
-            return Result.Failure<Guid>(MarketingErrors.Post.EventIdRequired);
-        }
+        var baseSlug = SlugHelper.Generate(command.Title);
 
-        if (command.OrganizerId == Guid.Empty)
-        {
-            return Result.Failure<Guid>(MarketingErrors.Post.OrganizerIdRequired);
-        }
-
-        if (string.IsNullOrWhiteSpace(command.Title))
-        {
-            return Result.Failure<Guid>(MarketingErrors.Post.TitleCannotBeEmpty);
-        }
-
-        if (string.IsNullOrWhiteSpace(command.Body))
-        {
-            return Result.Failure<Guid>(MarketingErrors.Post.BodyCannotBeEmpty);
-        }
+        var slug = await GenerateUniqueSlug(baseSlug, cancellationToken);
 
         // ─────────────────────────────────────────────────────────────
-        // Create aggregate via factory
+        // Create aggregate
         // ─────────────────────────────────────────────────────────────
         PostMarketing post;
 
@@ -74,10 +76,12 @@ public class CreatePostDraftCommandHandler
                 organizerId: command.OrganizerId,
                 title: command.Title,
                 body: command.Body,
-                trackingToken: command.TrackingToken,
+                slug: slug,
+                trackingToken: trackingToken,
                 promptUsed: command.PromptUsed,
                 aiModel: command.AiModel,
-                aiTokensUsed: command.AiTokensUsed);
+                aiTokensUsed: command.AiTokensUsed
+            );
         }
         catch (ArgumentException ex)
         {
@@ -92,5 +96,24 @@ public class CreatePostDraftCommandHandler
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Success(post.Id);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Slug uniqueness helper
+    // ─────────────────────────────────────────────────────────────
+    private async Task<string> GenerateUniqueSlug(
+        string baseSlug,
+        CancellationToken cancellationToken)
+    {
+        var slug = baseSlug;
+        int counter = 1;
+
+        while (await _postRepository.SlugExistsAsync(slug, cancellationToken))
+        {
+            slug = $"{baseSlug}-{counter}";
+            counter++;
+        }
+
+        return slug;
     }
 }

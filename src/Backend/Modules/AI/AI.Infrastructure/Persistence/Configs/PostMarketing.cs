@@ -46,18 +46,32 @@ public class PostConfiguration : IEntityTypeConfiguration<PostMarketing>
         builder.Property(p => p.Body)
                .HasColumnName("body")
                .IsRequired()
-               .HasMaxLength(4000);
+               .HasColumnType("text"); // better for large AI content
+
+        builder.Property(p => p.Summary)
+               .HasColumnName("summary")
+               .HasMaxLength(500);
+
+        builder.Property(p => p.Slug)
+               .HasColumnName("slug")
+               .IsRequired()
+               .HasMaxLength(300);
 
         builder.Property(p => p.ImageUrl)
                .HasColumnName("image_url")
                .HasMaxLength(500);
+
+        // Tags → JSONB (PostgreSQL optimized)
+       //  builder.Property(p => p.Tags)
+       //         .HasColumnName("tags")
+       //         .HasColumnType("jsonb");
 
         // ─────────────────────────────────────────────────────────────
         // AI Metadata
         // ─────────────────────────────────────────────────────────────
         builder.Property(p => p.PromptUsed)
                .HasColumnName("prompt_used")
-               .HasMaxLength(2000);
+               .HasColumnType("text");
 
         builder.Property(p => p.AiModel)
                .HasColumnName("ai_model")
@@ -65,6 +79,10 @@ public class PostConfiguration : IEntityTypeConfiguration<PostMarketing>
 
         builder.Property(p => p.AiTokensUsed)
                .HasColumnName("ai_tokens_used");
+
+        builder.Property(p => p.AiCost)
+               .HasColumnName("ai_cost")
+               .HasColumnType("numeric(10,4)");
 
         // ─────────────────────────────────────────────────────────────
         // Moderation
@@ -109,39 +127,50 @@ public class PostConfiguration : IEntityTypeConfiguration<PostMarketing>
                .HasMaxLength(500);
 
         // ─────────────────────────────────────────────────────────────
-        // Versioning
+        // Versioning (Optimistic Concurrency )
         // ─────────────────────────────────────────────────────────────
         builder.Property(p => p.Version)
                .HasColumnName("version")
                .IsRequired()
-               .HasDefaultValue(1);
+               .HasDefaultValue(1)
+               .IsConcurrencyToken(); //  important
 
         // ─────────────────────────────────────────────────────────────
-        // Audit Fields (CreatedAt, ModifiedAt from AggregateRoot)
+        // Audit Fields
         // ─────────────────────────────────────────────────────────────
         builder.ConfigureAudit<PostMarketing, Guid>();
 
         // ─────────────────────────────────────────────────────────────
         // Indexes
         // ─────────────────────────────────────────────────────────────
-        
-        // Unique index on TrackingToken (attribution)
+
+        //  Unique tracking token
         builder.HasIndex(p => p.TrackingToken)
                .IsUnique()
                .HasDatabaseName("ix_post_tracking_token");
 
-        // Composite index for organizer queries (dashboard filtering)
-        builder.HasIndex(p => new { p.OrganizerId, p.EventId, p.Status })
-               .HasDatabaseName("ix_post_organizer_event_status");
+        //  Slug (for public URL)
+        builder.HasIndex(p => p.Slug)
+               .IsUnique()
+               .HasDatabaseName("ix_post_slug");
 
-        // Index for pending moderation queue (FIFO ordering)
+        // Organizer dashboard queries
+        builder.HasIndex(p => new { p.OrganizerId, p.Status, p.CreatedAt })
+               .HasDatabaseName("ix_post_organizer_status_created");
+
+        // Moderation queue (FIFO)
         builder.HasIndex(p => new { p.Status, p.SubmittedAt })
                .HasDatabaseName("ix_post_pending_queue")
                .HasFilter("status = 'Pending'");
 
-        // Index for published posts by event (public feed)
-        builder.HasIndex(p => new { p.EventId, p.Status, p.PublishedAt })
-               .HasDatabaseName("ix_post_published_by_event")
+        // Public feed (event-based)
+        builder.HasIndex(p => new { p.EventId, p.PublishedAt })
+               .HasDatabaseName("ix_post_event_published")
+               .HasFilter("status = 'Published'");
+
+        //  Global feed (important for homepage)
+        builder.HasIndex(p => new { p.Status, p.PublishedAt })
+               .HasDatabaseName("ix_post_global_feed")
                .HasFilter("status = 'Published'");
     }
 }

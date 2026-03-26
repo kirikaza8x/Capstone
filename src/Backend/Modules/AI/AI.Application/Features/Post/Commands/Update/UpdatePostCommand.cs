@@ -6,5 +6,6 @@ public record UpdatePostCommand(
     Guid PostId,
     Guid OrganizerId,
     string? Title = null,
-    string? Body = null
+    string? Body = null,
+    string? Summary = null
 ) : ICommand;

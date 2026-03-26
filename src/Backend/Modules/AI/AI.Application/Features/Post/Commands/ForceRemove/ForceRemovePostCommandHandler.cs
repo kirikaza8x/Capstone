@@ -25,40 +25,23 @@ public class ForceRemovePostCommandHandler
         ForceRemovePostCommand command,
         CancellationToken cancellationToken)
     {
-        // ─────────────────────────────────────────────────────────────
-        // Fetch aggregate
-        // ─────────────────────────────────────────────────────────────
         var post = await _postRepository.GetByIdAsync(
             command.PostId,
             cancellationToken);
 
-        if (post == null)
+        if (post is null)
         {
             return Result.Failure(
                 MarketingErrors.Post.NotFound(command.PostId));
         }
 
-        // ─────────────────────────────────────────────────────────────
-        // Execute domain logic (admin action - no organizer check)
-        // ─────────────────────────────────────────────────────────────
-        try
-        {
-            var removeResult = post.ForceRemove(command.AdminId, command.Reason);
+        var result = post.AdminRemove(
+            command.AdminId,
+            command.Reason);
 
-            if (removeResult.IsFailure)
-            {
-                return Result.Failure(removeResult.Error);
-            }
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Result.Failure(
-                MarketingErrors.Post.ForceRemoveFailed(ex.Message));
-        }
+        if (result.IsFailure)
+            return result;
 
-        // ─────────────────────────────────────────────────────────────
-        // Persist
-        // ─────────────────────────────────────────────────────────────
         _postRepository.Update(post);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 

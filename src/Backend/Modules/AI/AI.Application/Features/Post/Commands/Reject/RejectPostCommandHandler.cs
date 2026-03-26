@@ -25,40 +25,21 @@ public class RejectPostCommandHandler
         RejectPostCommand command,
         CancellationToken cancellationToken)
     {
-        // ─────────────────────────────────────────────────────────────
-        // Fetch aggregate
-        // ─────────────────────────────────────────────────────────────
         var post = await _postRepository.GetByIdAsync(
             command.PostId,
             cancellationToken);
 
-        if (post == null)
+        if (post is null)
         {
             return Result.Failure(
                 MarketingErrors.Post.NotFound(command.PostId));
         }
 
-        // ─────────────────────────────────────────────────────────────
-        // Execute domain logic (admin action - no organizer check)
-        // ─────────────────────────────────────────────────────────────
-        try
-        {
-            var rejectResult = post.Reject(command.AdminId, command.Reason);
+        var result = post.Reject(command.AdminId, command.Reason);
 
-            if (rejectResult.IsFailure)
-            {
-                return Result.Failure(rejectResult.Error);
-            }
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Result.Failure(
-                MarketingErrors.Post.RejectFailed(ex.Message));
-        }
+        if (result.IsFailure)
+            return result;
 
-        // ─────────────────────────────────────────────────────────────
-        // Persist
-        // ─────────────────────────────────────────────────────────────
         _postRepository.Update(post);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
