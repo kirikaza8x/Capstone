@@ -66,18 +66,6 @@ internal static class Constants
         public const string TicketTypes = $"{EventById}/ticket-types";
         public const string TicketTypeById = $"{TicketTypes}/{{ticketTypeId:guid}}";
 
-        // Areas
-        public const string Areas = $"{EventById}/areas";
-        public const string AreaById = $"{Areas}/{{areaId:guid}}";
-
-        // Seats
-        public const string Seats = $"{AreaById}/seats";
-        public const string SeatById = $"{Seats}/{{seatId:guid}}";
-
-        // Session Ticket Quotas
-        public const string Quotas = $"{SessionById}/quotas";
-        public const string QuotaByTicketType = $"{Quotas}/{{ticketTypeId:guid}}";
-
         // Categories
         public const string Categories = $"{BaseApi}/categories";
         public const string CategoryById = $"{Categories}/{{categoryId:int}}";
