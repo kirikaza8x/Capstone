@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Logging;
 using Shared.Application.Abstractions.EventBus;
 using Shared.Application.Abstractions.Notifications;
-using Users.PublicApi.Services;
+using Users.PublicApi.PublicApi;
 
 namespace Notifications.Application.IntegrationEventHandlers;
 

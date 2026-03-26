@@ -22,5 +22,8 @@ internal static class Constants
         // voucher
         public const string Vouchers = $"{BaseApi}/vouchers";
         public const string VoucherById = $"{Vouchers}/{{voucherId:guid}}";
+
+        // organizer routes
+        public const string OrganizerOrdersForEvent = $"{BaseApi}/organizer/orders/event";
     }
 }

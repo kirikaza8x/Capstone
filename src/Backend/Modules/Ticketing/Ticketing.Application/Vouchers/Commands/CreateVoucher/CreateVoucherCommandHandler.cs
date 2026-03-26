@@ -59,7 +59,7 @@ internal sealed class CreateVoucherCommandHandler(
                 "Organizer must specify an event for the voucher."));
         }
 
-        // Check coupon code trùng
+        // Check duplicate coupon code
         var exists = await voucherRepository.IsCouponCodeExistsAsync(
             command.CouponCode,
             cancellationToken);

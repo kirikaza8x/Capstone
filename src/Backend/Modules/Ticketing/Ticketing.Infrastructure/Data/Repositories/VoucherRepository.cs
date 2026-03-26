@@ -1,3 +1,4 @@
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Shared.Domain.Pagination;
 using Shared.Domain.Queries;
@@ -51,5 +52,14 @@ internal sealed class VoucherRepository(TicketingDbContext context)
         return await queryable
             .OrderByDescending(v => v.CreatedAt)
             .ToPagedResultAsync(query, cancellationToken);
+    }
+
+    public async Task<Dictionary<Guid, Voucher>> GetVoucherMapByIdsAsync(IEnumerable<Guid> voucherIds, CancellationToken cancellationToken = default)
+    {
+        var vouchers = await _context.Vouchers
+            .Where(v => voucherIds.Contains(v.Id))
+            .ToListAsync(cancellationToken);
+
+        return vouchers.ToDictionary(v => v.Id);
     }
 }

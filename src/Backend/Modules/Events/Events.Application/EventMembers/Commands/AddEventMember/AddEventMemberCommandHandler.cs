@@ -7,7 +7,7 @@ using Shared.Application.Abstractions.Authentication;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
 using Users.PublicApi.Constants;
-using Users.PublicApi.Services;
+using Users.PublicApi.PublicApi;
 
 namespace Events.Application.EventMembers.Commands.AddEventMember;
 

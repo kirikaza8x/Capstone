@@ -11,6 +11,7 @@ public sealed class Order : AggregateRoot<Guid>
     public Guid UserId { get; private set; }
     public Guid EventId { get; private set; }
     public decimal TotalPrice { get; private set; }
+    public decimal OriginalTotalPrice { get; private set; }
     public OrderStatus Status { get; private set; }
 
     private readonly List<OrderTicket> _tickets = [];
@@ -32,16 +33,18 @@ public sealed class Order : AggregateRoot<Guid>
             EventId = eventId,
             Status = OrderStatus.Pending,
             TotalPrice = 0,
+            OriginalTotalPrice = 0, 
             CreatedAt = now
         };
     }
 
-    public Result SetTotalPrice(decimal totalPrice, DateTime? utcNow = null)
+    public Result SetOriginalTotalPrice(decimal originTotalPrice, DateTime? utcNow = null)
     {
-        if (totalPrice < 0)
+        if (originTotalPrice < 0)
             return Result.Failure(TicketingErrors.Order.InvalidTotalPrice);
 
-        TotalPrice = totalPrice;
+        OriginalTotalPrice = originTotalPrice;
+        TotalPrice = originTotalPrice;
         ModifiedAt = utcNow ?? DateTime.UtcNow;
         return Result.Success();
     }
@@ -101,7 +104,7 @@ public sealed class Order : AggregateRoot<Guid>
             appliedAtUtc: appliedAtUtc);
 
         _orderVouchers.Add(orderVoucher);
-        TotalPrice = Math.Max(0, TotalPrice - discountAmount);
+        TotalPrice = Math.Max(0, OriginalTotalPrice - discountAmount);
         ModifiedAt = appliedAtUtc;
         return Result.Success();
     }
