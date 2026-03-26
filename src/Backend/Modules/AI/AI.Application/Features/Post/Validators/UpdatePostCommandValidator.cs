@@ -9,8 +9,8 @@ public class UpdatePostCommandValidator
         RuleFor(x => x.PostId)
             .NotEmpty();
 
-        RuleFor(x => x.OrganizerId)
-            .NotEmpty();
+        // RuleFor(x => x.OrganizerId)
+        //     .NotEmpty();
 
         RuleFor(x => x.Title)
             .NotEmpty()

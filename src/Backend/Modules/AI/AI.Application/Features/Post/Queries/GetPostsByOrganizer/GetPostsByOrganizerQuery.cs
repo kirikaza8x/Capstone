@@ -1,10 +1,28 @@
 using Shared.Application.Abstractions.Messaging;
 using Marketing.Application.Posts.Dtos;
+using Shared.Domain.Queries;
+using Shared.Domain.Pagination;
+using Marketing.Domain.Enums;
 
 namespace Marketing.Application.Posts.Queries;
 
-public record GetPostsByOrganizerQuery(
+public record GetOrganizerPostsQuery(
     Guid OrganizerId,
-    Guid RequesterId,
-    string? StatusFilter = null
-) : IQuery<IReadOnlyList<PostDto>>;
+
+    Guid? EventId = null,
+
+    string? Search = null,
+
+    PostStatus? Status = null,
+
+    DateTime? SubmittedFrom = null,
+    DateTime? SubmittedTo = null,
+
+    DateTime? PublishedFrom = null,
+    DateTime? PublishedTo = null,
+
+    bool? IsPublished = null,
+    bool? HasExternalPostUrl = null
+
+) : PagedQuery, IQuery<PagedResult<PostDto>>;
+

@@ -86,7 +86,6 @@ public sealed class PostMarketing : AggregateRoot<Guid>
         string? summary = null,
         string? slug = null,
         string? imageUrl = null,
-        List<string>? tags = null,
         string? promptUsed = null,
         string? aiModel = null,
         int? aiTokensUsed = null,
@@ -142,11 +141,16 @@ public sealed class PostMarketing : AggregateRoot<Guid>
     // =========================================================
 
     public Result Update(
-        string? title,
-        string? body,
-        string? summary,
-        string? imageUrl,
-        string? slug = null
+    string? title,
+    string? body,
+    string? summary,
+    string? imageUrl,
+    string? slug = null,
+    string? promptUsed = null,
+    string? aiModel = null,
+    int? aiTokensUsed = null,
+    decimal? aiCost = null,
+    string? trackingToken = null
         )
     {
         if (Status is not (PostStatus.Draft or PostStatus.Rejected))
@@ -172,25 +176,36 @@ public sealed class PostMarketing : AggregateRoot<Guid>
         if (summary is not null)
             Summary = summary.Trim();
 
-        // if (tags is not null)
-        //     Tags = tags;
-
         if (slug is not null)
-        {
-
             Slug = slug.Trim().ToLowerInvariant();
-        }
 
-        ImageUrl = imageUrl?.Trim() ?? ImageUrl;
+        if (imageUrl is not null)
+            ImageUrl = imageUrl.Trim();
+
+        if (promptUsed is not null)
+            PromptUsed = promptUsed.Trim();
+
+        if (aiModel is not null)
+            AiModel = aiModel.Trim();
+
+        if (aiTokensUsed.HasValue)
+            AiTokensUsed = aiTokensUsed;
+
+        if (aiCost.HasValue)
+            AiCost = aiCost;
+
+        if (trackingToken is not null)
+            TrackingToken = trackingToken.Trim().ToLowerInvariant();
 
         Version++;
         ModifiedAt = DateTime.UtcNow;
+
         if (Status == PostStatus.Approved || Status == PostStatus.Published)
-        {
             Status = PostStatus.Draft;
-        }
+
         return Result.Success();
     }
+
 
     public Result Submit()
     {
