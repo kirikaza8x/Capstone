@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Shared.Api.Results;
 using Marketing.Application.Posts.Dtos;
-using Marketing.Application.Posts.Queries;
 
 namespace Marketing.Api.Features.Posts;
 
@@ -19,27 +18,24 @@ public class PostPublicEndpoints : ICarterModule
             .WithTags("Posts - Public");
 
         // ─────────────────────────────────────────────────────────────
-        // Get Published Posts by Event (Public event page)
+        // Get Published Post by ID (Public post page)
         // ─────────────────────────────────────────────────────────────
-        group.MapGet("/events/{eventId:guid}", async (
-            Guid eventId,
+        group.MapGet("/{postId:guid}", async (
+            Guid postId,
             ISender sender,
             CancellationToken cancellationToken) =>
         {
-            var query = new GetPostsByEventQuery(
-                EventId: eventId,
-                RequesterId: Guid.Empty,
-                IsOrganizer: false,
-                IncludeDrafts: false
+            var query = new GetPublicPostByIdQuery(
+                PostId: postId
             );
 
             var result = await sender.Send(query, cancellationToken);
             return result.ToOk();
         })
-        .WithName("GetPublishedPostsByEvent")
-        .WithSummary("Get published posts for an event")
-        .WithDescription("Returns only Published posts visible to attendees on the event page.")
-        .Produces<IReadOnlyList<PostPublicDto>>(StatusCodes.Status200OK)
+        .WithName("GetPublishedPostById")
+        .WithSummary("Get a published post by ID")
+        .WithDescription("Returns a single published post visible to attendees.")
+        .Produces<PostPublicDto>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status404NotFound);
     }
 }

@@ -3,62 +3,62 @@ using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
 using Marketing.Application.Posts.Dtos;
 using Marketing.Application.Posts.Queries;
-using Marketing.Domain.Entities;
 using Marketing.Domain.Repositories;
+using Marketing.Domain.Errors;
+using Shared.Application.Abstractions.Authentication;
+using Shared.Application.DTOs;
 
 namespace Marketing.Application.Posts.Handlers;
 
-public class GetPostsByEventQueryHandler
-    : IQueryHandler<GetPostsByEventQuery, IReadOnlyList<PostDto>>
+public class GetPostByIdQueryHandler
+    : IQueryHandler<GetOrganizerPostByIdQuery, PostDetailDto>
 {
     private readonly IPostRepository _postRepository;
+    private readonly ICurrentUserService _currentUserService;
     private readonly IMapper _mapper;
 
-    public GetPostsByEventQueryHandler(
+    public GetPostByIdQueryHandler(
         IPostRepository postRepository,
+        ICurrentUserService currentUserService,
         IMapper mapper)
     {
         _postRepository = postRepository;
+        _currentUserService = currentUserService;
         _mapper = mapper;
     }
 
-    public async Task<Result<IReadOnlyList<PostDto>>> Handle(
-        GetPostsByEventQuery query,
+    public async Task<Result<PostDetailDto>> Handle(
+        GetOrganizerPostByIdQuery query,
         CancellationToken cancellationToken)
     {
         // ─────────────────────────────────────────────────────────────
-        // Build filter based on requester role
+        // Fetch aggregate
         // ─────────────────────────────────────────────────────────────
-        IReadOnlyList<PostMarketing> posts;
+        CurrentUserDto? currentUser = _currentUserService.GetCurrentUser();
+        Guid requesterId = currentUser?.UserId ?? Guid.Empty;
+        var post = await _postRepository.GetByIdAsync(query.PostId, cancellationToken);
 
-        if (query.IsOrganizer)
+        if (post == null)
         {
-            // Organizer sees all their posts for this event
-            posts = await _postRepository.GetByEventAndOrganizerAsync(
-                query.EventId,
-                query.RequesterId,
-                cancellationToken);
+            return Result.Failure<PostDetailDto>(
+                MarketingErrors.Post.NotFound(query.PostId));
         }
-        else if (query.IncludeDrafts)
+
+        // Determine if requester is admin
+        bool isAdmin = currentUser?.Roles.Contains("Admin") ?? false;
+
+        // Authorization check
+        if (post.OrganizerId != requesterId && !isAdmin)
         {
-            // Admin/internal: can see drafts
-            posts = await _postRepository.FindAsync(
-                p => p.EventId == query.EventId,
-                cancellationToken);
-        }
-        else
-        {
-            // Public: only published posts
-            posts = await _postRepository.GetPublishedByEventAsync(
-                query.EventId,
-                cancellationToken);
+            return Result.Failure<PostDetailDto>(
+                MarketingErrors.Post.NotAuthorized(requesterId));
         }
 
         // ─────────────────────────────────────────────────────────────
-        // Map to DTOs
+        // Map to DTO
         // ─────────────────────────────────────────────────────────────
-        var dtos = _mapper.Map<IReadOnlyList<PostDto>>(posts);
+        var dto = _mapper.Map<PostDetailDto>(post);
 
-        return Result.Success(dtos);
+        return Result.Success(dto);
     }
 }
