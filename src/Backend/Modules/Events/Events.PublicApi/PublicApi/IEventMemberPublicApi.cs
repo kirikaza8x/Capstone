@@ -37,4 +37,6 @@ public interface IEventMemberPublicApi
         int               page              = 1,
         int               pageSize          = 100,
         CancellationToken cancellationToken = default);
+
+    
 }
