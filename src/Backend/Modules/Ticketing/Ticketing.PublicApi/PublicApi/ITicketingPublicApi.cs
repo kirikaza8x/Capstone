@@ -20,5 +20,7 @@ public interface ITicketingPublicApi
         Guid eventSessionId,
         IReadOnlyCollection<Guid> ticketTypeIds,
         CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyDictionary<Guid, int>> GetSoldCountsAsync(Guid eventSessionId, IEnumerable<Guid> ticketTypeIds, CancellationToken cancellationToken);
 }
 

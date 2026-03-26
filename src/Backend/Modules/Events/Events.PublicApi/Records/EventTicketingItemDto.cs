@@ -8,7 +8,7 @@ public sealed record EventTicketingItemDto(
     EventAreaType AreaType,
     decimal Price,
     int Quantity,
-    int SoldQuantity,
+    //int SoldQuantity,
     bool IsPurchasable);
 
 public sealed record EventSeatDto(

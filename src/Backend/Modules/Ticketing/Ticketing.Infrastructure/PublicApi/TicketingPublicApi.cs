@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using StackExchange.Redis;
+using Ticketing.Domain.Entities;
 using Ticketing.Domain.Enums;
 using Ticketing.Infrastructure.Data;
 using Ticketing.PublicApi;
@@ -100,5 +101,37 @@ internal sealed class TicketingPublicApi(
             .ToListAsync(cancellationToken);
 
         return lockedCounts.ToDictionary(x => x.TicketTypeId, x => x.Count);
+    }
+
+    public async Task<IReadOnlyDictionary<Guid, int>> GetSoldCountsAsync(Guid eventSessionId, IEnumerable<Guid> ticketTypeIds, CancellationToken cancellationToken)
+    {
+        var ticketTypeIdList = ticketTypeIds.ToList();
+
+        if (ticketTypeIdList.Count == 0)
+        {
+            return new Dictionary<Guid, int>();
+        }
+
+        // Query 
+        var counts = await dbContext.Set<OrderTicket>()
+            .Where(t => t.EventSessionId == eventSessionId
+                     && ticketTypeIdList.Contains(t.TicketTypeId)
+                     && (t.Status == OrderTicketStatus.Valid || t.Status == OrderTicketStatus.Used))
+            .GroupBy(t => t.TicketTypeId)
+            .Select(g => new
+            {
+                TicketTypeId = g.Key,
+                Count = g.Count()
+            })
+            .ToListAsync(cancellationToken);
+
+        var result = new Dictionary<Guid, int>();
+
+        foreach (var item in counts)
+        {
+            result[item.TicketTypeId] = item.Count;
+        }
+
+        return result;
     }
 }

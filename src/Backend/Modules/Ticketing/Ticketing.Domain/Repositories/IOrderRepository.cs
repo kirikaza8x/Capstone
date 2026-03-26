@@ -39,4 +39,8 @@ public interface IOrderRepository : IRepository<Order, Guid>
         CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<Order>> GetAllByEventIdAsync(Guid eventId, CancellationToken cancellationToken = default);
+
+    Task<Dictionary<(Guid SessionId, Guid TicketTypeId), int>> GetSoldZoneTicketsCountAsync(
+        IEnumerable<(Guid SessionId, Guid TicketTypeId)> sessionTicketTypePairs,
+        CancellationToken cancellationToken = default);
 }
