@@ -152,7 +152,7 @@ public class PostConfiguration : IEntityTypeConfiguration<PostMarketing>
         //  Slug (for public URL)
         builder.HasIndex(p => p.Slug)
                .IsUnique()
-               .HasDatabaseName("ix_post_slug");
+               .HasDatabaseName("ix_post_marketing_slug");
 
         // Organizer dashboard queries
         builder.HasIndex(p => new { p.OrganizerId, p.Status, p.CreatedAt })

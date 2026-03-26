@@ -6,8 +6,8 @@ public record CreatePostDraftCommand(
     Guid EventId,
     Guid OrganizerId,
     string Title,
-    string Body,
-    string TrackingToken,
+    string Body,    
+    string? Summary = null,
     string? PromptUsed = null,
     string? AiModel = null,
     int? AiTokensUsed = null

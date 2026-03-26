@@ -35,7 +35,6 @@ public class PostManagementEndpoints : ICarterModule
                 OrganizerId: currentUser.UserId,
                 Title: request.Title,
                 Body: request.Body,
-                TrackingToken: request.TrackingToken,
                 PromptUsed: request.PromptUsed,
                 AiModel: request.AiModel,
                 AiTokensUsed: request.AiTokensUsed
@@ -211,7 +210,7 @@ public sealed class CreatePostDraftRequestDto
     public Guid EventId { get; init; }
     public string Title { get; init; } = string.Empty;
     public string Body { get; init; } = string.Empty;
-    public string TrackingToken { get; init; } = string.Empty;
+    public string? Summary { get; init; }
     public string? ImageUrl { get; init; }
     public string? PromptUsed { get; init; }
     public string? AiModel { get; init; }

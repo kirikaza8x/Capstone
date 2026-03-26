@@ -40,7 +40,7 @@ public class GetPostByIdQueryHandler
         // ─────────────────────────────────────────────────────────────
         // Authorization: Only organizer or admin can view details
         // ─────────────────────────────────────────────────────────────
-        if (!query.IsAdmin && post.OrganizerId != query.RequesterId)
+        if (post.OrganizerId != query.RequesterId)
         {
             return Result.Failure<PostDetailDto>(
                 MarketingErrors.Post.NotAuthorized(query.RequesterId));
