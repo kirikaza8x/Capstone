@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using AI.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AI.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AIModuleDbContext))]
-    partial class AIModuleDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260325161021_migrate_auto_20260325231005")]
+    partial class migrate_auto_20260325231005
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -325,10 +328,6 @@ namespace AI.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<decimal?>("AiCost")
-                        .HasColumnType("numeric(10,4)")
-                        .HasColumnName("ai_cost");
-
                     b.Property<string>("AiModel")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
@@ -340,7 +339,8 @@ namespace AI.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("Body")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)")
                         .HasColumnName("body");
 
                     b.Property<DateTime?>("CreatedAt")
@@ -384,7 +384,8 @@ namespace AI.Infrastructure.Persistence.Migrations
                         .HasColumnName("organizer_id");
 
                     b.Property<string>("PromptUsed")
-                        .HasColumnType("text")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
                         .HasColumnName("prompt_used");
 
                     b.Property<DateTime?>("PublishedAt")
@@ -404,12 +405,6 @@ namespace AI.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("reviewed_by");
 
-                    b.Property<string>("Slug")
-                        .IsRequired()
-                        .HasMaxLength(300)
-                        .HasColumnType("character varying(300)")
-                        .HasColumnName("slug");
-
                     b.Property<string>("Status")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
@@ -421,11 +416,6 @@ namespace AI.Infrastructure.Persistence.Migrations
                     b.Property<DateTime?>("SubmittedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("submitted_at");
-
-                    b.Property<string>("Summary")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("summary");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -440,7 +430,6 @@ namespace AI.Infrastructure.Persistence.Migrations
                         .HasColumnName("tracking_token");
 
                     b.Property<int>("Version")
-                        .IsConcurrencyToken()
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasDefaultValue(1)
@@ -449,28 +438,20 @@ namespace AI.Infrastructure.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_post");
 
-                    b.HasIndex("Slug")
-                        .IsUnique()
-                        .HasDatabaseName("ix_post_marketing_slug");
-
                     b.HasIndex("TrackingToken")
                         .IsUnique()
                         .HasDatabaseName("ix_post_tracking_token");
-
-                    b.HasIndex("EventId", "PublishedAt")
-                        .HasDatabaseName("ix_post_event_published")
-                        .HasFilter("status = 'Published'");
-
-                    b.HasIndex("Status", "PublishedAt")
-                        .HasDatabaseName("ix_post_global_feed")
-                        .HasFilter("status = 'Published'");
 
                     b.HasIndex("Status", "SubmittedAt")
                         .HasDatabaseName("ix_post_pending_queue")
                         .HasFilter("status = 'Pending'");
 
-                    b.HasIndex("OrganizerId", "Status", "CreatedAt")
-                        .HasDatabaseName("ix_post_organizer_status_created");
+                    b.HasIndex("EventId", "Status", "PublishedAt")
+                        .HasDatabaseName("ix_post_published_by_event")
+                        .HasFilter("status = 'Published'");
+
+                    b.HasIndex("OrganizerId", "EventId", "Status")
+                        .HasDatabaseName("ix_post_organizer_event_status");
 
                     b.ToTable("post", "ai");
                 });
