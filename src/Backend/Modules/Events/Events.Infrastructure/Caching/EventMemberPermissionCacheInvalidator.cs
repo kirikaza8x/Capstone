@@ -9,7 +9,7 @@ internal sealed class EventMemberPermissionCacheInvalidator(
 {
     public async Task InvalidateAsync(Guid eventId, Guid userId, CancellationToken cancellationToken = default)
     {
-        foreach (var permission in EventPermissions.All)
+        foreach (var permission in EventMemberPermission.All)
         {
             var cacheKey = EventPermissionCacheKeys.Permission(eventId, userId, permission);
             await distributedCache.RemoveAsync(cacheKey, cancellationToken);
