@@ -10,4 +10,4 @@ public sealed record ApplyVoucherResponse(
     Guid OrderId,
     decimal OriginalPrice,
     decimal DiscountAmount,
-    decimal FinalPrice);
+    decimal TotalPrice);

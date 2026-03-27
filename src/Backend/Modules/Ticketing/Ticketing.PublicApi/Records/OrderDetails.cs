@@ -1,4 +1,4 @@
-﻿namespace Ticketing.PublicApi.Records;
+namespace Ticketing.PublicApi.Records;
 
 public record OrderDetails(
     Guid OrderId,
@@ -12,3 +12,7 @@ public record OrderTicketDetail(
     Guid EventSessionId,
     decimal Amount
 );
+
+/// <summary>IsValid=false means the voucher's MaxUse has been exceeded.</summary>
+public record VoucherValidationResult(bool IsValid, string? ErrorMessage = null);
+
