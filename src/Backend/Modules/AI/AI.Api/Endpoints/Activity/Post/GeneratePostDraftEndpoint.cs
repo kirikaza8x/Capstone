@@ -16,16 +16,18 @@ public class GeneratePostDraftEndpoint : ICarterModule
         app.MapPost("api/posts/generate/{eventId:guid}", async (
             Guid eventId,
             ISender sender,
+            string? UserPromptRequirement,
             ICurrentUserService currentUser,
             CancellationToken cancellationToken) =>
         {
             // Build command
             var command = new GeneratePostDraftCommand(
                 EventId: eventId,
-                OrganizerId: currentUser.UserId
+                OrganizerId: currentUser.UserId,
+                // SystemPromptOverride: null,
+                UserPromptRequirement: UserPromptRequirement
             );
 
-            // Send through MediatR
             var result = await sender.Send(command, cancellationToken);
 
             return result.ToOk();

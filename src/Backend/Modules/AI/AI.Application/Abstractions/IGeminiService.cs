@@ -85,4 +85,6 @@ public interface IGeminiService
         string? systemPromptOverride = null,
         CancellationToken cancellationToken = default
     );
+
+    string GetModelInfo();
 }

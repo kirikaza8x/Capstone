@@ -44,7 +44,6 @@ public sealed class CreatePostDraftRequestDto
     public string Title { get; init; } = string.Empty;
     public string Body { get; init; } = string.Empty;
     public string? Summary { get; init; }
-    public string? ImageUrl { get; init; }
     public string? PromptUsed { get; init; }
     public string? AiModel { get; init; }
     public int? AiTokensUsed { get; init; }
