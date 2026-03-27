@@ -79,5 +79,9 @@ internal static class Constants
         public const string Trending = $"{Events}/trending";
         public const string Upcoming = $"{Events}/upcoming";
 
+        // Members
+        public const string EventMembers = $"{EventById}/members";
+        public const string ConfirmEventMembers = $"{EventMembers}/{{memberId:guid}}/confirm";
+
     }
 }

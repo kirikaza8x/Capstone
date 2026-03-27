@@ -9,7 +9,7 @@ using Shared.Api.Extensions;
 using Shared.Api.Results;
 using Users.PublicApi.Constants;
 
-namespace Events.Api.Events.Get;
+namespace Events.Api.EventMembers.Get;
 
 public class GetEventMembersEndpoint : ICarterModule
 {

@@ -14,6 +14,7 @@ internal sealed class EventReminderTriggeredDomainEventHandler(
             id: domainEvent.EventId,
             occurredOnUtc: domainEvent.OccurredOn,
             eventId: domainEvent.EventId,
+            organizerId: domainEvent.OrganizerId,
             eventTitle: domainEvent.EventTitle,
             eventStartAtUtc: domainEvent.EventStartAtUtc);
 

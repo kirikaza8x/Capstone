@@ -4,7 +4,7 @@ using Shared.Application.Abstractions.EventBus;
 using Shared.Application.Abstractions.Notifications;
 using Users.PublicApi.PublicApi;
 
-namespace Notifications.Application.IntegrationEventHandlers;
+namespace Notifications.Application.IntegrationEventHandlers.Events;
 
 internal sealed class EventSuspensionExpiredIntegrationEventHandler(
     IUserPublicApi userPublicApi,

@@ -360,7 +360,25 @@ public sealed class Event : AggregateRoot<Guid>
         _areas.Clear();
         ModifiedAt = DateTime.UtcNow;
     }
+    public EventMember InviteMember(
+        Guid userId,
+        string email,
+        List<string> permissions,
+        Guid assignedBy)
+    {
+        var member = EventMember.Create(Id, userId, permissions, assignedBy);
 
+        _members.Add(member);
+        ModifiedAt = DateTime.UtcNow;
+
+        RaiseDomainEvent(new EventMemberInvitedDomainEvent(
+            member.Id,
+            Id,
+            userId,
+            email));
+
+        return member;
+    }
     public void RemoveMember(EventMember member)
     {
         _members.Remove(member);
@@ -370,7 +388,6 @@ public sealed class Event : AggregateRoot<Guid>
     public void AddSession(EventSession session) => _sessions.Add(session);
     public void AddTicketType(TicketType ticketType) => _ticketTypes.Add(ticketType);
     public void AddArea(Area area) => _areas.Add(area);
-    public void AddMember(EventMember member) => _members.Add(member);
     public void AddActorImage(EventActorImage actorImage) => _actorImages.Add(actorImage);
     public void AddCategories(EventCategory eventCategory) => _eventCategories.Add(eventCategory);
     public void AddHashtag(EventHashtag eventHashtag) => _eventHashtags.Add(eventHashtag);
@@ -424,6 +441,7 @@ public sealed class Event : AggregateRoot<Guid>
 
         RaiseDomainEvent(new EventReminderTriggeredDomainEvent(
             EventId: Id,
+            OrganizerId: OrganizerId,
             EventTitle: Title,
             EventStartAtUtc: startAt));
 
