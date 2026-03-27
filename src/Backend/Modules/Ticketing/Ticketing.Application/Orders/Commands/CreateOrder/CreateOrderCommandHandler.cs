@@ -21,7 +21,6 @@ internal sealed class CreateOrderCommandHandler(
     IEventTicketingPublicApi eventTicketingPublicApi,
     ITicketLockService ticketLockService,
     IOrderRepository orderRepository,
-    IVoucherRepository voucherRepository,
     ILogger<CreateOrderCommandHandler> logger,
     ITicketingUnitOfWork unitOfWork) : ICommandHandler<CreateOrderCommand, Guid>
 {
@@ -40,22 +39,19 @@ internal sealed class CreateOrderCommandHandler(
         var zoneLocks = new List<(Guid SessionId, Guid TicketTypeId, int Quantity)>();
         var isSaved = false;
 
-        Voucher? voucher = null;
-        bool isVoucherUsageIncremented = false;
-
         try
         {
-            // Retrieve Ticketing Item information
+            //  Retrieve Ticketing Item information from the Event Module
             var pairs = command.Tickets.Select(t => (t.EventSessionId, t.TicketTypeId)).ToList();
             var itemMap = await eventTicketingPublicApi.GetTicketingItemsBatchAsync(pairs, utcNow, cancellationToken);
 
             if (itemMap.Count == 0)
                 return Result.Failure<Guid>(TicketingErrors.Order.InvalidTicketSelection);
 
-            // Determine Event Area Type based on the first ticket's item
+            // Determine Event Area Type based on the first ticket's item 
             var eventAreaType = itemMap.First().Value.AreaType;
 
-            // Validate and lock base on Event Area Type
+            // 3. Validate and lock based on Event Area Type
             if (eventAreaType is EventAreaType.Seat or EventAreaType.Default)
             {
                 var seatResult = await ProcessSeatTicketsAsync(command, itemMap, userId, seatLocks, cancellationToken);
@@ -67,38 +63,23 @@ internal sealed class CreateOrderCommandHandler(
                 if (zoneResult.IsFailure) return Result.Failure<Guid>(zoneResult.Error);
             }
 
-            // Processing Voucher logic
-            if (!string.IsNullOrWhiteSpace(command.CouponCode))
-            {
-                voucher = await voucherRepository.GetByCouponCodeAsync(command.CouponCode, cancellationToken);
-
-                if (voucher is null)
-                    return Result.Failure<Guid>(TicketingErrors.Voucher.NotFound(command.CouponCode));
-
-                if (voucher.StartDate > utcNow || voucher.EndDate < utcNow)
-                    return Result.Failure<Guid>(TicketingErrors.Voucher.Expired);
-
-                if (voucher.TotalUse >= voucher.MaxUse)
-                    return Result.Failure<Guid>(TicketingErrors.Voucher.ExceededMaxUse);
-
-                var hasUsed = await voucherRepository.HasUserUsedVoucherAsync(voucher.Id, userId, cancellationToken);
-                if (hasUsed)
-                    return Result.Failure<Guid>(TicketingErrors.Voucher.AlreadyUsedByUser);
-
-                // hold voucher
-                voucher.IncrementUsage();
-                isVoucherUsageIncremented = true;
-            }
-
-            // 4. Double-check DB committed seats
+            //  Double-check DB committed seats to prevent Race Conditions
             if (seatLocks.Count > 0)
             {
                 var committedSeats = await orderRepository.GetCommittedSeatsAsync(seatLocks, cancellationToken);
                 var conflicted = seatLocks.FirstOrDefault(s => committedSeats.Contains((s.SessionId, s.SeatId)));
-                if (conflicted != default) return Result.Failure<Guid>(TicketingErrors.Order.SeatNotAvailable);
+
+                if (conflicted != default)
+                {
+                    logger.LogWarning(
+                        "Seat conflict detected for Session {SessionId}, Seat {SeatId} by User {UserId}. Redis lock bypassed or stale data.",
+                        conflicted.SessionId, conflicted.SeatId, userId);
+
+                    return Result.Failure<Guid>(TicketingErrors.Order.SeatNotAvailable);
+                }
             }
 
-            // 5. Build Order 
+            // Build Order 
             var order = Order.Create(userId, command.EventId, utcNow);
             var originalTotalPrice = 0m;
 
@@ -108,7 +89,15 @@ internal sealed class CreateOrderCommandHandler(
                 var orderTicketId = Guid.NewGuid();
                 var qrCode = QrCodeHelper.Generate(orderTicketId);
 
-                var addResult = order.AddTicket(ticket.EventSessionId, ticket.TicketTypeId, ticket.SeatId, qrCode, item.Price, orderTicketId, utcNow);
+                var addResult = order.AddTicket(
+                    ticket.EventSessionId,
+                    ticket.TicketTypeId,
+                    ticket.SeatId,
+                    qrCode,
+                    item.Price,
+                    orderTicketId,
+                    utcNow);
+
                 if (addResult.IsFailure) return Result.Failure<Guid>(addResult.Error);
 
                 originalTotalPrice += item.Price;
@@ -117,44 +106,31 @@ internal sealed class CreateOrderCommandHandler(
             var setPriceResult = order.SetOriginalTotalPrice(originalTotalPrice, utcNow);
             if (setPriceResult.IsFailure) return Result.Failure<Guid>(setPriceResult.Error);
 
-            // 6. Apply voucher if has
-            if (voucher is not null)
-            {
-                var discountAmount = voucher.Type switch
-                {
-                    VoucherType.Percentage => Math.Round(originalTotalPrice * voucher.Value / 100, 2),
-                    VoucherType.Fixed => voucher.Value,
-                    _ => 0m
-                };
-
-                var applyResult = order.ApplyVoucher(voucher.Id, discountAmount, utcNow);
-                if (applyResult.IsFailure) return Result.Failure<Guid>(applyResult.Error);
-            }
-
+            // Save to Database
             orderRepository.Add(order);
             await unitOfWork.SaveChangesAsync(cancellationToken);
 
             isSaved = true;
+
+            logger.LogInformation(
+                "Order {OrderId} created successfully for User {UserId}. Total Price: {TotalPrice}.",
+                order.Id, userId, order.TotalPrice);
+
             return Result.Success(order.Id);
         }
         finally
         {
-            // Rollback Locks and Voucher if order creation failed
+            // Rollback Locks if order creation failed
             if (!isSaved)
             {
                 try
                 {
                     await ReleaseLocksAsync(seatLocks, zoneLocks);
-
-                    if (isVoucherUsageIncremented && voucher is not null)
-                    {
-                        voucher.DecrementUsage();
-                        await unitOfWork.SaveChangesAsync(CancellationToken.None);
-                    }
                 }
-                catch (Exception ex) {
+                catch (Exception ex)
+                {
                     logger.LogError(ex,
-                        "Failed to release locks or rollback voucher usage for User {UserId} during failed Order creation for Event {EventId}.",
+                        "CRITICAL: Failed to release locks for User {UserId} during failed Order creation for Event {EventId}.",
                         userId, command.EventId);
                 }
             }

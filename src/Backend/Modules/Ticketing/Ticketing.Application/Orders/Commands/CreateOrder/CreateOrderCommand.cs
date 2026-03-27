@@ -9,5 +9,4 @@ public sealed record CreateOrderTicketItem(
 
 public sealed record CreateOrderCommand(
     Guid EventId,
-    IReadOnlyList<CreateOrderTicketItem> Tickets,
-    string? CouponCode = null) : ICommand<Guid>;
+    IReadOnlyList<CreateOrderTicketItem> Tickets) : ICommand<Guid>;

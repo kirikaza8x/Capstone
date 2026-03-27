@@ -80,9 +80,9 @@ public sealed class Order : AggregateRoot<Guid>
     }
 
     public Result ApplyVoucher(
-        Guid voucherId,
-        decimal discountAmount,
-        DateTime appliedAtUtc)
+            Guid voucherId,
+            decimal discountAmount,
+            DateTime appliedAtUtc)
     {
         if (Status != OrderStatus.Pending)
             return Result.Failure(TicketingErrors.Order.NotPending);
@@ -90,12 +90,8 @@ public sealed class Order : AggregateRoot<Guid>
         if (discountAmount < 0)
             return Result.Failure(TicketingErrors.Order.InvalidTotalPrice);
 
-        var existing = _orderVouchers.FirstOrDefault();
-        if (existing is not null)
-        {
-            TotalPrice += existing.DiscountAmount;
-            _orderVouchers.Remove(existing);
-        }
+        // Reset total price
+        RemoveVoucher(appliedAtUtc);
 
         var orderVoucher = OrderVoucher.Create(
             orderId: Id,
@@ -106,6 +102,7 @@ public sealed class Order : AggregateRoot<Guid>
         _orderVouchers.Add(orderVoucher);
         TotalPrice = Math.Max(0, OriginalTotalPrice - discountAmount);
         ModifiedAt = appliedAtUtc;
+
         return Result.Success();
     }
 
@@ -165,6 +162,24 @@ public sealed class Order : AggregateRoot<Guid>
             return Result.Failure(TicketingErrors.CheckIn.TicketNotFound);
 
         return ticket.CheckIn(staffUserId, utcNow);
+    }
+
+    public Result RemoveVoucher(DateTime? utcNow = null)
+    {
+        if (Status != OrderStatus.Pending)
+            return Result.Failure(TicketingErrors.Order.NotPending);
+
+        var existing = _orderVouchers.FirstOrDefault();
+
+        if (existing is null)
+            return Result.Success();
+
+        _orderVouchers.Remove(existing);
+
+        TotalPrice = OriginalTotalPrice;
+        ModifiedAt = utcNow ?? DateTime.UtcNow;
+
+        return Result.Success();
     }
 
     protected override void Apply(IDomainEvent @event) { }

@@ -13,6 +13,8 @@ using Users.PublicApi.Constants;
 namespace Ticketing.Api.Vouchers;
 
 public sealed record UpdateVoucherRequest(
+    string Name,
+    string? Description,
     string CouponCode,
     VoucherType Type,
     decimal Value,
@@ -32,6 +34,8 @@ public class UpdateVoucherEndpoint : ICarterModule
         {
             var result = await sender.Send(new UpdateVoucherCommand(
                 voucherId,
+                request.Name,
+                request.Description,
                 request.CouponCode,
                 request.Type,
                 request.Value,

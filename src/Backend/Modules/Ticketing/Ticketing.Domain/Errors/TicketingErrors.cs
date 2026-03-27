@@ -115,6 +115,14 @@ public static class TicketingErrors
             "Voucher.NotFound",
             $"Voucher '{couponId}' not found.");
 
+        public static readonly Error InvalidEvent = Error.Conflict(
+            "Voucher.InvalidEvent",
+            "This voucher is not applicable for this event.");
+
+        public static Error InvalidName => Error.Validation(
+            "Voucher.InvalidName",
+            "The voucher name cannot be null or empty.");
+
         public static Error CouponCodeAlreadyExists(string couponCode) => Error.Conflict(
             "Voucher.NotFound",
             $"Voucher with coupon code '{couponCode}' not found.");

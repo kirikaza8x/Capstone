@@ -2,20 +2,27 @@
 using Shared.Application.Abstractions.Authentication;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
-using Shared.Domain.Data;
-using Ticketing.Domain.Entities;
 using Ticketing.Domain.Errors;
 using Ticketing.Domain.Repositories;
 using Ticketing.Domain.Uow;
 using Users.PublicApi.Constants;
 
 namespace Ticketing.Application.Vouchers.Commands.UpdateVoucher;
+
 public sealed class UpdateVoucherCommandValidator : AbstractValidator<UpdateVoucherCommand>
 {
     public UpdateVoucherCommandValidator()
     {
         RuleFor(x => x.VoucherId)
             .NotEmpty().WithMessage("Voucher ID is required.");
+
+        RuleFor(x => x.Name)
+            .NotEmpty().WithMessage("Name is required.")
+            .MaximumLength(200).WithMessage("Name must not exceed 200 characters.");
+
+        RuleFor(x => x.Description)
+            .MaximumLength(1000).WithMessage("Description must not exceed 1000 characters.")
+            .When(x => !string.IsNullOrWhiteSpace(x.Description));
 
         RuleFor(x => x.CouponCode)
             .NotEmpty().WithMessage("Coupon code is required.")
@@ -58,18 +65,33 @@ internal sealed class UpdateVoucherCommandHandler(
             return Result.Failure(TicketingErrors.Voucher.NotFound(
                 command.VoucherId.ToString()));
 
-        var isAdmin = currentUserService.Roles.Contains(Roles.Admin);
+        // Check if the current user is the owner of the voucher or has admin role
+        var currentUser = currentUserService.GetCurrentUser();
+        var isAdmin = currentUser.Roles.Contains(Roles.Admin);
 
         if (!isAdmin && voucher.CreatedBy != userId.ToString())
             return Result.Failure(TicketingErrors.Voucher.NotOwner);
 
+        // Check if coupon code is being changed and if the new coupon code already exists
+        if (!string.Equals(voucher.CouponCode, command.CouponCode.Trim(), StringComparison.OrdinalIgnoreCase))
+        {
+            var exists = await voucherRepository.IsCouponCodeExistsAsync(
+                command.CouponCode,
+                cancellationToken);
+
+            if (exists)
+                return Result.Failure(TicketingErrors.Voucher.CouponCodeAlreadyExists(command.CouponCode));
+        }
+
         var updateResult = voucher.Update(
+            command.Name,
             command.CouponCode,
-            command.Type, 
+            command.Type,
             command.Value,
             command.MaxUse,
             command.StartDate,
-            command.EndDate);
+            command.EndDate,
+            command.Description);
 
         if (updateResult.IsFailure)
             return updateResult;

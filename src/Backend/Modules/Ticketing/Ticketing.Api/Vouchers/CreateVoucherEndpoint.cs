@@ -13,6 +13,8 @@ using Users.PublicApi.Constants;
 namespace Ticketing.Api.Vouchers;
 
 public sealed record CreateVoucherRequest(
+    string Name,
+    string? Description,
     string CouponCode,
     VoucherType Type,
     decimal Value,
@@ -31,6 +33,8 @@ public class CreateVoucherEndpoint : ICarterModule
             CancellationToken cancellationToken) =>
         {
             var result = await sender.Send(new CreateVoucherCommand(
+                request.Name,
+                request.Description,
                 request.CouponCode,
                 request.Type,
                 request.Value,
