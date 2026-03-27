@@ -5,7 +5,6 @@ using Shared.Domain.Pagination;
 using Shared.Domain.Queries;
 
 public record GetAdminPostsQuery(
-    Guid AdminId,
     // Identity
     Guid? EventId = null,
     Guid? OrganizerId = null,

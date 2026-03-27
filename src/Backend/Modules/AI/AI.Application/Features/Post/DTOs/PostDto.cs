@@ -10,7 +10,7 @@ public record PostDto(
     string Body,
     string? ImageUrl,
     string Status,          // enum as string for API
-    string Platform,        // enum as string for API
+    // string Platform,        // enum as string for API
     string? RejectionReason,
     DateTime? PublishedAt,
     string TrackingToken,

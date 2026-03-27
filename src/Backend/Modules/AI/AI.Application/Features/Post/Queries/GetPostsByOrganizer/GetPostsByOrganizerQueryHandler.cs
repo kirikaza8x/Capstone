@@ -5,6 +5,7 @@ using Marketing.Application.Posts.Dtos;
 using Marketing.Application.Posts.Queries;
 using Marketing.Domain.Repositories;
 using Shared.Domain.Pagination;
+using Shared.Application.Abstractions.Authentication;
 
 namespace Marketing.Application.Posts.Handlers;
 
@@ -12,13 +13,16 @@ public class GetOrganizerPostsQueryHandler
     : IQueryHandler<GetOrganizerPostsQuery, PagedResult<PostDto>>
 {
     private readonly IPostRepository _postRepository;
+    private readonly ICurrentUserService _currentUserService;
     private readonly IMapper _mapper;
 
     public GetOrganizerPostsQueryHandler(
         IPostRepository postRepository,
+        ICurrentUserService currentUserService,
         IMapper mapper)
     {
         _postRepository = postRepository;
+        _currentUserService = currentUserService;
         _mapper = mapper;
     }
 
@@ -26,11 +30,12 @@ public class GetOrganizerPostsQueryHandler
     GetOrganizerPostsQuery query,
     CancellationToken cancellationToken)
     {
+        Guid? organizerId = _currentUserService.UserId;
         var posts = await _postRepository.GetAllWithPagingAsync(
             query,
             p =>
                 // REQUIRED
-                p.OrganizerId == query.OrganizerId
+                p.OrganizerId == organizerId
 
                 // Identity
                 && (query.EventId == null || p.EventId == query.EventId)

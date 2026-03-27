@@ -200,4 +200,9 @@ public sealed class GeminiService : IGeminiService
 
         return text.Trim();
     }
+
+    public string GetModelInfo()
+    {
+        return $"{_config.Model}";
+    }
 }
