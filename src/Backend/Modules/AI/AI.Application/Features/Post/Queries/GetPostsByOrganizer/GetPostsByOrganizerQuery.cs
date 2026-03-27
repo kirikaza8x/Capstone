@@ -7,7 +7,7 @@ using Marketing.Domain.Enums;
 namespace Marketing.Application.Posts.Queries;
 
 public record GetOrganizerPostsQuery(
-    Guid OrganizerId,
+    Guid? OrganizerId,
 
     Guid? EventId = null,
 

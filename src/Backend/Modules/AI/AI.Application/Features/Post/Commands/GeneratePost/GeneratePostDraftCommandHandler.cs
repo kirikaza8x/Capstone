@@ -35,26 +35,34 @@ public class GeneratePostDraftCommandHandler
         var categories = string.Join(", ", ev.Categories);
 
         var prompt = $"""
-        Generate a marketing post draft in JSON format.
-        Include Title, Body, Summary, Slug, PromptUsed, AiModel, TrackingToken.
-        Exclude ImageUrl.
-        Event: {ev.Title}
-        Description: {ev.Description}
-        Hashtags: {hashtags}
-        Categories: {categories}
-        """;
+            Generate a marketing post draft in JSON format.
+            Include: Title, Body, Summary, Slug, PromptUsed, AiModel, TrackingToken.
+            Exclude: ImageUrl.
+            User Requirement: {command.UserPromptRequirement ?? "No specific requirement"}
+            Event: {ev.Title}
+            Description: {ev.Description}
+            Hashtags: {string.Join(" ", hashtags)}
+            Categories: {string.Join(", ", categories)}
+            """;
 
-        var result = await _geminiService.GenerateStructuredAsync<GeneratedPostDto>(
+
+        var requestDto = await _geminiService.GenerateStructuredAsync<GeneratedPostRequestDto>(
             prompt,
             cancellationToken: cancellationToken);
 
         // Approximate token usage and cost
-        int estimatedTokens = (prompt.Length + (result.Body?.Length ?? 0)) / 4;
+        int estimatedTokens = (prompt.Length + (requestDto.Body?.Length ?? 0)) / 4;
         decimal estimatedCost = (estimatedTokens / 1000m) * 0.002m; // Example pricing
-
-        result.AiTokensUsed = estimatedTokens;
-        result.AiCost = estimatedCost;
-
+        var result = new GeneratedPostDto
+        {
+            Title = requestDto.Title,
+            Body = requestDto.Body,
+            Summary = requestDto.Summary,
+            PromptUsed = command.UserPromptRequirement,
+            AiModel = _geminiService.GetModelInfo(),
+            AiCost = estimatedCost,
+            AiTokensUsed = estimatedTokens,
+        };
         return Result.Success(result);
     }
 }
