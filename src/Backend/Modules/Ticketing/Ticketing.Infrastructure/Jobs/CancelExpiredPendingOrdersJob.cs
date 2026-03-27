@@ -9,6 +9,7 @@ namespace Ticketing.Infrastructure.Jobs;
 [DisallowConcurrentExecution]
 internal sealed class CancelExpiredPendingOrdersJob(
     IOrderRepository orderRepository,
+    IVoucherRepository voucherRepository,
     ITicketLockService ticketLockService,
     ITicketingUnitOfWork unitOfWork,
     ILogger<CancelExpiredPendingOrdersJob> logger) : IJob
@@ -38,6 +39,17 @@ internal sealed class CancelExpiredPendingOrdersJob(
                 continue;
 
             cancelledCount++;
+
+            // Rollback the number of voucher uses if this order has the code applied.
+            var orderVoucher = order.OrderVouchers.FirstOrDefault();
+            if (orderVoucher is not null)
+            {
+                var voucher = await voucherRepository.GetByIdAsync(orderVoucher.VoucherId, context.CancellationToken);
+                if (voucher is not null)
+                {
+                    voucher.DecrementUsage();
+                }
+            }
 
             // release seat locks
             var seatTasks = order.Tickets

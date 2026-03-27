@@ -46,6 +46,15 @@ public class InitiatePaymentCommandHandler(
                 Error.Validation("Payment.InvalidAmount",
                     "All ticket amounts must be greater than zero."));
 
+        // Re-validate voucher MaxUse before charging — authoritative check at pay time
+        var voucherValidation = await ticketingApi
+            .ValidateOrderVoucherAsync(command.OrderId, cancellationToken);
+
+        if (voucherValidation is { IsValid: false })
+            return Result.Failure<InitiatePaymentResult>(
+                Error.Validation("Payment.VoucherExceededMaxUse",
+                    voucherValidation.ErrorMessage ?? "The voucher applied to this order has reached its maximum usage limit."));
+
         var totalAmount = order.Tickets.Sum(t => t.Amount);
         var orderInfo = command.Description
                           ?? $"Payment for order {command.OrderId}";

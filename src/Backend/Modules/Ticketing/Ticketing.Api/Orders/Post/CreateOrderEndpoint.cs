@@ -18,7 +18,8 @@ public sealed record CreateOrderTicketRequest(
 
 public sealed record CreateOrderRequest(
     Guid EventId,
-    List<CreateOrderTicketRequest> Tickets);
+    List<CreateOrderTicketRequest> Tickets,
+    string? CouponCode);
 
 public class CreateOrderEndpoint : ICarterModule
 {
@@ -36,7 +37,7 @@ public class CreateOrderEndpoint : ICarterModule
                     x.SeatId))
                 .ToList();
 
-            var command = new CreateOrderCommand(request.EventId, items);
+            var command = new CreateOrderCommand(request.EventId, items, request.CouponCode);
 
             var result = await sender.Send(command, cancellationToken);
 
