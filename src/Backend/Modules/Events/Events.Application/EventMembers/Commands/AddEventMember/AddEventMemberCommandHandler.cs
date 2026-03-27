@@ -1,12 +1,11 @@
-﻿using Events.Application.Abstractions.Caching;
-using Events.Domain.Entities;
+﻿using Events.Domain.Entities;
+using Events.Domain.Enums;
 using Events.Domain.Errors;
 using Events.Domain.Repositories;
 using Events.Domain.Uow;
 using Shared.Application.Abstractions.Authentication;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
-using Users.PublicApi.Constants;
 using Users.PublicApi.PublicApi;
 
 namespace Events.Application.EventMembers.Commands.AddEventMember;
@@ -15,8 +14,7 @@ internal sealed class AddEventMemberCommandHandler(
     IEventRepository eventRepository,
     IUserPublicApi userPublicApi,
     ICurrentUserService currentUserService,
-    IEventUnitOfWork unitOfWork,
-    IEventMemberPermissionCacheInvalidator permissionCacheInvalidator) : ICommandHandler<AddEventMemberCommand, Guid>
+    IEventUnitOfWork unitOfWork) : ICommandHandler<AddEventMemberCommand, Guid>
 {
     public async Task<Result<Guid>> Handle(AddEventMemberCommand command, CancellationToken cancellationToken)
     {
@@ -33,23 +31,23 @@ internal sealed class AddEventMemberCommandHandler(
         if (userInfo is null)
             return Result.Failure<Guid>(EventErrors.EventMemberErrors.UserNotFound(command.Email));
 
-        if (!userInfo.Roles.Contains(Roles.Attendee))
-            return Result.Failure<Guid>(EventErrors.EventMemberErrors.UserNotEligible);
+        var existingMember = @event.Members.FirstOrDefault(m => m.UserId == userInfo.Id);
+        if (existingMember is not null)
+        {
+            if (existingMember.Status == EventMemberStatus.Pending)
+                return Result.Failure<Guid>(EventErrors.EventMemberErrors.AlreadyInvited(command.Email));
 
-        var alreadyMember = @event.Members.Any(m => m.UserId == userInfo.Id);
-        if (alreadyMember)
-            return Result.Failure<Guid>(EventErrors.EventMemberErrors.AlreadyExists(command.Email));
+            if (existingMember.Status == EventMemberStatus.Active)
+                return Result.Failure<Guid>(EventErrors.EventMemberErrors.AlreadyExists(command.Email));
+        }
 
-        var member = EventMember.Create(
-            command.EventId,
-            userInfo.Id,
-            command.Permissions,
-            currentUserService.UserId);
+        var member = @event.InviteMember(
+                    userInfo.Id,
+                    command.Email,
+                    command.Permissions,
+                    currentUserService.UserId);
 
-        @event.AddMember(member);
         await unitOfWork.SaveChangesAsync(cancellationToken);
-
-        await permissionCacheInvalidator.InvalidateAsync(command.EventId, userInfo.Id, cancellationToken);
 
         return Result.Success(member.Id);
     }

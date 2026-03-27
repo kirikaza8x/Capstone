@@ -1,4 +1,7 @@
-﻿
+﻿using Events.Domain.DomainEvents;
+using Events.Domain.Enums;
+using Events.Domain.Errors;
+using Shared.Domain.Abstractions;
 using Shared.Domain.DDD;
 
 namespace Events.Domain.Entities;
@@ -10,12 +13,15 @@ public sealed class EventMember : Entity<Guid>
     public Guid EventId { get; private set; }
     public Guid UserId { get; private set; }
     public List<string> Permissions { get; private set; } = [];
-    public string Status { get; private set; } = string.Empty;
+    public EventMemberStatus Status { get; private set; }
     public Guid AssignedBy { get; private set; }
-
     public Event Event { get; private set; } = null!;
 
-    public static EventMember Create(Guid eventId, Guid userId, List<string> permissions, Guid assignedBy)
+    public static EventMember Create(
+            Guid eventId,
+            Guid userId,
+            List<string> permissions,
+            Guid assignedBy)
     {
         return new EventMember
         {
@@ -23,10 +29,28 @@ public sealed class EventMember : Entity<Guid>
             EventId = eventId,
             UserId = userId,
             Permissions = permissions,
-            Status = "Active",
+            Status = EventMemberStatus.Pending,
             AssignedBy = assignedBy,
             CreatedAt = DateTime.UtcNow
         };
+    }
+
+    public Result Confirm(DateTime? utcNow = null)
+    {
+        if (Status == EventMemberStatus.Active)
+        {
+            return Result.Success(); // Idempotent
+        }
+
+        if (Status != EventMemberStatus.Pending)
+        {
+            return Result.Failure(Error.Validation("EventMember.CannotConfirm", "Only pending invitations can be confirmed."));
+        }
+
+        Status = EventMemberStatus.Active;
+        ModifiedAt = utcNow ?? DateTime.UtcNow;
+
+        return Result.Success();
     }
 
     public void UpdatePermissions(List<string> permissions)
@@ -37,7 +61,7 @@ public sealed class EventMember : Entity<Guid>
 
     public void Deactivate()
     {
-        Status = "Inactive";
+        Status = EventMemberStatus.Inactive;
         ModifiedAt = DateTime.UtcNow;
     }
 }

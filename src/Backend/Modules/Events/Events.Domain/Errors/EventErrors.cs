@@ -182,6 +182,10 @@ public static class EventErrors
         public static Error UserNotFound(string email) => Error.NotFound(
             "EventMember.UserNotFound",
             $"No registered user found with email '{email}'.");
+
+        public static Error AlreadyInvited(string email) => Error.Conflict(
+            "EventMember.AlreadyInvited",
+            $"An invitation has already been sent to {email}.");
     }
 
     public static class EventSessionErrors

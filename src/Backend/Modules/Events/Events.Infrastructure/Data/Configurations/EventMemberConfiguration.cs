@@ -1,4 +1,5 @@
 ﻿using Events.Domain.Entities;
+using Events.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -21,7 +22,10 @@ internal sealed class EventMemberConfiguration : IEntityTypeConfiguration<EventM
             .HasColumnType("text[]");
 
         builder.Property(e => e.Status)
-            .HasMaxLength(50)
+            .HasConversion(
+                v => v.ToString().ToLowerInvariant(),
+                v => Enum.Parse<EventMemberStatus>(v, true))
+            .HasMaxLength(20)
             .IsRequired();
 
         builder.Property(e => e.AssignedBy)
