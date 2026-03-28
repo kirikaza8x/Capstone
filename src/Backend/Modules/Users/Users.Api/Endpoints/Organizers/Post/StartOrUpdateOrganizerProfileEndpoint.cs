@@ -2,6 +2,7 @@ using Carter;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Shared.Api.Results;
 using Users.Application.Features.Organizers.Dtos;
@@ -14,9 +15,9 @@ public class StartOrUpdateOrganizerProfileEndpoint : ICarterModule
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         app.MapPost("/api/organizer/profile/start-or-update", async (
-    StartOrUpdateOrganizerProfileRequestDto request,
-    ISender sender,
-    CancellationToken cancellationToken) =>
+            [FromForm] StartOrUpdateOrganizerProfileRequestDto request,
+            ISender sender,
+            CancellationToken cancellationToken) =>
         {
             var businessInfo = new OrganizerBusinessInfoDto(
                 request.DisplayName,
@@ -39,30 +40,29 @@ public class StartOrUpdateOrganizerProfileEndpoint : ICarterModule
             var command = new StartOrUpdateOrganizerProfileCommand(
                 request.Type,
                 businessInfo,
-                bankInfo
+                bankInfo,
+                request.LogoFile != null ? new FormFileUpload(request.LogoFile) : null
             );
 
             var result = await sender.Send(command, cancellationToken);
-
             return result.ToOk();
         })
+        .Accepts<StartOrUpdateOrganizerProfileRequestDto>("multipart/form-data")
         .WithName("StartOrUpdateOrganizerProfile")
         .WithTags("Organizers")
         .WithSummary("Start or update organizer profile draft")
         .WithDescription("Creates a new organizer profile draft if none exists. Updates an existing draft if present. Returns conflict if a pending profile exists.")
+        .DisableAntiforgery()
         .Produces<Guid>(StatusCodes.Status201Created)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status409Conflict);
-
-            }
-        }
-
+    }
+}
 public sealed class StartOrUpdateOrganizerProfileRequestDto
 {
     public OrganizerType Type { get; init; }
 
     // Business info fields
-    public string? Logo { get; init; }
     public string? DisplayName { get; init; }
     public string? Description { get; init; }
     public string? Address { get; init; }
@@ -77,4 +77,7 @@ public sealed class StartOrUpdateOrganizerProfileRequestDto
     public string? AccountNumber { get; init; }
     public string? BankCode { get; init; }
     public string? Branch { get; init; }
+
+    // File upload (multipart/form-data)
+    public IFormFile? LogoFile { get; init; }
 }

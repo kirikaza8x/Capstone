@@ -12,7 +12,8 @@ public class OrganizersProfile : Profile
         // ========================
         CreateMap<OrganizerProfile, OrganizerAdminListItemDto>()
             .ForMember(dest => dest.ProfileId, opt => opt.MapFrom(src => src.Id))
-            .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId));
+            .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId))
+            .ForMember(dest => dest.Logo, opt => opt.MapFrom(src => src.Logo));
 
         // ========================
         // FULL RESPONSE (ADMIN DETAIL)

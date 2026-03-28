@@ -1,11 +1,14 @@
 using FluentValidation;
-using Users.Application.Features.Organizers.Commands;
 
 namespace Users.Application.Features.Organizers.Validators;
 
-public class StartOrUpdateOrganizerProfileCommandValidator 
+public class StartOrUpdateOrganizerProfileCommandValidator
     : AbstractValidator<StartOrUpdateOrganizerProfileCommand>
 {
+    private static readonly string[] AllowedContentTypes =
+       { "image/jpeg", "image/png", "image/gif", "image/webp" };
+
+    private const long MaxFileSize = 10 * 1024 * 1024; // 10 MB
     public StartOrUpdateOrganizerProfileCommandValidator()
     {
         // --------------------
@@ -79,6 +82,15 @@ public class StartOrUpdateOrganizerProfileCommandValidator
 
             RuleFor(x => x.BankInfo.Branch)
                 .MaximumLength(200);
+        });
+
+        When(x => x.LogoFile != null, () =>
+        {
+            RuleFor(x => x.LogoFile)
+                .Must(f => f!.Length > 0).WithMessage("Logo file cannot be empty.")
+                .Must(f => f!.Length <= MaxFileSize).WithMessage("Logo file too large. Max size is 10 MB.")
+                .Must(f => AllowedContentTypes.Contains(f!.ContentType.ToLowerInvariant()))
+                .WithMessage("Invalid logo type. Allowed: jpeg, png, gif, webp.");
         });
     }
 }
