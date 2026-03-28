@@ -39,6 +39,9 @@ internal sealed class CheckInCommandHandler(
         if (order is null)
             return Result.Failure<CheckInResponse>(TicketingErrors.CheckIn.TicketNotFound);
 
+        if (order.EventId != command.EventId)
+            return Result.Failure<CheckInResponse>(Error.Forbidden("CheckIn.WrongEvent", "This ticket does not belong to the current event."));
+
         var ticket = order.Tickets.FirstOrDefault(t => t.Id == orderTicketId);
         if (ticket is null)
             return Result.Failure<CheckInResponse>(TicketingErrors.CheckIn.TicketNotFound);

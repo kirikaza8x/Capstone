@@ -4,11 +4,7 @@ namespace Events.PublicApi.PublicApi;
 
 public interface IEventMemberPublicApi
 {
-    Task<bool> HasPermissionAsync(
-        Guid eventId,
-        Guid userId,
-        string permission,
-        CancellationToken cancellationToken = default);
+    Task<bool> HasPermissionAsync(Guid eventId, Guid userId, string requiredPermission, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<EventRecommendationFeature>> GetEventsByCategoriesOrHashtagsAsync(
         IEnumerable<string> categoryNames,
@@ -37,6 +33,5 @@ public interface IEventMemberPublicApi
         int               page              = 1,
         int               pageSize          = 100,
         CancellationToken cancellationToken = default);
-
     
 }

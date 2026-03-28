@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging;
+
 namespace Ticketing.Api;
 
 internal static class Constants
@@ -14,10 +16,11 @@ internal static class Constants
 
         public const string Orders = $"{BaseApi}/orders";
         public const string OrderById = $"{BaseApi}/{{orderId:guid}}";
-        public const string CheckIn = $"{BaseApi}/check-in";
         public const string ApplyVoucher = $"{BaseApi}/{{orderId:guid}}/apply-voucher";
         public const string CancelOrder = $"{Orders}/{{orderId:guid}}/cancel";
         public const string MyOrders = $"{Orders}/me";
+
+        public const string CheckIn = $"api/events/{{eventId:guid}}/check-in";
 
         // voucher
         public const string Vouchers = $"{BaseApi}/vouchers";

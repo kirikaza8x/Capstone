@@ -1,5 +1,6 @@
-﻿using Events.Domain.Repositories;
-using Events.Infrastructure.Caching;
+﻿using System.Text.Json;
+using Events.Domain.Enums;
+using Events.Domain.Repositories;
 using Events.PublicApi.Constants;
 using Events.PublicApi.PublicApi;
 using Events.PublicApi.Records;
@@ -12,36 +13,61 @@ internal class EventMemberPublicApi(
     IDistributedCache  distributedCache)
     : IEventMemberPublicApi
 {
-    private static readonly TimeSpan PermissionCacheTtl = TimeSpan.FromSeconds(60);
+    private static readonly TimeSpan PermissionCacheTtl = TimeSpan.FromHours(24);
 
     public async Task<bool> HasPermissionAsync(
-        Guid              eventId,
-        Guid              userId,
-        string            permission,
-        CancellationToken cancellationToken = default)
+            Guid eventId,
+            Guid userId,
+            string requiredPermission,
+            CancellationToken cancellationToken = default)
     {
-        if (!EventMemberPermission.All.Contains(permission))
+        var cacheKey = $"event_permissions:{eventId}:{userId}";
+
+        // read cache
+        var cachedJson = await distributedCache.GetStringAsync(cacheKey, cancellationToken);
+        if (!string.IsNullOrEmpty(cachedJson))
+        {
+            var cachedPermissions = JsonSerializer.Deserialize<List<string>>(cachedJson);
+            return HasRequiredPermission(cachedPermissions, requiredPermission);
+        }
+
+        // cache Miss -> query db
+        var @event = await eventRepository.GetByIdWithMembersAsync(eventId, cancellationToken);
+
+        if (@event is null)
+        {
             return false;
+        }
 
-        var cacheKey    = EventPermissionCacheKeys.Permission(eventId, userId, permission);
-        var cachedValue = await distributedCache.GetStringAsync(cacheKey, cancellationToken);
+        // get list permissions
+        List<string> permissionsToCache = [];
 
-        if (cachedValue is not null)
-            return cachedValue == bool.TrueString;
+        if (@event.OrganizerId == userId)
+        {
+            permissionsToCache.Add(EventPermissions.Organizer);
+        }
+        else
+        {
+            var member = @event.Members.FirstOrDefault(m => m.UserId == userId && m.Status == EventMemberStatus.Active);
+            if (member is not null)
+            {
+                permissionsToCache.AddRange(member.Permissions);
+            }
+        }
 
-        var hasPermission = await eventRepository
-            .HasPermissionAsync(eventId, userId, permission, cancellationToken);
-
-        await distributedCache.SetStringAsync(
-            cacheKey,
-            hasPermission.ToString(),
-            new DistributedCacheEntryOptions
+        // cache permissions if any
+        if (permissionsToCache.Count > 0)
+        {
+            var options = new DistributedCacheEntryOptions
             {
                 AbsoluteExpirationRelativeToNow = PermissionCacheTtl
-            },
-            cancellationToken);
+            };
 
-        return hasPermission;
+            var json = JsonSerializer.Serialize(permissionsToCache);
+            await distributedCache.SetStringAsync(cacheKey, json, options, cancellationToken);
+        }
+
+        return HasRequiredPermission(permissionsToCache, requiredPermission);
     }
 
     public async Task<IReadOnlyList<EventRecommendationFeature>> GetEventsByCategoriesOrHashtagsAsync(
@@ -90,6 +116,14 @@ internal class EventMemberPublicApi(
     }
 
     // ── Private ───────────────────────────────────────────────────
+    private static bool HasRequiredPermission(IReadOnlyCollection<string>? userPermissions, string requiredPermission)
+    {
+        if (userPermissions is null || userPermissions.Count == 0)
+            return false;
+
+        return userPermissions.Contains(EventPermissions.Organizer) ||
+               userPermissions.Contains(requiredPermission);
+    }
 
     private static IReadOnlyList<EventRecommendationFeature> MapToFeatures(
         IEnumerable<Events.Domain.Entities.Event> events)
