@@ -269,7 +269,7 @@ internal sealed class EventRepository(EventsDbContext context)
     {
         return await _context.Events
             .AsNoTracking()
-            .Where(e => e.Id == id && e.IsActive)
+            .Where(e => e.Id == id && e.IsActive && e.Status == EventStatus.Published)
             .Include(e => e.EventCategories).ThenInclude(ec => ec.Category)
             .Include(e => e.EventHashtags).ThenInclude(eh => eh.Hashtag)
             .Include(e => e.TicketTypes)
