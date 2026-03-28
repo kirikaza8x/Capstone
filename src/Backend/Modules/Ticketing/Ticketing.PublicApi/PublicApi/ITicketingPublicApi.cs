@@ -11,6 +11,15 @@ public interface ITicketingPublicApi
         Guid userId,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Re-validates the voucher attached to an order before charging the user.
+    /// Returns null if no voucher is attached (valid — proceed normally).
+    /// Returns a result with IsValid=false if MaxUse is already exhausted.
+    /// </summary>
+    Task<VoucherValidationResult?> ValidateOrderVoucherAsync(
+        Guid orderId,
+        CancellationToken cancellationToken = default);
+
     Task<IReadOnlyDictionary<Guid, int>> GetZoneLockedCountsAsync(
         Guid eventSessionId,
         IReadOnlyCollection<Guid> ticketTypeIds,

@@ -1,4 +1,5 @@
-﻿using Events.Domain.Errors;
+﻿using Events.Domain.Enums;
+using Events.Domain.Errors;
 using Events.Domain.Repositories;
 using Shared.Application.Abstractions.Authentication;
 using Shared.Application.Abstractions.Messaging;
@@ -52,8 +53,8 @@ public class ExportEventMembersQueryHandler(
             var permissions = string.Join(", ", m.Permissions.Select(p => permissionMap.TryGetValue(p, out var v) ? v : p));
 
             // Status mapping
-            var status = m.Status == "Active" ? "Đang hoạt động" : "Đã khoá";
-            var isActive = m.Status == "Active" ? "Có" : "Không";
+            var status = m.Status == EventMemberStatus.Active ? "Đang hoạt động" : "Đã khoá";
+            var isActive = m.Status == EventMemberStatus.Active ? "Có" : "Không";
 
             return new EventMemberExportDto
             {

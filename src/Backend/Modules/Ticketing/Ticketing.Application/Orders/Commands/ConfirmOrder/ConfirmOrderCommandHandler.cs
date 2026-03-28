@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
 using Ticketing.Application.Abstractions.Locks;

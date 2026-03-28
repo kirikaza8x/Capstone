@@ -26,6 +26,7 @@ internal sealed class OrderRepository(TicketingDbContext context)
     {
         return await _context.Orders
             .Include(o => o.Tickets)
+            .Include(o => o.OrderVouchers)
             .Where(o =>
                 o.Status == OrderStatus.Pending &&
                 o.CreatedAt.HasValue &&

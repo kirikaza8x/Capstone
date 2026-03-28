@@ -1,4 +1,5 @@
-﻿using Shared.Application.Abstractions.Messaging;
+﻿using Events.Domain.Enums;
+using Shared.Application.Abstractions.Messaging;
 
 namespace Events.Application.EventMembers.Queries.GetEventMembers;
 
@@ -10,4 +11,4 @@ public sealed record EventMemberResponse(
     string FullName,
     string Email,
     IReadOnlyList<string> Permissions,
-    string Status);
+    EventMemberStatus Status);

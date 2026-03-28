@@ -53,6 +53,32 @@ internal sealed class TicketingPublicApi(
                 .ToList());
     }
 
+    public async Task<VoucherValidationResult?> ValidateOrderVoucherAsync(
+        Guid orderId,
+        CancellationToken cancellationToken = default)
+    {
+        // Load the voucher attached to this order (if any)
+        var orderVoucher = await dbContext.OrderVouchers
+            .Include(ov => ov.Voucher)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(
+                ov => ov.OrderId == orderId,
+                cancellationToken);
+
+        // No voucher attached — nothing to validate, proceed with payment
+        if (orderVoucher is null)
+            return null;
+
+        // Re-validate MaxUse at payment initiation time (authoritative check)
+        if (orderVoucher.Voucher.TotalUse >= orderVoucher.Voucher.MaxUse)
+            return new VoucherValidationResult(
+                IsValid: false,
+                ErrorMessage: $"Voucher '{orderVoucher.Voucher.CouponCode}' has reached its maximum usage limit.");
+
+        return new VoucherValidationResult(IsValid: true);
+    }
+
+
     public async Task<IReadOnlyDictionary<Guid, int>> GetZoneLockedCountsAsync(
         Guid eventSessionId,
         IReadOnlyCollection<Guid> ticketTypeIds,

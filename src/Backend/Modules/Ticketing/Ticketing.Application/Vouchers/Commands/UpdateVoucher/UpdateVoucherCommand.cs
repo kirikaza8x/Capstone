@@ -5,8 +5,10 @@ namespace Ticketing.Application.Vouchers.Commands.UpdateVoucher;
 
 public sealed record UpdateVoucherCommand(
     Guid VoucherId,
+    string Name,
+    string? Description,
     string CouponCode,
-    VoucherType Type, 
+    VoucherType Type,
     decimal Value,
     int MaxUse,
     DateTime StartDate,

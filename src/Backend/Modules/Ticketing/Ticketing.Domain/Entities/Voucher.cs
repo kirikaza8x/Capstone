@@ -7,6 +7,8 @@ namespace Ticketing.Domain.Entities;
 
 public sealed class Voucher : Entity<Guid>
 {
+    public string Name { get; private set; } = string.Empty;
+    public string? Description { get; private set; }
     public string CouponCode { get; private set; } = string.Empty;
     public VoucherType Type { get; private set; }
     public decimal Value { get; private set; }
@@ -19,15 +21,20 @@ public sealed class Voucher : Entity<Guid>
     private Voucher() { }
 
     public static Result<Voucher> Create(
+        string name,
         string couponCode,
         VoucherType type,
         decimal value,
         int maxUse,
         DateTime startDate,
         DateTime endDate,
+        string? description = null,
         Guid? eventId = null,
         DateTime? utcNow = null)
     {
+        if (string.IsNullOrWhiteSpace(name))
+            return Result.Failure<Voucher>(TicketingErrors.Voucher.InvalidName); 
+
         if (string.IsNullOrWhiteSpace(couponCode))
             return Result.Failure<Voucher>(TicketingErrors.Voucher.InvalidCouponCode);
 
@@ -43,10 +50,12 @@ public sealed class Voucher : Entity<Guid>
         var entity = new Voucher
         {
             Id = Guid.NewGuid(),
-            CouponCode = couponCode.Trim(),
+            Name = name.Trim(),
+            Description = description?.Trim(),
+            CouponCode = couponCode.Trim().ToUpperInvariant(),
             Type = type,
             Value = value,
-            TotalUse = 0,    
+            TotalUse = 0,
             MaxUse = maxUse,
             StartDate = startDate,
             EndDate = endDate,
@@ -58,15 +67,20 @@ public sealed class Voucher : Entity<Guid>
     }
 
     public Result Update(
+        string name,
         string couponCode,
         VoucherType type,
         decimal value,
         int maxUse,
         DateTime startDate,
-        DateTime endDate)
+        DateTime endDate,
+        string? description = null)
     {
         if (TotalUse > 0)
             return Result.Failure(TicketingErrors.Voucher.CannotUpdateUsedVoucher);
+
+        if (string.IsNullOrWhiteSpace(name))
+            return Result.Failure(TicketingErrors.Voucher.InvalidName);
 
         if (string.IsNullOrWhiteSpace(couponCode))
             return Result.Failure(TicketingErrors.Voucher.InvalidCouponCode);
@@ -80,6 +94,8 @@ public sealed class Voucher : Entity<Guid>
         if (startDate >= endDate)
             return Result.Failure(TicketingErrors.Voucher.InvalidDateRange);
 
+        Name = name.Trim();
+        Description = description?.Trim();
         CouponCode = couponCode.Trim().ToUpperInvariant();
         Type = type;
         Value = value;
@@ -97,6 +113,7 @@ public sealed class Voucher : Entity<Guid>
 
         return Result.Success();
     }
+
     public void IncrementUsage()
     {
         TotalUse++;

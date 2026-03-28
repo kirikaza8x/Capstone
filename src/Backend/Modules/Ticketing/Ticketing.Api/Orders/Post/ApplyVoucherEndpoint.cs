@@ -6,10 +6,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Shared.Api.Extensions;
 using Shared.Api.Results;
+using Ticketing.Api;
 using Ticketing.Application.Orders.Commands.ApplyVoucher;
 using Users.PublicApi.Constants;
 
-namespace Ticketing.Api.Orders.Post;
+namespace Ticketing.Presentation.Endpoints.Orders;
 
 public sealed record ApplyVoucherRequest(string CouponCode);
 
@@ -30,18 +31,17 @@ public class ApplyVoucherEndpoint : ICarterModule
             if (result.IsFailure)
                 return result.ToProblem();
 
-            return result.ToOk();
+            return Results.Ok(result.Value);
         })
         .WithTags(Constants.Tags.Orders)
-        .WithName("ApplyVoucher")
-        .WithSummary("Apply voucher to order")
-        .WithDescription("Applies a voucher discount to a pending order. Replaces existing voucher if any.")
+        .WithName("ApplyVoucherToOrder")
+        .WithSummary("Apply a discount voucher to a pending order")
+        .WithDescription("Validates and locks the voucher. If an existing voucher is present, it will be swapped out.")
         .Produces<ApplyVoucherResponse>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status401Unauthorized)
         .ProducesProblem(StatusCodes.Status403Forbidden)
         .ProducesProblem(StatusCodes.Status404NotFound)
-        .ProducesProblem(StatusCodes.Status409Conflict)
         .RequireRoles(Roles.AttendeeAndOrganizer);
     }
 }

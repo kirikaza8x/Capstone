@@ -5,6 +5,7 @@ using Shared.Domain.Queries;
 using Shared.Infrastructure.Data;
 using Shared.Infrastructure.Extensions;
 using Ticketing.Domain.Entities;
+using Ticketing.Domain.Enums;
 using Ticketing.Domain.Repositories;
 
 namespace Ticketing.Infrastructure.Data.Repositories;
@@ -29,7 +30,8 @@ internal sealed class VoucherRepository(TicketingDbContext context)
         await _context.OrderVouchers
             .AnyAsync(
                 ov => ov.VoucherId == voucherId &&
-                      ov.Order.UserId == userId,
+                      ov.Order.UserId == userId &&
+                      ov.Order.Status == OrderStatus.Paid,
                 cancellationToken);
 
     public async Task<bool> IsCouponCodeExistsAsync(
