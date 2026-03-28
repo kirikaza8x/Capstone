@@ -16,7 +16,7 @@ public class AssignOrganizerRoleEventHandler(
 {
     public async Task Handle(OrganizerProfileVerifiedEvent notification, CancellationToken cancellationToken)
     {
-        var user = await userRepository.GetByIdAsync(notification.UserId, cancellationToken);
+        var user = await userRepository.GetByIdWithRoleAsync(notification.UserId, cancellationToken);
         if (user == null || user.Roles.Any(r => r.Name == PublicApi.Constants.Roles.Organizer)) return;
 
         var defaultRole = await roleRepository.GetByRoleNameAsync(PublicApi.Constants.Roles.Organizer, cancellationToken)
