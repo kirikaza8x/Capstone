@@ -60,6 +60,8 @@ public sealed class OrganizerAdminListItemDto
 
     public Guid ProfileId { get; init; }
 
+    public string? Logo { get; init; }
+
     public string DisplayName { get; init; } = default!;
 
     public OrganizerStatus Status { get; init; }

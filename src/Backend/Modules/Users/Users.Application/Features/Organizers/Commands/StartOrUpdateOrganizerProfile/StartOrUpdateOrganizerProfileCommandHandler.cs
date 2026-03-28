@@ -1,6 +1,8 @@
 using Shared.Application.Abstractions.Authentication;
 using Shared.Application.Abstractions.Messaging;
+using Shared.Application.Abstractions.Storage;
 using Shared.Domain.Abstractions;
+using Users.Application.Storage;
 using Users.Domain.Repositories;
 using Users.Domain.UOW;
 using Users.Domain.ValueObjects; 
@@ -12,15 +14,19 @@ public class StartOrUpdateOrganizerProfileCommandHandler
 {
     private readonly IUserRepository _userRepository;
     private readonly ICurrentUserService _currentUserService;
+
+    private readonly IStorageService _storageService;
     private readonly IUserUnitOfWork _unitOfWork;
 
     public StartOrUpdateOrganizerProfileCommandHandler(
         IUserRepository userRepository,
         ICurrentUserService currentUserService,
+        IStorageService storageService,
         IUserUnitOfWork unitOfWork)
     {
         _userRepository = userRepository;
         _currentUserService = currentUserService;
+        _storageService = storageService;
         _unitOfWork = unitOfWork;
     }
 
@@ -32,6 +38,18 @@ public class StartOrUpdateOrganizerProfileCommandHandler
 
         var user = await _userRepository
             .GetByIdWithOrganizerProfileAsync(userId, cancellationToken);
+
+        
+
+        // await using var stream = command.LogoFile.OpenReadStream();
+        // var folder = $"{StoragePath.OrganizerProfileImages}/{command.user}";
+
+        // var imageUrl = await storageService.UploadAsync(
+        //     stream,
+        //     command.LogoFile.FileName,
+        //     command.File.ContentType,
+        //     folder,
+        //     cancellationToken);
 
         if (user == null)
         {
@@ -64,6 +82,7 @@ public class StartOrUpdateOrganizerProfileCommandHandler
                     "Bank account is required."));
         }
 
+        
         var businessInfo = new OrganizerBusinessInfo(
             command.BusinessInfo.DisplayName,
             command.BusinessInfo.Description,
@@ -87,6 +106,23 @@ public class StartOrUpdateOrganizerProfileCommandHandler
             command.Type,
             businessInfo,
             bankInfo);
+
+        if(command.LogoFile != null)
+        {
+            await using var stream = command.LogoFile.OpenReadStream();
+            var folder = $"{StoragePath.OrganizerProfileImages}/{user.Id}";
+
+            var imageUrl = await _storageService.UploadAsync(
+                stream,
+                command.LogoFile.FileName,
+                command.LogoFile.ContentType,
+                folder,
+                cancellationToken);
+
+            user.UpdateDraftLogo(imageUrl);
+        }
+
+            
 
         // --------------------
         // Persist
