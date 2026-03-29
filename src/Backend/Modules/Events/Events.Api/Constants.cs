@@ -26,6 +26,7 @@ internal static class Constants
     internal static class Routes
     {
         private const string BaseApi = "api";
+        public const string Events = $"{BaseApi}/events";
         private const string OrganizerBaseApi = $"{BaseApi}/organizer";
 
         // Organizer
@@ -50,7 +51,6 @@ internal static class Constants
         public const string StaffEventById = $"{BaseApi}/staff/events/{{eventId:guid}}";
 
         // Events
-        public const string Events = $"{BaseApi}/events";
         public const string EventById = $"{Events}/{{eventId:guid}}";
         public const string EventByUrlPath = $"{Events}/url/{{urlPath}}";
 
@@ -82,6 +82,7 @@ internal static class Constants
         // Members
         public const string EventMembers = $"{EventById}/members";
         public const string ConfirmEventMembers = $"{EventMembers}/{{memberId:guid}}/confirm";
+        public const string AssignedEvent = $"{Events}/assigned";
 
     }
 }
