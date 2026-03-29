@@ -104,7 +104,6 @@ public class Program
         }
 
         app.UseCors();
-        app.UseHttpsRedirection();
         app.UseAuthentication();
         app.UseAuthorization();
         app.UseExceptionHandler();

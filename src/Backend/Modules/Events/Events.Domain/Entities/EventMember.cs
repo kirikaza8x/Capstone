@@ -1,6 +1,4 @@
-﻿using Events.Domain.DomainEvents;
-using Events.Domain.Enums;
-using Events.Domain.Errors;
+﻿using Events.Domain.Enums; 
 using Shared.Domain.Abstractions;
 using Shared.Domain.DDD;
 

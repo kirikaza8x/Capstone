@@ -301,4 +301,14 @@ internal sealed class EventRepository(EventsDbContext context)
             .AsSplitQuery()
             .ToListAsync(ct);
     }
+
+    public async Task<IReadOnlyCollection<Event>> GetAssignedEventsAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Events
+            .Include(e => e.Sessions) 
+            .Include(e => e.Members)
+            .Where(e => e.Members.Any(m => m.UserId == userId && m.Status == EventMemberStatus.Active))
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+    }
 }
