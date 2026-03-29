@@ -87,7 +87,7 @@ internal sealed class CreateOrderCommandHandler(
             {
                 var item = itemMap[(ticket.EventSessionId, ticket.TicketTypeId)];
                 var orderTicketId = Guid.NewGuid();
-                var qrCode = QrCodeHelper.Generate(orderTicketId);
+                var qrCode = QrCodeHelper.Generate(orderTicketId, ticket.EventSessionId);
 
                 var addResult = order.AddTicket(
                     ticket.EventSessionId,

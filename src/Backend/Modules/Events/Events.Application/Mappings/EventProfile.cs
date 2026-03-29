@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Events.Application.EventMembers.Queries.GetAssignedEvents;
 using Events.Application.Events.DTOs;
 using Events.Application.Events.Queries.GetEventById;
 using Events.Application.Events.Queries.GetEventByUrlPath;
@@ -58,5 +59,9 @@ public sealed class EventProfile : Profile
         CreateMap<EventCategory, EventCategoryDto>()
             .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.CategoryId))
             .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Category != null ? src.Category.Name : string.Empty));
+
+        CreateMap<Event, AssignedEventResponse>()
+            .ForMember(dest => dest.Sessions, opt => opt.MapFrom(src => src.Sessions))
+            .ForMember(dest => dest.EventId, opt => opt.MapFrom(src => src.Id));
     }
 }

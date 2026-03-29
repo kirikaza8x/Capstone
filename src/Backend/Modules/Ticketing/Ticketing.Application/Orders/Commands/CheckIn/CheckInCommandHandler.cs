@@ -28,8 +28,11 @@ internal sealed class CheckInCommandHandler(
                 "Current user is not authenticated."));
 
         //Parse QR
-        if (!QrCodeHelper.TryParse(command.QrCode, out var orderTicketId))
+        if (!QrCodeHelper.TryParse(command.QrCode, out var orderTicketId, out var qrEventSessionId))
             return Result.Failure<CheckInResponse>(TicketingErrors.CheckIn.InvalidQrCode);
+
+        if (qrEventSessionId != command.EventSessionId)
+            return Result.Failure<CheckInResponse>(TicketingErrors.CheckIn.SessionMismatch);
 
         // Load OrderTicket
         var order = await orderRepository.GetByOrderTicketIdAsync(
@@ -45,10 +48,6 @@ internal sealed class CheckInCommandHandler(
         var ticket = order.Tickets.FirstOrDefault(t => t.Id == orderTicketId);
         if (ticket is null)
             return Result.Failure<CheckInResponse>(TicketingErrors.CheckIn.TicketNotFound);
-
-        //  Validate session
-        if (ticket.EventSessionId != command.EventSessionId)
-            return Result.Failure<CheckInResponse>(TicketingErrors.CheckIn.SessionMismatch);
 
         // Check-in
         var utcNow = dateTimeProvider.UtcNow;
