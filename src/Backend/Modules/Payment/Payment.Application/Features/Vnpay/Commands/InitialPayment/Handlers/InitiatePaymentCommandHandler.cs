@@ -29,7 +29,7 @@ public class InitiatePaymentCommandHandler(
         var ipAddress = currentUserService.IpAddress ?? "127.0.0.1";
 
         var order = await ticketingApi
-            .GetOrderAsync(command.OrderId, userId, cancellationToken);
+            .GetOrderAsync(command.OrderId, userId, false, cancellationToken);
 
         if (order == null)
             return Result.Failure<InitiatePaymentResult>(
@@ -46,18 +46,19 @@ public class InitiatePaymentCommandHandler(
                 Error.Validation("Payment.InvalidAmount",
                     "All ticket amounts must be greater than zero."));
 
-        // Re-validate voucher MaxUse before charging — authoritative check at pay time
         var voucherValidation = await ticketingApi
             .ValidateOrderVoucherAsync(command.OrderId, cancellationToken);
 
         if (voucherValidation is { IsValid: false })
             return Result.Failure<InitiatePaymentResult>(
                 Error.Validation("Payment.VoucherExceededMaxUse",
-                    voucherValidation.ErrorMessage ?? "The voucher applied to this order has reached its maximum usage limit."));
+                    voucherValidation.ErrorMessage ??
+                    "The voucher applied to this order has reached its maximum usage limit."));
 
         var totalAmount = order.Tickets.Sum(t => t.Amount);
         var orderInfo = command.Description
                           ?? $"Payment for order {command.OrderId}";
+
         var itemTuples = order.Tickets
             .Select(t => (t.OrderTicketId, t.EventSessionId, t.Amount));
 
@@ -65,13 +66,24 @@ public class InitiatePaymentCommandHandler(
         {
             PaymentType.BatchDirectPay =>
                 await HandleBatchDirectPayAsync(
-                    command, userId, ipAddress,
-                    totalAmount, orderInfo, itemTuples, cancellationToken),
+                    command,
+                    userId,
+                    ipAddress,
+                    order.EventId,     // ✅ PASS EVENT ID
+                    totalAmount,
+                    orderInfo,
+                    itemTuples,
+                    cancellationToken),
 
             PaymentType.BatchWalletPay =>
                 await HandleBatchWalletPayAsync(
-                    command, userId,
-                    totalAmount, orderInfo, itemTuples, cancellationToken),
+                    command,
+                    userId,
+                    order.EventId,     // ✅ PASS EVENT ID
+                    totalAmount,
+                    orderInfo,
+                    itemTuples,
+                    cancellationToken),
 
             _ => Result.Failure<InitiatePaymentResult>(
                 Error.Validation("Payment.InvalidMethod",
@@ -84,6 +96,7 @@ public class InitiatePaymentCommandHandler(
         InitiatePaymentCommand command,
         Guid userId,
         string ipAddress,
+        Guid eventId,   // ✅ ADDED
         decimal totalAmount,
         string orderInfo,
         IEnumerable<(Guid OrderTicketId, Guid EventSessionId, decimal Amount)> itemTuples,
@@ -92,7 +105,13 @@ public class InitiatePaymentCommandHandler(
         var txnRef = Guid.NewGuid().ToString("N");
 
         var txn = PaymentTransaction.CreateBatchDirectPay(
-            userId, command.OrderId, itemTuples, orderInfo, txnRef, ipAddress);
+            userId: userId,
+            orderId: command.OrderId,
+            eventId: eventId,          
+            items: itemTuples,
+            gatewayOrderInfo: orderInfo,
+            gatewayTxnRef: txnRef,
+            ipAddress: ipAddress);
 
         transactionRepository.Add(txn);
         await unitOfWork.SaveChangesAsync(cancellationToken);
@@ -103,8 +122,7 @@ public class InitiatePaymentCommandHandler(
                 totalAmount, txnRef, orderInfo, ipAddress);
 
             logger.LogInformation(
-                "BatchDirectPay initiated: UserId={UserId}, OrderId={OrderId}, " +
-                "Total={Total}, TxnRef={TxnRef}",
+                "BatchDirectPay initiated: UserId={UserId}, OrderId={OrderId}, Total={Total}, TxnRef={TxnRef}",
                 userId, command.OrderId, totalAmount, txnRef);
 
             return Result.Success(new InitiatePaymentResult(
@@ -128,6 +146,7 @@ public class InitiatePaymentCommandHandler(
     private async Task<Result<InitiatePaymentResult>> HandleBatchWalletPayAsync(
         InitiatePaymentCommand command,
         Guid userId,
+        Guid eventId,   
         decimal totalAmount,
         string orderInfo,
         IEnumerable<(Guid OrderTicketId, Guid EventSessionId, decimal Amount)> itemTuples,
@@ -154,8 +173,7 @@ public class InitiatePaymentCommandHandler(
         if (wallet.Balance < totalAmount)
             return Result.Failure<InitiatePaymentResult>(
                 Error.Failure("Payment.InsufficientFunds",
-                    $"Balance {wallet.Balance:N0} VND is insufficient " +
-                    $"for {totalAmount:N0} VND."));
+                    $"Balance {wallet.Balance:N0} VND is insufficient for {totalAmount:N0} VND."));
 
         WalletTransaction walletTxn;
         try
@@ -168,6 +186,7 @@ public class InitiatePaymentCommandHandler(
         {
             logger.LogWarning(ex,
                 "Debit race for UserId={UserId}", userId);
+
             return Result.Failure<InitiatePaymentResult>(
                 Error.Failure("Payment.DebitFailed",
                     "Debit failed. Please try again."));
@@ -177,14 +196,18 @@ public class InitiatePaymentCommandHandler(
         walletRepository.Update(wallet);
 
         var txn = PaymentTransaction.CreateBatchWalletPay(
-            userId, wallet.Id, command.OrderId, itemTuples, orderInfo);
+            userId: userId,
+            walletId: wallet.Id,
+            orderId: command.OrderId,
+            eventId: eventId,      
+            items: itemTuples,
+            orderInfo: orderInfo);
 
         transactionRepository.Add(txn);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         logger.LogInformation(
-            "BatchWalletPay completed: UserId={UserId}, OrderId={OrderId}, " +
-            "Total={Total}, BalanceAfter={Balance}",
+            "BatchWalletPay completed: UserId={UserId}, OrderId={OrderId}, Total={Total}, BalanceAfter={Balance}",
             userId, command.OrderId, totalAmount, wallet.Balance);
 
         return Result.Success(new InitiatePaymentResult(

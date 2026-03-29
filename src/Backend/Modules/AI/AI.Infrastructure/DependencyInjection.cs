@@ -84,7 +84,11 @@ public static class DependencyInjection
         });
         services.AddScoped<ITrackingTokenGenerator, TrackingTokenGenerator>();
         // ── 3. External AI services ───────────────────────────────
-        services.AddHttpClient<IImageGenerationService, OpenRouterImageService>();
+        services.AddHttpClient<IImageGenerationService, OpenRouterImageService>(client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(120);
+
+        });
         services.AddScoped<IGeminiService, GeminiService>();
         services.AddScoped<IRecommendationAiService, RecommendationAiService>();
 

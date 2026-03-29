@@ -9,6 +9,7 @@ public interface ITicketingPublicApi
     Task<OrderDetails?> GetOrderAsync(
         Guid orderId,
         Guid userId,
+        bool requirePaid = false,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -31,5 +32,7 @@ public interface ITicketingPublicApi
         CancellationToken cancellationToken = default);
 
     Task<IReadOnlyDictionary<Guid, int>> GetSoldCountsAsync(Guid eventSessionId, IEnumerable<Guid> ticketTypeIds, CancellationToken cancellationToken);
+
+    Task<IReadOnlyCollection<Guid>> GetOrdersByEventIdAsync(Guid eventSessionId, CancellationToken cancellationToken);
 }
 
