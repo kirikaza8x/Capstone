@@ -364,4 +364,91 @@ public class PaymentTransactionRepository
             .Select(x => new EventRevenue(x.EventId, byNet ? x.Net : x.Gross))
             .ToList();
     }
+
+    // GROSS — per event, filtered to organizer's events
+    public async Task<IReadOnlyList<EventRevenue>> GetRevenueByEventIdsAsync(
+        IReadOnlyCollection<Guid> eventIds,
+        CancellationToken cancellationToken = default)
+    {
+        if (eventIds.Count == 0) return [];
+
+        return await DbSet
+            .Where(x =>
+                x.EventId != null &&
+                eventIds.Contains(x.EventId.Value) &&
+                x.InternalStatus == PaymentInternalStatus.Completed)
+            .GroupBy(x => x.EventId!.Value)
+            .Select(g => new EventRevenue(g.Key, g.Sum(x => x.Amount)))
+            .ToListAsync(cancellationToken);
+    }
+
+    // NET — per event, filtered to organizer's events
+    public async Task<IReadOnlyList<EventRevenue>> GetNetRevenueByEventIdsAsync(
+        IReadOnlyCollection<Guid> eventIds,
+        CancellationToken cancellationToken = default)
+    {
+        if (eventIds.Count == 0) return [];
+
+        return await DbSet
+            .Where(x =>
+                x.EventId != null &&
+                eventIds.Contains(x.EventId.Value) &&
+                x.InternalStatus == PaymentInternalStatus.Completed)
+            .GroupBy(x => x.EventId!.Value)
+            .Select(g => new EventRevenue(
+                g.Key,
+                g.Sum(x =>
+                    x.Amount -
+                    x.Items
+                        .Where(i => i.InternalStatus == PaymentInternalStatus.Refunded)
+                        .Sum(i => i.Amount))))
+            .ToListAsync(cancellationToken);
+    }
+
+    // REFUNDS total across all organizer's events
+    public async Task<decimal> GetTotalRefundsByEventIdsAsync(
+        IReadOnlyCollection<Guid> eventIds,
+        CancellationToken cancellationToken = default)
+    {
+        if (eventIds.Count == 0) return 0m;
+
+        return await DbSet
+            .Where(x =>
+                x.EventId != null &&
+                eventIds.Contains(x.EventId.Value) &&
+                x.InternalStatus == PaymentInternalStatus.Completed)
+            .SelectMany(x => x.Items)
+            .Where(i => i.InternalStatus == PaymentInternalStatus.Refunded)
+            .SumAsync(i => (decimal?)i.Amount, cancellationToken) ?? 0m;
+    }
+
+    // SUMMARY — gross, net, refunds, event count in one pass
+    public async Task<OrganizerRevenueSummary> GetRevenueSummaryByEventIdsAsync(
+        IReadOnlyCollection<Guid> eventIds,
+        CancellationToken cancellationToken = default)
+    {
+        if (eventIds.Count == 0)
+            return new OrganizerRevenueSummary(0m, 0m, 0m, 0);
+
+        var txns = await DbSet
+            .Include(x => x.Items)
+            .Where(x =>
+                x.EventId != null &&
+                eventIds.Contains(x.EventId.Value) &&
+                x.InternalStatus == PaymentInternalStatus.Completed)
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+
+        var gross = txns.Sum(x => x.Amount);
+        var refunds = txns
+            .SelectMany(x => x.Items)
+            .Where(i => i.InternalStatus == PaymentInternalStatus.Refunded)
+            .Sum(i => i.Amount);
+
+        return new OrganizerRevenueSummary(
+            GrossRevenue: gross,
+            TotalRefunds: refunds,
+            NetRevenue: gross - refunds,
+            EventCount: txns.Select(x => x.EventId).Distinct().Count());
+    }
 }

@@ -26,3 +26,9 @@ public record GlobalRevenueSummary(
     decimal TotalRefunds,
     decimal NetRevenue,
     int EventCount);
+
+public record OrganizerRevenueSummary(
+    decimal GrossRevenue,
+    decimal TotalRefunds,
+    decimal NetRevenue,
+    int EventCount);

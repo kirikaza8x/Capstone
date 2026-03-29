@@ -51,4 +51,20 @@ public interface IPaymentTransactionRepository : IRepository<PaymentTransaction,
     Task<EventTransactionSummary?> GetTransactionSummaryByEventAsync(Guid eventId, CancellationToken cancellationToken = default);
     Task<GlobalRevenueSummary> GetGlobalRevenueSummaryAsync(CancellationToken cancellationToken = default);
     Task<IReadOnlyList<EventRevenue>> GetTopEventsByRevenueAsync(int topN, bool byNet = false, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<EventRevenue>> GetRevenueByEventIdsAsync(
+        IReadOnlyCollection<Guid> eventIds,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<EventRevenue>> GetNetRevenueByEventIdsAsync(
+        IReadOnlyCollection<Guid> eventIds,
+        CancellationToken cancellationToken = default);
+
+    Task<decimal> GetTotalRefundsByEventIdsAsync(
+        IReadOnlyCollection<Guid> eventIds,
+        CancellationToken cancellationToken = default);
+
+    Task<OrganizerRevenueSummary> GetRevenueSummaryByEventIdsAsync(
+        IReadOnlyCollection<Guid> eventIds,
+        CancellationToken cancellationToken = default);
 }

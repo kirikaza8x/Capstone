@@ -44,7 +44,8 @@ public sealed class OpenRouterImageService : IImageGenerationService
         {
             Model = _config.Model,
             Messages = [new() { Role = "user", Content = request.Prompt }],
-            Modalities = ["image"]
+            Modalities = ["image"],
+            
         };
 
         var json = JsonSerializer.Serialize(payload, JsonOptions);
