@@ -257,4 +257,23 @@ internal sealed class EventTicketingPublicApi(EventsDbContext dbContext) : IEven
 
         return ev;
     }
+
+    public async Task<IReadOnlyDictionary<Guid, TicketTypeDetailDto>> GetTicketTypeDetailsAsync(
+    IReadOnlyCollection<Guid> ticketTypeIds,
+    CancellationToken cancellationToken = default)
+    {
+        if (ticketTypeIds == null || ticketTypeIds.Count == 0)
+            return new Dictionary<Guid, TicketTypeDetailDto>();
+
+        var ticketTypes = await dbContext.TicketTypes
+            .Where(t => ticketTypeIds.Contains(t.Id))
+            .Select(t => new TicketTypeDetailDto(
+                t.Id,
+                t.Name,
+                t.Price,
+                t.Quantity))
+            .ToListAsync(cancellationToken);
+
+        return ticketTypes.ToDictionary(t => t.Id);
+    }
 }

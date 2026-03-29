@@ -189,4 +189,19 @@ internal sealed class OrderRepository(TicketingDbContext context)
             .Where(o => o.Tickets.Any(t => ticketIds.Contains(t.Id)))
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<IReadOnlyList<(Guid TicketTypeId, OrderTicketStatus Status)>> GetTicketStatsBySessionAsync(
+        Guid eventId,
+        Guid sessionId,
+        CancellationToken cancellationToken = default)
+    {
+        var query = await context.Set<OrderTicket>()
+            .Where(t => t.Order.EventId == eventId &&
+                        t.EventSessionId == sessionId &&
+                        t.Status != OrderTicketStatus.Cancelled)
+            .Select(t => new { t.TicketTypeId, t.Status })
+            .ToListAsync(cancellationToken);
+        // Return list of (TicketTypeId, Status) pairs
+        return query.Select(x => (x.TicketTypeId, x.Status)).ToList();
+    }
 }
