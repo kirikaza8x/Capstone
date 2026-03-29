@@ -20,7 +20,9 @@ internal static class Constants
         public const string CancelOrder = $"{Orders}/{{orderId:guid}}/cancel";
         public const string MyOrders = $"{Orders}/me";
 
-        public const string CheckIn = $"api/events/{{eventId:guid}}/check-in";
+        public const string CheckIn = $"{BaseApi}/events/{{eventId:guid}}/check-in";
+        public const string GetTicketsForCheckIn = $"{BaseApi}/events/{{eventId:guid}}/check-in/tickets";
+        public const string ManualCheckIn = $"{BaseApi}/events/{{eventId:guid}}/check-in/manual";
 
         // voucher
         public const string Vouchers = $"{BaseApi}/vouchers";
@@ -32,6 +34,7 @@ internal static class Constants
         public const string OrganizerOrdersForEvent = $"{OrganizerApi}/orders";
         public const string ExportOrdersSheet = $"{OrganizerApi}/orders/export";
         public const string ExportVouchersSheet = $"{OrganizerApi}/vouchers/export";
+
 
     }
 }
