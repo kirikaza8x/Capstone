@@ -179,4 +179,14 @@ internal sealed class OrderRepository(TicketingDbContext context)
             .AsNoTracking()
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<IReadOnlyCollection<Order>> GetByTicketIdsAsync(
+        IEnumerable<Guid> ticketIds,
+        CancellationToken cancellationToken = default)
+    {
+        return await context.Orders
+            .Include(o => o.Tickets)
+            .Where(o => o.Tickets.Any(t => ticketIds.Contains(t.Id)))
+            .ToListAsync(cancellationToken);
+    }
 }

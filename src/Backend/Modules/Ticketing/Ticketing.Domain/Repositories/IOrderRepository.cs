@@ -45,4 +45,6 @@ public interface IOrderRepository : IRepository<Order, Guid>
         CancellationToken cancellationToken = default);
 
     Task<IReadOnlyCollection<Order>> GetByUserIdAndEventIdAsync(Guid userId, Guid eventId, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyCollection<Order>> GetByTicketIdsAsync(IEnumerable<Guid> ticketIds, CancellationToken cancellationToken = default);
 }
