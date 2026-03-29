@@ -18,7 +18,7 @@ public sealed class GenerateImageCommandHandler
         _imageService = imageService;
     }
 
-    public async Task<Result<IReadOnlyList<GenerateImageResponse>>> Handle(
+    public async Task<Result<GenerateImageResponse>> Handle(
         GenerateImageCommand command,
         CancellationToken cancellationToken)
     {
@@ -33,7 +33,7 @@ public sealed class GenerateImageCommandHandler
 
         if (results.Count == 0)
         {
-            return Result.Failure<IReadOnlyList<GenerateImageResponse>>(
+            return Result.Failure<GenerateImageResponse>(
                 Error.Failure("ImageGeneration.Empty", "No images were returned from the provider."));
         }
 
