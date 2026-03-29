@@ -170,4 +170,13 @@ internal sealed class OrderRepository(TicketingDbContext context)
 
         return result;
     }
+
+    public async Task<IReadOnlyCollection<Order>> GetByUserIdAndEventIdAsync(Guid userId, Guid eventId, CancellationToken cancellationToken = default)
+    {
+        return await context.Orders
+            .Include(o => o.Tickets)
+            .Where(o => o.UserId == userId && o.EventId == eventId)
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+    }
 }

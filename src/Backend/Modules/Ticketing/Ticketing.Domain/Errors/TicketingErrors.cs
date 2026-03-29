@@ -75,6 +75,12 @@ public static class TicketingErrors
             "Order.NotPending",
             "Order is not in pending status.");
     }
+    public static class User
+    {
+        public static Error EmailNotFound(string Email) => Error.NotFound(
+            "CheckIn.EmailNotFound",
+            $"No user found with email '{Email}'. Please check again.");
+    }
 
     public static class Event
     {
