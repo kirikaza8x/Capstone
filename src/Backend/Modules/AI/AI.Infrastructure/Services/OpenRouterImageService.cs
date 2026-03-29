@@ -39,7 +39,7 @@ public sealed class OpenRouterImageService : IImageGenerationService
         _logger  = logger;
     }
 
-    public async Task<IReadOnlyList<ImageGenerationResult>> GenerateImagesAsync(
+    public async Task<ImageGenerationResult> GenerateImagesAsync(
         ImageGenerationRequestDto request,
         CancellationToken cancellationToken = default)
     {
@@ -86,15 +86,12 @@ public sealed class OpenRouterImageService : IImageGenerationService
         return await ParseAndUploadAsync(raw, cancellationToken);
     }
 
-    private async Task<IReadOnlyList<ImageGenerationResult>> ParseAndUploadAsync(
+    private async Task<ImageGenerationResult> ParseAndUploadAsync(
         string raw,
         CancellationToken cancellationToken)
     {
         var root = JsonSerializer.Deserialize<OpenRouterResponse>(raw, JsonOptions)
             ?? throw new InvalidOperationException("Empty response from OpenRouter.");
-
-        var results = new List<ImageGenerationResult>();
-        var index   = 0;
 
         foreach (var choice in root.Choices ?? [])
         {
@@ -136,15 +133,13 @@ public sealed class OpenRouterImageService : IImageGenerationService
                     folder,
                     cancellationToken);
 
-                _logger.LogInformation(
-                    "Image [{Index}] uploaded. PublicUrl={Url}", index, publicUrl);
+                _logger.LogInformation("Image uploaded. PublicUrl={Url}", publicUrl);
 
-                results.Add(new ImageGenerationResult { ImageUrl = publicUrl });
-                index++;
+                return new ImageGenerationResult { ImageUrl = publicUrl };
             }
         }
 
-        return results;
+        throw new InvalidOperationException("No image was returned from OpenRouter.");
     }
 
     // ── Request models ────────────────────────────────────────────────────────

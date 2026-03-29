@@ -7,7 +7,7 @@ using Shared.Domain.Abstractions;
 namespace AI.Application.Features.ImageGeneration.Handlers;
 
 public sealed class GenerateImageCommandHandler
-    : ICommandHandler<GenerateImageCommand, IReadOnlyList<GenerateImageResponse>>
+    : ICommandHandler<GenerateImageCommand, GenerateImageResponse>
 {
     private readonly IImageGenerationService _imageService;
 
@@ -31,16 +31,10 @@ public sealed class GenerateImageCommandHandler
 
         var results = await _imageService.GenerateImagesAsync(request, cancellationToken);
 
-        if (results.Count == 0)
-        {
-            return Result.Failure<GenerateImageResponse>(
-                Error.Failure("ImageGeneration.Empty", "No images were returned from the provider."));
-        }
+        var response = 
+            new GenerateImageResponse(results.ImageUrl ?? string.Empty);
+            
 
-        var response = results
-            .Select(r => new GenerateImageResponse(r.ImageUrl ?? string.Empty))
-            .ToList();
-
-        return Result.Success<IReadOnlyList<GenerateImageResponse>>(response);
+        return Result.Success(response);
     }
 }
