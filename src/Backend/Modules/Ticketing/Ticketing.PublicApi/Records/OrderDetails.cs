@@ -3,6 +3,7 @@ namespace Ticketing.PublicApi.Records;
 public record OrderDetails(
     Guid OrderId,
     Guid UserId,
+    Guid EventId,
     decimal TotalAmount,
     IReadOnlyList<OrderTicketDetail> Tickets
 );

@@ -26,7 +26,7 @@ public interface IEventMemberPublicApi
 
     /// <summary>Returns a single event by ID for re-indexing.</summary>
     Task<EventRecommendationFeature?> GetByIdForReIndexAsync(
-        Guid              eventId,
+        Guid eventId,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -34,9 +34,10 @@ public interface IEventMemberPublicApi
     /// Paginated to avoid loading thousands of events into memory at once.
     /// </summary>
     Task<IReadOnlyList<EventRecommendationFeature>> GetAllForReIndexAsync(
-        int               page              = 1,
-        int               pageSize          = 100,
+        int page = 1,
+        int pageSize = 100,
         CancellationToken cancellationToken = default);
 
-    
+   
+
 }

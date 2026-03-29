@@ -1,3 +1,4 @@
+using Payment.Domain.ValueObject;
 using Payments.Domain.Entities;
 using Shared.Domain.Data.Repositories;
 
@@ -32,4 +33,22 @@ public interface IPaymentTransactionRepository : IRepository<PaymentTransaction,
         GetAllCompletedItemsBySessionIdAsync(
             Guid eventSessionId,
             CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<EventRevenue>> GetRevenuePerEventAsync(
+        CancellationToken cancellationToken = default);
+
+    Task<EventRevenue?> GetRevenueByEventAsync(
+        Guid eventId,
+        CancellationToken cancellationToken = default);
+
+    Task<decimal> GetNetRevenueByEventAsync(
+        Guid eventId,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<EventRevenue>> GetNetRevenuePerEventAsync(CancellationToken cancellationToken = default);
+    Task<decimal> GetTotalRefundsByEventAsync(Guid eventId, CancellationToken cancellationToken = default);
+    Task<EventRefundRate?> GetRefundRateByEventAsync(Guid eventId, CancellationToken cancellationToken = default);
+    Task<EventTransactionSummary?> GetTransactionSummaryByEventAsync(Guid eventId, CancellationToken cancellationToken = default);
+    Task<GlobalRevenueSummary> GetGlobalRevenueSummaryAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<EventRevenue>> GetTopEventsByRevenueAsync(int topN, bool byNet = false, CancellationToken cancellationToken = default);
 }

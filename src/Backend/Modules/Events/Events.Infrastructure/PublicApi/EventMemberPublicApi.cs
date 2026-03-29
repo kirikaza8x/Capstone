@@ -89,6 +89,8 @@ internal class EventMemberPublicApi(
         return MapToFeatures(events);
     }
 
+    
+
     // ── Private ───────────────────────────────────────────────────
 
     private static IReadOnlyList<EventRecommendationFeature> MapToFeatures(

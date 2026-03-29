@@ -13,37 +13,37 @@ internal sealed class TicketingPublicApi(
     IConnectionMultiplexer redis) : ITicketingPublicApi
 {
     public async Task<OrderDetails?> GetOrderAsync(
-        Guid orderId,
-        Guid userId,
-        CancellationToken cancellationToken = default)
+    Guid orderId,
+    Guid userId,
+    bool requirePaid = false,
+    CancellationToken cancellationToken = default)
     {
-        var order = await dbContext.Orders
+        var query = dbContext.Orders
             .Include(o => o.Tickets)
             .AsNoTracking()
-            .FirstOrDefaultAsync(
-                o => o.Id == orderId && o.UserId == userId,
-                cancellationToken);
+            .Where(o => o.Id == orderId && o.UserId == userId);
+
+        if (requirePaid)
+        {
+            query = query.Where(o => o.Status == OrderStatus.Paid);
+        }
+
+        var order = await query.FirstOrDefaultAsync(cancellationToken);
 
         if (order is null) return null;
 
-        // Only return tickets that are not cancelled
-        // — cancelled tickets should not be paid for
         var validTickets = order.Tickets
             .Where(t => t.Status != Ticketing.Domain.Enums.OrderTicketStatus.Cancelled)
             .ToList();
 
         if (validTickets.Count == 0) return null;
 
-        // Price per ticket — derived from TotalPrice / ticket count
-        // Each ticket has the same price within an order
-        // If your Order has per-ticket pricing later, swap this out
-        var pricePerTicket = validTickets.Count > 0
-            ? order.TotalPrice / validTickets.Count
-            : 0m;
+        var pricePerTicket = order.TotalPrice / validTickets.Count;
 
         return new OrderDetails(
             OrderId: order.Id,
             UserId: order.UserId,
+            EventId: order.EventId,
             TotalAmount: order.TotalPrice,
             Tickets: validTickets
                 .Select(t => new OrderTicketDetail(
@@ -52,7 +52,6 @@ internal sealed class TicketingPublicApi(
                     Amount: pricePerTicket))
                 .ToList());
     }
-
     public async Task<VoucherValidationResult?> ValidateOrderVoucherAsync(
         Guid orderId,
         CancellationToken cancellationToken = default)
@@ -159,5 +158,17 @@ internal sealed class TicketingPublicApi(
         }
 
         return result;
+    }
+
+    public async Task<IReadOnlyCollection<Guid>> GetOrdersByEventIdAsync(Guid eventId, CancellationToken cancellationToken)
+    {
+        var orderIds = await dbContext.Orders
+            .AsNoTracking()
+            .Where(ot => ot.EventId == eventId && ot.Status == OrderStatus.Paid)
+            .Select(ot => ot.Id)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        return orderIds;
     }
 }
