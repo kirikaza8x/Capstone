@@ -4,8 +4,8 @@ namespace AI.Application.Features.ImageGeneration.Commands;
 
 public sealed record GenerateImageCommand(
     string Prompt,
-    string? AspectRatio = "1:1",
-    string? ImageSize = "1K"
+    string AspectRatio = "1:1",
+    string ImageSize = "512x512"
 ) : ICommand<IReadOnlyList<GenerateImageResponse>>;
 
-public sealed record GenerateImageResponse(string DataUrl, string Base64);
+public sealed record GenerateImageResponse(string ImageUrl);

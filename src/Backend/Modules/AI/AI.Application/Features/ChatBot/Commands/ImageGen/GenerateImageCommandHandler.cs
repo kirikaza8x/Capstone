@@ -1,4 +1,3 @@
-// AI.Application/Features/ImageGeneration/Handlers/GenerateImageCommandHandler.cs
 using AI.Application.Abstractions;
 using AI.Application.Features.ImageGeneration.Commands;
 using FluentValidation;
@@ -23,12 +22,11 @@ public sealed class GenerateImageCommandHandler
         GenerateImageCommand command,
         CancellationToken cancellationToken)
     {
-
         var request = new ImageGenerationRequestDto
         {
-            Prompt = command.Prompt,
-            // AspectRatio = command.AspectRatio,
-            // ImageSize   = command.ImageSize
+            Prompt      = command.Prompt,
+            AspectRatio = command.AspectRatio,
+            ImageSize   = command.ImageSize
         };
 
         var results = await _imageService.GenerateImagesAsync(request, cancellationToken);
@@ -40,7 +38,7 @@ public sealed class GenerateImageCommandHandler
         }
 
         var response = results
-            .Select(r => new GenerateImageResponse(r.DataUrl, r.Base64))
+            .Select(r => new GenerateImageResponse(r.ImageUrl ?? string.Empty))
             .ToList();
 
         return Result.Success<IReadOnlyList<GenerateImageResponse>>(response);

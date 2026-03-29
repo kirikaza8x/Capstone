@@ -7,6 +7,7 @@ using AI.Application.Features.ImageGeneration;
 using AI.Infrastructure.Configs;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Shared.Application.Abstractions.Storage;
 
 namespace AI.Infrastructure.ExternalServices;
 
@@ -23,32 +24,38 @@ public sealed class OpenRouterImageService : IImageGenerationService
 
     private readonly HttpClient _http;
     private readonly OpenRouterConfig _config;
+    private readonly IStorageService _storage;
     private readonly ILogger<OpenRouterImageService> _logger;
 
     public OpenRouterImageService(
         HttpClient http,
         IOptions<OpenRouterConfig> options,
+        IStorageService storage,
         ILogger<OpenRouterImageService> logger)
     {
-        _http = http;
-        _config = options.Value;
-        _logger = logger;
+        _http    = http;
+        _config  = options.Value;
+        _storage = storage;
+        _logger  = logger;
     }
 
     public async Task<IReadOnlyList<ImageGenerationResult>> GenerateImagesAsync(
         ImageGenerationRequestDto request,
         CancellationToken cancellationToken = default)
     {
-        // Mirror of the JS SDK: openrouter.chat.send({ model, messages, modalities })
         var payload = new OpenRouterRequest
         {
-            Model = _config.Model,
-            Messages = [new() { Role = "user", Content = request.Prompt }],
+            Model      = _config.Model,
+            Messages   = [new() { Role = "user", Content = request.Prompt }],
             Modalities = ["image"],
-            
+            ImageConfig = new()
+            {
+                AspectRatio = request.AspectRatio,
+                ImageSize   = request.ImageSize
+            }
         };
 
-        var json = JsonSerializer.Serialize(payload, JsonOptions);
+        var json    = JsonSerializer.Serialize(payload, JsonOptions);
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, Endpoint)
@@ -56,61 +63,98 @@ public sealed class OpenRouterImageService : IImageGenerationService
             Content = content
         };
 
-        // Auth — set per-request, not in constructor
         httpRequest.Headers.Authorization =
             new AuthenticationHeaderValue("Bearer", _config.ApiKey);
 
         _logger.LogInformation(
-            "OpenRouter image generation started. Model={Model}, Prompt={Prompt}",
-            _config.Model, request.Prompt);
+            "OpenRouter image generation started. Model={Model}, Prompt={Prompt}, AspectRatio={AspectRatio}, ImageSize={ImageSize}",
+            _config.Model, request.Prompt, request.AspectRatio, request.ImageSize);
 
         var response = await _http.SendAsync(httpRequest, cancellationToken);
 
         if (!response.IsSuccessStatusCode)
         {
             var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
-            _logger.LogError(
-                "OpenRouter {StatusCode}: {Body}",
+            _logger.LogError("OpenRouter {StatusCode}: {Body}",
                 (int)response.StatusCode, errorBody);
             response.EnsureSuccessStatusCode();
         }
 
         var raw = await response.Content.ReadAsStringAsync(cancellationToken);
+        _logger.LogDebug("OpenRouter raw response length: {Length} chars", raw.Length);
 
-        _logger.LogDebug("OpenRouter raw response: {Raw}", raw);
-
-        return ParseResponse(raw);
+        return await ParseAndUploadAsync(raw, cancellationToken);
     }
 
-    // -------------------------------------------------------------------------
-    // Parsing — mirrors JS: result.choices[0].message.images[].image_url.url
-    // -------------------------------------------------------------------------
-
-    private static IReadOnlyList<ImageGenerationResult> ParseResponse(string raw)
+    private async Task<IReadOnlyList<ImageGenerationResult>> ParseAndUploadAsync(
+        string raw,
+        CancellationToken cancellationToken)
     {
         var root = JsonSerializer.Deserialize<OpenRouterResponse>(raw, JsonOptions)
             ?? throw new InvalidOperationException("Empty response from OpenRouter.");
 
-        var images = new List<ImageGenerationResult>();
+        var results = new List<ImageGenerationResult>();
+        var index   = 0;
 
         foreach (var choice in root.Choices ?? [])
         {
             foreach (var image in choice.Message?.Images ?? [])
             {
-                var url = image.ImageUrl?.Url;
-                if (!string.IsNullOrWhiteSpace(url))
-                    images.Add(new ImageGenerationResult { DataUrl = url });
+                var base64DataUrl = image.ImageUrl?.Url;
+                if (string.IsNullOrWhiteSpace(base64DataUrl))
+                    continue;
+
+                // data:image/png;base64,<payload>
+                // Strip the prefix to get the raw base64 string
+                var comma      = base64DataUrl.IndexOf(',');
+                var base64Data = comma >= 0
+                    ? base64DataUrl[(comma + 1)..]
+                    : base64DataUrl;
+
+                // Detect content type from the prefix e.g. "data:image/png;base64"
+                var contentType = "image/png";
+                if (comma > 0)
+                {
+                    var prefix = base64DataUrl[..comma]; // "data:image/png;base64"
+                    var start  = prefix.IndexOf(':') + 1;
+                    var end    = prefix.IndexOf(';');
+                    if (start > 0 && end > start)
+                        contentType = prefix[start..end];
+                }
+
+                var extension = contentType.Split('/').LastOrDefault() ?? "png";
+                var fileName  = $"ai-generated-{Guid.NewGuid():N}.{extension}";
+                var folder    = "ai-generated";
+
+                var bytes = Convert.FromBase64String(base64Data);
+                await using var stream = new MemoryStream(bytes);
+
+                var publicUrl = await _storage.UploadAsync(
+                    stream,
+                    fileName,
+                    contentType,
+                    folder,
+                    cancellationToken);
+
+                _logger.LogInformation(
+                    "Image [{Index}] uploaded. PublicUrl={Url}", index, publicUrl);
+
+                results.Add(new ImageGenerationResult { ImageUrl = publicUrl });
+                index++;
             }
         }
 
-        return images;
+        return results;
     }
+
+    // ── Request models ────────────────────────────────────────────────────────
 
     private sealed class OpenRouterRequest
     {
         public string Model { get; set; } = default!;
         public List<Message> Messages { get; set; } = [];
         public List<string> Modalities { get; set; } = [];
+        public ImageConfig? ImageConfig { get; set; }
     }
 
     private sealed class Message
@@ -119,35 +163,38 @@ public sealed class OpenRouterImageService : IImageGenerationService
         public string Content { get; set; } = default!;
     }
 
-    // result.choices[]
+    private sealed class ImageConfig
+    {
+        public string? AspectRatio { get; set; }
+        public string? ImageSize { get; set; }
+    }
+
+    // ── Response models ───────────────────────────────────────────────────────
+
     private sealed class OpenRouterResponse
     {
         public List<Choice>? Choices { get; set; }
     }
 
-    // result.choices[i]
     private sealed class Choice
     {
         public AssistantMessage? Message { get; set; }
     }
 
-    // result.choices[i].message
     private sealed class AssistantMessage
     {
         public string? Role { get; set; }
         public string? Content { get; set; }
-        public List<Image>? Images { get; set; }  // message.images[]
+        public List<Image>? Images { get; set; }
     }
 
-    // result.choices[i].message.images[j]
     private sealed class Image
     {
-        public ImageUrl? ImageUrl { get; set; }     // image.image_url
+        public ImageUrl? ImageUrl { get; set; }
     }
 
-    // result.choices[i].message.images[j].image_url
     private sealed class ImageUrl
     {
-        public string? Url { get; set; }            // image.image_url.url
+        public string? Url { get; set; }
     }
 }
