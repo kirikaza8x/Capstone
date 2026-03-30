@@ -21,6 +21,9 @@ using Shared.Infrastructure.Configs.Database;
 using Shared.Infrastructure.Configs.Qdrant;
 using Shared.Infrastructure.Data.Seeds;
 using Shared.Infrastructure.Services;
+using Microsoft.Extensions.Logging;
+using RabbitMQ.Client;
+using Shared.Infrastructure.Configs.MessageBroker;
 
 namespace AI.Infrastructure;
 
@@ -59,9 +62,9 @@ public static class DependencyInjection
         services.AddSingleton<NpgsqlDataSource>(sp =>
         {
             var dbConfig = sp.GetRequiredService<IOptions<DatabaseConfig>>().Value;
-            var dataSourceBuilder = new NpgsqlDataSourceBuilder(dbConfig.ConnectionString);
-            dataSourceBuilder.EnableDynamicJson();
-            return dataSourceBuilder.Build();
+            var builder = new NpgsqlDataSourceBuilder(dbConfig.ConnectionString);
+            builder.EnableDynamicJson();
+            return builder.Build();
         });
 
         services.AddDbContext<AIModuleDbContext>((sp, options) =>
@@ -69,26 +72,28 @@ public static class DependencyInjection
             var dataSource = sp.GetRequiredService<NpgsqlDataSource>();
             var dbConfig = sp.GetRequiredService<IOptions<DatabaseConfig>>().Value;
 
-            options.UseNpgsql(dataSource, npgsqlOptions =>
+            options.UseNpgsql(dataSource, npgsql =>
             {
-                npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", Constants.SchemaName);
+                npgsql.MigrationsHistoryTable("__EFMigrationsHistory", Constants.SchemaName);
 
                 if (dbConfig.MaxRetryCount > 0)
-                    npgsqlOptions.EnableRetryOnFailure(dbConfig.MaxRetryCount);
+                    npgsql.EnableRetryOnFailure(dbConfig.MaxRetryCount);
 
                 if (dbConfig.CommandTimeout > 0)
-                    npgsqlOptions.CommandTimeout(dbConfig.CommandTimeout);
+                    npgsql.CommandTimeout(dbConfig.CommandTimeout);
             })
             .UseSnakeCaseNamingConvention()
             .AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
         });
+
         services.AddScoped<ITrackingTokenGenerator, TrackingTokenGenerator>();
+
         // ── 3. External AI services ───────────────────────────────
         services.AddHttpClient<IImageGenerationService, OpenRouterImageService>(client =>
         {
             client.Timeout = TimeSpan.FromSeconds(120);
-
         });
+
         services.AddScoped<IGeminiService, GeminiService>();
         services.AddScoped<IRecommendationAiService, RecommendationAiService>();
 
@@ -108,53 +113,60 @@ public static class DependencyInjection
         services.AddScoped<IEventVectorRepository, EventVectorRepository>();
         services.AddScoped<IUserBehaviorVectorRepository, UserBehaviorVectorRepository>();
 
-        // Ensures Qdrant collections + indexes exist before app accepts traffic
         services.AddHostedService<QdrantStartupService>();
         services.AddHostedService<BackgroundJobs.EventReIndexJob>();
-
-        // Updates GlobalCategoryStat every 6 hours for cold-start recommendations
         services.AddHostedService<BackgroundJobs.GlobalCategoryStatUpdateJob>();
 
-        // Re-index service — shared by job and manual admin endpoint
         services.AddScoped<IEventReIndexService, EventReIndexService>();
 
-        // ── 5. Embedding — HTTP for dev, swap comment for production ──
-        var embeddingOptions = configuration
-            .GetSection(HttpEmbeddingOptions.Section)
-            .Get<HttpEmbeddingOptions>() ?? new HttpEmbeddingOptions();
+        // ── 5. Embedding (RabbitMQ → Python) ──────────────────────
 
-        services.Configure<HttpEmbeddingOptions>(
-            configuration.GetSection(HttpEmbeddingOptions.Section));
+        // ── Embedding (HTTP fallback - DEV only) ─────────────────────
+        //
+        // Uncomment this block if you want to bypass RabbitMQ
+        // and call Python (or any embedding API) directly via HTTP.
+        //
+        // Useful for:
+        // - debugging
+        // - local development
+        // - testing without message broker
+        //
 
-        services.AddHttpClient<IEmbeddingService, HttpEmbeddingService>(client =>
+        // var embeddingOptions = configuration
+        //     .GetSection(HttpEmbeddingOptions.Section)
+        //     .Get<HttpEmbeddingOptions>() ?? new HttpEmbeddingOptions();
+        //
+        // services.Configure<HttpEmbeddingOptions>(
+        //     configuration.GetSection(HttpEmbeddingOptions.Section));
+        //
+        // services.AddHttpClient<IEmbeddingService, HttpEmbeddingService>(client =>
+        // {
+        //     client.BaseAddress = new Uri(embeddingOptions.BaseUrl);
+        //     client.Timeout = TimeSpan.FromSeconds(embeddingOptions.TimeoutSeconds);
+        //     client.DefaultRequestHeaders.Add("Accept", "application/json");
+        // });
+
+        services.Configure<EmbeddingQueueOptions>(
+            configuration.GetSection(EmbeddingQueueOptions.Section));
+
+        services.Configure<MessageBrokerConfig>(
+            configuration.GetSection("MessageBroker"));
+
+        services.AddSingleton<IConnection>(sp =>
         {
-            client.BaseAddress = new Uri(embeddingOptions.BaseUrl);
-            client.Timeout = TimeSpan.FromSeconds(embeddingOptions.TimeoutSeconds);
-            client.DefaultRequestHeaders.Add("Accept", "application/json");
+            var config = sp.GetRequiredService<IOptions<MessageBrokerConfig>>().Value;
+
+            var factory = new ConnectionFactory
+            {
+                Uri = new Uri(config.Host),
+                UserName = config.Username,
+                Password = config.Password
+            };
+
+            return factory.CreateConnectionAsync().GetAwaiter().GetResult();
         });
 
-
-        // Production: comment out HTTP block above and uncomment below
-        // services.Configure<EmbeddingQueueOptions>(
-        //     configuration.GetSection(EmbeddingQueueOptions.Section));
-        // services.AddSingleton<RabbitMQ.Client.IConnection>(_ =>
-        // {
-        //     var factory = new RabbitMQ.Client.ConnectionFactory
-        //     {
-        //         HostName = configuration["RabbitMQ:Host"] ?? "localhost",
-        //         Port     = int.Parse(configuration["RabbitMQ:Port"] ?? "5672"),
-        //         UserName = configuration["RabbitMQ:Username"] ?? "guest",
-        //         Password = configuration["RabbitMQ:Password"] ?? "guest",
-        //         AutomaticRecoveryEnabled = true,
-        //     };
-        //     return factory.CreateConnectionAsync("ai-embedding-client").GetAwaiter().GetResult();
-        // });
-        // services.AddSingleton<IEmbeddingService>(sp =>
-        //     RabbitMqEmbeddingService.CreateAsync(
-        //         sp.GetRequiredService<RabbitMQ.Client.IConnection>(),
-        //         sp.GetRequiredService<IOptions<EmbeddingQueueOptions>>(),
-        //         sp.GetRequiredService<ILogger<RabbitMqEmbeddingService>>()
-        //     ).GetAwaiter().GetResult());
+        services.AddSingleton<IEmbeddingService, RabbitMqEmbeddingService>();
 
         return services;
     }

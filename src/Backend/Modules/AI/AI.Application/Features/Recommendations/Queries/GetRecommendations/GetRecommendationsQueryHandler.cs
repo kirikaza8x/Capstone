@@ -88,6 +88,8 @@ public sealed class GetRecommendationsQueryHandler(
     }
 
     // ── Path 1: Semantic ──────────────────────────────────────────
+    // Requires real behavior vectors to build a WeightedCentroid query vector.
+    // Falls through to Path 2 if the user has no behavior history in Qdrant.
 
     private async Task<List<RankedEvent>> TrySemanticPathAsync(
         GetRecommendationsQuery request,
@@ -97,7 +99,7 @@ public sealed class GetRecommendationsQueryHandler(
         var behaviorVectors = await behaviorVectorRepo.GetRecentVectorsAsync(
             userId: request.UserId,
             limit:  BehaviorLimit,
-            since:  null,   // no date filter — rule out datetime index issues
+            since:  null,
             ct:     ct);
 
         logger.LogInformation(
@@ -158,7 +160,7 @@ public sealed class GetRecommendationsQueryHandler(
             return new List<RankedEvent>();
         }
 
-        // STEP 5 — Qdrant search
+        // STEP 5 — Qdrant semantic search (real query vector — SearchSimilarAsync is correct here)
         var afterDate = request.FutureOnly ? DateTime.UtcNow : (DateTime?)null;
 
         var hits = await eventVectorRepo.SearchSimilarAsync(
@@ -189,6 +191,8 @@ public sealed class GetRecommendationsQueryHandler(
     }
 
     // ── Path 2: Category Fallback ─────────────────────────────────
+    // User has interest scores (from postgres) but no behavior vectors in Qdrant yet.
+    // Uses ScrollByFilterAsync — filter by category only, no query vector involved.
 
     private async Task<List<RankedEvent>> TryCategoryFallbackAsync(
         GetRecommendationsQuery request,
@@ -206,21 +210,21 @@ public sealed class GetRecommendationsQueryHandler(
         var categoryNames = topScores.Select(c => c.Category).ToList();
         var afterDate     = request.FutureOnly ? DateTime.UtcNow : (DateTime?)null;
 
-        var hits = await eventVectorRepo.SearchSimilarAsync(
-            queryEmbedding:   new float[VectorDim],
-            limit:            CandidateCount,
-            scoreThreshold:   0f,
+        // ScrollByFilterAsync: no query vector — retrieves by category filter only
+        var hits = await eventVectorRepo.ScrollByFilterAsync(
+            limit:           CandidateCount,
             filterCategories: categoryNames,
             afterDate:        afterDate,
             ct:               ct);
 
         logger.LogInformation(
-            "[CategoryFallback] QdrantHits={Count} for categories=[{Categories}]",
+            "[CategoryFallback] ScrollHits={Count} for categories=[{Categories}]",
             hits.Count, string.Join(", ", categoryNames));
 
         if (hits.Count == 0)
             return new List<RankedEvent>();
 
+        // Re-rank by interest score weight only (SemanticScore will be 0 from scroll)
         var categoryWeights = topScores.ToDictionary(s => s.Category, s => s.Score);
         var ranked = RecommendationRanker.Rank(
             hits, categoryWeights,
@@ -232,12 +236,14 @@ public sealed class GetRecommendationsQueryHandler(
     }
 
     // ── Path 3: Cold-Start ────────────────────────────────────────
+    // New user — no interest scores, no behavior vectors.
+    // Uses ScrollByFilterAsync with globally popular categories.
 
     private async Task<List<RankedEvent>> TryColdStartFallbackAsync(
         GetRecommendationsQuery request,
         CancellationToken ct)
     {
-        var popular   = await globalStatRepo.GetTopCategoriesAsync(ColdStartTopN);
+        var popular   = await globalStatRepo.GetTopCategoriesAsync(ColdStartTopN,ct);
         var afterDate = request.FutureOnly ? DateTime.UtcNow : (DateTime?)null;
 
         logger.LogInformation(
@@ -246,13 +252,15 @@ public sealed class GetRecommendationsQueryHandler(
         if (popular.Count == 0)
             return new List<RankedEvent>();
 
-        var hits = await eventVectorRepo.SearchSimilarAsync(
-            queryEmbedding:   new float[VectorDim],
+        // ScrollByFilterAsync: no query vector — retrieves by popular category filter only
+        var hits = await eventVectorRepo.ScrollByFilterAsync(
             limit:            request.TopN,
-            scoreThreshold:   0f,
             filterCategories: popular.Select(c => c.Category).ToList(),
             afterDate:        afterDate,
             ct:               ct);
+
+        logger.LogInformation(
+            "[ColdStart] ScrollHits={Count}", hits.Count);
 
         return hits
             .Select(h => new RankedEvent(h.EventId, 0f, 0f, "popular_fallback"))

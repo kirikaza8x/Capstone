@@ -8,7 +8,7 @@ namespace AI.Domain.Repositories
 
         Task<GlobalCategoryStat?> GetByCategoryAsync(string category);
         Task<List<GlobalCategoryStat>> GetByCategoryNamesAsync(List<string> categories);
-        Task<List<GlobalCategoryStat>> GetTopCategoriesAsync(int topN = 20);
+        Task<List<GlobalCategoryStat>> GetTopCategoriesAsync(int topN = 20, CancellationToken ct = default);
         Task<List<GlobalCategoryStat>> GetAllAsync();
 
         // Batch operations
