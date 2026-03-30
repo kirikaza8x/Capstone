@@ -180,9 +180,9 @@ internal sealed class EventRepository(EventsDbContext context)
     }
 
     public async Task<IReadOnlyList<Event>> GetByCategoriesOrHashtagsAsync(
-    IEnumerable<string> categoryNames,
-    IEnumerable<string> hashtagNames,
-    CancellationToken cancellationToken = default)
+        IEnumerable<string> categoryNames,
+        IEnumerable<string> hashtagNames,
+        CancellationToken cancellationToken = default)
     {
         return await _context.Events
             .Where(e =>
@@ -310,5 +310,42 @@ internal sealed class EventRepository(EventsDbContext context)
             .Where(e => e.Members.Any(m => m.UserId == userId && m.Status == EventMemberStatus.Active))
             .AsNoTracking()
             .ToListAsync(cancellationToken);
+    }
+
+    public async Task<PagedResult<Event>> SearchEventsAsync(
+        string keyword,
+        PagedQuery query,
+        CancellationToken cancellationToken = default)
+    {
+        var dbQuery = context.Events
+            .AsNoTracking()
+            .Where(e => e.Status == EventStatus.Published)
+            .Include(e => e.EventCategories)
+                .ThenInclude(ec => ec.Category)
+            .Include(e => e.TicketTypes)
+            .AsSplitQuery();
+
+        if (!string.IsNullOrWhiteSpace(keyword))
+        {
+            // Using trigrams similarity for fuzzy search
+            // using unaccent to ignore accents in Vietnamese
+            dbQuery = dbQuery
+                .Where(e => EF.Functions.TrigramsSimilarity(
+                                EF.Functions.Unaccent(e.Title),
+                                EF.Functions.Unaccent(keyword)) > 0.1) // filter out results with very low similarity
+                .OrderByDescending(e => EF.Functions.TrigramsSimilarity(
+                                EF.Functions.Unaccent(e.Title),
+                                EF.Functions.Unaccent(keyword))); // order by similarity score
+        }
+        else
+        {
+            // default ordering when no keyword is provided
+            if (string.IsNullOrWhiteSpace(query.SortColumn))
+            {
+                dbQuery = dbQuery.OrderByDescending(e => e.CreatedAt);
+            }
+        }
+
+        return await dbQuery.ToPagedResultAsync(query, cancellationToken);
     }
 }

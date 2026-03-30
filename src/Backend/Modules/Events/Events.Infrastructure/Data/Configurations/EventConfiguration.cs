@@ -15,6 +15,11 @@ internal sealed class EventConfiguration : IEntityTypeConfiguration<Event>
         builder.Property(e => e.OrganizerId).IsRequired();
 
         builder.Property(e => e.Title).HasMaxLength(500).IsRequired();
+        // config gin index for title
+        builder.HasIndex(e => e.Title)
+            .HasDatabaseName("ix_events_title_trigram")
+            .HasMethod("gin") 
+            .HasOperators("gin_trgm_ops");
 
         builder.Property(e => e.Status)
             .HasConversion(

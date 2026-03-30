@@ -54,9 +54,9 @@ public interface IEventRepository : IRepository<Event, Guid>
         int take,
         CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Event>> GetAllActivePagedAsync(
-    int page,
-    int pageSize,
-    CancellationToken ct = default);
+        int page,
+        int pageSize,
+        CancellationToken ct = default);
 
     Task<Event?> GetByIdForReIndexAsync(Guid id, CancellationToken ct = default);
 
@@ -67,5 +67,10 @@ public interface IEventRepository : IRepository<Event, Guid>
     Task<IReadOnlyList<Event>> GetMiniByIdsAsync(IEnumerable<Guid> ids, CancellationToken ct = default);
 
     Task<IReadOnlyCollection<Event>> GetAssignedEventsAsync(Guid userId, CancellationToken cancellationToken = default);
+
+    Task<PagedResult<Event>> SearchEventsAsync(
+        string? keyword,
+        PagedQuery query,
+        CancellationToken cancellationToken = default);
 
 }
