@@ -22,7 +22,7 @@ public class ImageGenerationEndpoint : ICarterModule
         {
             var command = new GenerateImageCommand(dto.Prompt);
 
-            Result<IReadOnlyList<GenerateImageResponse>> result =
+           var result =
                 await sender.Send(command, cancellationToken);
 
             return result.ToOk();

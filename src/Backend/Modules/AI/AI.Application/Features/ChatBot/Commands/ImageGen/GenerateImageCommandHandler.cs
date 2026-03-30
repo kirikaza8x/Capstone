@@ -1,4 +1,3 @@
-// AI.Application/Features/ImageGeneration/Handlers/GenerateImageCommandHandler.cs
 using AI.Application.Abstractions;
 using AI.Application.Features.ImageGeneration.Commands;
 using FluentValidation;
@@ -8,7 +7,7 @@ using Shared.Domain.Abstractions;
 namespace AI.Application.Features.ImageGeneration.Handlers;
 
 public sealed class GenerateImageCommandHandler
-    : ICommandHandler<GenerateImageCommand, IReadOnlyList<GenerateImageResponse>>
+    : ICommandHandler<GenerateImageCommand, GenerateImageResponse>
 {
     private readonly IImageGenerationService _imageService;
 
@@ -19,30 +18,23 @@ public sealed class GenerateImageCommandHandler
         _imageService = imageService;
     }
 
-    public async Task<Result<IReadOnlyList<GenerateImageResponse>>> Handle(
+    public async Task<Result<GenerateImageResponse>> Handle(
         GenerateImageCommand command,
         CancellationToken cancellationToken)
     {
-
         var request = new ImageGenerationRequestDto
         {
-            Prompt = command.Prompt,
-            // AspectRatio = command.AspectRatio,
-            // ImageSize   = command.ImageSize
+            Prompt      = command.Prompt,
+            AspectRatio = command.AspectRatio,
+            ImageSize   = command.ImageSize
         };
 
         var results = await _imageService.GenerateImagesAsync(request, cancellationToken);
 
-        if (results.Count == 0)
-        {
-            return Result.Failure<IReadOnlyList<GenerateImageResponse>>(
-                Error.Failure("ImageGeneration.Empty", "No images were returned from the provider."));
-        }
+        var response = 
+            new GenerateImageResponse(results.ImageUrl ?? string.Empty);
+            
 
-        var response = results
-            .Select(r => new GenerateImageResponse(r.DataUrl, r.Base64))
-            .ToList();
-
-        return Result.Success<IReadOnlyList<GenerateImageResponse>>(response);
+        return Result.Success(response);
     }
 }

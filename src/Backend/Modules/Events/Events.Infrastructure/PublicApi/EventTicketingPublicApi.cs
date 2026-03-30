@@ -257,6 +257,19 @@ internal sealed class EventTicketingPublicApi(EventsDbContext dbContext) : IEven
         return ev;
     }
 
+    public async Task<IReadOnlyList<Guid>> GetEventIdsByUserIdAsync(
+        Guid organizerId,
+        CancellationToken cancellationToken = default)
+    {
+        var eventIds = await dbContext.Events
+            .AsNoTracking()
+            .Where(e => e.OrganizerId == organizerId && e.Status == EventStatus.Published)
+            .Select(e => e.Id)
+            .ToListAsync(cancellationToken);
+
+        return eventIds;
+    }
+
     public async Task<IReadOnlyDictionary<Guid, TicketTypeDetailDto>> GetTicketTypeDetailsAsync(
     IReadOnlyCollection<Guid> ticketTypeIds,
     CancellationToken cancellationToken = default)

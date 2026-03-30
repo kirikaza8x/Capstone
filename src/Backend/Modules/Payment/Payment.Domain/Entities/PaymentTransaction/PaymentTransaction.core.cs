@@ -1,5 +1,6 @@
 using Payment.Domain.Enums;
 using Payments.Domain.Events;
+using Shared.Domain.Abstractions;
 using Shared.Domain.DDD;
 
 namespace Payments.Domain.Entities;
@@ -11,7 +12,8 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
     // --------------------
     public Guid UserId { get; private set; }
     public Guid? WalletId { get; private set; }
-    public Guid? OrderId { get; private set; }    // links to Order in Ticketing module
+    public Guid? OrderId { get; private set; }
+    public Guid? EventId { get; private set; } // 👈 NEW
     public PaymentType Type { get; private set; }
 
     // --------------------
@@ -27,9 +29,6 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
 
     // --------------------
     // Items
-    // WalletTopUp    → always empty
-    // BatchDirectPay → populated, AwaitingGateway until VNPay return
-    // BatchWalletPay → populated, Completed immediately
     // --------------------
     public ICollection<BatchPaymentItem> Items { get; private set; }
         = new List<BatchPaymentItem>();
@@ -65,7 +64,7 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
     private PaymentTransaction() { }
 
     // --------------------
-    // Factory — WalletTopUp (unchanged)
+    // Factory — WalletTopUp
     // --------------------
     public static PaymentTransaction CreateWalletTopUp(
         Guid userId,
@@ -76,8 +75,7 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
         string? ipAddress = null)
     {
         if (amount <= 0)
-            throw new ArgumentException(
-                "Amount must be greater than zero.", nameof(amount));
+            throw new ArgumentException("Amount must be greater than zero.", nameof(amount));
 
         return new PaymentTransaction
         {
@@ -103,6 +101,7 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
     public static PaymentTransaction CreateBatchDirectPay(
         Guid userId,
         Guid orderId,
+        Guid eventId,
         IEnumerable<(Guid OrderTicketId, Guid EventSessionId, decimal Amount)> items,
         string? gatewayOrderInfo,
         string? gatewayTxnRef,
@@ -121,6 +120,7 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
             Id = Guid.NewGuid(),
             UserId = userId,
             OrderId = orderId,
+            EventId = eventId,
             Type = PaymentType.BatchDirectPay,
             Amount = itemList.Sum(i => i.Amount),
             InternalStatus = PaymentInternalStatus.AwaitingGateway,
@@ -134,8 +134,10 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
         };
 
         foreach (var (orderTicketId, eventSessionId, amount) in itemList)
+        {
             txn.Items.Add(BatchPaymentItem.Create(
                 txn.Id, orderTicketId, eventSessionId, amount));
+        }
 
         return txn;
     }
@@ -144,11 +146,12 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
     // Factory — BatchWalletPay
     // --------------------
     public static PaymentTransaction CreateBatchWalletPay(
-    Guid userId,
-    Guid walletId,
-    Guid orderId,
-    IEnumerable<(Guid OrderTicketId, Guid EventSessionId, decimal Amount)> items,
-    string? orderInfo = null)
+        Guid userId,
+        Guid walletId,
+        Guid orderId,
+        Guid eventId,
+        IEnumerable<(Guid OrderTicketId, Guid EventSessionId, decimal Amount)> items,
+        string? orderInfo = null)
     {
         var itemList = items.ToList();
 
@@ -166,6 +169,7 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
             UserId = userId,
             WalletId = walletId,
             OrderId = orderId,
+            EventId = eventId,
             Type = PaymentType.BatchWalletPay,
             Amount = itemList.Sum(i => i.Amount),
             GatewayOrderInfo = orderInfo,
@@ -185,15 +189,42 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
         return txn;
     }
 
+    // --------------------
+    // Status transitions
+    // --------------------
+    public void MarkCompleted()
+    {
+        if (InternalStatus == PaymentInternalStatus.Completed)
+            return;
+
+        InternalStatus = PaymentInternalStatus.Completed;
+        CompletedAt = DateTime.UtcNow;
+
+        foreach (var item in Items)
+            item.MarkCompleted();
+
+        if (OrderId.HasValue && EventId.HasValue)
+        {
+            RaiseDomainEvent(new PaymentSucceededDomainEvent(
+                PaymentTransactionId: Id,
+                OrderId: OrderId.Value,
+                // EventId: EventId.Value,
+                Amount: Amount,
+                CompletedAtUtc: CompletedAt.Value));
+        }
+    }
+
     public void MarkFailed(string? reason = null)
     {
         InternalStatus = PaymentInternalStatus.Failed;
         FailedAt = DateTime.UtcNow;
 
         if (!string.IsNullOrWhiteSpace(reason))
+        {
             GatewayOrderInfo = string.IsNullOrEmpty(GatewayOrderInfo)
                 ? reason
                 : $"{GatewayOrderInfo} | {reason}";
+        }
 
         foreach (var item in Items)
             item.MarkFailed();
@@ -207,27 +238,6 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
 
         InternalStatus = PaymentInternalStatus.Refunded;
         RefundedAt = DateTime.UtcNow;
-    }
-
-    public void MarkCompleted()
-    {
-        if (InternalStatus == PaymentInternalStatus.Completed)
-            return;
-
-        InternalStatus = PaymentInternalStatus.Completed;
-        CompletedAt = DateTime.UtcNow;
-
-        foreach (var item in Items)
-            item.MarkCompleted();
-
-        if (OrderId.HasValue)
-        {
-            RaiseDomainEvent(new PaymentSucceededDomainEvent(
-                PaymentTransactionId: Id,
-                OrderId: OrderId.Value,
-                Amount: Amount,
-                CompletedAtUtc: CompletedAt.Value));
-        }
     }
 
     public void MarkItemRefunded(BatchPaymentItem item, Guid userId)
@@ -247,6 +257,9 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
             MarkRefunded();
     }
 
+    // --------------------
+    // Gateway update
+    // --------------------
     public void UpdateGatewayInfo(
         string? responseCode,
         string? status,
@@ -280,11 +293,11 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
     }
 
     public bool IsFullyRefunded()
-        => Items.Count > 0
-        && Items.All(i => i.InternalStatus == PaymentInternalStatus.Refunded);
+        => Items.Count > 0 &&
+           Items.All(i => i.InternalStatus == PaymentInternalStatus.Refunded);
 
     // --------------------
-    // Private helpers
+    // Helpers
     // --------------------
     private static string GetVietnamCreateDate()
     {
@@ -292,20 +305,11 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
         {
             var tzi = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
             return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, tzi)
-                               .ToString("yyyyMMddHHmmss");
+                .ToString("yyyyMMddHHmmss");
         }
-        catch (TimeZoneNotFoundException)
+        catch
         {
-            try
-            {
-                var tzi = TimeZoneInfo.FindSystemTimeZoneById("Asia/Ho_Chi_Minh");
-                return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, tzi)
-                                   .ToString("yyyyMMddHHmmss");
-            }
-            catch (TimeZoneNotFoundException)
-            {
-                return DateTime.UtcNow.AddHours(7).ToString("yyyyMMddHHmmss");
-            }
+            return DateTime.UtcNow.AddHours(7).ToString("yyyyMMddHHmmss");
         }
     }
 

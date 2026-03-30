@@ -115,6 +115,8 @@ internal class EventMemberPublicApi(
         return MapToFeatures(events);
     }
 
+    
+
     // ── Private ───────────────────────────────────────────────────
     private static bool HasRequiredPermission(IReadOnlyCollection<string>? userPermissions, string requiredPermission)
     {

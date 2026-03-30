@@ -127,6 +127,10 @@ namespace Payment.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(10)")
                         .HasColumnName("currency");
 
+                    b.Property<Guid?>("EventId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("event_id");
+
                     b.Property<DateTime?>("FailedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("failed_at");
@@ -521,6 +525,99 @@ namespace Payment.Infrastructure.Persistence.Migrations
                     b.ToTable("wallet_transaction", "payments");
                 });
 
+            modelBuilder.Entity("Payments.Domain.Entities.WithdrawalRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("AdminNote")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("admin_note");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("amount");
+
+                    b.Property<string>("BankAccountNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("bank_account_number");
+
+                    b.Property<string>("BankName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("bank_name");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("created_by");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<DateTime?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modified_at");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("modified_by");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("notes");
+
+                    b.Property<DateTime?>("ProcessedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("processed_at");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Pending")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<Guid>("WalletId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("wallet_id");
+
+                    b.Property<Guid?>("WalletTransactionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("wallet_transaction_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_withdrawal_request");
+
+                    b.HasIndex("WalletId")
+                        .HasDatabaseName("ix_withdrawal_request_wallet_id");
+
+                    b.HasIndex("WalletTransactionId")
+                        .HasDatabaseName("ix_withdrawal_request_wallet_transaction_id");
+
+                    b.HasIndex("UserId", "Status")
+                        .HasDatabaseName("ix_withdrawal_request_user_id_status");
+
+                    b.ToTable("withdrawal_request", "payments");
+                });
+
             modelBuilder.Entity("Shared.Infrastructure.Outbox.OutboxMessage", b =>
                 {
                     b.Property<Guid>("Id")
@@ -579,6 +676,16 @@ namespace Payment.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_wallet_transaction_wallet_wallet_id");
+                });
+
+            modelBuilder.Entity("Payments.Domain.Entities.WithdrawalRequest", b =>
+                {
+                    b.HasOne("Payments.Domain.Entities.Wallet", null)
+                        .WithMany()
+                        .HasForeignKey("WalletId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_withdrawal_request_wallet_wallet_id");
                 });
 
             modelBuilder.Entity("Payments.Domain.Entities.PaymentTransaction", b =>
