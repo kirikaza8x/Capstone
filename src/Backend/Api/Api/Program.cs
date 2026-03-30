@@ -77,15 +77,17 @@ public class Program
             .AddPaymentModule(Configuration)
         ;
 
-        builder.Services.AddCors(options =>
-        {
-            options.AddDefaultPolicy(policy =>
-            {
-                policy.AllowAnyOrigin()
-                      .AllowAnyMethod()
-                      .AllowAnyHeader();
-            });
-        });
+        // builder.Services.AddCors(options =>
+        // {
+        //     options.AddDefaultPolicy(policy =>
+        //     {
+        //         policy.AllowAnyOrigin()
+        //               .AllowAnyMethod()
+        //               .AllowAnyHeader()
+        //             //   .AllowCredentials()
+        //               ;
+        //     });
+        // });
 
         builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
         builder.Services.AddProblemDetails();
@@ -109,7 +111,7 @@ public class Program
         app.UseExceptionHandler();
 
         app.MapCarter();
-
+        app.UseApi();
         app
         .UseNotificationModule()
         .UseUserModule()
@@ -118,7 +120,6 @@ public class Program
         .UseTicketingModule()
         .UsePaymentModule()
             ;
-
         app.Run();
     }
 }

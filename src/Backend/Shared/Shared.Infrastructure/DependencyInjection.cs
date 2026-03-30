@@ -3,15 +3,18 @@ using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Quartz;
 using Shared.Application.Abstractions.Authentication;
 using Shared.Application.Abstractions.Caching;
+using Shared.Application.Abstractions.SignalR;
 using Shared.Application.Abstractions.Time;
 using Shared.Infrastructure.Configs;
 using Shared.Infrastructure.Configs.Redis;
 using Shared.Infrastructure.Data.Interceptors;
 using Shared.Infrastructure.Extensions;
+using Shared.Infrastructure.Service;
 using Shared.Infrastructure.Service.Authentication;
 using Shared.Infrastructure.Service.Caching;
 using Shared.Infrastructure.Service.Time;
@@ -84,6 +87,14 @@ public static class IInfrastructureConfiguration
         services.AddQuartzHostedService(options =>
         {
             options.WaitForJobsToComplete = true;
+        });
+
+        services.AddSignalR();
+        services.AddSingleton<ILogNotifier, SignalRLogNotifier>();
+        services.AddSingleton<ILoggerProvider>(sp =>
+        {
+            var scopeFactory = sp.GetRequiredService<IServiceScopeFactory>();
+            return new SignalRLoggerProvider(scopeFactory);
         });
 
         return services;

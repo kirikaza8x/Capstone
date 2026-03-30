@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SignalR Test</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20; background: #1e1e1e; color: #d4d4d4; }
+        #output { background: #000; padding: 15px; border-radius: 5px; height: 400px; overflow-y: auto; white-space: pre-wrap; border: 1px solid #333; }
+        .timestamp { color: #888; margin-right: 10px; }
+        .log-info { color: #4fc1ff; }
+        .log-error { color: #f44747; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h2>Live .NET Console Logs</h2>
+    <button id="connectBtn">Connect to Server</button>
+    <pre id="output">Waiting for connection...</pre>
+
+    <script>
+        let connection;
+
+        document.getElementById("connectBtn").addEventListener("click", async () => {
+            connection = new signalR.HubConnectionBuilder()
+                .withUrl("http://localhost:5197/api/logHub") // Ensure this port matches your dotnet run output
+                .withAutomaticReconnect()
+                .build();
+
+            // IMPORTANT: The backend sends an object: { message, level, timestamp }
+            connection.on("ReceiveLog", (logData) => {
+                const output = document.getElementById("output");
+                
+                // If logData is just a string (fallback), handle it, otherwise parse the object
+                let displayMsg = typeof logData === 'string' 
+                    ? logData 
+                    : `[${logData.timestamp}] ${logData.level}: ${logData.message}`;
+
+                // Append new log to the top or bottom
+                output.textContent = displayMsg + "\n" + output.textContent;
+                
+                console.log("New Log Received:", logData);
+            });
+
+            try {
+                await connection.start();
+                document.getElementById("output").textContent = ">>> Connected to LogHub at " + new Date().toLocaleTimeString() + "\n" + output.textContent;
+                document.getElementById("connectBtn").disabled = true;
+                document.getElementById("connectBtn").innerText = "Connected ";
+            } catch (err) {
+                document.getElementById("output").textContent = ">>> Connection Failed: " + err + "\n";
+                console.error("SignalR Connection Error: ", err);
+            }
+        });
+    </script>
+</body>
+</html>

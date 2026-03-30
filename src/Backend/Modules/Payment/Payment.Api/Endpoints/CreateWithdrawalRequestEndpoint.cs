@@ -36,7 +36,7 @@ public class CreateWithdrawalRequestEndpoint : ICarterModule
             var result = await sender.Send(command, cancellationToken);
             return result.ToOk();
         })
-        .RequireAuthorization()
+        //.RequireAuthorization()
         .WithName("CreateWithdrawalRequest")
         .WithTags("Withdrawal Requests")
         .Produces<Guid>(StatusCodes.Status200OK)
@@ -68,7 +68,7 @@ public class CancelWithdrawalRequestEndpoint : ICarterModule
             var result = await sender.Send(command, cancellationToken);
             return result.ToOk();
         })
-        .RequireAuthorization()
+        //.RequireAuthorization()
         .WithName("CancelWithdrawalRequest")
         .WithTags("Withdrawal Requests")
         .Produces(StatusCodes.Status200OK)
@@ -104,7 +104,7 @@ public class GetMyWithdrawalRequestsEndpoint : ICarterModule
             var result = await sender.Send(query, cancellationToken);
             return result.ToOk();
         })
-        .RequireAuthorization()
+        //.RequireAuthorization()
         .WithName("GetMyWithdrawalRequests")
         .WithTags("Withdrawal Requests")
         .Produces<PagedResult<WithdrawalRequestListItemDto>>(StatusCodes.Status200OK);
@@ -145,7 +145,7 @@ public class GetMyWithdrawalRequestDetailEndpoint : ICarterModule
             var result = await sender.Send(query, cancellationToken);
             return result.ToOk();
         })
-        .RequireAuthorization()
+        //.RequireAuthorization()
         .WithName("GetMyWithdrawalRequestDetail")
         .WithTags("Withdrawal Requests")
         .Produces<WithdrawalRequestDetailDto>(StatusCodes.Status200OK)
@@ -175,7 +175,7 @@ public class ApproveWithdrawalRequestEndpoint : ICarterModule
             var result = await sender.Send(command, cancellationToken);
             return result.ToOk();
         })
-        .RequireAuthorization("Admin")
+        //.RequireAuthorization("Admin")
         .WithName("ApproveWithdrawalRequest")
         .WithTags("Admin - Withdrawal Requests")
         .Produces(StatusCodes.Status200OK)
@@ -206,7 +206,7 @@ public class RejectWithdrawalRequestEndpoint : ICarterModule
             var result = await sender.Send(command, cancellationToken);
             return result.ToOk();
         })
-        .RequireAuthorization("Admin")
+        //.RequireAuthorization("Admin")
         .WithName("RejectWithdrawalRequest")
         .WithTags("Admin - Withdrawal Requests")
         .Produces(StatusCodes.Status200OK)
@@ -237,7 +237,8 @@ public class CompleteWithdrawalRequestEndpoint : ICarterModule
             var result = await sender.Send(command, cancellationToken);
             return result.ToOk();
         })
-        .RequireAuthorization("Admin")
+        //.RequireAuthorization("Admin")
+        //
         .WithName("CompleteWithdrawalRequest")
         .WithTags("Admin - Withdrawal Requests")
         .Produces(StatusCodes.Status200OK)
@@ -277,7 +278,7 @@ public class GetAllWithdrawalRequestsEndpoint : ICarterModule
             var result = await sender.Send(query, cancellationToken);
             return result.ToOk();
         })
-        .RequireAuthorization("Admin")
+        //.RequireAuthorization("Admin")
         .WithName("GetAllWithdrawalRequests")
         .WithTags("Admin - Withdrawal Requests")
         .Produces<PagedResult<WithdrawalRequestAdminListItemDto>>(StatusCodes.Status200OK);
@@ -321,7 +322,7 @@ public class GetWithdrawalRequestDetailEndpoint : ICarterModule
             var result = await sender.Send(query, cancellationToken);
             return result.ToOk();
         })
-        .RequireAuthorization("Admin")
+        //.RequireAuthorization("Admin")
         .WithName("GetWithdrawalRequestDetail")
         .WithTags("Admin - Withdrawal Requests")
         .Produces<WithdrawalRequestAdminDetailDto>(StatusCodes.Status200OK)
