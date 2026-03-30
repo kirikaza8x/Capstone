@@ -53,4 +53,8 @@ public interface IOrderRepository : IRepository<Order, Guid>
         Guid eventId,
         Guid sessionId,
         CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<(string OrderStatus, DateTime CreatedAt, Guid TicketTypeId, decimal Price)>> GetReportDataByEventIdAsync(
+        Guid eventId,
+        CancellationToken cancellationToken = default);
 }

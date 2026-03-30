@@ -204,4 +204,9 @@ internal sealed class OrderRepository(TicketingDbContext context)
         // Return list of (TicketTypeId, Status) pairs
         return query.Select(x => (x.TicketTypeId, x.Status)).ToList();
     }
+
+    public Task<IReadOnlyList<(string OrderStatus, DateTime CreatedAt, Guid TicketTypeId, decimal Price)>> GetReportDataByEventIdAsync(Guid eventId, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

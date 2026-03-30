@@ -24,7 +24,7 @@ internal sealed class GetCheckInStatsQueryHandler(
         if (!tickets.Any())
         {
             return Result.Success(new CheckInStatsResponse(
-                new CheckInSummary(0, 0),
+                new CheckInSummary(0, 0, 0),
                 []));
         }
 

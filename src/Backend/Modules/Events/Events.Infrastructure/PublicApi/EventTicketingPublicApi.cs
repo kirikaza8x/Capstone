@@ -70,7 +70,6 @@ internal sealed class EventTicketingPublicApi(EventsDbContext dbContext) : IEven
                     AreaType: MapAreaType(row.AreaType),
                     Price: row.Price,
                     Quantity: row.Quantity,
-                    //SoldQuantity: row.SoldQuantity,
                     IsPurchasable: isPurchasable);
             }
         }
@@ -275,5 +274,10 @@ internal sealed class EventTicketingPublicApi(EventsDbContext dbContext) : IEven
             .ToListAsync(cancellationToken);
 
         return ticketTypes.ToDictionary(t => t.Id);
+    }
+
+    public Task<IReadOnlyCollection<TicketTypeDetailDto>> GetAllTicketTypesByEventIdAsync(Guid eventId, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 }
