@@ -8,6 +8,7 @@ internal static class Constants
     {
         public const string Orders = "Ticketing - Orders";
         public const string Vouchers = "Ticketing - Vouchers";
+        public const string Reports = "Ticketing - Report";
     }
 
     internal static class Routes
@@ -35,6 +36,8 @@ internal static class Constants
         public const string ExportOrdersSheet = $"{OrganizerApi}/orders/export";
         public const string ExportVouchersSheet = $"{OrganizerApi}/vouchers/export";
 
+        // reports
+        public const string CheckInStats = $"{BaseApi}/events/{{eventId:guid}}/check-in/stats";
 
     }
 }

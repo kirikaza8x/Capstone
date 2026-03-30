@@ -49,6 +49,7 @@ internal static class Constants
         // Staff
         public const string StaffEvents = $"{BaseApi}/staff/events";
         public const string StaffEventById = $"{BaseApi}/staff/events/{{eventId:guid}}";
+        public const string StaffEventSpec = $"{StaffEventById}/spec";
 
         // Events
         public const string EventById = $"{Events}/{{eventId:guid}}";

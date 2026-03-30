@@ -2,6 +2,7 @@ using Shared.Domain.Data.Repositories;
 using Shared.Domain.Pagination;
 using Shared.Domain.Queries;
 using Ticketing.Domain.Entities;
+using Ticketing.Domain.Enums;
 
 namespace Ticketing.Domain.Repositories;
 
@@ -47,4 +48,13 @@ public interface IOrderRepository : IRepository<Order, Guid>
     Task<IReadOnlyCollection<Order>> GetByUserIdAndEventIdAsync(Guid userId, Guid eventId, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyCollection<Order>> GetByTicketIdsAsync(IEnumerable<Guid> ticketIds, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<(Guid TicketTypeId, OrderTicketStatus Status)>> GetTicketStatsBySessionAsync(
+        Guid eventId,
+        Guid sessionId,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<(string OrderStatus, DateTime CreatedAt, Guid TicketTypeId, decimal Price)>> GetReportDataByEventIdAsync(
+        Guid eventId,
+        CancellationToken cancellationToken = default);
 }
