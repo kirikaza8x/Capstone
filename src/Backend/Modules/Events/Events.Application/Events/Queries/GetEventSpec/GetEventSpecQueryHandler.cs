@@ -83,11 +83,11 @@ internal sealed class GetEventSpecQueryHandler(
                     // check if the seat is unavailable for ticketing
                     bool isTicketingBlocked = unavailableSeatIds.Contains(seatId);
 
-                    // check from json spec
-                    bool isOrganizerBlocked = string.Equals(seat.Status, "blocked", StringComparison.OrdinalIgnoreCase);
+                    bool isOrganizerBlocked = seat.ParsedStatus == SeatMapSeatStatus.blocked;
+
                     seat.Status = isTicketingBlocked || isOrganizerBlocked
-                        ? "blocked"
-                        : "available";
+                        ? nameof(SeatMapSeatStatus.blocked)
+                        : nameof(SeatMapSeatStatus.available);
                 }
             }
         }
