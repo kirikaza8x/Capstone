@@ -1,8 +1,6 @@
-using System;
 using Carter;
 using Events.Application.Events.DTOs;
 using Events.Application.Events.Queries.GetTicketTypes;
-using Events.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;

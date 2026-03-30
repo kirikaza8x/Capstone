@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Shared.Api.Results;
 using Shared.Application.Abstractions.Authentication;
 using Shared.Domain.Abstractions;
+using Users.PublicApi.Constants; // Thêm namespace này để lấy Roles.Organizer
 
 namespace Ticketing.Api.Extensions;
 
@@ -14,7 +15,7 @@ public static class EventAuthorizationExtensions
     {
         return builder.AddEndpointFilter(async (context, next) =>
         {
-            // get eventId from route
+            // get eventid from route
             if (!context.HttpContext.Request.RouteValues.TryGetValue("eventId", out var eventIdObj) ||
                 !Guid.TryParse(eventIdObj?.ToString(), out var eventId))
             {
@@ -25,7 +26,7 @@ public static class EventAuthorizationExtensions
                 return Result.Failure(error).ToProblem();
             }
 
-            // Get current user id
+            // get current user id
             var currentUserService = context.HttpContext.RequestServices.GetRequiredService<ICurrentUserService>();
             var userId = currentUserService.UserId;
 
@@ -38,7 +39,33 @@ public static class EventAuthorizationExtensions
                 return Result.Failure(error).ToProblem();
             }
 
-            // Check permission via IEventMemberPublicApi
+            // check owner
+            bool isOrganizer = currentUserService.Roles.Contains(Roles.Organizer);
+            if (isOrganizer)
+            {
+                var eventTicketingApi = context.HttpContext.RequestServices.GetRequiredService<IEventTicketingPublicApi>();
+
+                // get event info
+                var eventDetail = await eventTicketingApi.GetEventDetailAsync(eventId, context.HttpContext.RequestAborted);
+
+                if (eventDetail is null)
+                {
+                    var error = Error.NotFound("Event.NotFound", "The specified event was not found.");
+                    return Result.Failure(error).ToProblem();
+                }
+
+                if (eventDetail.OrganizerId != userId)
+                {
+                    var error = Error.Forbidden(
+                        "Event.NotOwner",
+                        "You are not the owner of this event.");
+                    return Result.Failure(error).ToProblem();
+                }
+
+                return await next(context);
+            }
+
+            // check permission for attendee
             var eventPermissionApi = context.HttpContext.RequestServices.GetRequiredService<IEventMemberPublicApi>();
 
             var hasPermission = await eventPermissionApi.HasPermissionAsync(eventId, userId, requiredPermission);
