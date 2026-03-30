@@ -7,6 +7,7 @@ using Events.Application.Events.Queries.GetEvents;
 using Events.Application.Events.Queries.GetEventsByOrganizer;
 using Events.Application.Events.Queries.GetEventsForAdmin;
 using Events.Application.Events.Queries.GetEventsForStaff;
+using Events.Application.Events.Queries.SearchEvents;
 using Events.Domain.Entities;
 
 namespace Events.Application.Mappings;
@@ -21,6 +22,12 @@ public sealed class EventProfile : Profile
             .ForMember(dest => dest.Categories, opt => opt.MapFrom(src => src.EventCategories))
             .ForMember(dest => dest.ActorImages, opt => opt.MapFrom(src => src.ActorImages))
             .ForMember(dest => dest.TicketTypes, opt => opt.MapFrom(src => src.TicketTypes));
+
+        CreateMap<Event, EventSearchResponse>()
+            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
+            .ForMember(dest => dest.Categories, opt => opt.MapFrom(src => src.EventCategories))
+            .ForMember(dest => dest.MinPrice, opt => opt.MapFrom(src => src.TicketTypes.Any() ? src.TicketTypes.Min(t => t.Price) : (decimal?)null))
+            .ForMember(dest => dest.MaxPrice, opt => opt.MapFrom(src => src.TicketTypes.Any() ? src.TicketTypes.Max(t => t.Price) : (decimal?)null));
 
         CreateMap<Event, EventResponse>()
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
