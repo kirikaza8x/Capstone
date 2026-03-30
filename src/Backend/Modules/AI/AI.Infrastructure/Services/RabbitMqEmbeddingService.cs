@@ -10,22 +10,6 @@ using Shared.Application.Abstractions.Embbeding;
 
 namespace AI.Infrastructure.Embedding;
 
-/// <summary>
-/// Sends text to the Python embedding service via RabbitMQ and waits for the response.
-///
-/// PATTERN: Request/response over two queues (matches Python RabbitMQConsumer exactly).
-///   → Publish EmbeddingRequested  → REQUEST_QUEUE  → Python processes
-///   → Receive EmbeddingGenerated  ← RESPONSE_QUEUE ← Python responds
-///   → Matched by correlationId via ConcurrentDictionary of TaskCompletionSource
-///
-/// V7 CHANGES from v6:
-///   - IModel       → IChannel
-///   - CreateModel()→ await CreateChannelAsync()
-///   - EventingBasicConsumer → AsyncEventingBasicConsumer with ReceivedAsync
-///   - BasicPublish → await BasicPublishAsync
-///   - QueueDeclare → await QueueDeclareAsync
-///   - CreateBasicProperties() removed → use new BasicProperties()
-/// </summary>
 public sealed class RabbitMqEmbeddingService : IEmbeddingService, IAsyncDisposable
 {
     private readonly IConnection _connection;
@@ -34,73 +18,94 @@ public sealed class RabbitMqEmbeddingService : IEmbeddingService, IAsyncDisposab
     private readonly EmbeddingQueueOptions _options;
     private readonly ILogger<RabbitMqEmbeddingService> _logger;
 
-    // correlationId → TaskCompletionSource waiting for Python's response
     private readonly ConcurrentDictionary<string, TaskCompletionSource<float[]>> _pending = new();
+    private readonly SemaphoreSlim _batchThrottle = new(10, 10);
 
-    private RabbitMqEmbeddingService(
+    // 🔥 NEW: safe async init
+    private readonly SemaphoreSlim _initLock = new(1, 1);
+    private bool _initialized = false;
+
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
+    public RabbitMqEmbeddingService(
         IConnection connection,
-        EmbeddingQueueOptions options,
+        IOptions<EmbeddingQueueOptions> options,
         ILogger<RabbitMqEmbeddingService> logger)
     {
         _connection = connection;
-        _options = options;
-        _logger = logger;
+        _options    = options.Value;
+        _logger     = logger;
     }
 
-    /// <summary>
-    /// Factory method — channels must be created async so constructor can't do it.
-    /// Call this from DI registration instead of new().
-    /// </summary>
-    public static async Task<RabbitMqEmbeddingService> CreateAsync(
-        IConnection connection,
-        IOptions<EmbeddingQueueOptions> options,
-        ILogger<RabbitMqEmbeddingService> logger,
-        CancellationToken ct = default)
+    // ─────────────────────────────────────────────────────────────
+    // 🔧 SAFE LAZY INIT (NO BLOCKING IN DI)
+    // ─────────────────────────────────────────────────────────────
+    private async Task EnsureInitializedAsync(CancellationToken ct)
     {
-        var service = new RabbitMqEmbeddingService(connection, options.Value, logger);
-        await service.InitializeAsync(ct);
-        return service;
+        if (_initialized) return;
+
+        await _initLock.WaitAsync(ct);
+        try
+        {
+            if (_initialized) return;
+
+            _requestChannel  = await _connection.CreateChannelAsync(cancellationToken: ct);
+            _responseChannel = await _connection.CreateChannelAsync(cancellationToken: ct);
+
+            await _requestChannel.QueueDeclareAsync(
+                _options.RequestQueue,
+                durable: true,
+                exclusive: false,
+                autoDelete: false,
+                cancellationToken: ct);
+
+            await _responseChannel.QueueDeclareAsync(
+                _options.ResponseQueue,
+                durable: true,
+                exclusive: false,
+                autoDelete: false,
+                cancellationToken: ct);
+
+            var consumer = new AsyncEventingBasicConsumer(_responseChannel);
+            consumer.ReceivedAsync += OnResponseReceivedAsync;
+
+            await _responseChannel.BasicConsumeAsync(
+                _options.ResponseQueue,
+                autoAck: true,
+                consumer: consumer,
+                cancellationToken: ct);
+
+            _initialized = true;
+
+            _logger.LogInformation(
+                "RabbitMqEmbeddingService ready — request: {Req}, response: {Res}",
+                _options.RequestQueue, _options.ResponseQueue);
+        }
+        finally
+        {
+            _initLock.Release();
+        }
     }
 
-    private async Task InitializeAsync(CancellationToken ct)
-    {
-        // v7: CreateChannelAsync instead of CreateModel()
-        _requestChannel = await _connection.CreateChannelAsync(cancellationToken: ct);
-        _responseChannel = await _connection.CreateChannelAsync(cancellationToken: ct);
-
-        await _requestChannel.QueueDeclareAsync(
-            _options.RequestQueue, durable: true, exclusive: false, autoDelete: false,
-            cancellationToken: ct);
-
-        await _responseChannel.QueueDeclareAsync(
-            _options.ResponseQueue, durable: true, exclusive: false, autoDelete: false,
-            cancellationToken: ct);
-
-        // v7: AsyncEventingBasicConsumer with ReceivedAsync (not Received)
-        var consumer = new AsyncEventingBasicConsumer(_responseChannel);
-        consumer.ReceivedAsync += OnResponseReceivedAsync;
-
-        await _responseChannel.BasicConsumeAsync(
-            _options.ResponseQueue, autoAck: true, consumer: consumer,
-            cancellationToken: ct);
-
-        _logger.LogInformation(
-            "RabbitMqEmbeddingService ready — request: {Req}, response: {Res}",
-            _options.RequestQueue, _options.ResponseQueue);
-    }
-
-    // ── IEmbeddingService ─────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────
+    // IEmbeddingService
+    // ─────────────────────────────────────────────────────────────
 
     public async Task<float[]> EmbedAsync(string text, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(text))
             throw new ArgumentException("Text cannot be empty.", nameof(text));
 
-        // Trim to 512 chars — matches Python validator max_length
+        await EnsureInitializedAsync(ct);
+
         var trimmed = text.Length > 512 ? text[..512] : text;
 
         var correlationId = Guid.NewGuid().ToString();
         var tcs = new TaskCompletionSource<float[]>(TaskCreationOptions.RunContinuationsAsynchronously);
+
         _pending[correlationId] = tcs;
 
         try
@@ -121,9 +126,11 @@ public sealed class RabbitMqEmbeddingService : IEmbeddingService, IAsyncDisposab
         catch (OperationCanceledException)
         {
             _pending.TryRemove(correlationId, out _);
+
             _logger.LogError(
                 "Embedding request {CorrelationId} timed out after {Timeout}s",
                 correlationId, _options.TimeoutSeconds);
+
             throw;
         }
     }
@@ -132,33 +139,49 @@ public sealed class RabbitMqEmbeddingService : IEmbeddingService, IAsyncDisposab
         IReadOnlyList<string> texts,
         CancellationToken ct = default)
     {
-        var tasks = texts.Select(t => EmbedAsync(t, ct));
+        if (texts.Count == 0)
+            return Array.Empty<float[]>();
+
+        var tasks = texts.Select(async text =>
+        {
+            await _batchThrottle.WaitAsync(ct);
+            try
+            {
+                return await EmbedAsync(text, ct);
+            }
+            finally
+            {
+                _batchThrottle.Release();
+            }
+        });
+
         return await Task.WhenAll(tasks);
     }
 
+    // ─────────────────────────────────────────────────────────────
+    // INTERNAL PUBLISH
+    // ─────────────────────────────────────────────────────────────
 
     private async Task PublishAsync(string correlationId, string text, CancellationToken ct)
     {
         var request = new EmbeddingRequested
         {
             CorrelationId = correlationId,
-            Text = text,
-            Normalize = true,
-            RequestedAt = DateTime.UtcNow.ToString("O")
+            Text          = text,
+            Normalize     = true,
+            RequestedAt   = DateTime.UtcNow.ToString("O")
         };
 
-        var body = JsonSerializer.SerializeToUtf8Bytes(request, new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        });
+        var body = JsonSerializer.SerializeToUtf8Bytes(request, JsonOptions);
 
         var props = new BasicProperties
         {
-            ContentType = "application/json",
-            DeliveryMode = DeliveryModes.Persistent,
-            MessageId = Guid.NewGuid().ToString(),
+            ContentType   = "application/json",
+            DeliveryMode  = DeliveryModes.Persistent,
+            MessageId     = Guid.NewGuid().ToString(),
             CorrelationId = correlationId,
-            Timestamp = new AmqpTimestamp(DateTimeOffset.UtcNow.ToUnixTimeSeconds())
+            ReplyTo       = _options.ResponseQueue, // 🔥 added
+            Timestamp     = new AmqpTimestamp(DateTimeOffset.UtcNow.ToUnixTimeSeconds())
         };
 
         await _requestChannel!.BasicPublishAsync(
@@ -172,7 +195,10 @@ public sealed class RabbitMqEmbeddingService : IEmbeddingService, IAsyncDisposab
         _logger.LogDebug("Published embedding request {CorrelationId}", correlationId);
     }
 
-    // v7: handler is async Task, not void
+    // ─────────────────────────────────────────────────────────────
+    // RESPONSE HANDLER
+    // ─────────────────────────────────────────────────────────────
+
     private Task OnResponseReceivedAsync(object sender, BasicDeliverEventArgs e)
     {
         try
@@ -183,17 +209,14 @@ public sealed class RabbitMqEmbeddingService : IEmbeddingService, IAsyncDisposab
                 !_pending.TryRemove(correlationId, out var tcs))
             {
                 _logger.LogWarning(
-                    "Received embedding response with unknown correlationId: {Id}", correlationId);
+                    "Received embedding response with unknown correlationId: {Id}",
+                    correlationId);
                 return Task.CompletedTask;
             }
 
-            // v7: body is ReadOnlyMemory<byte> — must copy before async use
             var json = Encoding.UTF8.GetString(e.Body.Span);
 
-            var response = JsonSerializer.Deserialize<EmbeddingGenerated>(json, new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-            });
+            var response = JsonSerializer.Deserialize<EmbeddingGenerated>(json, JsonOptions);
 
             if (response is null)
             {
@@ -218,27 +241,30 @@ public sealed class RabbitMqEmbeddingService : IEmbeddingService, IAsyncDisposab
         return Task.CompletedTask;
     }
 
-    // v7: IAsyncDisposable instead of IDisposable
+    // ─────────────────────────────────────────────────────────────
+    // CLEANUP
+    // ─────────────────────────────────────────────────────────────
+
     public async ValueTask DisposeAsync()
     {
-        if (_requestChannel is not null) await _requestChannel.DisposeAsync();
+        _batchThrottle.Dispose();
+        _initLock.Dispose();
+
+        if (_requestChannel  is not null) await _requestChannel.DisposeAsync();
         if (_responseChannel is not null) await _responseChannel.DisposeAsync();
     }
 }
 
-/// <summary>
-/// Config bound from appsettings — queue names must match Python config.py exactly.
-/// </summary>
+// ─────────────────────────────────────────────────────────────
+// OPTIONS
+// ─────────────────────────────────────────────────────────────
+
 public sealed class EmbeddingQueueOptions
 {
     public const string Section = "Embedding:Queue";
 
-    /// <summary>Must match Python REQUEST_QUEUE.</summary>
-    public string RequestQueue { get; set; } = "embedding.requests";
-
-    /// <summary>Must match Python RESPONSE_QUEUE.</summary>
+    public string RequestQueue  { get; set; } = "embedding.requests";
     public string ResponseQueue { get; set; } = "embedding.responses";
-
-    /// <summary>Seconds to wait for Python response before timing out.</summary>
-    public int TimeoutSeconds { get; set; } = 30;
+ 
+    public int TimeoutSeconds   { get; set; } = 30;
 }

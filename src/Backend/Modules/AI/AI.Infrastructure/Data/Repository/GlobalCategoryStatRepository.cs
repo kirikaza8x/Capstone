@@ -33,7 +33,7 @@ namespace AI.Infrastructure.Repositories
                 .ToListAsync();
         }
 
-        public async Task<List<GlobalCategoryStat>> GetTopCategoriesAsync(int topN = 20)
+        public async Task<List<GlobalCategoryStat>> GetTopCategoriesAsync(int topN = 20 , CancellationToken ct = default)
         {
             return await _dbSet
                 .OrderByDescending(x => x.PopularityScore)
