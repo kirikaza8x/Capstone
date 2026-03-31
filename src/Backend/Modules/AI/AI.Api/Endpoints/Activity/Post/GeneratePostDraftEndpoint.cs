@@ -5,9 +5,13 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Shared.Api.Results;
 using Shared.Application.Abstractions.Authentication;
-using Marketing.Application.Posts.Commands;
 
 namespace Marketing.Api.Features.Posts.GeneratePost;
+
+public class GeneratePostDraftRequest
+{
+    public string? UserPromptRequirement { get; set; }
+}
 
 public class GeneratePostDraftEndpoint : ICarterModule
 {
@@ -16,7 +20,7 @@ public class GeneratePostDraftEndpoint : ICarterModule
         app.MapPost("api/posts/generate/{eventId:guid}", async (
             Guid eventId,
             ISender sender,
-            string? UserPromptRequirement,
+            GeneratePostDraftRequest request,
             ICurrentUserService currentUser,
             CancellationToken cancellationToken) =>
         {
@@ -24,8 +28,7 @@ public class GeneratePostDraftEndpoint : ICarterModule
             var command = new GeneratePostDraftCommand(
                 EventId: eventId,
                 OrganizerId: currentUser.UserId,
-                // SystemPromptOverride: null,
-                UserPromptRequirement: UserPromptRequirement
+                UserPromptRequirement: request.UserPromptRequirement
             );
 
             var result = await sender.Send(command, cancellationToken);
