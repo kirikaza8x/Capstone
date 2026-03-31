@@ -22,10 +22,10 @@ public class CreateWithdrawalRequestCommandHandler
         ICurrentUserService currentUserService,
         IPaymentUnitOfWork unitOfWork)
     {
-        _walletRepository             = walletRepository;
-        _withdrawalRequestRepository  = withdrawalRequestRepository;
-        _currentUserService           = currentUserService;
-        _unitOfWork                   = unitOfWork;
+        _walletRepository = walletRepository;
+        _withdrawalRequestRepository = withdrawalRequestRepository;
+        _currentUserService = currentUserService;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<Result<Guid>> Handle(
@@ -33,6 +33,7 @@ public class CreateWithdrawalRequestCommandHandler
         CancellationToken cancellationToken)
     {
         var userId = _currentUserService.UserId;
+        var userName = _currentUserService.Name;
 
         // 1. Ensure no active request already exists
         var hasActive = await _withdrawalRequestRepository
@@ -61,12 +62,13 @@ public class CreateWithdrawalRequestCommandHandler
 
         // 3. Create the request
         var request = WithdrawalRequest.Create(
-            userId:            userId,
-            walletId:          wallet.Id,
+            userId: userId,
+            walletId: wallet.Id,
+            name: userName,
             bankAccountNumber: command.BankAccountNumber,
-            bankName:          command.BankName,
-            amount:            command.Amount,
-            notes:             command.Notes);
+            bankName: command.BankName,
+            amount: command.Amount,
+            notes: command.Notes);
 
         _withdrawalRequestRepository.Add(request);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
