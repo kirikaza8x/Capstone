@@ -205,8 +205,16 @@ internal sealed class OrderRepository(TicketingDbContext context)
         return query.Select(x => (x.TicketTypeId, x.Status)).ToList();
     }
 
-    public Task<IReadOnlyList<(string OrderStatus, DateTime CreatedAt, Guid TicketTypeId, decimal Price)>> GetReportDataByEventIdAsync(Guid eventId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Order>> GetPaidOrdersByTicketTypeIdsAsync(
+        IEnumerable<Guid> ticketTypeIds,
+        CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        return await context.Orders
+            .Include(o => o.Tickets)
+            .Include(o => o.OrderVouchers)
+            .Where(o => o.Status == OrderStatus.Paid &&
+                        o.Tickets.Any(t => ticketTypeIds.Contains(t.TicketTypeId)))
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
     }
 }

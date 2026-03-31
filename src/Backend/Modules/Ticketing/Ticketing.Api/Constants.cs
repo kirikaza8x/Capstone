@@ -37,7 +37,9 @@ internal static class Constants
         public const string ExportVouchersSheet = $"{OrganizerApi}/vouchers/export";
 
         // reports
-        public const string CheckInStats = $"{BaseApi}/events/{{eventId:guid}}/check-in/stats";
+        public const string CheckInStats = $"{BaseApi}/report/events/{{eventId:guid}}/check-in-stats";
+        public const string EventTicketSales = $"{BaseApi}/report/events/{{eventId:guid}}/ticket-sales";
+        public const string SalesTrend = $"{BaseApi}/report/events/{{eventId:guid}}/sales-trend";
 
     }
 }
