@@ -80,9 +80,7 @@ public class AdminRefundEndpoints : ICarterModule
                     AdminId: Guid.Empty),  // overridden inside handler via ICurrentUserService
                 ct);
 
-            return result.IsSuccess
-                ? Results.Ok(result.Value)
-                : Results.BadRequest(result.Error);
+            return result.ToOk();
         })
         .WithName("MassRefundBySession")
         .WithSummary("Refund all attendees for a cancelled event session")
