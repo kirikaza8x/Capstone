@@ -8,10 +8,10 @@ using Microsoft.AspNetCore.Routing;
 using Shared.Api.Extensions;
 using Shared.Api.Results;
 using Ticketing.Api.Extensions;
-using Ticketing.Application.Orders.Queries.GetCheckInStats;
+using Ticketing.Application.Reports.GetCheckInStats;
 using Users.PublicApi.Constants;
 
-namespace Ticketing.Api.Orders.Get;
+namespace Ticketing.Api.Reports;
 
 public class GetCheckInStatsEndpoint : ICarterModule
 {

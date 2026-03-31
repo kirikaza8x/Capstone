@@ -1,6 +1,6 @@
 ﻿using Shared.Application.Abstractions.Messaging;
 
-namespace Ticketing.Application.Orders.Queries.GetCheckInStats;
+namespace Ticketing.Application.Reports.GetCheckInStats;
 
 public sealed record GetCheckInStatsQuery(
     Guid EventId,
@@ -11,11 +11,15 @@ public sealed record CheckInStatsResponse(
     IReadOnlyCollection<TicketTypeStat> TicketStats);
 
 public sealed record CheckInSummary(
-    int TotalTickets,
-    int TotalQuantity,
-    int CheckedIn);
+    int TotalTicketTypes,      
+    int TotalTicketQuantity,     
+    int TotalSold,         
+    int TotalCheckedIn,     
+    double CheckInRate);   
 
 public sealed record TicketTypeStat(
-    string TicketType,
-    int Quantity,
-    int CheckedIn);
+    Guid TicketTypeId,         
+    string TicketTypeName,    
+    int Quantity,              
+    int Sold,                
+    int CheckedIn);          
