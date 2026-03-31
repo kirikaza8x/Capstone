@@ -39,6 +39,7 @@ internal static class Constants
         // reports
         public const string CheckInStats = $"{BaseApi}/report/events/{{eventId:guid}}/check-in-stats";
         public const string EventTicketSales = $"{BaseApi}/report/events/{{eventId:guid}}/ticket-sales";
+        public const string SalesTrend = $"{BaseApi}/report/events/{{eventId:guid}}/sales-trend";
 
     }
 }
