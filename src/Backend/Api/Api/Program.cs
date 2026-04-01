@@ -43,7 +43,11 @@ public class Program
 
             // Payment
             PaymentsApplicationAssemblyReference.Assembly,
-            PaymentApiAssemblyReference.Assembly
+            PaymentApiAssemblyReference.Assembly,
+
+            // Reports
+            Reports.Application.AssemblyReference.Assembly,
+            Reports.Api.AssemblyReference.Assembly,
         };
 
         // Add Application Services

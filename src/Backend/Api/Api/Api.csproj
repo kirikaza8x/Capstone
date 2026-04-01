@@ -27,6 +27,8 @@
 	  <ProjectReference Include="..\..\Modules\Notifications\Notifications.Application\Notifications.Application.csproj" />
 	  <ProjectReference Include="..\..\Modules\Notifications\Notifications.Infrastructure\Notifications.Infrastructure.csproj" />
 	  <ProjectReference Include="..\..\Modules\Payment\Payment.Api\Payment.Api.csproj" />
+	  <ProjectReference Include="..\..\Modules\Reports\Reports.Api\Reports.Api.csproj" />
+	  <ProjectReference Include="..\..\Modules\Reports\Reports.Application\Reports.Application.csproj" />
 	  <ProjectReference Include="..\..\Modules\Ticketing\Ticketing.Api\Ticketing.Api.csproj" />
 	  <ProjectReference Include="..\..\Modules\Ticketing\Ticketing.Infrastructure\Ticketing.Infrastructure.csproj" />
 	<ProjectReference Include="..\..\Modules\Users\Users.Api\Users.Api.csproj" />

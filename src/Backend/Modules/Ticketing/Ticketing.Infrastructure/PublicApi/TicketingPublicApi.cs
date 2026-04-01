@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Shared.Application.Abstractions.Time;
 using StackExchange.Redis;
 using Ticketing.Domain.Entities;
 using Ticketing.Domain.Enums;
@@ -10,6 +11,7 @@ namespace Ticketing.Infrastructure.PublicApi;
 
 internal sealed class TicketingPublicApi(
     TicketingDbContext dbContext,
+    IDateTimeProvider dateTimeProvider,
     IConnectionMultiplexer redis) : ITicketingPublicApi
 {
     public async Task<OrderDetails?> GetOrderAsync(
@@ -170,5 +172,54 @@ internal sealed class TicketingPublicApi(
             .ToListAsync(cancellationToken);
 
         return orderIds;
+    }
+
+    public async Task<TicketingMetricsDto> GetTicketingMetricsAsync(CancellationToken cancellationToken = default)
+    {
+        var now = dateTimeProvider.UtcNow;
+        // get metrics for current 30-day period and previous 30-day period
+        var startOfCurrentPeriod = now.AddDays(-30);
+        var startOfLastPeriod = now.AddDays(-60);
+
+        var totalRevenueTask = dbContext.Orders
+            .Where(o => o.Status == OrderStatus.Paid)
+            .SumAsync(o => o.TotalPrice, cancellationToken);
+
+        var totalTicketsSoldTask = dbContext.OrderTickets
+            .CountAsync(t => t.Status == OrderTicketStatus.Valid || t.Status == OrderTicketStatus.Used, cancellationToken);
+
+        // Get the revenue from the last 30 days.
+        var currentPeriodRevenueTask = dbContext.Orders
+            .Where(o => o.Status == OrderStatus.Paid && o.CreatedAt >= startOfCurrentPeriod)
+            .SumAsync(o => o.TotalPrice, cancellationToken);
+
+        // Revenue from the previous 30-day period
+        var lastPeriodRevenueTask = dbContext.Orders
+            .Where(o => o.Status == OrderStatus.Paid && o.CreatedAt >= startOfLastPeriod && o.CreatedAt < startOfCurrentPeriod)
+            .SumAsync(o => o.TotalPrice, cancellationToken);
+
+        await Task.WhenAll(
+            totalRevenueTask,
+            totalTicketsSoldTask,
+            currentPeriodRevenueTask,
+            lastPeriodRevenueTask);
+
+        decimal currentRev = currentPeriodRevenueTask.Result;
+        decimal lastRev = lastPeriodRevenueTask.Result;
+        double growthRate = 0;
+
+        if (lastRev == 0)
+        {
+            growthRate = currentRev > 0 ? 100.0 : 0.0;
+        }
+        else
+        {
+            growthRate = Math.Round((double)((currentRev - lastRev) / lastRev * 100), 1);
+        }
+
+        return new TicketingMetricsDto(
+            TotalRevenue: totalRevenueTask.Result,
+            RevenueGrowthRate: growthRate,
+            TotalTicketsSold: totalTicketsSoldTask.Result);
     }
 }
