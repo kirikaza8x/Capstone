@@ -128,6 +128,22 @@ public class WithdrawalRequest : AggregateRoot<Guid>
         ProcessedAt = DateTime.UtcNow;
     }
 
+    /// <summary>
+/// Admin marks the request as failed after the bank transfer could not be completed.
+/// The caller is responsible for refunding the wallet balance.
+/// </summary>
+public void Fail(string adminNote)
+{
+    EnsureStatus(WithdrawalRequestStatus.Approved, nameof(Fail));
+
+    if (string.IsNullOrWhiteSpace(adminNote))
+        throw new ArgumentException("A failure reason is required.", nameof(adminNote));
+
+    AdminNote = adminNote.Trim();
+    Status = WithdrawalRequestStatus.Failed;
+    ProcessedAt = DateTime.UtcNow;
+}
+
     // ── Helpers ───────────────────────────────────────────────────────────────
     private void EnsureStatus(WithdrawalRequestStatus expected, string operation)
     {

@@ -29,9 +29,9 @@ public class CreateWithdrawalRequestEndpoint : ICarterModule
         {
             var command = new CreateWithdrawalRequestCommand(
                 BankAccountNumber: body.BankAccountNumber,
-                BankName: body.BankName,
-                Amount: body.Amount,
-                Notes: body.Notes);
+                BankName:          body.BankName,
+                Amount:            body.Amount,
+                Notes:             body.Notes);
 
             var result = await sender.Send(command, cancellationToken);
             return result.ToOk();
@@ -92,13 +92,13 @@ public class GetMyWithdrawalRequestsEndpoint : ICarterModule
         {
             var query = new GetMyWithdrawalRequestsQuery
             {
-                PageNumber = request.PageNumber,
-                PageSize = request.PageSize,
-                SortColumn = request.SortColumn,
-                SortOrder = request.SortOrder?.ToLower() == "asc"
-                    ? SortOrder.Ascending
-                    : SortOrder.Descending,
-                Status = request.Status
+                PageNumber  = request.PageNumber,
+                PageSize    = request.PageSize,
+                SortColumn  = request.SortColumn,
+                SortOrder   = request.SortOrder?.ToLower() == "asc"
+                                ? SortOrder.Ascending
+                                : SortOrder.Descending,
+                Status      = request.Status
             };
 
             var result = await sender.Send(query, cancellationToken);
@@ -113,17 +113,11 @@ public class GetMyWithdrawalRequestsEndpoint : ICarterModule
 
 public sealed record GetMyWithdrawalRequestsRequestDto
 {
-    [DefaultValue(1)]
-    public int PageNumber { get; init; } = 1;
+    [DefaultValue(1)]  public int PageNumber { get; init; } = 1;
+    [DefaultValue(10)] public int PageSize   { get; init; } = 10;
 
-    [DefaultValue(10)]
-    public int PageSize { get; init; } = 10;
-
-    [DefaultValue("CreatedAt")]
-    public string SortColumn { get; init; } = "CreatedAt";
-
-    [DefaultValue("desc")]
-    public string SortOrder { get; init; } = "desc";
+    [DefaultValue("CreatedAt")] public string SortColumn { get; init; } = "CreatedAt";
+    [DefaultValue("desc")]      public string SortOrder  { get; init; } = "desc";
 
     public WithdrawalRequestStatus? Status { get; init; }
 }
@@ -141,7 +135,7 @@ public class GetMyWithdrawalRequestDetailEndpoint : ICarterModule
             ISender sender,
             CancellationToken cancellationToken) =>
         {
-            var query = new GetMyWithdrawalRequestDetailQuery(RequestId: id);
+            var query  = new GetMyWithdrawalRequestDetailQuery(RequestId: id);
             var result = await sender.Send(query, cancellationToken);
             return result.ToOk();
         })
@@ -150,6 +144,82 @@ public class GetMyWithdrawalRequestDetailEndpoint : ICarterModule
         .WithTags("Withdrawal Requests")
         .Produces<WithdrawalRequestDetailDto>(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status403Forbidden)
+        .Produces(StatusCodes.Status404NotFound);
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ADMIN — List
+// ══════════════════════════════════════════════════════════════════════════════
+
+public class GetAllWithdrawalRequestsEndpoint : ICarterModule
+{
+    public void AddRoutes(IEndpointRouteBuilder app)
+    {
+        app.MapGet("/api/admin/withdrawal-requests", async (
+            [AsParameters] GetAllWithdrawalRequestsRequestDto request,
+            ISender sender,
+            CancellationToken cancellationToken) =>
+        {
+            var query = new GetAllWithdrawalRequestsQuery
+            {
+                PageNumber  = request.PageNumber,
+                PageSize    = request.PageSize,
+                SortColumn  = request.SortColumn,
+                SortOrder   = request.SortOrder?.ToLower() == "asc"
+                                ? SortOrder.Ascending
+                                : SortOrder.Descending,
+                UserId      = request.UserId,
+                Status      = request.Status,
+                CreatedFrom = request.CreatedFrom,
+                CreatedTo   = request.CreatedTo
+            };
+
+            var result = await sender.Send(query, cancellationToken);
+            return result.ToOk();
+        })
+        //.RequireAuthorization("Admin")
+        .WithName("GetAllWithdrawalRequests")
+        .WithTags("Admin - Withdrawal Requests")
+        .Produces<PagedResult<WithdrawalRequestAdminListItemDto>>(StatusCodes.Status200OK);
+    }
+}
+
+public sealed record GetAllWithdrawalRequestsRequestDto
+{
+    [DefaultValue(1)]  public int PageNumber { get; init; } = 1;
+    [DefaultValue(10)] public int PageSize   { get; init; } = 10;
+
+    [DefaultValue("CreatedAt")] public string SortColumn { get; init; } = "CreatedAt";
+    [DefaultValue("desc")]      public string SortOrder  { get; init; } = "desc";
+
+    public Guid?                    UserId      { get; init; }
+    public WithdrawalRequestStatus? Status      { get; init; }
+    public DateTime?                CreatedFrom { get; init; }
+    public DateTime?                CreatedTo   { get; init; }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ADMIN — Detail
+// ══════════════════════════════════════════════════════════════════════════════
+
+public class GetWithdrawalRequestDetailEndpoint : ICarterModule
+{
+    public void AddRoutes(IEndpointRouteBuilder app)
+    {
+        app.MapGet("/api/admin/withdrawal-requests/{id:guid}", async (
+            Guid id,
+            ISender sender,
+            CancellationToken cancellationToken) =>
+        {
+            var query  = new GetWithdrawalRequestDetailQuery(RequestId: id);
+            var result = await sender.Send(query, cancellationToken);
+            return result.ToOk();
+        })
+        //.RequireAuthorization("Admin")
+        .WithName("GetWithdrawalRequestDetail")
+        .WithTags("Admin - Withdrawal Requests")
+        .Produces<WithdrawalRequestAdminDetailDto>(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status404NotFound);
     }
 }
@@ -214,7 +284,7 @@ public class RejectWithdrawalRequestEndpoint : ICarterModule
     }
 }
 
-public sealed record RejectWithdrawalRequestDto(string AdminNote);
+public sealed record RejectWithdrawalRequestDto(string AdminNote);  // required
 
 // ══════════════════════════════════════════════════════════════════════════════
 // ADMIN — Complete
@@ -238,7 +308,6 @@ public class CompleteWithdrawalRequestEndpoint : ICarterModule
             return result.ToOk();
         })
         //.RequireAuthorization("Admin")
-        //
         .WithName("CompleteWithdrawalRequest")
         .WithTags("Admin - Withdrawal Requests")
         .Produces(StatusCodes.Status200OK)
@@ -249,83 +318,38 @@ public class CompleteWithdrawalRequestEndpoint : ICarterModule
 public sealed record CompleteWithdrawalRequestDto(string? AdminNote);
 
 // ══════════════════════════════════════════════════════════════════════════════
-// ADMIN — List
+// ADMIN — Fail  (bank transfer failed after approval → auto-refunds wallet)
 // ══════════════════════════════════════════════════════════════════════════════
 
-public class GetAllWithdrawalRequestsEndpoint : ICarterModule
+public class FailWithdrawalRequestEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapGet("/api/admin/withdrawal-requests", async (
-            [AsParameters] GetAllWithdrawalRequestsRequestDto request,
-            ISender sender,
-            CancellationToken cancellationToken) =>
-        {
-            var query = new GetAllWithdrawalRequestsQuery
-            {
-                PageNumber = request.PageNumber,
-                PageSize = request.PageSize,
-                SortColumn = request.SortColumn,
-                SortOrder = request.SortOrder?.ToLower() == "asc"
-                    ? SortOrder.Ascending
-                    : SortOrder.Descending,
-                UserId = request.UserId,
-                Status = request.Status,
-                CreatedFrom = request.CreatedFrom,
-                CreatedTo = request.CreatedTo
-            };
-
-            var result = await sender.Send(query, cancellationToken);
-            return result.ToOk();
-        })
-        //.RequireAuthorization("Admin")
-        .WithName("GetAllWithdrawalRequests")
-        .WithTags("Admin - Withdrawal Requests")
-        .Produces<PagedResult<WithdrawalRequestAdminListItemDto>>(StatusCodes.Status200OK);
-    }
-}
-
-public sealed record GetAllWithdrawalRequestsRequestDto
-{
-    [DefaultValue(1)]
-    public int PageNumber { get; init; } = 1;
-
-    [DefaultValue(10)]
-    public int PageSize { get; init; } = 10;
-
-    [DefaultValue("CreatedAt")]
-    public string SortColumn { get; init; } = "CreatedAt";
-
-    [DefaultValue("desc")]
-    public string SortOrder { get; init; } = "desc";
-
-    public Guid? UserId { get; init; }
-    public WithdrawalRequestStatus? Status { get; init; }
-    public DateTime? CreatedFrom { get; init; }
-    public DateTime? CreatedTo { get; init; }
-}
-
-// ══════════════════════════════════════════════════════════════════════════════
-// ADMIN — Detail
-// ══════════════════════════════════════════════════════════════════════════════
-
-public class GetWithdrawalRequestDetailEndpoint : ICarterModule
-{
-    public void AddRoutes(IEndpointRouteBuilder app)
-    {
-        app.MapGet("/api/admin/withdrawal-requests/{id:guid}", async (
+        app.MapPut("/api/admin/withdrawal-requests/{id:guid}/fail", async (
             Guid id,
+            FailWithdrawalRequestDto body,
             ISender sender,
             CancellationToken cancellationToken) =>
         {
-            var query = new GetWithdrawalRequestDetailQuery(RequestId: id);
-            var result = await sender.Send(query, cancellationToken);
+            var command = new FailWithdrawalRequestCommand(
+                RequestId: id,
+                AdminNote: body.AdminNote);
+
+            var result = await sender.Send(command, cancellationToken);
             return result.ToOk();
         })
         //.RequireAuthorization("Admin")
-        .WithName("GetWithdrawalRequestDetail")
+        .WithName("FailWithdrawalRequest")
         .WithTags("Admin - Withdrawal Requests")
-        .Produces<WithdrawalRequestAdminDetailDto>(StatusCodes.Status200OK)
+        .WithSummary("Mark an approved withdrawal as failed")
+        .WithDescription(
+            "Admin calls this when the bank transfer could not be completed. " +
+            "Marks the original debit transaction as failed and automatically " +
+            "refunds the full amount back to the user's wallet.")
+        .Produces(StatusCodes.Status200OK)
+        .Produces(StatusCodes.Status400BadRequest)
         .Produces(StatusCodes.Status404NotFound);
     }
 }
+
+public sealed record FailWithdrawalRequestDto(string AdminNote);    
