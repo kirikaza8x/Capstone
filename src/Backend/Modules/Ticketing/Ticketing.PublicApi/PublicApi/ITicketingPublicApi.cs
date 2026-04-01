@@ -36,5 +36,11 @@ public interface ITicketingPublicApi
     Task<IReadOnlyCollection<Guid>> GetOrdersByEventIdAsync(Guid eventSessionId, CancellationToken cancellationToken);
 
     Task<TicketingMetricsDto> GetTicketingMetricsAsync(CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<DailySalesTrendDto>> GetSalesTrendAsync(
+        DateTime startDate,
+        DateTime endDate,
+        CancellationToken cancellationToken = default);
+
 }
 

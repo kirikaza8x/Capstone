@@ -12,6 +12,7 @@ internal static class Constants
         private const string BaseApi = "api";
         public const string Admin = $"{BaseApi}/admin/reports";
         public const string AdminOverview = $"{Admin}/overview";
+       public const string AdminSalesTrend = $"{Admin}/sales-trend";
 
     }
 }

@@ -222,4 +222,42 @@ internal sealed class TicketingPublicApi(
             RevenueGrowthRate: growthRate,
             TotalTicketsSold: totalTicketsSoldTask.Result);
     }
+
+    public async Task<IReadOnlyList<DailySalesTrendDto>> GetSalesTrendAsync(
+            DateTime startDate,
+            DateTime endDate,
+            CancellationToken cancellationToken = default)
+    {
+        // Get data and group by date
+        var rawData = await dbContext.Orders
+            .Where(o => o.Status == OrderStatus.Paid
+                     && o.CreatedAt != null 
+                     && o.CreatedAt >= startDate
+                     && o.CreatedAt <= endDate)
+            .GroupBy(o => o.CreatedAt.Value.Date)
+            .Select(g => new
+            {
+                Date = g.Key,
+                Revenue = g.Sum(o => o.TotalPrice),
+                Transactions = g.Count()
+            })
+            .ToListAsync(cancellationToken);
+
+        var dict = rawData.ToDictionary(x => x.Date);
+        var result = new List<DailySalesTrendDto>();
+
+        for (var date = startDate.Date; date <= endDate.Date; date = date.AddDays(1))
+        {
+            if (dict.TryGetValue(date, out var data))
+            {
+                result.Add(new DailySalesTrendDto(date, data.Revenue, data.Transactions));
+            }
+            else
+            {
+                result.Add(new DailySalesTrendDto(date, 0, 0));
+            }
+        }
+
+        return result;
+    }
 }
