@@ -1,9 +1,7 @@
-﻿// src/Modules/Ticketing/Infrastructure/Locks/TicketLockService.cs
-
-using StackExchange.Redis;
+﻿using StackExchange.Redis;
 using Ticketing.Application.Abstractions.Locks;
 
-namespace Ticketing.Infrastructure.Locks;
+namespace Ticketing.Infrastructure.Services;
 
 internal sealed class TicketLockService(IConnectionMultiplexer redis) : ITicketLockService
 {
