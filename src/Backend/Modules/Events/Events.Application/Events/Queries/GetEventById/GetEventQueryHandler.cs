@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
 using Events.Domain.Errors;
 using Events.Domain.Repositories;
-using Shared.Application.Abstractions.Caching;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
 
