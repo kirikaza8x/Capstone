@@ -34,4 +34,11 @@ public class WalletRepository
         => await DbSet
             .Where(x => userIds.Contains(x.UserId))
             .ToListAsync(cancellationToken);
+
+    public async Task<Wallet?> GetByUserIdIncludeTransacAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default)
+        => await DbSet
+            .Include(x => x.Transactions)
+            .FirstOrDefaultAsync(x => x.UserId == userId, cancellationToken);
 }
