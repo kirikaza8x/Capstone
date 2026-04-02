@@ -36,7 +36,7 @@ public class CompleteWithdrawalRequestCommandHandler
 
         // Mark the linked wallet transaction as completed
         var wallet = await _walletRepository
-            .GetByUserIdAsync(request.UserId, cancellationToken);
+            .GetByUserIdIncludeTransacAsync(request.UserId, cancellationToken);
 
         if (wallet == null)
             return Result.Failure(
