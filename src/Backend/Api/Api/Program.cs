@@ -119,7 +119,7 @@ public class Program
         app
         .UseNotificationModule()
         .UseUserModule()
-        .UseEventModule()
+        // .UseEventModule()
         .UseAiModule()
         .UseTicketingModule()
         .UsePaymentModule()

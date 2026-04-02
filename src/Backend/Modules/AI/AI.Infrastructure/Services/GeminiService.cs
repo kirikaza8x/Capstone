@@ -133,6 +133,84 @@ public sealed class GeminiService : IGeminiService
         }
     }
 
+
+    /// <inheritdoc />
+    public async Task<GeminiStructuredResult<TResponse>> GenerateStructuredV2Async<TResponse>(
+    string userPrompt,
+    string? systemPromptOverride = null,
+    CancellationToken cancellationToken = default)
+    where TResponse : class
+    {
+        try
+        {
+            var effectiveSystemInstruction = string.IsNullOrWhiteSpace(systemPromptOverride)
+                ? _config.SystemInstruction
+                : systemPromptOverride;
+
+            var structuredPrompt = $"""
+            IMPORTANT INSTRUCTIONS:
+            1. Return ONLY valid JSON matching the expected schema.
+            2. Do not include Markdown formatting (no ```json or ``` wrappers).
+            3. Do not include explanations, apologies, or extra text before/after the JSON.
+
+            Request:
+            {userPrompt}
+            """;
+
+            var model = CreateModelWithSystemInstruction(effectiveSystemInstruction);
+
+            // API Call
+            var response = await model.GenerateContentAsync(structuredPrompt, cancellationToken: cancellationToken);
+
+            // Extract raw text
+            var rawText = response.Text;
+
+            // Capture token usage from SDK 3.6.3 UsageMetadata
+            var usage = response.UsageMetadata;
+            int promptTokens = usage?.PromptTokenCount ?? 0;
+            int candidateTokens = usage?.CandidatesTokenCount ?? 0;
+            int totalTokens = usage?.TotalTokenCount ?? 0;
+
+            if (string.IsNullOrWhiteSpace(rawText))
+            {
+                _logger.LogError("Gemini returned empty response.");
+                throw new InvalidOperationException("Gemini returned empty response.");
+            }
+
+            var cleanJson = CleanJsonString(rawText);
+
+            // Deserialization
+            var result = JsonSerializer.Deserialize<TResponse>(cleanJson, _jsonOptions);
+
+            if (result is null)
+            {
+                _logger.LogError("Deserialization returned null. JSON: {Preview}",
+                    cleanJson.Length > 100 ? cleanJson[..100] : cleanJson);
+                throw new InvalidOperationException("Deserialized null result.");
+            }
+
+            // Return the full record
+            return new GeminiStructuredResult<TResponse>(result, promptTokens, candidateTokens, totalTokens);
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogError(ex, "JSON parsing failed for structured generation.");
+            throw new InvalidOperationException("Gemini returned invalid JSON.", ex);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            // LOG THE ACTUAL ERROR so you can see it in the console/debug
+            _logger.LogError(ex, "GenerateStructuredAsync failed: {Message}", ex.Message);
+
+            // Re-throw so the handler knows something went wrong
+            throw;
+        }
+    }
+
     /// <inheritdoc />
     public async IAsyncEnumerable<string> StreamChatAsync(
         string userMessage,
