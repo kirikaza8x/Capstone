@@ -15,3 +15,18 @@ public record UpdatePostCommand(
     decimal? AiCost = null,
     string? TrackingToken = null
 ) : ICommand;
+
+
+public record UpdatePostCommandV2(
+    Guid PostId,
+    bool GenerateWithAi, 
+    string? UserPromptRequirement = null,
+    string? Title = null,
+    string? Body = null,
+    string? Summary = null,
+    string? Slug = null,
+    string? AiModel = null,
+    int? AiTokensUsed = null,
+    decimal? AiCost = null,
+    string? TrackingToken = null
+) : ICommand;
