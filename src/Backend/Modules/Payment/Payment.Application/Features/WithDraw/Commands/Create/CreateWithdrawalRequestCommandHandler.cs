@@ -33,7 +33,6 @@ public class CreateWithdrawalRequestCommandHandler
         CancellationToken cancellationToken)
     {
         var userId = _currentUserService.UserId;
-        var userName = _currentUserService.Name;
 
         // 1. Ensure no active request already exists
         var hasActive = await _withdrawalRequestRepository
@@ -60,11 +59,10 @@ public class CreateWithdrawalRequestCommandHandler
                     "WithdrawalRequest.InsufficientFunds",
                     $"Insufficient balance. Available: {wallet.Balance:N0}, Requested: {command.Amount:N0}."));
 
-        // 3. Create the request
         var request = WithdrawalRequest.Create(
             userId: userId,
             walletId: wallet.Id,
-            name: userName,
+            name: command.ReceiverName,
             bankAccountNumber: command.BankAccountNumber,
             bankName: command.BankName,
             amount: command.Amount,

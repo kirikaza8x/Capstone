@@ -19,8 +19,8 @@ public class CompleteWithdrawalRequestCommandHandler
         IPaymentUnitOfWork unitOfWork)
     {
         _withdrawalRequestRepository = withdrawalRequestRepository;
-        _walletRepository            = walletRepository;
-        _unitOfWork                  = unitOfWork;
+        _walletRepository = walletRepository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<Result> Handle(

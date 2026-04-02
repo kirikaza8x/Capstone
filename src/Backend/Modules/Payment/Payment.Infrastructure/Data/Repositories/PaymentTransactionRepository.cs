@@ -451,4 +451,22 @@ public class PaymentTransactionRepository
             NetRevenue: gross - refunds,
             EventCount: txns.Select(x => x.EventId).Distinct().Count());
     }
+
+    public async Task<IEnumerable<(PaymentTransaction Transaction, BatchPaymentItem Item)>>
+    GetAllCompletedItemsByEventIdAsync(Guid eventId, CancellationToken ct)
+    {
+        var txns = await DbSet
+            .Include(x => x.Items)
+            .Where(x => x.EventId == eventId
+                     && x.Items.Any(i =>
+                         i.InternalStatus == PaymentInternalStatus.Completed ||
+                         i.InternalStatus == PaymentInternalStatus.Refunded))
+            .ToListAsync(ct);
+
+        return txns.SelectMany(txn =>
+            txn.Items
+               .Where(i => i.InternalStatus == PaymentInternalStatus.Completed
+                        || i.InternalStatus == PaymentInternalStatus.Refunded)
+               .Select(i => (txn, i)));
+    }
 }

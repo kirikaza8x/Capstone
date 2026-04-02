@@ -29,9 +29,10 @@ public class CreateWithdrawalRequestEndpoint : ICarterModule
         {
             var command = new CreateWithdrawalRequestCommand(
                 BankAccountNumber: body.BankAccountNumber,
-                BankName:          body.BankName,
-                Amount:            body.Amount,
-                Notes:             body.Notes);
+                BankName: body.BankName,
+                Amount: body.Amount,
+                Notes: body.Notes,
+                ReceiverName: body.ReceiverName);
 
             var result = await sender.Send(command, cancellationToken);
             return result.ToOk();
@@ -49,7 +50,8 @@ public sealed record CreateWithdrawalRequestDto(
     string BankAccountNumber,
     string BankName,
     decimal Amount,
-    string? Notes);
+    string? Notes,
+    string? ReceiverName);
 
 // ══════════════════════════════════════════════════════════════════════════════
 // USER — Cancel
@@ -92,13 +94,13 @@ public class GetMyWithdrawalRequestsEndpoint : ICarterModule
         {
             var query = new GetMyWithdrawalRequestsQuery
             {
-                PageNumber  = request.PageNumber,
-                PageSize    = request.PageSize,
-                SortColumn  = request.SortColumn,
-                SortOrder   = request.SortOrder?.ToLower() == "asc"
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize,
+                SortColumn = request.SortColumn,
+                SortOrder = request.SortOrder?.ToLower() == "asc"
                                 ? SortOrder.Ascending
                                 : SortOrder.Descending,
-                Status      = request.Status
+                Status = request.Status
             };
 
             var result = await sender.Send(query, cancellationToken);
@@ -113,11 +115,11 @@ public class GetMyWithdrawalRequestsEndpoint : ICarterModule
 
 public sealed record GetMyWithdrawalRequestsRequestDto
 {
-    [DefaultValue(1)]  public int PageNumber { get; init; } = 1;
-    [DefaultValue(10)] public int PageSize   { get; init; } = 10;
+    [DefaultValue(1)] public int PageNumber { get; init; } = 1;
+    [DefaultValue(10)] public int PageSize { get; init; } = 10;
 
     [DefaultValue("CreatedAt")] public string SortColumn { get; init; } = "CreatedAt";
-    [DefaultValue("desc")]      public string SortOrder  { get; init; } = "desc";
+    [DefaultValue("desc")] public string SortOrder { get; init; } = "desc";
 
     public WithdrawalRequestStatus? Status { get; init; }
 }
@@ -135,7 +137,7 @@ public class GetMyWithdrawalRequestDetailEndpoint : ICarterModule
             ISender sender,
             CancellationToken cancellationToken) =>
         {
-            var query  = new GetMyWithdrawalRequestDetailQuery(RequestId: id);
+            var query = new GetMyWithdrawalRequestDetailQuery(RequestId: id);
             var result = await sender.Send(query, cancellationToken);
             return result.ToOk();
         })
@@ -163,16 +165,16 @@ public class GetAllWithdrawalRequestsEndpoint : ICarterModule
         {
             var query = new GetAllWithdrawalRequestsQuery
             {
-                PageNumber  = request.PageNumber,
-                PageSize    = request.PageSize,
-                SortColumn  = request.SortColumn,
-                SortOrder   = request.SortOrder?.ToLower() == "asc"
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize,
+                SortColumn = request.SortColumn,
+                SortOrder = request.SortOrder?.ToLower() == "asc"
                                 ? SortOrder.Ascending
                                 : SortOrder.Descending,
-                UserId      = request.UserId,
-                Status      = request.Status,
+                UserId = request.UserId,
+                Status = request.Status,
                 CreatedFrom = request.CreatedFrom,
-                CreatedTo   = request.CreatedTo
+                CreatedTo = request.CreatedTo
             };
 
             var result = await sender.Send(query, cancellationToken);
@@ -187,16 +189,16 @@ public class GetAllWithdrawalRequestsEndpoint : ICarterModule
 
 public sealed record GetAllWithdrawalRequestsRequestDto
 {
-    [DefaultValue(1)]  public int PageNumber { get; init; } = 1;
-    [DefaultValue(10)] public int PageSize   { get; init; } = 10;
+    [DefaultValue(1)] public int PageNumber { get; init; } = 1;
+    [DefaultValue(10)] public int PageSize { get; init; } = 10;
 
     [DefaultValue("CreatedAt")] public string SortColumn { get; init; } = "CreatedAt";
-    [DefaultValue("desc")]      public string SortOrder  { get; init; } = "desc";
+    [DefaultValue("desc")] public string SortOrder { get; init; } = "desc";
 
-    public Guid?                    UserId      { get; init; }
-    public WithdrawalRequestStatus? Status      { get; init; }
-    public DateTime?                CreatedFrom { get; init; }
-    public DateTime?                CreatedTo   { get; init; }
+    public Guid? UserId { get; init; }
+    public WithdrawalRequestStatus? Status { get; init; }
+    public DateTime? CreatedFrom { get; init; }
+    public DateTime? CreatedTo { get; init; }
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -212,7 +214,7 @@ public class GetWithdrawalRequestDetailEndpoint : ICarterModule
             ISender sender,
             CancellationToken cancellationToken) =>
         {
-            var query  = new GetWithdrawalRequestDetailQuery(RequestId: id);
+            var query = new GetWithdrawalRequestDetailQuery(RequestId: id);
             var result = await sender.Send(query, cancellationToken);
             return result.ToOk();
         })
@@ -352,4 +354,4 @@ public class FailWithdrawalRequestEndpoint : ICarterModule
     }
 }
 
-public sealed record FailWithdrawalRequestDto(string AdminNote);    
+public sealed record FailWithdrawalRequestDto(string AdminNote);
