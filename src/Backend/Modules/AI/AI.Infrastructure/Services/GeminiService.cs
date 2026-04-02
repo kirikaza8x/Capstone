@@ -82,14 +82,33 @@ public sealed class GeminiService : IGeminiService
                 ? _config.SystemInstruction
                 : systemPromptOverride;
 
-            var structuredPrompt = $"""
-            IMPORTANT INSTRUCTIONS:
-            1. Return ONLY valid JSON matching the expected schema.
-            2. Do not include Markdown formatting (no ```json or ``` wrappers).
-            3. Do not include explanations, apologies, or extra text before/after the JSON.
+            var structuredPrompt = $$"""
+            Return ONLY a valid JSON object with exactly this shape. No explanation, no markdown, no code fences.
+
+            {
+            "title": "Tiêu đề bài viết",
+            "summary": "Tóm tắt ngắn 1-2 câu",
+            "body": "<JSON array of content blocks as a STRING>"
+            }
+
+            The "body" field must be a JSON-serialized STRING containing an array of content blocks:
+            - { "type": "heading", "level": 1|2|3, "text": "..." }
+            - { "type": "paragraph", "text": "..." }
+            - { "type": "image", "src": "<url>", "alt": "..." }   ← only if image provided
+            - { "type": "button", "label": "...", "href": "..." }
+            - { "type": "list", "ordered": false, "items": ["...", "..."] }
+            - { "type": "divider" }
+            - { "type": "highlight", "content": "..." }
+
+            Rules:
+            - All text content must be in Vietnamese.
+            - image block src must be exactly the URL provided, never fabricate image URLs.
+            - button href must be the real CTA link, never a placeholder.
+            - Produce a complete, well-structured marketing post (heading → content → CTA).
+            - "body" must be a valid JSON string (escaped), not a nested object.
 
             Request:
-            {userPrompt}
+            {{userPrompt}}
             """;
 
             var model = CreateModelWithSystemInstruction(effectiveSystemInstruction);
@@ -147,14 +166,33 @@ public sealed class GeminiService : IGeminiService
                 ? _config.SystemInstruction
                 : systemPromptOverride;
 
-            var structuredPrompt = $"""
-            IMPORTANT INSTRUCTIONS:
-            1. Return ONLY valid JSON matching the expected schema.
-            2. Do not include Markdown formatting (no ```json or ``` wrappers).
-            3. Do not include explanations, apologies, or extra text before/after the JSON.
+            var structuredPrompt = $$"""
+            Return ONLY a valid JSON object with exactly this shape. No explanation, no markdown, no code fences.
+
+            {
+            "title": "Tiêu đề bài viết",
+            "summary": "Tóm tắt ngắn 1-2 câu",
+            "body": "<JSON array of content blocks as a STRING>"
+            }
+
+            The "body" field must be a JSON-serialized STRING containing an array of content blocks:
+            - { "type": "heading", "level": 1|2|3, "text": "..." }
+            - { "type": "paragraph", "text": "..." }
+            - { "type": "image", "src": "<url>", "alt": "..." }   ← only if image provided
+            - { "type": "button", "label": "...", "href": "..." }
+            - { "type": "list", "ordered": false, "items": ["...", "..."] }
+            - { "type": "divider" }
+            - { "type": "highlight", "content": "..." }
+
+            Rules:
+            - All text content must be in Vietnamese.
+            - image block src must be exactly the URL provided, never fabricate image URLs.
+            - button href must be the real CTA link, never a placeholder.
+            - Produce a complete, well-structured marketing post (heading → content → CTA).
+            - "body" must be a valid JSON string (escaped), not a nested object.
 
             Request:
-            {userPrompt}
+            {{userPrompt}}
             """;
 
             var model = CreateModelWithSystemInstruction(effectiveSystemInstruction);
