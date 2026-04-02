@@ -2,6 +2,7 @@
 using Shared.Application.Abstractions.Messaging;
 using Shared.Application.Abstractions.Time;
 using Shared.Domain.Abstractions;
+using Ticketing.Application.Abstractions.Notifications;
 using Ticketing.Domain.Enums;
 using Ticketing.Domain.Repositories;
 using Ticketing.Domain.Uow;
@@ -12,7 +13,8 @@ internal sealed class ManualCheckInCommandHandler(
     IOrderRepository orderRepository,
     IDateTimeProvider dateTimeProvider,
     ICurrentUserService currentUserService,
-    ITicketingUnitOfWork unitOfWork) : ICommandHandler<ManualCheckInCommand, ManualCheckInResponse>
+    ITicketingUnitOfWork unitOfWork,
+    ICheckInStatsBroadcaster checkInStatsBroadcaster) : ICommandHandler<ManualCheckInCommand, ManualCheckInResponse>
 {
     public async Task<Result<ManualCheckInResponse>> Handle(ManualCheckInCommand command, CancellationToken cancellationToken)
     {
@@ -53,6 +55,12 @@ internal sealed class ManualCheckInCommandHandler(
         if (successCount > 0)
         {
             await unitOfWork.SaveChangesAsync(cancellationToken);
+
+            await checkInStatsBroadcaster.BroadcastAsync(
+                command.EventId,
+                command.EventSessionId,
+                cancellationToken);
+
             return Result.Success(new ManualCheckInResponse(successCount));
         }
 
