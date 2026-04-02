@@ -16,6 +16,6 @@ public sealed record SalesTrendResponse(
     IReadOnlyList<SalesTrendPoint> Trend);
 
 public sealed record SalesTrendPoint(
-    string TimeLabel,
+    DateTime TimeLabel,
     int TicketsSold,
     decimal Revenue);
