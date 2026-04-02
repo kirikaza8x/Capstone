@@ -7,3 +7,4 @@ public record GeneratePostDraftCommand(
     string? UserPromptRequirement    
     // string? SystemPromptOverride = null
 ) : ICommand<GeneratedPostDto>;
+

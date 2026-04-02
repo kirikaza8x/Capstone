@@ -148,10 +148,9 @@ public sealed class PostMarketing : AggregateRoot<Guid>
     string? slug = null,
     string? promptUsed = null,
     string? aiModel = null,
-    int? aiTokensUsed = null,
-    decimal? aiCost = null,
-    string? trackingToken = null
-        )
+    int? additionalTokensUsed = null, // Accumulate new usage
+    decimal? additionalAiCost = null,  // Accumulate new cost
+    string? trackingToken = null)
     {
         if (Status is not (PostStatus.Draft or PostStatus.Rejected))
             return Result.Failure(MarketingErrors.Post.CannotEditInStatus(Status));
@@ -162,7 +161,8 @@ public sealed class PostMarketing : AggregateRoot<Guid>
                 return Result.Failure(MarketingErrors.Post.TitleCannotBeEmpty);
 
             Title = title.Trim();
-            Slug = GenerateSlug(Title);
+            // If slug isn't provided, we regenerate it from the new title
+            Slug = slug ?? GenerateSlug(Title);
         }
 
         if (body is not null)
@@ -188,11 +188,12 @@ public sealed class PostMarketing : AggregateRoot<Guid>
         if (aiModel is not null)
             AiModel = aiModel.Trim();
 
-        if (aiTokensUsed.HasValue)
-            AiTokensUsed = aiTokensUsed;
+        // Logic: Add new usage to existing totals
+        if (additionalTokensUsed.HasValue)
+            AiTokensUsed = (AiTokensUsed ?? 0) + additionalTokensUsed.Value;
 
-        if (aiCost.HasValue)
-            AiCost = aiCost;
+        if (additionalAiCost.HasValue)
+            AiCost = (AiCost ?? 0) + additionalAiCost.Value;
 
         if (trackingToken is not null)
             TrackingToken = trackingToken.Trim().ToLowerInvariant();
@@ -200,6 +201,7 @@ public sealed class PostMarketing : AggregateRoot<Guid>
         Version++;
         ModifiedAt = DateTime.UtcNow;
 
+        // Reset status to Draft if it was previously approved/published
         if (Status == PostStatus.Approved || Status == PostStatus.Published)
             Status = PostStatus.Draft;
 
