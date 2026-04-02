@@ -28,4 +28,25 @@ internal sealed class EventPublicApi(
             TotalEvents: totalEvents,
             LiveEventsNow: liveEventsNow);
     }
+
+    public async Task<Dictionary<Guid, EventBasicInfoDto>> GetEventMapByIdsAsync(
+        IEnumerable<Guid> eventIds,
+        CancellationToken cancellationToken = default)
+    {
+        var idList = eventIds.ToList();
+
+        if (idList.Count == 0)
+            return new Dictionary<Guid, EventBasicInfoDto>();
+
+        var events = await dbContext.Events
+            .Where(e => idList.Contains(e.Id))
+            .Select(e => new EventBasicInfoDto(
+                e.Id,
+                e.Title,
+                e.BannerUrl ?? "",
+                e.Status.ToString()))
+            .ToListAsync(cancellationToken);
+
+        return events.ToDictionary(e => e.Id);
+    }
 }
