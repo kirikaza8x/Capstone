@@ -71,7 +71,8 @@ public class Wallet : AggregateRoot<Guid>
             balanceBefore: before,
             balanceAfter: Balance,
             note: note
-        );
+        )
+        ;
 
         Transactions.Add(txn);
         return txn;

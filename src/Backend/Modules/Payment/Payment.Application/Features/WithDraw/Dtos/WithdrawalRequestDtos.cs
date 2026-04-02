@@ -7,6 +7,7 @@ public sealed record WithdrawalRequestListItemDto
 {
     public Guid Id { get; init; }
     public decimal Amount { get; init; }
+    public string? ReceiverName { get; init; }
     public string BankAccountNumber { get; init; } = default!;
     public string BankName { get; init; } = default!;
     public WithdrawalRequestStatus Status { get; init; }
@@ -19,6 +20,7 @@ public sealed record WithdrawalRequestDetailDto
 {
     public Guid Id { get; init; }
     public decimal Amount { get; init; }
+    public string? ReceiverName { get; init; }
     public string BankAccountNumber { get; init; } = default!;
     public string BankName { get; init; } = default!;
     public WithdrawalRequestStatus Status { get; init; }
@@ -34,6 +36,7 @@ public sealed record WithdrawalRequestAdminListItemDto
     public Guid Id { get; init; }
     public Guid UserId { get; init; }
     public Guid WalletId { get; init; }
+    public string? ReceiverName { get; init; }
     public decimal Amount { get; init; }
     public string BankAccountNumber { get; init; } = default!;
     public string BankName { get; init; } = default!;
@@ -49,6 +52,7 @@ public sealed record WithdrawalRequestAdminDetailDto
     public Guid UserId { get; init; }
     public Guid WalletId { get; init; }
     public decimal Amount { get; init; }
+    public string? ReceiverName { get; init; }
     public string BankAccountNumber { get; init; } = default!;
     public string BankName { get; init; } = default!;
     public WithdrawalRequestStatus Status { get; init; }

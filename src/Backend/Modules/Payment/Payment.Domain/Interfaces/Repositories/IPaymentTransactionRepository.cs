@@ -67,4 +67,7 @@ public interface IPaymentTransactionRepository : IRepository<PaymentTransaction,
     Task<OrganizerRevenueSummary> GetRevenueSummaryByEventIdsAsync(
         IReadOnlyCollection<Guid> eventIds,
         CancellationToken cancellationToken = default);
+
+    Task<IEnumerable<(PaymentTransaction Transaction, BatchPaymentItem Item)>>
+    GetAllCompletedItemsByEventIdAsync(Guid eventId, CancellationToken ct);
 }

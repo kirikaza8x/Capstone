@@ -80,9 +80,7 @@ public class AdminRefundEndpoints : ICarterModule
                     AdminId: Guid.Empty),  // overridden inside handler via ICurrentUserService
                 ct);
 
-            return result.IsSuccess
-                ? Results.Ok(result.Value)
-                : Results.BadRequest(result.Error);
+            return result.ToOk();
         })
         .WithName("MassRefundBySession")
         .WithSummary("Refund all attendees for a cancelled event session")
@@ -91,6 +89,25 @@ public class AdminRefundEndpoints : ICarterModule
             "Credits each user's wallet directly — no review step. " +
             "Skips already-refunded items silently. " +
             "Processes in batches of 50 with per-batch transaction safety.")
+        .Produces<MassRefundResult>(StatusCodes.Status200OK)
+        .Produces(StatusCodes.Status400BadRequest);
+
+        group.MapPost("events/{eventId:guid}/mass-refund", async (
+            Guid eventId,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var result = await sender.Send(
+                new MassRefundByEventCommand(EventId: eventId),
+                ct);
+
+            return result.ToOk();
+        })
+        .WithName("MassRefundByEvent")
+        .WithSummary("Refund all attendees for a cancelled event")
+        .WithDescription(
+            "Refunds all completed BatchPaymentItems across ALL sessions of the given EventId. " +
+            "Skips already-refunded items silently. Processes in batches of 50.")
         .Produces<MassRefundResult>(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status400BadRequest);
     }

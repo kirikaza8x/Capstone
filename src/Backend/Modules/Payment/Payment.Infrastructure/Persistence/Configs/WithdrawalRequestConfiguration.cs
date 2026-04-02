@@ -29,6 +29,10 @@ public class WithdrawalRequestConfiguration : IEntityTypeConfiguration<Withdrawa
                .HasColumnType("uuid")
                .IsRequired();
 
+        builder.Property(w => w.Name)
+               .HasColumnName("name")
+               .HasMaxLength(200);
+
         builder.Property(w => w.BankAccountNumber)
                .HasColumnName("bank_account_number")
                .HasMaxLength(50)

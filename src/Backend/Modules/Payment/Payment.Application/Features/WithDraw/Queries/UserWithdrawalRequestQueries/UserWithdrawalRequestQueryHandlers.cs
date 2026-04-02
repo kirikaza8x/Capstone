@@ -45,9 +45,9 @@ public class GetMyWithdrawalRequestsQueryHandler
             (result.Items ?? [])
                 .Select(_mapper.Map<WithdrawalRequestListItemDto>)
                 .ToList(),
-            result.TotalCount,
             result.PageNumber,
-            result.PageSize);
+            result.PageSize,
+            result.TotalCount);
 
         return Result.Success(mapped);
     }

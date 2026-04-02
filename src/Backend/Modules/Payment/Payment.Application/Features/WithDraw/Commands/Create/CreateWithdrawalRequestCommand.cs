@@ -6,5 +6,6 @@ public sealed record CreateWithdrawalRequestCommand(
     string BankAccountNumber,
     string BankName,
     decimal Amount,
-    string? Notes
+    string? Notes,
+    string? ReceiverName
 ) : ICommand<Guid>;

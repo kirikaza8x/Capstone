@@ -7,6 +7,8 @@ public record MassRefundBySessionCommand(
     Guid AdminId
 ) : ICommand<MassRefundResult>;
 
+public record MassRefundByEventCommand(Guid EventId) : ICommand<MassRefundResult>;
+
 public record MassRefundResult(
     Guid EventSessionId,
     int TotalFound,

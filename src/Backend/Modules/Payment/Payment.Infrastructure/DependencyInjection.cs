@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Payments.Application.Abstractions;
+using Payments.Application.Features.Refunds.Services;
 using Payments.Domain.UOW;
 using Payments.Infrastructure.Data.UOW;
 using Payments.Infrastructure.Persistence.Contexts;
@@ -57,7 +58,7 @@ namespace Payments.Infrastructure
             });
             services.AddScoped<IPaymentUnitOfWork, PaymentUnitOfWork>();
             services.AddScoped<IVnPayService, VnPayService>();
-
+            services.AddScoped<MassRefundService>();
             // Public Api
             return services;
         }
