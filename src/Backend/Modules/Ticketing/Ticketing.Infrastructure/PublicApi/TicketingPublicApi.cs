@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Shared.Application.Abstractions.Time;
 using StackExchange.Redis;
 using Ticketing.Domain.Entities;
 using Ticketing.Domain.Enums;
@@ -10,6 +11,7 @@ namespace Ticketing.Infrastructure.PublicApi;
 
 internal sealed class TicketingPublicApi(
     TicketingDbContext dbContext,
+    IDateTimeProvider dateTimeProvider,
     IConnectionMultiplexer redis) : ITicketingPublicApi
 {
     public async Task<OrderDetails?> GetOrderAsync(
@@ -170,5 +172,146 @@ internal sealed class TicketingPublicApi(
             .ToListAsync(cancellationToken);
 
         return orderIds;
+    }
+
+    public async Task<TicketingMetricsDto> GetTicketingMetricsAsync(CancellationToken cancellationToken = default)
+    {
+        var now = dateTimeProvider.UtcNow;
+        // get metrics for current 30-day period and previous 30-day period
+        var startOfCurrentPeriod = now.AddDays(-30);
+        var startOfLastPeriod = now.AddDays(-60);
+
+        var totalRevenueTask = dbContext.Orders
+            .Where(o => o.Status == OrderStatus.Paid)
+            .SumAsync(o => o.TotalPrice, cancellationToken);
+
+        var totalTicketsSoldTask = dbContext.OrderTickets
+            .CountAsync(t => t.Status == OrderTicketStatus.Valid || t.Status == OrderTicketStatus.Used, cancellationToken);
+
+        // Get the revenue from the last 30 days.
+        var currentPeriodRevenueTask = dbContext.Orders
+            .Where(o => o.Status == OrderStatus.Paid && o.CreatedAt >= startOfCurrentPeriod)
+            .SumAsync(o => o.TotalPrice, cancellationToken);
+
+        // Revenue from the previous 30-day period
+        var lastPeriodRevenueTask = dbContext.Orders
+            .Where(o => o.Status == OrderStatus.Paid && o.CreatedAt >= startOfLastPeriod && o.CreatedAt < startOfCurrentPeriod)
+            .SumAsync(o => o.TotalPrice, cancellationToken);
+
+        await Task.WhenAll(
+            totalRevenueTask,
+            totalTicketsSoldTask,
+            currentPeriodRevenueTask,
+            lastPeriodRevenueTask);
+
+        decimal currentRev = currentPeriodRevenueTask.Result;
+        decimal lastRev = lastPeriodRevenueTask.Result;
+        double growthRate = 0;
+
+        if (lastRev == 0)
+        {
+            growthRate = currentRev > 0 ? 100.0 : 0.0;
+        }
+        else
+        {
+            growthRate = Math.Round((double)((currentRev - lastRev) / lastRev * 100), 1);
+        }
+
+        return new TicketingMetricsDto(
+            TotalRevenue: totalRevenueTask.Result,
+            RevenueGrowthRate: growthRate,
+            TotalTicketsSold: totalTicketsSoldTask.Result);
+    }
+
+    public async Task<IReadOnlyList<DailySalesTrendDto>> GetSalesTrendAsync(
+            DateTime startDate,
+            DateTime endDate,
+            CancellationToken cancellationToken = default)
+    {
+        // Get data and group by date
+        var rawData = await dbContext.Orders
+            .Where(o => o.Status == OrderStatus.Paid
+                     && o.CreatedAt != null 
+                     && o.CreatedAt >= startDate
+                     && o.CreatedAt <= endDate)
+            .GroupBy(o => o.CreatedAt.Value.Date)
+            .Select(g => new
+            {
+                Date = g.Key,
+                Revenue = g.Sum(o => o.TotalPrice),
+                Transactions = g.Count()
+            })
+            .ToListAsync(cancellationToken);
+
+        var dict = rawData.ToDictionary(x => x.Date);
+        var result = new List<DailySalesTrendDto>();
+
+        for (var date = startDate.Date; date <= endDate.Date; date = date.AddDays(1))
+        {
+            if (dict.TryGetValue(date, out var data))
+            {
+                result.Add(new DailySalesTrendDto(date, data.Revenue, data.Transactions));
+            }
+            else
+            {
+                result.Add(new DailySalesTrendDto(date, 0, 0));
+            }
+        }
+
+        return result;
+    }
+
+    public async Task<IReadOnlyList<TopEventTicketMetricsDto>> GetTopEventsMetricsAsync(
+            int top,
+            DateTime? startDate = null,
+            CancellationToken cancellationToken = default)
+    {
+        var query = dbContext.Orders
+            .Where(o => o.Status == OrderStatus.Paid);
+
+        if (startDate.HasValue)
+        {
+            query = query.Where(o => o.CreatedAt >= startDate.Value);
+        }
+
+        // get top events by revenue
+        var topRevenueEvents = await query
+            .GroupBy(o => o.EventId)
+            .Select(g => new
+            {
+                EventId = g.Key,
+                TotalRevenue = g.Sum(o => o.TotalPrice)
+            })
+            .OrderByDescending(x => x.TotalRevenue)
+            .Take(top)
+            .ToListAsync(cancellationToken);
+
+        if (topRevenueEvents.Count == 0)
+            return new List<TopEventTicketMetricsDto>();
+
+        // get list of event ids in the top list to filter tickets in the next query
+        var topEventIds = topRevenueEvents.Select(e => e.EventId).ToList();
+
+        // BƯỚC 2: Đếm số vé bán ra NHƯNG CHỈ đếm cho các sự kiện nằm trong Top ở trên.
+        var ticketCounts = await dbContext.OrderTickets
+            .Where(t => topEventIds.Contains(t.Order.EventId)
+                     && t.Order.Status == OrderStatus.Paid
+                     && (t.Status == OrderTicketStatus.Valid || t.Status == OrderTicketStatus.Used))
+            .Where(t => !startDate.HasValue || t.Order.CreatedAt >= startDate.Value)
+            .GroupBy(t => t.Order.EventId)
+            .Select(g => new
+            {
+                EventId = g.Key,
+                TicketsSold = g.Count()
+            })
+            .ToDictionaryAsync(x => x.EventId, x => x.TicketsSold, cancellationToken);
+
+        var result = topRevenueEvents.Select(e => new TopEventTicketMetricsDto(
+            e.EventId,
+            e.TotalRevenue,
+            ticketCounts.TryGetValue(e.EventId, out var count) ? count : 0 
+        )).ToList();
+
+        return result;
     }
 }

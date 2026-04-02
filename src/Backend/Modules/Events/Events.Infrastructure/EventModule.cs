@@ -37,6 +37,7 @@ public static class EventModule
 
         services.AddScoped<IEventMemberPublicApi, EventMemberPublicApi>();
         services.AddScoped<IEventTicketingPublicApi, EventTicketingPublicApi>();
+        services.AddScoped<IEventPublicApi, EventPublicApi>();
         services.AddScoped<IEventMemberPermissionCacheInvalidator, EventMemberPermissionCacheInvalidator>();
 
         // Report services
