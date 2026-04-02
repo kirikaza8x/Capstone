@@ -260,4 +260,58 @@ internal sealed class TicketingPublicApi(
 
         return result;
     }
+
+    public async Task<IReadOnlyList<TopEventTicketMetricsDto>> GetTopEventsMetricsAsync(
+            int top,
+            DateTime? startDate = null,
+            CancellationToken cancellationToken = default)
+    {
+        var query = dbContext.Orders
+            .Where(o => o.Status == OrderStatus.Paid);
+
+        if (startDate.HasValue)
+        {
+            query = query.Where(o => o.CreatedAt >= startDate.Value);
+        }
+
+        // get top events by revenue
+        var topRevenueEvents = await query
+            .GroupBy(o => o.EventId)
+            .Select(g => new
+            {
+                EventId = g.Key,
+                TotalRevenue = g.Sum(o => o.TotalPrice)
+            })
+            .OrderByDescending(x => x.TotalRevenue)
+            .Take(top)
+            .ToListAsync(cancellationToken);
+
+        if (topRevenueEvents.Count == 0)
+            return new List<TopEventTicketMetricsDto>();
+
+        // get list of event ids in the top list to filter tickets in the next query
+        var topEventIds = topRevenueEvents.Select(e => e.EventId).ToList();
+
+        // BƯỚC 2: Đếm số vé bán ra NHƯNG CHỈ đếm cho các sự kiện nằm trong Top ở trên.
+        var ticketCounts = await dbContext.OrderTickets
+            .Where(t => topEventIds.Contains(t.Order.EventId)
+                     && t.Order.Status == OrderStatus.Paid
+                     && (t.Status == OrderTicketStatus.Valid || t.Status == OrderTicketStatus.Used))
+            .Where(t => !startDate.HasValue || t.Order.CreatedAt >= startDate.Value)
+            .GroupBy(t => t.Order.EventId)
+            .Select(g => new
+            {
+                EventId = g.Key,
+                TicketsSold = g.Count()
+            })
+            .ToDictionaryAsync(x => x.EventId, x => x.TicketsSold, cancellationToken);
+
+        var result = topRevenueEvents.Select(e => new TopEventTicketMetricsDto(
+            e.EventId,
+            e.TotalRevenue,
+            ticketCounts.TryGetValue(e.EventId, out var count) ? count : 0 
+        )).ToList();
+
+        return result;
+    }
 }
