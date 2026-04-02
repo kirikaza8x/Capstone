@@ -292,7 +292,6 @@ internal sealed class TicketingPublicApi(
         // get list of event ids in the top list to filter tickets in the next query
         var topEventIds = topRevenueEvents.Select(e => e.EventId).ToList();
 
-        // BƯỚC 2: Đếm số vé bán ra NHƯNG CHỈ đếm cho các sự kiện nằm trong Top ở trên.
         var ticketCounts = await dbContext.OrderTickets
             .Where(t => topEventIds.Contains(t.Order.EventId)
                      && t.Order.Status == OrderStatus.Paid

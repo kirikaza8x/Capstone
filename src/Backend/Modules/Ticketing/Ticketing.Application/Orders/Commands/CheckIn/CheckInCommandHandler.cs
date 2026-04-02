@@ -3,6 +3,7 @@ using Shared.Application.Abstractions.Authentication;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Application.Abstractions.Time;
 using Shared.Domain.Abstractions;
+using Ticketing.Application.Abstractions.Notifications;
 using Ticketing.Application.Helpers;
 using Ticketing.Domain.Errors;
 using Ticketing.Domain.Repositories;
@@ -15,7 +16,8 @@ internal sealed class CheckInCommandHandler(
     IEventTicketingPublicApi eventTicketingPublicApi,
     IDateTimeProvider dateTimeProvider,
     ICurrentUserService currentUserService,
-    ITicketingUnitOfWork unitOfWork) : ICommandHandler<CheckInCommand, CheckInResponse>
+    ITicketingUnitOfWork unitOfWork,
+    ICheckInStatsBroadcaster checkInStatsBroadcaster) : ICommandHandler<CheckInCommand, CheckInResponse>
 {
     public async Task<Result<CheckInResponse>> Handle(
         CheckInCommand command,
@@ -27,29 +29,25 @@ internal sealed class CheckInCommandHandler(
                 "CheckIn.Unauthorized",
                 "Current user is not authenticated."));
 
-        //Parse QR
         if (!QrCodeHelper.TryParse(command.QrCode, out var orderTicketId, out var qrEventSessionId))
             return Result.Failure<CheckInResponse>(TicketingErrors.CheckIn.InvalidQrCode);
 
         if (qrEventSessionId != command.EventSessionId)
             return Result.Failure<CheckInResponse>(TicketingErrors.CheckIn.SessionMismatch);
 
-        // Load OrderTicket
-        var order = await orderRepository.GetByOrderTicketIdAsync(
-            orderTicketId,
-            cancellationToken);
-
+        var order = await orderRepository.GetByOrderTicketIdAsync(orderTicketId, cancellationToken);
         if (order is null)
             return Result.Failure<CheckInResponse>(TicketingErrors.CheckIn.TicketNotFound);
 
         if (order.EventId != command.EventId)
-            return Result.Failure<CheckInResponse>(Error.Forbidden("CheckIn.WrongEvent", "This ticket does not belong to the current event."));
+            return Result.Failure<CheckInResponse>(Error.Forbidden(
+                "CheckIn.WrongEvent",
+                "This ticket does not belong to the current event."));
 
         var ticket = order.Tickets.FirstOrDefault(t => t.Id == orderTicketId);
         if (ticket is null)
             return Result.Failure<CheckInResponse>(TicketingErrors.CheckIn.TicketNotFound);
 
-        // Check-in
         var utcNow = dateTimeProvider.UtcNow;
         var checkInResult = order.CheckIn(orderTicketId, staffUserId, utcNow);
         if (checkInResult.IsFailure)
@@ -57,7 +55,11 @@ internal sealed class CheckInCommandHandler(
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // Get check-in info for response
+        await checkInStatsBroadcaster.BroadcastAsync(
+            command.EventId,
+            command.EventSessionId,
+            cancellationToken);
+
         var checkInInfo = await eventTicketingPublicApi.GetTicketCheckInInfoAsync(
             ticket.TicketTypeId,
             ticket.EventSessionId,

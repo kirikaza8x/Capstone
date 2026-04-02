@@ -161,7 +161,10 @@ public sealed class Order : AggregateRoot<Guid>
         if (ticket is null)
             return Result.Failure(TicketingErrors.CheckIn.TicketNotFound);
 
-        return ticket.CheckIn(staffUserId, utcNow);
+        var checkInResult = ticket.CheckIn(staffUserId, utcNow);
+        if (checkInResult.IsFailure)
+            return checkInResult;
+        return Result.Success();
     }
 
     public Result RemoveVoucher(DateTime? utcNow = null)
