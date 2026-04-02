@@ -6,14 +6,14 @@ using Shared.Domain.Abstractions;
 
 namespace Payments.Application.Features.WithdrawalRequests.Handlers;
 
-public class CompleteWithdrawalRequestCommandHandler
-    : ICommandHandler<CompleteWithdrawalRequestCommand>
+public class FailWithdrawalRequestCommandHandler
+    : ICommandHandler<FailWithdrawalRequestCommand>
 {
     private readonly IWithdrawalRequestRepository _withdrawalRequestRepository;
     private readonly IWalletRepository _walletRepository;
     private readonly IPaymentUnitOfWork _unitOfWork;
 
-    public CompleteWithdrawalRequestCommandHandler(
+    public FailWithdrawalRequestCommandHandler(
         IWithdrawalRequestRepository withdrawalRequestRepository,
         IWalletRepository walletRepository,
         IPaymentUnitOfWork unitOfWork)
@@ -24,7 +24,7 @@ public class CompleteWithdrawalRequestCommandHandler
     }
 
     public async Task<Result> Handle(
-        CompleteWithdrawalRequestCommand command,
+        FailWithdrawalRequestCommand command,
         CancellationToken cancellationToken)
     {
         var request = await _withdrawalRequestRepository
@@ -34,7 +34,6 @@ public class CompleteWithdrawalRequestCommandHandler
             return Result.Failure(
                 Error.NotFound("WithdrawalRequest.NotFound", "Withdrawal request not found."));
 
-        // Mark the linked wallet transaction as completed
         var wallet = await _walletRepository
             .GetByUserIdAsync(request.UserId, cancellationToken);
 
@@ -42,24 +41,33 @@ public class CompleteWithdrawalRequestCommandHandler
             return Result.Failure(
                 Error.NotFound("Wallet.NotFound", "Wallet not found."));
 
-        var walletTxn = wallet.Transactions
-            .FirstOrDefault(t => t.Id == request.WalletTransactionId);
-
-        if (walletTxn == null)
-            return Result.Failure(
-                Error.NotFound(
-                    "WalletTransaction.NotFound",
-                    "Linked wallet transaction not found."));
-
         try
         {
-            walletTxn.MarkCompleted();
-            request.Complete(command.AdminNote);
+            // Mark the original debit transaction as failed
+            var originalTxn = wallet.Transactions
+                .FirstOrDefault(t => t.Id == request.WalletTransactionId);
+
+            if (originalTxn == null)
+                return Result.Failure(
+                    Error.NotFound(
+                        "WalletTransaction.NotFound",
+                        "Linked wallet transaction not found."));
+
+            originalTxn.MarkFailed($"Withdrawal failed — {command.AdminNote}");
+
+            // Refund the held amount back to the wallet
+            var refundTxn = wallet.Refund(
+                request.Amount,
+                note: $"Refund — failed withdrawal request {request.Id}");
+
+            refundTxn.MarkCompleted();
+
+            request.Fail(command.AdminNote);
         }
         catch (InvalidOperationException ex)
         {
             return Result.Failure(
-                Error.Failure("WithdrawalRequest.Complete.Invalid", ex.Message));
+                Error.Failure("WithdrawalRequest.Fail.Invalid", ex.Message));
         }
 
         _walletRepository.Update(wallet);

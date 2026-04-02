@@ -13,6 +13,8 @@ public class WithdrawalRequest : AggregateRoot<Guid>
     public Guid UserId { get; private set; }
     public Guid WalletId { get; private set; }
 
+    public string? Name { get; private set; }
+
     // ── Bank destination ──────────────────────────────────────────────────────
     public string BankAccountNumber { get; private set; } = default!;
     public string BankName { get; private set; } = default!;
@@ -36,10 +38,10 @@ public class WithdrawalRequest : AggregateRoot<Guid>
     private WithdrawalRequest() { }
 
     // ── Factory ───────────────────────────────────────────────────────────────
-
     public static WithdrawalRequest Create(
         Guid userId,
         Guid walletId,
+        string? name,
         string bankAccountNumber,
         string bankName,
         decimal amount,
@@ -59,6 +61,7 @@ public class WithdrawalRequest : AggregateRoot<Guid>
             Id = Guid.NewGuid(),
             UserId = userId,
             WalletId = walletId,
+            Name = name?.Trim(),
             BankAccountNumber = bankAccountNumber.Trim(),
             BankName = bankName.Trim(),
             Amount = amount,
@@ -69,7 +72,6 @@ public class WithdrawalRequest : AggregateRoot<Guid>
     }
 
     // ── State transitions ─────────────────────────────────────────────────────
-
     /// <summary>
     /// Admin approves the request. The caller is responsible for calling
     /// <see cref="Wallet.Debit"/> and passing the resulting transaction ID here
@@ -126,8 +128,23 @@ public class WithdrawalRequest : AggregateRoot<Guid>
         ProcessedAt = DateTime.UtcNow;
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
+    /// <summary>
+/// Admin marks the request as failed after the bank transfer could not be completed.
+/// The caller is responsible for refunding the wallet balance.
+/// </summary>
+public void Fail(string adminNote)
+{
+    EnsureStatus(WithdrawalRequestStatus.Approved, nameof(Fail));
 
+    if (string.IsNullOrWhiteSpace(adminNote))
+        throw new ArgumentException("A failure reason is required.", nameof(adminNote));
+
+    AdminNote = adminNote.Trim();
+    Status = WithdrawalRequestStatus.Failed;
+    ProcessedAt = DateTime.UtcNow;
+}
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
     private void EnsureStatus(WithdrawalRequestStatus expected, string operation)
     {
         if (Status != expected)

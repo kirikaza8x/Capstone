@@ -13,7 +13,7 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
     public Guid UserId { get; private set; }
     public Guid? WalletId { get; private set; }
     public Guid? OrderId { get; private set; }
-    public Guid? EventId { get; private set; } // 👈 NEW
+    public Guid? EventId { get; private set; } 
     public PaymentType Type { get; private set; }
 
     // --------------------

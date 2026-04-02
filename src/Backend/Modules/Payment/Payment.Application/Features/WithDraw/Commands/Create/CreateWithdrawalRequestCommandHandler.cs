@@ -22,10 +22,10 @@ public class CreateWithdrawalRequestCommandHandler
         ICurrentUserService currentUserService,
         IPaymentUnitOfWork unitOfWork)
     {
-        _walletRepository             = walletRepository;
-        _withdrawalRequestRepository  = withdrawalRequestRepository;
-        _currentUserService           = currentUserService;
-        _unitOfWork                   = unitOfWork;
+        _walletRepository = walletRepository;
+        _withdrawalRequestRepository = withdrawalRequestRepository;
+        _currentUserService = currentUserService;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<Result<Guid>> Handle(
@@ -59,14 +59,14 @@ public class CreateWithdrawalRequestCommandHandler
                     "WithdrawalRequest.InsufficientFunds",
                     $"Insufficient balance. Available: {wallet.Balance:N0}, Requested: {command.Amount:N0}."));
 
-        // 3. Create the request
         var request = WithdrawalRequest.Create(
-            userId:            userId,
-            walletId:          wallet.Id,
+            userId: userId,
+            walletId: wallet.Id,
+            name: command.ReceiverName,
             bankAccountNumber: command.BankAccountNumber,
-            bankName:          command.BankName,
-            amount:            command.Amount,
-            notes:             command.Notes);
+            bankName: command.BankName,
+            amount: command.Amount,
+            notes: command.Notes);
 
         _withdrawalRequestRepository.Add(request);
         await _unitOfWork.SaveChangesAsync(cancellationToken);

@@ -39,9 +39,9 @@ public class GetAllWithdrawalRequestsQueryHandler
             (result.Items ?? [])
                 .Select(_mapper.Map<WithdrawalRequestAdminListItemDto>)
                 .ToList(),
-            result.TotalCount,
             result.PageNumber,
-            result.PageSize);
+            result.PageSize,
+            result.TotalCount);
 
         return Result.Success(mapped);
     }
