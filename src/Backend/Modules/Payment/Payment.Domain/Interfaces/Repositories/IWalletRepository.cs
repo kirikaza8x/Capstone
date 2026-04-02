@@ -17,4 +17,8 @@ public interface IWalletRepository : IRepository<Wallet, Guid>
     Task<IEnumerable<Wallet>> GetByUserIdsAsync(
         IEnumerable<Guid> userIds,
         CancellationToken cancellationToken = default);
+    
+    Task<Wallet?> GetByUserIdIncludeAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default);
 }
