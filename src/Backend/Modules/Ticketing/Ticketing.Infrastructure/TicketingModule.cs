@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
@@ -10,8 +11,10 @@ using Shared.Infrastructure.Configs.Database;
 using Shared.Infrastructure.Extensions;
 using Shared.Infrastructure.Service.Report;
 using Ticketing.Application.Abstractions.Locks;
+using Ticketing.Application.Abstractions.Notifications;
 using Ticketing.Application.Orders.Queries.ExportOrdersSheet;
 using Ticketing.Application.Orders.Queries.ExportVoucherSheet;
+using Ticketing.Application.Services;
 using Ticketing.Domain.Repositories;
 using Ticketing.Domain.Uow;
 using Ticketing.Infrastructure.Data;
@@ -21,6 +24,7 @@ using Ticketing.Infrastructure.Jobs;
 using Ticketing.Infrastructure.Locks;
 using Ticketing.Infrastructure.PublicApi;
 using Ticketing.Infrastructure.Services.Reports;
+using Ticketing.Infrastructure.SignalR;
 using Ticketing.PublicApi;
 using Ticketing.PublicApi.PublicApi;
 
@@ -37,6 +41,9 @@ public static class TicketingModule
         services.AddScoped<ITicketingSeatStatusPublicApi, TicketingSeatStatusPublicApi>();
         services.AddScoped<ITicketingPublicApi, TicketingPublicApi>();
 
+        services.AddSignalR();
+        services.AddTransient<ICheckInStatsNotifier, SignalRCheckInStatsNotifier>();
+        services.AddScoped<ICheckInStatsBroadcaster, CheckInStatsBroadcaster>();
         // Report services
         services.AddScoped<ISheetMappings<OrderExportDto>, OrderSheetMappings>();
         services.AddScoped<IFileImportExportService<OrderExportDto>>(sp =>
@@ -76,13 +83,16 @@ public static class TicketingModule
         });
 
         services.AddTicketingQuartzJobs();
-
         return services;
     }
 
     public static IApplicationBuilder UseTicketingModule(this IApplicationBuilder app)
     {
         app.UseMigration<TicketingDbContext>();
+
+        // Map SignalR hubs
+        var endpointRouteBuilder = (IEndpointRouteBuilder)app;
+        endpointRouteBuilder.MapHub<TicketHub>("/hubs/ticket-hub");
         return app;
     }
 }

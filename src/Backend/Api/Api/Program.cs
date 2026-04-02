@@ -81,17 +81,16 @@ public class Program
             .AddPaymentModule(Configuration)
         ;
 
-        // builder.Services.AddCors(options =>
-        // {
-        //     options.AddDefaultPolicy(policy =>
-        //     {
-        //         policy.AllowAnyOrigin()
-        //               .AllowAnyMethod()
-        //               .AllowAnyHeader()
-        //             //   .AllowCredentials()
-        //               ;
-        //     });
-        // });
+        builder.Services.AddCors(options =>
+        {
+            options.AddDefaultPolicy(policy =>
+            {
+                policy.SetIsOriginAllowed(origin => true)
+                      .AllowAnyMethod()
+                      .AllowAnyHeader()
+                      .AllowCredentials();
+            });
+        });
 
         builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
         builder.Services.AddProblemDetails();
