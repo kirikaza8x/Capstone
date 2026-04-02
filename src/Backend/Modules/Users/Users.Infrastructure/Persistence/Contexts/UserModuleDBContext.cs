@@ -9,7 +9,9 @@ public class UserModuleDbContext : DbContext
     public DbSet<User> Users { get; set; } = default!;
     public DbSet<Role> Roles { get; set; } = default!;
     public DbSet<RefreshToken> RefreshTokens { get; set; } = default!;
+    public DbSet<Policy> Policies { get; set; } = default!;
     public DbSet<OutboxMessage> OutboxMessages { get; set; } = null!;
+
     public UserModuleDbContext(DbContextOptions<UserModuleDbContext> options) : base(options) { }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

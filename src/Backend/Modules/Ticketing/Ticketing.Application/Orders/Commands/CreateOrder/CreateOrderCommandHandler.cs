@@ -24,7 +24,7 @@ internal sealed class CreateOrderCommandHandler(
     ILogger<CreateOrderCommandHandler> logger,
     ITicketingUnitOfWork unitOfWork) : ICommandHandler<CreateOrderCommand, Guid>
 {
-    private static readonly TimeSpan LockTtl = TimeSpan.FromMinutes(10);
+    private static readonly TimeSpan LockTtl = TimeSpan.FromMinutes(15);
 
     public async Task<Result<Guid>> Handle(
         CreateOrderCommand command,
@@ -130,7 +130,7 @@ internal sealed class CreateOrderCommandHandler(
                 catch (Exception ex)
                 {
                     logger.LogError(ex,
-                        "CRITICAL: Failed to release locks for User {UserId} during failed Order creation for Event {EventId}.",
+                        "Failed to release locks for User {UserId} during failed Order creation for Event {EventId}.",
                         userId, command.EventId);
                 }
             }
