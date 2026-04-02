@@ -1,5 +1,4 @@
 using AI.Application.Features.Tracking.Commands;
-using AI.Application.Services;
 using AI.Domain.Entities;
 using AI.Domain.Interfaces.UOW;
 using AI.Domain.Repositories;
@@ -32,10 +31,8 @@ namespace AI.Application.Features.Tracking.Handlers
             command.TargetType,
             command.Metadata
         );
-
             _logRepository.Add(log);
             await _uow.SaveChangesAsync();
-
             return Result.Success(true);
         }
     }

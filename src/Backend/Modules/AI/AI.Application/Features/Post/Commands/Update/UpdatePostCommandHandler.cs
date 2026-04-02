@@ -68,8 +68,8 @@ public class UpdatePostCommandHandler
             slug: newSlug,
             promptUsed: command.PromptUsed,
             aiModel: command.AiModel,
-            aiTokensUsed: command.AiTokensUsed,
-            aiCost: command.AiCost,
+            additionalTokensUsed: command.AiTokensUsed,
+            additionalAiCost: command.AiCost,
             trackingToken: command.TrackingToken
         );
 

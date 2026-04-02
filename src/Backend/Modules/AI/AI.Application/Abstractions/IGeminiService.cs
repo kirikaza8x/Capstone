@@ -86,5 +86,19 @@ public interface IGeminiService
         CancellationToken cancellationToken = default
     );
 
+    Task<GeminiStructuredResult<TResponse>> GenerateStructuredV2Async<TResponse>(
+        string userPrompt,
+        string? systemPromptOverride = null,
+        CancellationToken cancellationToken = default)
+        where TResponse : class;
+
     string GetModelInfo();
 }
+
+
+public record GeminiStructuredResult<T>(
+    T Data,
+    int PromptTokens,
+    int CandidateTokens,
+    int TotalTokens
+);

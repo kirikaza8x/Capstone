@@ -5,7 +5,7 @@ namespace Shared.IntegrationEvents.AI;
 public sealed record TrackUserActivityIntegrationEvent(
     Guid Id,                         // Required for base class
     DateTime OccurredOnUtc,          // Required for base class
-    Guid UserId,
+    Guid UserId,                     // UserId
     string ActionType,
     string TargetId,
     string TargetType,

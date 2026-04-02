@@ -12,3 +12,14 @@ public record CreatePostDraftCommand(
     string? AiModel = null,
     int? AiTokensUsed = null
 ) : ICommand<Guid>;
+
+public record CreatePostDraftCommandV2(
+    Guid EventId,
+    Guid OrganizerId,
+    bool GenerateWithAi,
+    string? UserPromptRequirement = null,
+    string? Title = null,
+    string? Body = null,
+    string? Summary = null,
+    string? TrackingToken = null
+) : ICommand<Guid>;
