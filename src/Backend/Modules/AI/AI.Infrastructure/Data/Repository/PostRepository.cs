@@ -16,14 +16,8 @@ public class PostRepository
     {
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Organizer Queries
-    // ─────────────────────────────────────────────────────────────
-
     public async Task<IReadOnlyList<PostMarketing>> GetByEventAndOrganizerAsync(
-        Guid eventId,
-        Guid organizerId,
-        CancellationToken ct = default)
+        Guid eventId, Guid organizerId, CancellationToken ct = default)
     {
         return await Query()
             .AsNoTracking()
@@ -33,30 +27,15 @@ public class PostRepository
     }
 
     public async Task<IReadOnlyList<PostMarketing>> GetByOrganizerAsync(
-        Guid organizerId,
-        PostStatus? status = null,
-        CancellationToken ct = default)
+        Guid organizerId, PostStatus? status = null, CancellationToken ct = default)
     {
-        var query = Query()
-            .AsNoTracking()
-            .Where(p => p.OrganizerId == organizerId);
-
+        var query = Query().AsNoTracking().Where(p => p.OrganizerId == organizerId);
         if (status.HasValue)
-        {
             query = query.Where(p => p.Status == status.Value);
-        }
-
-        return await query
-            .OrderByDescending(p => p.CreatedAt)
-            .ToListAsync(ct);
+        return await query.OrderByDescending(p => p.CreatedAt).ToListAsync(ct);
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Admin / Moderation
-    // ─────────────────────────────────────────────────────────────
-
-    public async Task<IReadOnlyList<PostMarketing>> GetPendingQueueAsync(
-        CancellationToken ct = default)
+    public async Task<IReadOnlyList<PostMarketing>> GetPendingQueueAsync(CancellationToken ct = default)
     {
         return await Query()
             .AsNoTracking()
@@ -65,13 +44,8 @@ public class PostRepository
             .ToListAsync(ct);
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Public Queries
-    // ─────────────────────────────────────────────────────────────
-
     public async Task<IReadOnlyList<PostMarketing>> GetPublishedByEventAsync(
-        Guid eventId,
-        CancellationToken ct = default)
+        Guid eventId, CancellationToken ct = default)
     {
         return await Query()
             .AsNoTracking()
@@ -81,8 +55,7 @@ public class PostRepository
     }
 
     public async Task<IReadOnlyList<PostMarketing>> GetGlobalFeedAsync(
-        int limit,
-        CancellationToken ct = default)
+        int limit, CancellationToken ct = default)
     {
         return await Query()
             .AsNoTracking()
@@ -92,65 +65,56 @@ public class PostRepository
             .ToListAsync(ct);
     }
 
-    public async Task<PostMarketing?> GetBySlugAsync(
-        string slug,
-        CancellationToken ct = default)
+    public async Task<PostMarketing?> GetBySlugAsync(string slug, CancellationToken ct = default)
     {
-        if (string.IsNullOrWhiteSpace(slug))
-            return null;
-
-        slug = slug.Trim().ToLowerInvariant();
-
+        if (string.IsNullOrWhiteSpace(slug)) return null;
         return await Query()
             .AsNoTracking()
-            .FirstOrDefaultAsync(p => p.Slug == slug, ct);
+            .FirstOrDefaultAsync(p => p.Slug == slug.Trim().ToLowerInvariant(), ct);
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Tracking
-    // ─────────────────────────────────────────────────────────────
-
-    public async Task<PostMarketing?> GetByTrackingTokenAsync(
-        string trackingToken,
-        CancellationToken ct = default)
+    public async Task<PostMarketing?> GetByTrackingTokenAsync(string trackingToken, CancellationToken ct = default)
     {
-        if (string.IsNullOrWhiteSpace(trackingToken))
-            return null;
-
-        trackingToken = trackingToken.Trim().ToLowerInvariant();
-
+        if (string.IsNullOrWhiteSpace(trackingToken)) return null;
         return await Query()
             .AsNoTracking()
-            .FirstOrDefaultAsync(p => p.TrackingToken == trackingToken, ct);
+            .FirstOrDefaultAsync(p => p.TrackingToken == trackingToken.Trim().ToLowerInvariant(), ct);
     }
 
-    public async Task<bool> TrackingTokenExistsAsync(
-        string trackingToken,
-        CancellationToken ct = default)
+    public async Task<bool> TrackingTokenExistsAsync(string trackingToken, CancellationToken ct = default)
     {
-        if (string.IsNullOrWhiteSpace(trackingToken))
-            return false;
-
-        trackingToken = trackingToken.Trim().ToLowerInvariant();
-
+        if (string.IsNullOrWhiteSpace(trackingToken)) return false;
         return await Query()
             .AsNoTracking()
-            .AnyAsync(p => p.TrackingToken == trackingToken, ct);
+            .AnyAsync(p => p.TrackingToken == trackingToken.Trim().ToLowerInvariant(), ct);
     }
 
-    public async Task<bool> SlugExistsAsync(
-        string slug,
-        CancellationToken ct = default)
+    public async Task<bool> SlugExistsAsync(string slug, CancellationToken ct = default)
     {
-        if (string.IsNullOrWhiteSpace(slug))
-            return false;
-
-        slug = slug.Trim().ToLowerInvariant();
-
+        if (string.IsNullOrWhiteSpace(slug)) return false;
         return await Query()
             .AsNoTracking()
-            .AnyAsync(p => p.Slug == slug, ct);
+            .AnyAsync(p => p.Slug == slug.Trim().ToLowerInvariant(), ct);
     }
+
+    // public async Task<IReadOnlyList<PostMarketing>> GetDispatchedPostsForPlatformAsync(
+    //     string platform, CancellationToken ct = default)
+    // {
+    //     var normalised = platform.Trim().ToLowerInvariant();
+
+    //     // Include via the public Distributions property (not the field name string)
+    //     // so EF can resolve the navigation correctly.
+    //     // No AsNoTracking — the cron only reads, but EF needs to fix up the
+    //     // collection into the private field for GetConfirmedDistributions() to work.
+    //     return await Query()
+    //         .Include(p => p.Distributions)
+    //         .Where(p =>
+    //             p.Status == PostStatus.Published &&
+    //             p.Distributions.Any(d =>
+    //                 d.Platform == normalised &&
+    //                 d.ExternalPostId != null))
+    //         .ToListAsync(ct);
+    // }
 
     public async Task<IReadOnlyList<PostMarketing>> GetPublishedNotDistributedToAsync(
         ExternalPlatform platform,

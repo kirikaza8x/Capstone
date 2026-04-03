@@ -50,7 +50,6 @@ public sealed class PostMarketing : AggregateRoot<Guid>
 
     public DateTime? PublishedAt { get; private set; }
     public DateTime? SubmittedAt { get; private set; }
-
     public string TrackingToken { get; private set; } = string.Empty;
 
     // =========================================================
@@ -180,8 +179,11 @@ public sealed class PostMarketing : AggregateRoot<Guid>
             Body = body.Trim();
         }
 
-        if (summary is not null)
-            Summary = summary.Trim();
+        if (summary is not null) Summary = summary.Trim();
+        if (slug is not null) Slug = slug.Trim().ToLowerInvariant();
+        if (imageUrl is not null) ImageUrl = imageUrl.Trim();
+        if (promptUsed is not null) PromptUsed = promptUsed.Trim();
+        if (aiModel is not null) AiModel = aiModel.Trim();
 
         if (slug is not null)
             Slug = slug.Trim().ToLowerInvariant();
