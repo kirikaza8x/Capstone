@@ -14,6 +14,10 @@ namespace AI.Infrastructure.Data
         public DbSet<GlobalCategoryStat> GlobalCategoryStats { get; set; }
         public DbSet<InteractionWeight> InteractionWeights { get; set; }
 
+        public DbSet<AiPackage> AiPackages { get; set; }
+        public DbSet<OrganizerAiQuota> OrganizerAiQuotas { get; set; }
+        public DbSet<AiTokenTransaction> AiTokenTransactions { get; set; }
+
         public DbSet<OutboxMessage> OutboxMessages { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
