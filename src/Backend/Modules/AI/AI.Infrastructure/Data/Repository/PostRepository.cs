@@ -151,4 +151,31 @@ public class PostRepository
             .AsNoTracking()
             .AnyAsync(p => p.Slug == slug, ct);
     }
+
+    public async Task<IReadOnlyList<PostMarketing>> GetPublishedNotDistributedToAsync(
+        ExternalPlatform platform,
+        int limit = 50,
+        CancellationToken ct = default)
+    {
+        return await Query()
+            .AsNoTracking()
+            .Where(p => p.Status == PostStatus.Published)
+            .Where(p => !p.ExternalDistributions.Any(d =>
+                d.Platform == platform && d.Status == DistributionStatus.Sent))
+            .OrderByDescending(p => p.PublishedAt)
+            .Take(limit)
+            .ToListAsync(ct);
+    }
+    public async Task<ExternalDistribution?> GetDistributionByPostAndPlatformAsync(
+        Guid postId,
+        ExternalPlatform platform,
+        CancellationToken ct = default)
+    {
+        return await Context.Set<ExternalDistribution>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(d =>
+                d.PostMarketingId == postId &&
+                d.Platform == platform,
+                ct);
+    }
 }
