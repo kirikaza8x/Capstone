@@ -9,5 +9,6 @@ public class AiPackageProfile : Profile
     public AiPackageProfile()
     {
         CreateMap<AiPackage, AiPackageDto>();
+        CreateMap<OrganizerAiQuota, MyAiQuotaDto>();
     }
 }

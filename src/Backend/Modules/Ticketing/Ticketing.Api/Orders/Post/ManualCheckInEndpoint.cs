@@ -19,7 +19,7 @@ public class ManualCheckInEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPost("events/{eventId:guid}/check-in/manual", async (
+        app.MapPost("api/ticketing/events/{eventId:guid}/check-in/manual", async (
              Guid eventId,
              [FromBody] ManualCheckInRequest request,
              ISender sender,
