@@ -3,10 +3,11 @@ using Shared.Domain.Abstractions;
 
 namespace Marketing.Domain.Errors;
 
-
-
 public static class MarketingErrors
 {
+    // =========================================================
+    // Post Errors
+    // =========================================================
     public static class Post
     {
         public static Error TrackingTokenAlreadyExists(string token) => Error.Validation(
@@ -108,10 +109,41 @@ public static class MarketingErrors
         public static Error ForceRemoveFailed(string reason) => Error.Failure(
             "Post.ForceRemoveFailed",
             $"Failed to remove post: {reason}");
+
+        // ── NEW: For external distribution ──
+        public static Error CannotDistributeInStatus(PostStatus status) => Error.Validation(
+            "Post.CannotDistributeInStatus",
+            $"Cannot distribute post to external platform while in status '{status}'. Only Published posts can be distributed.");
+
+        public static Error DistributionAlreadyQueued(ExternalPlatform platform) => Error.Validation(
+            "Post.DistributionAlreadyQueued",
+            $"Post is already queued for distribution to {platform}.");
+    }
+
+    // =========================================================
+    // Distribution Errors (NEW - sibling of Post, not nested)
+    // =========================================================
+    public static class Distribution
+    {
+        public static Error PlatformRequired => Error.Validation(
+            "Distribution.PlatformRequired",
+            "Platform must be specified and cannot be Unknown.");
+
+        public static Error UrlRequired => Error.Validation(
+            "Distribution.UrlRequired",
+            "External URL is required when confirming distribution.");
+
+        public static Error NotFound(ExternalPlatform platform) => Error.NotFound(
+            "Distribution.NotFound",
+            $"No pending distribution record found for platform '{platform}'.");
+
+        public static Error AlreadyQueued(ExternalPlatform platform) => Error.Conflict(
+            "Distribution.AlreadyQueued",
+            $"A distribution to {platform} is already pending. Wait for completion or remove it first.");
     }
 }
 
-// ── Event Integration Errors (when calling Events.PublicApi) ──
+// ── Event Integration Errors (namespace-level, unchanged) ──
 public static class Event
 {
     public static Error NotFound(Guid eventId) => Error.NotFound(

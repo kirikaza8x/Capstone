@@ -47,4 +47,23 @@ public interface IPostRepository : IRepository<PostMarketing, Guid>
     Task<bool> SlugExistsAsync(
         string slug,
         CancellationToken ct = default);
+
+    Task<IReadOnlyList<PostMarketing>> GetPublishedNotDistributedToAsync(
+        ExternalPlatform platform,
+        int limit = 50,
+        CancellationToken ct = default);
+
+    /// <summary>
+    /// Gets a specific distribution record for a post + platform.
+    /// Returns null if not found.
+    /// Used for checking status or updating distribution details.
+    /// </summary>
+    Task<ExternalDistribution?> GetDistributionByPostAndPlatformAsync(
+        Guid postId,
+        ExternalPlatform platform,
+        CancellationToken ct = default);
+
+    Task<PostMarketing?> GetByIdWithDistributionsAsync(
+    Guid id,
+    CancellationToken ct = default);
 }

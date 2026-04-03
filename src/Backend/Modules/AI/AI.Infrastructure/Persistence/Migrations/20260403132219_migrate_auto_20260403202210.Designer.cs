@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using AI.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AI.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AIModuleDbContext))]
-    partial class AIModuleDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260403132219_migrate_auto_20260403202210")]
+    partial class migrate_auto_20260403202210
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -751,92 +754,6 @@ namespace AI.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_post_organizer_status_created");
 
                     b.ToTable("post", "ai");
-                });
-
-            modelBuilder.Entity("Marketing.Domain.Entities.SocialPostAnalytics", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<long>("Clicks")
-                        .HasColumnType("bigint")
-                        .HasColumnName("clicks");
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<string>("CreatedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("created_by");
-
-                    b.Property<string>("ExternalPostId")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("external_post_id");
-
-                    b.Property<DateTime>("FetchedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("fetched_at");
-
-                    b.Property<DateOnly>("FetchedDate")
-                        .HasColumnType("date")
-                        .HasColumnName("fetched_date");
-
-                    b.Property<long>("Impressions")
-                        .HasColumnType("bigint")
-                        .HasColumnName("impressions");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_active");
-
-                    b.Property<DateTime?>("ModifiedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("modified_at");
-
-                    b.Property<string>("ModifiedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("modified_by");
-
-                    b.Property<string>("Platform")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("platform");
-
-                    b.Property<Guid>("PostMarketingId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("post_marketing_id");
-
-                    b.Property<long>("Reach")
-                        .HasColumnType("bigint")
-                        .HasColumnName("reach");
-
-                    b.Property<long>("Reactions")
-                        .HasColumnType("bigint")
-                        .HasColumnName("reactions");
-
-                    b.Property<long>("Shares")
-                        .HasColumnType("bigint")
-                        .HasColumnName("shares");
-
-                    b.Property<long>("VideoViews")
-                        .HasColumnType("bigint")
-                        .HasColumnName("video_views");
-
-                    b.HasKey("Id")
-                        .HasName("pk_social_post_analytics");
-
-                    b.HasIndex("PostMarketingId", "FetchedDate")
-                        .IsUnique()
-                        .HasDatabaseName("ix_social_analytics_post_day");
-
-                    b.ToTable("social_post_analytics", "ai");
                 });
 
             modelBuilder.Entity("Shared.Infrastructure.Outbox.OutboxMessage", b =>
