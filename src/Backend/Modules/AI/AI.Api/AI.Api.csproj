@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\Shared\Shared.Api\Shared.Api.csproj" />
+    <ProjectReference Include="..\..\Users\Users.PublicApi\Users.PublicApi.csproj" />
     <ProjectReference Include="..\AI.Infrastructure\AI.Infrastructure.csproj" />
   </ItemGroup>
 
