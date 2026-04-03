@@ -1,4 +1,3 @@
-
 using Microsoft.Extensions.Logging;
 using Payment.Domain.Enums;
 using Payments.Domain.Entities;
@@ -114,22 +113,20 @@ public class MassRefundService(
 
             if (txnsToUpdate.Count == 0) continue;
 
-            await unitOfWork.BeginTransactionAsync(ct);
             try
             {
-                await unitOfWork.SaveChangesAsync(ct);
-                await transactionRepository.BulkUpdateAsync(txnsToUpdate, ct);
-                await walletRepository.BulkUpdateAsync(walletsToUpdate, ct);
-                await unitOfWork.CommitTransactionAsync(ct);
+                await unitOfWork.ExecuteInTransactionAsync(async () =>
+                {
+                    transactionRepository.AddRange(txnsToUpdate);
+                    walletRepository.UpdateRange(walletsToUpdate);
 
-                logger.LogInformation(
-                    "MassRefund batch committed: ScopeId={ScopeId}, S={S}, Sk={Sk}, F={F}",
-                    scopeId, succeeded, skipped, failed);
+                    logger.LogInformation(
+                        "MassRefund batch committed: ScopeId={ScopeId}, S={S}, Sk={Sk}, F={F}",
+                        scopeId, succeeded, skipped, failed);
+                });
             }
             catch (Exception ex)
             {
-                await unitOfWork.RollbackTransactionAsync(ct);
-
                 logger.LogError(ex,
                     "MassRefund batch rolled back: ScopeId={ScopeId}", scopeId);
 
