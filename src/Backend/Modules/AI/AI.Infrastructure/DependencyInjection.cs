@@ -24,6 +24,8 @@ using Shared.Infrastructure.Services;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using Shared.Infrastructure.Configs.MessageBroker;
+using AI.Domain.Repositories;
+using AI.Infrastructure.Data.Repository;
 
 namespace AI.Infrastructure;
 
@@ -112,7 +114,7 @@ public static class DependencyInjection
 
         services.AddScoped<IEventVectorRepository, EventVectorRepository>();
         services.AddScoped<IUserBehaviorVectorRepository, UserBehaviorVectorRepository>();
-
+        services.AddScoped<IAiPackageRepository, AiPackageRepository>();
         services.AddHostedService<QdrantStartupService>();
         services.AddHostedService<BackgroundJobs.EventReIndexJob>();
         services.AddHostedService<BackgroundJobs.GlobalCategoryStatUpdateJob>();
