@@ -6,6 +6,10 @@ using Shared.Infrastructure.Extensions;
 
 namespace Marketing.Infrastructure.Persistence.Configs;
 
+/// <summary>
+/// EF Core configuration for PostMarketing aggregate root.
+/// Configures 1-to-many relationship with ExternalDistribution child entities.
+/// </summary>
 public class PostConfiguration : IEntityTypeConfiguration<PostMarketing>
 {
     public void Configure(EntityTypeBuilder<PostMarketing> builder)
@@ -46,7 +50,7 @@ public class PostConfiguration : IEntityTypeConfiguration<PostMarketing>
         builder.Property(p => p.Body)
                .HasColumnName("body")
                .IsRequired()
-               .HasColumnType("text"); // better for large AI content
+               .HasColumnType("text");
 
         builder.Property(p => p.Summary)
                .HasColumnName("summary")
@@ -60,11 +64,6 @@ public class PostConfiguration : IEntityTypeConfiguration<PostMarketing>
         builder.Property(p => p.ImageUrl)
                .HasColumnName("image_url")
                .HasMaxLength(500);
-
-        // Tags → JSONB (PostgreSQL optimized)
-       //  builder.Property(p => p.Tags)
-       //         .HasColumnName("tags")
-       //         .HasColumnType("jsonb");
 
         // ─────────────────────────────────────────────────────────────
         // AI Metadata
@@ -122,55 +121,53 @@ public class PostConfiguration : IEntityTypeConfiguration<PostMarketing>
                .IsRequired()
                .HasMaxLength(100);
 
-        builder.Property(p => p.ExternalPostUrl)
-               .HasColumnName("external_post_url")
-               .HasMaxLength(500);
-
         // ─────────────────────────────────────────────────────────────
-        // Versioning (Optimistic Concurrency )
+        // Versioning (Optimistic Concurrency)
         // ─────────────────────────────────────────────────────────────
         builder.Property(p => p.Version)
                .HasColumnName("version")
                .IsRequired()
                .HasDefaultValue(1)
-               .IsConcurrencyToken(); //  important
+               .IsConcurrencyToken();
 
         // ─────────────────────────────────────────────────────────────
-        // Audit Fields
+        // Audit Fields (CreatedAt, ModifiedAt, etc.)
         // ─────────────────────────────────────────────────────────────
         builder.ConfigureAudit<PostMarketing, Guid>();
 
         // ─────────────────────────────────────────────────────────────
         // Indexes
         // ─────────────────────────────────────────────────────────────
-
-        //  Unique tracking token
         builder.HasIndex(p => p.TrackingToken)
                .IsUnique()
                .HasDatabaseName("ix_post_tracking_token");
 
-        //  Slug (for public URL)
         builder.HasIndex(p => p.Slug)
                .IsUnique()
                .HasDatabaseName("ix_post_marketing_slug");
 
-        // Organizer dashboard queries
         builder.HasIndex(p => new { p.OrganizerId, p.Status, p.CreatedAt })
                .HasDatabaseName("ix_post_organizer_status_created");
 
-        // Moderation queue (FIFO)
         builder.HasIndex(p => new { p.Status, p.SubmittedAt })
                .HasDatabaseName("ix_post_pending_queue")
                .HasFilter("status = 'Pending'");
 
-        // Public feed (event-based)
         builder.HasIndex(p => new { p.EventId, p.PublishedAt })
                .HasDatabaseName("ix_post_event_published")
                .HasFilter("status = 'Published'");
 
-        //  Global feed (important for homepage)
         builder.HasIndex(p => new { p.Status, p.PublishedAt })
                .HasDatabaseName("ix_post_global_feed")
                .HasFilter("status = 'Published'");
+
+        // ─────────────────────────────────────────────────────────────
+        // External Distributions (1-to-Many Navigation)
+        // ─────────────────────────────────────────────────────────────
+        
+        builder.HasMany(p => p.ExternalDistributions)
+               .WithOne()
+               .HasForeignKey("PostMarketingId")
+               .OnDelete(DeleteBehavior.Cascade);
     }
 }
