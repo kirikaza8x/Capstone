@@ -198,14 +198,23 @@ internal sealed class TicketingPublicApi(
             .Where(o => o.Status == OrderStatus.Paid && o.CreatedAt >= startOfLastPeriod && o.CreatedAt < startOfCurrentPeriod)
             .SumAsync(o => o.TotalPrice, cancellationToken);
 
-        await Task.WhenAll(
-            totalRevenueTask,
-            totalTicketsSoldTask,
-            currentPeriodRevenueTask,
-            lastPeriodRevenueTask);
+        var totalRevenue = await dbContext.Orders
+                .Where(o => o.Status == OrderStatus.Paid)
+                .SumAsync(o => o.TotalPrice, cancellationToken);
 
-        decimal currentRev = currentPeriodRevenueTask.Result;
-        decimal lastRev = lastPeriodRevenueTask.Result;
+        var totalTicketsSold = await dbContext.OrderTickets
+            .CountAsync(t => t.Status == OrderTicketStatus.Valid || t.Status == OrderTicketStatus.Used, cancellationToken);
+
+        // Get the revenue from the last 30 days.
+        var currentRev = await dbContext.Orders
+            .Where(o => o.Status == OrderStatus.Paid && o.CreatedAt >= startOfCurrentPeriod)
+            .SumAsync(o => o.TotalPrice, cancellationToken);
+
+        // Revenue from the previous 30-day period
+        var lastRev = await dbContext.Orders
+            .Where(o => o.Status == OrderStatus.Paid && o.CreatedAt >= startOfLastPeriod && o.CreatedAt < startOfCurrentPeriod)
+            .SumAsync(o => o.TotalPrice, cancellationToken);
+
         double growthRate = 0;
 
         if (lastRev == 0)
