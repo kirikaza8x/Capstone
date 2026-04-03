@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Routing;
 using Shared.Api.Extensions;
 using Shared.Api.Results;
 using Users.Application.Features.Policies.Commands;
+using Users.Application.Features.Policies.Commands.CreatePolicy;
 using UserRoles = Users.PublicApi.Constants.Roles;
 
 namespace Users.Api.Endpoints.Policies.Post;

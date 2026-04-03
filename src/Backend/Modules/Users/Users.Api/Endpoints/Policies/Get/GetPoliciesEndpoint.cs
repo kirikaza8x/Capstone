@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Routing;
 using Shared.Api.Results;
 using Users.Application.Features.Policies.Dtos;
 using Users.Application.Features.Policies.Queries;
+using Users.Application.Features.Policies.Queries.GetPolicies;
 
 namespace Users.Api.Endpoints.Policies.Get;
 
@@ -23,6 +24,6 @@ public class GetPoliciesEndpoint : ICarterModule
         .WithTags("Policies")
         .WithName("GetPolicies")
         .WithSummary("Get all policies")
-        .Produces<ApiResult<IReadOnlyList<PolicyDto>>>(StatusCodes.Status200OK)
+        .Produces<ApiResult<IReadOnlyList<PolicyDto>>>(StatusCodes.Status200OK);
     }
 }
