@@ -9,5 +9,7 @@ public record ConfirmExternalDistributionCommand(
     ExternalPlatform Platform,
     string ExternalUrl,
     string? ExternalPostId = null,
-    string? PlatformMetadata = null
+    string? PlatformMetadata = null // meta use
 ) : ICommand;
+
+// meta use
