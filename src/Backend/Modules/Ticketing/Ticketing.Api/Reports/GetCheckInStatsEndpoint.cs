@@ -42,6 +42,6 @@ public class GetCheckInStatsEndpoint : ICarterModule
         .ProducesProblem(StatusCodes.Status403Forbidden)
         .ProducesProblem(StatusCodes.Status404NotFound)
         .RequireRoles(Roles.AttendeeAndOrganizer)
-        .RequireEventPermission(EventPermissions.CheckIn);
+        .RequireEventPermission(EventPermissions.ViewReports);
     }
 }
