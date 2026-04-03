@@ -49,4 +49,9 @@ public class AiPackage : Entity<Guid>
         TokenQuota = tokenQuota;
         IsActive = isActive;
     }
+
+    public void ToggleStatus()
+    {
+        IsActive = !IsActive;
+    }
 }
