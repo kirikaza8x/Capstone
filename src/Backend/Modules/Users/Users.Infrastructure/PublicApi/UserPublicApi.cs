@@ -71,27 +71,23 @@ internal sealed class UserPublicApi(
         var startOfCurrentPeriod = now.AddDays(-30);
         var startOfLastPeriod = now.AddDays(-60);
 
-        var attendeesTask = dbContext.Users
+        var attendees = await dbContext.Users
             .AsNoTracking()
             .CountAsync(u => u.Roles.Any(r => r.Name == Users.PublicApi.Constants.Roles.Attendee), cancellationToken);
 
-        var organizersTask = dbContext.Users
+        var organizers = await dbContext.Users
             .AsNoTracking()
             .CountAsync(u => u.Roles.Any(r => r.Name == Users.PublicApi.Constants.Roles.Organizer), cancellationToken);
 
         // Calculate the number of users registered in the last 30 days
-        var currentPeriodUsersTask = dbContext.Users
+        var current = await dbContext.Users
             .CountAsync(u => u.CreatedAt >= startOfCurrentPeriod, cancellationToken);
 
         // Calculate the number of users registered in the previous 30 days
-        var lastPeriodUsersTask = dbContext.Users
+        var last = await dbContext.Users
             .CountAsync(u => u.CreatedAt >= startOfLastPeriod && u.CreatedAt < startOfCurrentPeriod, cancellationToken);
 
-        await Task.WhenAll(attendeesTask, organizersTask, currentPeriodUsersTask, lastPeriodUsersTask);
-
         double growthRate = 0;
-        int current = currentPeriodUsersTask.Result;
-        int last = lastPeriodUsersTask.Result;
 
         if (last == 0)
         {
@@ -103,8 +99,8 @@ internal sealed class UserPublicApi(
         }
 
         return new UserMetricsDto(
-            TotalAttendees: attendeesTask.Result,
-            TotalOrganizers: organizersTask.Result,
-            UserGrowthRate: growthRate);
+                    TotalAttendees: attendees,
+                    TotalOrganizers: organizers,
+                    UserGrowthRate: growthRate);
     }
 }

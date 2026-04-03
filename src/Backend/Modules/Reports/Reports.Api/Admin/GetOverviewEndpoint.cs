@@ -26,7 +26,7 @@ public class GetOverviewEndpoint : ICarterModule
         })
         .WithTags(Constants.Tags.Admin)
         .WithName("GetAdminOverview")
-        .WithSummary("Get cross-module aggregated KPIs for the Admin overview dashboard")
+        .WithSummary("Get aggregated KPIs for the Admin overview dashboard")
         .Produces<ApiResult<OverviewResponse>>(StatusCodes.Status200OK)
         .RequireRoles(Roles.Admin);
     }
