@@ -57,7 +57,7 @@ internal class GetTicketsForCheckInQueryHandler(
         var responses = sessionTickets.Select(t =>
         {
             var detail = ticketDetailMap.TryGetValue((t.TicketTypeId, t.EventSessionId), out var d) ? d : null;
-            bool isCheckedIn = t.Status == Domain.Enums.OrderTicketStatus.Valid ? true : false ;
+            bool isCheckedIn = t.Status == Domain.Enums.OrderTicketStatus.Valid ? false : true ;
             return new TicketForCheckInResponse(
                 t.Id,
                 detail?.TicketTypeName ?? string.Empty,
