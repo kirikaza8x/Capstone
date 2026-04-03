@@ -63,7 +63,7 @@ public sealed class PostMarketing : AggregateRoot<Guid>
     /// Read-only access to external platform distributions.
     /// Use aggregate methods to modify this collection.
     /// </summary>
-    public IReadOnlyList<ExternalDistribution> ExternalDistributions 
+    public IReadOnlyList<ExternalDistribution> ExternalDistributions
         => _externalDistributions.AsReadOnly();
 
     // =========================================================
@@ -378,16 +378,18 @@ public sealed class PostMarketing : AggregateRoot<Guid>
             return Result.Failure(MarketingErrors.Distribution.PlatformRequired);
 
         // Invariant: Prevent duplicate pending distributions for same platform
-        var existingPending = _externalDistributions.FirstOrDefault(d => 
+        var existingPending = _externalDistributions.FirstOrDefault(d =>
             d.Platform == platform && !d.IsSent() && !d.IsFailed());
-            
+
         if (existingPending is not null)
             return Result.Failure(MarketingErrors.Distribution.AlreadyQueued(platform));
 
         // Create new distribution entity in Pending state
-        var distribution = ExternalDistribution.Create(platform);
+        var distribution = ExternalDistribution.Create(
+    postMarketingId: this.Id,  // ← Pass parent ID
+    platform: platform);
         _externalDistributions.Add(distribution);
-        
+
         ModifiedAt = DateTime.UtcNow;
         Version++;
 
@@ -412,13 +414,13 @@ public sealed class PostMarketing : AggregateRoot<Guid>
     /// <param name="platformMetadata">Platform-specific JSON metadata (optional)</param>
     /// <returns>Success if confirmed, Failure if distribution not found</returns>
     public Result ConfirmExternalDistribution(
-        ExternalPlatform platform, 
-        string externalUrl, 
+        ExternalPlatform platform,
+        string externalUrl,
         string? externalPostId = null,
         string? platformMetadata = null)
     {
         // Find the pending distribution for this platform
-        var distribution = _externalDistributions.FirstOrDefault(d => 
+        var distribution = _externalDistributions.FirstOrDefault(d =>
             d.Platform == platform && !d.IsSent() && !d.IsFailed());
 
         if (distribution is null)
@@ -431,7 +433,7 @@ public sealed class PostMarketing : AggregateRoot<Guid>
         distribution.UpdateExternalUrl(externalUrl);
         distribution.UpdateMetadata(externalPostId, platformMetadata);
         distribution.MarkAsSent();
-        
+
         ModifiedAt = DateTime.UtcNow;
 
         // Raise event for analytics, notifications, UI updates
@@ -453,7 +455,7 @@ public sealed class PostMarketing : AggregateRoot<Guid>
     /// <returns>Success if recorded, Failure if distribution not found</returns>
     public Result FailExternalDistribution(ExternalPlatform platform, string errorMessage)
     {
-        var distribution = _externalDistributions.FirstOrDefault(d => 
+        var distribution = _externalDistributions.FirstOrDefault(d =>
             d.Platform == platform && !d.IsSent() && !d.IsFailed());
 
         if (distribution is null)
@@ -474,13 +476,13 @@ public sealed class PostMarketing : AggregateRoot<Guid>
     public Result RemoveExternalDistribution(ExternalPlatform platform)
     {
         var distribution = _externalDistributions.FirstOrDefault(d => d.Platform == platform);
-        
+
         if (distribution is null)
             return Result.Failure(MarketingErrors.Distribution.NotFound(platform));
 
         _externalDistributions.Remove(distribution);
         ModifiedAt = DateTime.UtcNow;
-        
+
         return Result.Success();
     }
 
@@ -489,21 +491,21 @@ public sealed class PostMarketing : AggregateRoot<Guid>
     // =========================================================
 
     public bool IsVisible() => Status == PostStatus.Published;
-    
+
     public bool IsEditable() => Status is PostStatus.Draft or PostStatus.Rejected;
-    
-    public bool IsDistributedTo(ExternalPlatform platform) 
+
+    public bool IsDistributedTo(ExternalPlatform platform)
         => _externalDistributions.Any(d => d.Platform == platform && d.IsSent());
-    
+
     public ExternalDistribution? GetDistribution(ExternalPlatform platform)
         => _externalDistributions.FirstOrDefault(d => d.Platform == platform);
-    
+
     public IReadOnlyList<ExternalDistribution> GetPendingDistributions()
         => _externalDistributions.Where(d => d.IsPending()).ToList().AsReadOnly();
-    
+
     public IReadOnlyList<ExternalDistribution> GetSuccessfulDistributions()
         => _externalDistributions.Where(d => d.IsSent()).ToList().AsReadOnly();
-    
+
     public IReadOnlyList<ExternalDistribution> GetFailedDistributions()
         => _externalDistributions.Where(d => d.IsFailed()).ToList().AsReadOnly();
 
@@ -515,7 +517,7 @@ public sealed class PostMarketing : AggregateRoot<Guid>
     {
         if (string.IsNullOrWhiteSpace(title))
             return string.Empty;
-            
+
         return title
             .ToLowerInvariant()
             .Replace(" ", "-")
@@ -529,8 +531,8 @@ public sealed class PostMarketing : AggregateRoot<Guid>
             .Replace(";", "");
     }
 
-    protected override void Apply(IDomainEvent @event) 
-    { 
+    protected override void Apply(IDomainEvent @event)
+    {
         // Event sourcing support: apply state changes from events
         // Currently not used, but available for future implementation
     }
