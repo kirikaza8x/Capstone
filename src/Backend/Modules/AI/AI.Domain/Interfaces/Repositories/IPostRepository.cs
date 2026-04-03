@@ -62,4 +62,8 @@ public interface IPostRepository : IRepository<PostMarketing, Guid>
         Guid postId,
         ExternalPlatform platform,
         CancellationToken ct = default);
+
+    Task<PostMarketing?> GetByIdWithDistributionsAsync(
+    Guid id,
+    CancellationToken ct = default);
 }

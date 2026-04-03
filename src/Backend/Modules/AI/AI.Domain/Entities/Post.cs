@@ -467,6 +467,20 @@ public sealed class PostMarketing : AggregateRoot<Guid>
         return Result.Success();
     }
 
+    public Result MarkDistributionAsInProgress(ExternalPlatform platform)
+    {
+        var distribution = _externalDistributions.FirstOrDefault(d =>
+            d.Platform == platform && d.IsPending());
+
+        if (distribution is null)
+            return Result.Failure(MarketingErrors.Distribution.NotFound(platform));
+
+        distribution.MarkAsInProgress();  // ← internal call, same assembly
+        ModifiedAt = DateTime.UtcNow;
+
+        return Result.Success();
+    }
+
     /// <summary>
     /// Removes a distribution record for a platform.
     /// Use when user wants to "unpost" or retry from scratch.

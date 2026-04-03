@@ -16,19 +16,19 @@ public sealed class ExternalDistribution : Entity<Guid>
     // =========================================================
     // Properties
     // =========================================================
-    
+
     public ExternalPlatform Platform { get; private set; }
-    
+
     public string ExternalUrl { get; private set; } = string.Empty;
-    
+
     public string? ExternalPostId { get; private set; }
-    
+
     public string? PlatformMetadata { get; private set; }
-    
+
     public DistributionStatus Status { get; private set; } = DistributionStatus.Pending;
-    
+
     public DateTime? SentAt { get; private set; }
-    
+
     public string? ErrorMessage { get; private set; }
 
     // ── FK to Parent Aggregate ──
@@ -37,7 +37,7 @@ public sealed class ExternalDistribution : Entity<Guid>
     // =========================================================
     // Constructors
     // =========================================================
-    
+
     private ExternalDistribution() { }
 
     private ExternalDistribution(
@@ -50,13 +50,13 @@ public sealed class ExternalDistribution : Entity<Guid>
     {
         if (id == Guid.Empty)
             throw new ArgumentException("Distribution Id cannot be empty", nameof(id));
-            
+
         if (postMarketingId == Guid.Empty)
             throw new ArgumentException("PostMarketingId is required", nameof(postMarketingId));
-            
+
         if (platform == ExternalPlatform.Unknown)
             throw new ArgumentException("Platform must be specified and cannot be Unknown", nameof(platform));
-        
+
         if (!string.IsNullOrWhiteSpace(externalUrl))
             ExternalUrl = externalUrl.Trim();
 
@@ -70,7 +70,7 @@ public sealed class ExternalDistribution : Entity<Guid>
     // =========================================================
     // Factory Method
     // =========================================================
-    
+
     public static ExternalDistribution Create(
         Guid postMarketingId,
         ExternalPlatform platform,
@@ -90,12 +90,12 @@ public sealed class ExternalDistribution : Entity<Guid>
     // =========================================================
     // State Transition Methods (Internal - Aggregate Only)
     // =========================================================
-    
+
     internal void MarkAsSent()
     {
         if (Status == DistributionStatus.Sent)
             return;
-            
+
         Status = DistributionStatus.Sent;
         SentAt = DateTime.UtcNow;
         ErrorMessage = null;
@@ -105,10 +105,10 @@ public sealed class ExternalDistribution : Entity<Guid>
     {
         if (string.IsNullOrWhiteSpace(errorMessage))
             throw new ArgumentException("Error message cannot be empty", nameof(errorMessage));
-            
+
         if (Status == DistributionStatus.Failed)
             return;
-            
+
         Status = DistributionStatus.Failed;
         ErrorMessage = errorMessage.Trim();
     }
@@ -117,8 +117,18 @@ public sealed class ExternalDistribution : Entity<Guid>
     {
         if (string.IsNullOrWhiteSpace(newUrl))
             throw new ArgumentException("External URL cannot be empty", nameof(newUrl));
-            
+
         ExternalUrl = newUrl.Trim();
+    }
+
+    internal void MarkAsInProgress()
+    {
+        // Don't downgrade or override terminal states
+        if (Status is DistributionStatus.Sent or DistributionStatus.Failed)
+            return;
+
+        Status = DistributionStatus.InProgress;
+        // Keep SentAt null until platform confirms
     }
 
     internal void UpdateMetadata(string? externalPostId, string? platformMetadata)
@@ -130,12 +140,14 @@ public sealed class ExternalDistribution : Entity<Guid>
     // =========================================================
     // Query Methods (Public - Read-Only)
     // =========================================================
-    
+
     public bool IsSent() => Status == DistributionStatus.Sent;
-    
+
     public bool IsFailed() => Status == DistributionStatus.Failed;
-    
+
     public bool CanRetry() => Status == DistributionStatus.Failed;
-    
+
     public bool IsPending() => Status == DistributionStatus.Pending;
+
+    public bool IsInProgress() => Status == DistributionStatus.InProgress;
 }

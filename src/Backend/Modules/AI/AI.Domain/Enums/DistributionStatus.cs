@@ -1,22 +1,24 @@
 namespace Marketing.Domain.Enums;
 
-/// <summary>
-/// Status of a post distribution to an external platform.
-/// </summary>
 public enum DistributionStatus
 {
     /// <summary>
-    /// Distribution is queued/pending, not yet sent to platform
+    /// Queued in our system, not yet sent to n8n
     /// </summary>
     Pending = 0,
     
     /// <summary>
-    /// Successfully sent and confirmed on external platform
+    /// Successfully sent to n8n, awaiting platform confirmation
     /// </summary>
-    Sent = 1,
+    InProgress = 1,
     
     /// <summary>
-    /// Distribution failed (can be retried)
+    /// Confirmed posted to external platform (via n8n callback)
     /// </summary>
-    Failed = 2
+    Sent = 2,
+    
+    /// <summary>
+    /// Distribution failed (can retry)
+    /// </summary>
+    Failed = 3
 }

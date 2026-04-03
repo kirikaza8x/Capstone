@@ -178,4 +178,13 @@ public class PostRepository
                 d.Platform == platform,
                 ct);
     }
+
+    public async Task<PostMarketing?> GetByIdWithDistributionsAsync(
+        Guid id,
+        CancellationToken ct = default)
+    {
+        return await Query()
+            .Include(p => p.ExternalDistributions)  // ← Load child entities
+            .FirstOrDefaultAsync(p => p.Id == id, ct);
+    }
 }
