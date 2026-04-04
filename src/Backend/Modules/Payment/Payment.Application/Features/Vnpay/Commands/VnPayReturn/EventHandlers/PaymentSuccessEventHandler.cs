@@ -1,10 +1,12 @@
 using Microsoft.Extensions.Logging;
+using Payment.Domain.Events;
 using Payment.IntegrationEvents;
-using Payments.Domain.Events;
 using Shared.Application.Abstractions.EventBus;
 using Shared.Application.Abstractions.Messaging;
+using DomainPaymentReferenceType = Payment.Domain.Enums.PaymentReferenceType;
+using IntegrationPaymentReferenceType = Payment.IntegrationEvents.PaymentReferenceType;
 
-namespace Payments.Application.Features.Refunds.EventHandlers;
+namespace Payment.Application.Features.Vnpay.Commands.VnPayReturn.EventHandlers;
 
 public sealed class PaymentSuccessDomainEventHandler(
     IEventBus eventBus,
@@ -12,31 +14,45 @@ public sealed class PaymentSuccessDomainEventHandler(
     : IDomainEventHandler<PaymentSucceededDomainEvent>
 {
     public async Task Handle(
-        PaymentSucceededDomainEvent @event, CancellationToken cancellationToken)
+        PaymentSucceededDomainEvent @event,
+        CancellationToken cancellationToken)
     {
         try
         {
+            var integrationReferenceType = @event.ReferenceType switch
+            {
+                DomainPaymentReferenceType.TicketOrder => IntegrationPaymentReferenceType.TicketOrder,
+                DomainPaymentReferenceType.AiPackage => IntegrationPaymentReferenceType.AiPackage,
+                _ => IntegrationPaymentReferenceType.TicketOrder
+            };
+
             await eventBus.PublishAsync(
                 new PaymentSuccessIntegrationEvent(
                     id: Guid.NewGuid(),
                     occurredOnUtc: DateTime.UtcNow,
-                    orderId: @event.OrderId,
+                    paymentTransactionId: @event.PaymentTransactionId,
+                    userId: @event.UserId,
+                    referenceType: integrationReferenceType,
+                    referenceId: @event.ReferenceId,
                     amount: @event.Amount,
-                    paidAtUtc: @event.CompletedAtUtc),
+                    paidAtUtc: @event.CompletedAtUtc,
+                    orderId: @event.OrderId),
                 cancellationToken);
 
             logger.LogInformation(
-                "PaymentSuccessIntegrationEvent published: OrderId={OrderId}, Amount={Amount}, PaidAtUtc={PaidAtUtc}",
-                @event.OrderId,
-                @event.Amount,
-                @event.CompletedAtUtc);
+                "PaymentSuccessIntegrationEvent published: TxnId={TxnId}, UserId={UserId}, RefType={RefType}, RefId={RefId}, Amount={Amount}",
+                @event.PaymentTransactionId,
+                @event.UserId,
+                @event.ReferenceType,
+                @event.ReferenceId,
+                @event.Amount);
         }
         catch (Exception ex)
         {
             logger.LogError(
                 ex,
-                "Failed to publish PaymentSuccessIntegrationEvent: OrderId={OrderId}",
-                @event.OrderId);
+                "Failed to publish PaymentSuccessIntegrationEvent: TxnId={TxnId}",
+                @event.PaymentTransactionId);
         }
     }
 }

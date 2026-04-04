@@ -23,4 +23,22 @@ public class OrganizerAiQuota : Entity<Guid>
     }
 
     public int TotalTokens => SubscriptionTokens + TopUpTokens;
+
+    public void AddSubscriptionTokens(int tokens)
+    {
+        if (tokens <= 0)
+            return;
+
+        SubscriptionTokens += tokens;
+        ModifiedAt = DateTime.UtcNow;
+    }
+
+    public void AddTopUpTokens(int tokens)
+    {
+        if (tokens <= 0)
+            return;
+
+        TopUpTokens += tokens;
+        ModifiedAt = DateTime.UtcNow;
+    }
 }

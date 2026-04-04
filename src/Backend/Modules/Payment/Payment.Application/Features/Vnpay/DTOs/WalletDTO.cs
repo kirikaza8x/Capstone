@@ -1,4 +1,4 @@
-using Payments.Domain.Enums;
+using Payment.Domain.Enums;
 
 namespace Payments.Application.DTOs.Wallet;
 

@@ -1,5 +1,6 @@
 using AI.Application.Features.AiPackages.Dtos;
 using AI.Application.Features.AiPackages.Queries.GetMyPurchasedAiPackages;
+using AI.Domain.Interfaces.Repositories;
 using AI.Domain.Repositories;
 using Shared.Application.Abstractions.Authentication;
 using Shared.Application.Abstractions.Messaging;

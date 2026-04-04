@@ -26,6 +26,8 @@ using RabbitMQ.Client;
 using Shared.Infrastructure.Configs.MessageBroker;
 using AI.Domain.Repositories;
 using AI.Infrastructure.Data.Repository;
+using AI.PublicApi.PublicApi;
+using AI.Infrastructure.PublicApi;
 
 namespace AI.Infrastructure;
 
@@ -169,6 +171,7 @@ public static class DependencyInjection
         });
 
         services.AddSingleton<IEmbeddingService, RabbitMqEmbeddingService>();
+        services.AddScoped<IAiPackagePublicApi, AiPackagePublicApi>();
 
         return services;
     }

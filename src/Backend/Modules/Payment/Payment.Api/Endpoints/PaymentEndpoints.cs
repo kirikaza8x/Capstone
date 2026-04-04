@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using Payment.Application.Features.Vnpay.Commands.InitialPackagePayment;
 using Payment.Domain.Enums;
 using Payments.Application.Features.Payments.Commands.GetPaymentUrl;
 using Payments.Application.Features.Payments.Commands.InitiatePayment;
@@ -41,6 +42,26 @@ public class PaymentEndpoints : ICarterModule
             "Method = BatchDirectPay  → returns VNPay redirect URL.\n" +
             "Method = BatchWalletPay  → deducts from wallet immediately.\n" +
             "Order tickets are fetched from Ticketing module automatically.")
+        .Produces<InitiatePaymentResult>(StatusCodes.Status200OK)
+        .Produces(StatusCodes.Status400BadRequest)
+        .Produces(StatusCodes.Status404NotFound);
+
+        group.MapPost("packages", async (
+            InitiatePackagePaymentRequest request,
+            ISender sender,
+            CancellationToken ct) =>
+            {
+                var result = await sender.Send(
+                    new InitiatePackagePaymentCommand(
+                        request.PackageId,
+                        request.Method,
+                        request.Description),
+                    ct);
+
+                return result.ToOk();
+            })
+        .WithName("InitiatePackagePayment")
+        .WithSummary("Initiate payment for an AI package")
         .Produces<InitiatePaymentResult>(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status400BadRequest)
         .Produces(StatusCodes.Status404NotFound);
@@ -93,3 +114,8 @@ public record InitiatePaymentRequest(
     PaymentType Method,
     string? Description = null
 );
+
+public record InitiatePackagePaymentRequest(
+    Guid PackageId,
+    PaymentType Method,
+    string? Description = null);
