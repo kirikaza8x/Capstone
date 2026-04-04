@@ -1,4 +1,4 @@
-using Payments.Application.Features.Vnpay.DTOs;
+using Payment.Application.Features.Vnpay.DTOs;
 using Payments.Domain.Repositories;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;

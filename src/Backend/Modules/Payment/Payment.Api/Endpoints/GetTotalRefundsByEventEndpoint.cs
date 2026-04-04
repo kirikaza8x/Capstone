@@ -3,7 +3,7 @@ using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using Payments.Application.Features.Vnpay.DTOs;
+using Payment.Application.Features.Vnpay.DTOs;
 using Shared.Api.Results;
 using Shared.Domain.Abstractions;
 
