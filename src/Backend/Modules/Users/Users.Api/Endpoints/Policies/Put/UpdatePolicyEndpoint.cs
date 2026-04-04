@@ -12,7 +12,7 @@ using UserRoles = Users.PublicApi.Constants.Roles;
 
 namespace Users.Api.Endpoints.Policies.Put;
 
-public sealed record UpdatePolicyRequest(string Type, string Description);
+public sealed record UpdatePolicyRequest(string Type, string? FileUrl, string Description);
 
 public class UpdatePolicyEndpoint : ICarterModule
 {
@@ -25,7 +25,7 @@ public class UpdatePolicyEndpoint : ICarterModule
             CancellationToken cancellationToken) =>
         {
             var result = await sender.Send(
-                new UpdatePolicyCommand(id, request.Type, request.Description),
+                new UpdatePolicyCommand(id, request.Type, request.FileUrl, request.Description),
                 cancellationToken);
 
             return result.ToOk();

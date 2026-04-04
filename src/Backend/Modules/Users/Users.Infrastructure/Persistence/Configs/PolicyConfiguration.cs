@@ -13,7 +13,7 @@ namespace Users.Infrastructure.Persistence.Configs
             builder.HasKey(x => x.Id);
 
             builder.Property(r => r.Id)
-                   .ValueGeneratedNever();
+                .ValueGeneratedNever();
 
             builder.Property(x => x.Id)
                 .HasColumnName("id")
@@ -24,6 +24,11 @@ namespace Users.Infrastructure.Persistence.Configs
                 .HasColumnName("type")
                 .HasMaxLength(100)
                 .IsRequired();
+
+            builder.Property(x => x.FileUrl)
+                .HasColumnName("file_url")
+                .HasMaxLength(1000)
+                .IsRequired(false);
 
             builder.Property(x => x.Description)
                 .HasColumnName("description")

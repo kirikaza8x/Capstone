@@ -17,6 +17,10 @@ public class CreatePolicyCommandValidator : AbstractValidator<CreatePolicyComman
             .NotEmpty()
             .MaximumLength(100);
 
+        RuleFor(x => x.FileUrl)
+            .MaximumLength(1000)
+            .When(x => !string.IsNullOrWhiteSpace(x.FileUrl));
+
         RuleFor(x => x.Description)
             .NotEmpty()
             .MaximumLength(2000);
@@ -52,7 +56,7 @@ public sealed class CreatePolicyCommandHandler : ICommandHandler<CreatePolicyCom
                 Error.Validation("Policy.Validation", firstError.ErrorMessage));
         }
 
-        var policy = Policy.Create(request.Type, request.Description);
+        var policy = Policy.Create(request.Type, request.FileUrl, request.Description);
 
         _policyRepository.Add(policy);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
