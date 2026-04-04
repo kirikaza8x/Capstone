@@ -1,4 +1,4 @@
-namespace Payments.Application.Features.Vnpay.DTOs;
+namespace Payment.Application.Features.Vnpay.DTOs;
 
 public record EventRevenueDto(
     Guid EventId,
@@ -10,8 +10,20 @@ public record OrganizerRevenueSummaryDto(
     decimal GrossRevenue,
     decimal TotalRefunds,
     decimal NetRevenue,
-    int EventCount);
+    int EventCount,
+    int CompletedEventCount,
+    int ActiveEventCount,
+    int UpcomingEventCount);
+
+public record OrganizerRevenuePerEventItemDto(
+    Guid EventId,
+    string EventName,
+    decimal GrossRevenue,
+    decimal NetRevenue,
+    decimal RefundAmount,
+    decimal RefundRate,
+    string Status);
 
 public record OrganizerRevenuePerEventDto(
     Guid OrganizerId,
-    IReadOnlyList<EventRevenueDto> PerEvent);
+    IReadOnlyList<OrganizerRevenuePerEventItemDto> PerEvent);
