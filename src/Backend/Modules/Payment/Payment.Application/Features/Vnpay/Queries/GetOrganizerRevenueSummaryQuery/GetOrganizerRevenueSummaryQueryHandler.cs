@@ -1,5 +1,6 @@
 using Events.PublicApi.PublicApi;
-using Payments.Application.Features.Vnpay.DTOs;
+using Events.PublicApi.Records;
+using Payment.Application.Features.Vnpay.DTOs;
 using Payments.Domain.Repositories;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
@@ -13,23 +14,56 @@ public class GetOrganizerRevenueSummaryQueryHandler(
         GetOrganizerRevenueSummaryQuery query,
         CancellationToken cancellationToken)
     {
-        // Step 1: resolve event IDs from Events module
-        var eventIds = await eventApi.GetEventIdsByUserIdAsync(
-            query.OrganizerId, cancellationToken);
+        var eventIds = await eventApi.GetEventIdsByUserIdAsync(query.OrganizerId, cancellationToken);
 
         if (eventIds.Count == 0)
+        {
             return Result.Success(new OrganizerRevenueSummaryDto(
-                query.OrganizerId, 0m, 0m, 0m, 0));
+                query.OrganizerId,
+                0m,
+                0m,
+                0m,
+                0,
+                0,
+                0,
+                0));
+        }
 
-        // Step 2: query payment data for those event IDs
         var summary = await repo.GetRevenueSummaryByEventIdsAsync(
-            eventIds, cancellationToken);
+            eventIds,
+            cancellationToken);
+
+        var overviews = await eventApi.GetOrganizerEventOverviewByEventIdsAsync(
+            eventIds,
+            cancellationToken);
+
+        var now = DateTime.UtcNow;
+        var completedEventCount = overviews.Values.Count(x => IsCompleted(x, now));
+        var upcomingEventCount = overviews.Values.Count(x => IsUpcoming(x, now));
+        var activeEventCount = overviews.Values.Count(x => IsActive(x, now));
 
         return Result.Success(new OrganizerRevenueSummaryDto(
             query.OrganizerId,
             summary.GrossRevenue,
             summary.TotalRefunds,
             summary.NetRevenue,
-            summary.EventCount));
+            overviews.Count,
+            completedEventCount,
+            activeEventCount,
+            upcomingEventCount));
     }
+
+    private static bool IsCompleted(OrganizerEventOverviewDto x, DateTime now) =>
+        x.Status.Equals("Completed", StringComparison.OrdinalIgnoreCase) ||
+        (x.EventEndAt.HasValue && x.EventEndAt.Value <= now);
+
+    private static bool IsUpcoming(OrganizerEventOverviewDto x, DateTime now) =>
+        x.Status.Equals("Published", StringComparison.OrdinalIgnoreCase) &&
+        x.EventStartAt.HasValue &&
+        x.EventStartAt.Value > now;
+
+    private static bool IsActive(OrganizerEventOverviewDto x, DateTime now) =>
+        x.Status.Equals("Published", StringComparison.OrdinalIgnoreCase) &&
+        (!x.EventStartAt.HasValue || x.EventStartAt.Value <= now) &&
+        (!x.EventEndAt.HasValue || x.EventEndAt.Value > now);
 }

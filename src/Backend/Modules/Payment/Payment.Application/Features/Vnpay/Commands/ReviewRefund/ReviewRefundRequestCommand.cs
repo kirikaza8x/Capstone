@@ -1,4 +1,4 @@
-using Payments.Domain.Enums;
+using Payment.Domain.Enums;
 using Shared.Application.Abstractions.Messaging;
 
 namespace Payments.Application.Features.Refunds.Commands.ReviewRefundRequest;

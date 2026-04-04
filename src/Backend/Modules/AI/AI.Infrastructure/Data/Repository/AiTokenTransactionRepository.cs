@@ -1,6 +1,6 @@
 using AI.Domain.Entities;
 using AI.Domain.Enums;
-using AI.Domain.Repositories;
+using AI.Domain.Interfaces.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Shared.Infrastructure.Data;
 
@@ -26,5 +26,12 @@ public class AiTokenTransactionRepository(AIModuleDbContext dbContext)
                 (x.Type == AiTokenTransactionType.TopUp || x.Type == AiTokenTransactionType.MonthlyGrant))
             .OrderByDescending(x => x.CreatedAt)
             .ToListAsync(ct);
+    }
+
+    public async Task<bool> ExistsByReferenceIdAsync(Guid referenceId, CancellationToken ct = default)
+    {
+        return await _dbSet
+            .AsNoTracking()
+            .AnyAsync(x => x.ReferenceId == referenceId, ct);
     }
 }

@@ -29,6 +29,8 @@ using AI.Infrastructure.Data.Repository;
 using Marketing.Infrastructure.Configs;
 using Marketing.Application.Services;
 using Marketing.Infrastructure.Services;
+using AI.PublicApi.PublicApi;
+using AI.Infrastructure.PublicApi;
 
 namespace AI.Infrastructure;
 
@@ -172,6 +174,7 @@ public static class DependencyInjection
         });
 
         services.AddSingleton<IEmbeddingService, RabbitMqEmbeddingService>();
+        services.AddScoped<IAiPackagePublicApi, AiPackagePublicApi>();
 
 
         services.AddHttpClient("N8n", (services, client) =>

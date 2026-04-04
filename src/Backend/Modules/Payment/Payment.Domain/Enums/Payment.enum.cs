@@ -4,8 +4,13 @@ public enum PaymentType
 {
     BatchDirectPay,
     BatchWalletPay,
-    WalletTopUp,
+    WalletTopUp
+}
 
+public enum PaymentReferenceType
+{
+    TicketOrder = 0,
+    AiPackage = 1
 }
 
 public enum PaymentInternalStatus

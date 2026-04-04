@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Payment.Domain.Enums;
 using Payments.Domain.Entities;
-using Payments.Domain.Enums;
 using Shared.Infrastructure.Extensions;
 
 namespace Payments.Infrastructure.Persistence.Configs;
