@@ -5,4 +5,5 @@ namespace Users.Application.Features.Policies.Commands.CreatePolicy;
 
 public sealed record CreatePolicyCommand(
     string Type,
+    string? FileUrl,
     string Description) : ICommand<PolicyDto>;

@@ -7,4 +7,5 @@ namespace Payment.Application.Features.Vnpay.Commands.InitialPackagePayment;
 public sealed record InitiatePackagePaymentCommand(
     Guid PackageId,
     PaymentType Method,
-    string? Description = null) : ICommand<InitiatePaymentResult>;
+    string? Description = null,
+    string? ReturnUrl = null) : ICommand<InitiatePaymentResult>;

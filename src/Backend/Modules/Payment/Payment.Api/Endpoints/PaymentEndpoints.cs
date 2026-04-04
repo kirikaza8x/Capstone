@@ -50,16 +50,17 @@ public class PaymentEndpoints : ICarterModule
             InitiatePackagePaymentRequest request,
             ISender sender,
             CancellationToken ct) =>
-            {
-                var result = await sender.Send(
-                    new InitiatePackagePaymentCommand(
-                        request.PackageId,
-                        request.Method,
-                        request.Description),
-                    ct);
+        {
+            var result = await sender.Send(
+                new InitiatePackagePaymentCommand(
+                    request.PackageId,
+                    request.Method,
+                    request.Description,
+                    request.ReturnUrl),
+                ct);
 
-                return result.ToOk();
-            })
+            return result.ToOk();
+        })
         .WithName("InitiatePackagePayment")
         .WithSummary("Initiate payment for an AI package")
         .Produces<InitiatePaymentResult>(StatusCodes.Status200OK)
@@ -118,4 +119,6 @@ public record InitiatePaymentRequest(
 public record InitiatePackagePaymentRequest(
     Guid PackageId,
     PaymentType Method,
-    string? Description = null);
+    string? Description = null,
+    string? ReturnUrl = null
+);
