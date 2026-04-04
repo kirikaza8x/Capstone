@@ -1,5 +1,5 @@
+using Payment.Domain.Enums;
 using Payments.Domain.Entities;
-using Payments.Domain.Enums;
 using Shared.Domain.Data.Repositories;
 
 namespace Payments.Domain.Repositories;

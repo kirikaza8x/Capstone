@@ -1,6 +1,6 @@
 using FluentValidation;
+using Payment.Domain.Enums;
 using Payments.Application.Features.Refunds.Commands.SubmitRefundRequest;
-using Payments.Domain.Enums;
 
 namespace Payments.Application.Validators;
 

@@ -11,23 +11,37 @@ public class PaymentSuccessIntegrationEventHandler(
     ILogger<PaymentSuccessIntegrationEventHandler> logger)
     : IntegrationEventHandler<PaymentSuccessIntegrationEvent>
 {
-    public override async Task Handle(PaymentSuccessIntegrationEvent integrationEvent, CancellationToken cancellationToken = default)
+    public override async Task Handle(
+        PaymentSuccessIntegrationEvent integrationEvent,
+        CancellationToken cancellationToken = default)
     {
-        if (integrationEvent.OrderId == Guid.Empty)
+        if (integrationEvent.ReferenceType != PaymentReferenceType.TicketOrder)
             return;
 
+        var orderId = integrationEvent.ReferenceId != Guid.Empty
+            ? integrationEvent.ReferenceId
+            : integrationEvent.OrderId;
+
+        if (orderId == Guid.Empty)
+        {
+            logger.LogWarning(
+                "PaymentSuccess received for TicketOrder but OrderId is empty. TxnId={TxnId}",
+                integrationEvent.PaymentTransactionId);
+            return;
+        }
+
         var result = await sender.Send(
-           new ConfirmOrderCommand(
-               integrationEvent.OrderId,
-               integrationEvent.Amount,
-               integrationEvent.PaidAtUtc),
-           cancellationToken);
+            new ConfirmOrderCommand(
+                orderId,
+                integrationEvent.Amount,
+                integrationEvent.PaidAtUtc),
+            cancellationToken);
 
         if (result.IsFailure)
         {
             logger.LogWarning(
-                "PaymentSuccess handled with business failure for OrderId {OrderId}. Error: {ErrorCode} - {ErrorDescription}",
-                integrationEvent.OrderId,
+                "ConfirmOrder failed. OrderId={OrderId}, Error={ErrorCode}-{ErrorDescription}",
+                orderId,
                 result.Error.Code,
                 result.Error.Description);
         }

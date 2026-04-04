@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Logging;
+using Payment.Domain.Enums;
 using Payments.Application.Abstractions;
 using Payments.Domain.Entities;
-using Payments.Domain.Enums;
 using Payments.Domain.Repositories;
 using Payments.Domain.UOW;
 using Shared.Application.Abstractions.Authentication;

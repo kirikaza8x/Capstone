@@ -1,10 +1,14 @@
+using Payment.Domain.Enums;
 using Shared.Domain.DDD;
 
-namespace Payments.Domain.Events;
+namespace Payment.Domain.Events;
 
 public sealed record PaymentSucceededDomainEvent(
     Guid PaymentTransactionId,
-    Guid OrderId,
+    Guid UserId,
+    PaymentReferenceType ReferenceType,
+    Guid ReferenceId,
+    Guid? OrderId,
     decimal Amount,
     DateTime CompletedAtUtc
 ) : DomainEvent;

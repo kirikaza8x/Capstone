@@ -1,4 +1,5 @@
 using Payment.Domain.Enums;
+using Payment.Domain.Events;
 using Payments.Domain.Events;
 using Shared.Domain.Abstractions;
 using Shared.Domain.DDD;
@@ -15,6 +16,8 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
     public Guid? OrderId { get; private set; }
     public Guid? EventId { get; private set; } 
     public PaymentType Type { get; private set; }
+    public PaymentReferenceType? ReferenceType { get; private set; }
+    public Guid? ReferenceId { get; private set; }
 
     // --------------------
     // Core
@@ -122,6 +125,8 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
             OrderId = orderId,
             EventId = eventId,
             Type = PaymentType.BatchDirectPay,
+            ReferenceType = PaymentReferenceType.TicketOrder,
+            ReferenceId = orderId,
             Amount = itemList.Sum(i => i.Amount),
             InternalStatus = PaymentInternalStatus.AwaitingGateway,
             GatewayOrderInfo = gatewayOrderInfo,
@@ -171,6 +176,8 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
             OrderId = orderId,
             EventId = eventId,
             Type = PaymentType.BatchWalletPay,
+            ReferenceType = PaymentReferenceType.TicketOrder,
+            ReferenceId = orderId,
             Amount = itemList.Sum(i => i.Amount),
             GatewayOrderInfo = orderInfo,
             CreatedAt = now
@@ -190,8 +197,70 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
     }
 
     // --------------------
-    // Status transitions
+    // Factory — DirectPay by reference
     // --------------------
+    public static PaymentTransaction CreateDirectPayByReference(
+        Guid userId,
+        PaymentReferenceType referenceType,
+        Guid referenceId,
+        decimal amount,
+        string? gatewayOrderInfo,
+        string? gatewayTxnRef,
+        string? ipAddress = null)
+    {
+        if (amount <= 0)
+            throw new ArgumentException("Amount must be greater than zero.", nameof(amount));
+
+        return new PaymentTransaction
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            Type = PaymentType.BatchDirectPay,
+            ReferenceType = referenceType,
+            ReferenceId = referenceId,
+            Amount = amount,
+            InternalStatus = PaymentInternalStatus.AwaitingGateway,
+            GatewayOrderInfo = gatewayOrderInfo,
+            GatewayTxnRef = gatewayTxnRef,
+            GatewayCreateDate = GetVietnamCreateDate(),
+            GatewayLocale = "vn",
+            GatewayIpAddr = NormalizeIp(ipAddress),
+            GatewayOrderType = "other",
+            CreatedAt = DateTime.UtcNow
+        };
+    }
+
+    // --------------------
+    // Factory — WalletPay by reference
+    // --------------------
+    public static PaymentTransaction CreateWalletPayByReference(
+        Guid userId,
+        Guid walletId,
+        PaymentReferenceType referenceType,
+        Guid referenceId,
+        decimal amount,
+        string? orderInfo = null)
+    {
+        if (amount <= 0)
+            throw new ArgumentException("Amount must be greater than zero.", nameof(amount));
+
+        var txn = new PaymentTransaction
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            WalletId = walletId,
+            Type = PaymentType.BatchWalletPay,
+            ReferenceType = referenceType,
+            ReferenceId = referenceId,
+            Amount = amount,
+            GatewayOrderInfo = orderInfo,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        txn.MarkCompleted();
+        return txn;
+    }
+
     public void MarkCompleted()
     {
         if (InternalStatus == PaymentInternalStatus.Completed)
@@ -203,12 +272,19 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
         foreach (var item in Items)
             item.MarkCompleted();
 
-        if (OrderId.HasValue && EventId.HasValue)
+        var resolvedReferenceType = ReferenceType
+            ?? (OrderId.HasValue ? PaymentReferenceType.TicketOrder : (PaymentReferenceType?)null);
+
+        var resolvedReferenceId = ReferenceId ?? OrderId;
+
+        if (resolvedReferenceType.HasValue && resolvedReferenceId.HasValue)
         {
             RaiseDomainEvent(new PaymentSucceededDomainEvent(
                 PaymentTransactionId: Id,
-                OrderId: OrderId.Value,
-                // EventId: EventId.Value,
+                UserId: UserId,
+                ReferenceType: resolvedReferenceType.Value,
+                ReferenceId: resolvedReferenceId.Value,
+                OrderId: OrderId,
                 Amount: Amount,
                 CompletedAtUtc: CompletedAt.Value));
         }

@@ -1,4 +1,4 @@
-namespace Payments.Domain.Enums;
+namespace Payment.Domain.Enums;
 
 public enum WalletStatus
 {
