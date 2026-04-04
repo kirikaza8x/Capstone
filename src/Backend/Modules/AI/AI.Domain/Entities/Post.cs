@@ -6,6 +6,10 @@ using Shared.Domain.DDD;
 
 namespace Marketing.Domain.Entities;
 
+/// <summary>
+/// Aggregate root representing a marketing post for an event.
+/// Manages content, moderation workflow, and external distribution.
+/// </summary>
 public sealed class PostMarketing : AggregateRoot<Guid>
 {
     // =========================================================
@@ -25,8 +29,6 @@ public sealed class PostMarketing : AggregateRoot<Guid>
     public string Slug { get; private set; } = string.Empty;
     public string? ImageUrl { get; private set; }
 
-    // public List<string> Tags { get; private set; } = new();
-
     // =========================================================
     // AI Metadata
     // =========================================================
@@ -37,7 +39,7 @@ public sealed class PostMarketing : AggregateRoot<Guid>
     public decimal? AiCost { get; private set; }
 
     // =========================================================
-    // Moderation
+    // Moderation & Lifecycle
     // =========================================================
 
     public PostStatus Status { get; private set; }
@@ -46,37 +48,42 @@ public sealed class PostMarketing : AggregateRoot<Guid>
     public DateTime? ReviewedAt { get; private set; }
     public string? RejectionReason { get; private set; }
 
-    // =========================================================
-    // Publishing
-    // =========================================================
-
     public DateTime? PublishedAt { get; private set; }
     public DateTime? SubmittedAt { get; private set; }
-
     public string TrackingToken { get; private set; } = string.Empty;
 
+    // =========================================================
+    // External Distributions (Child Entities Collection)
+    // =========================================================
+
+    private readonly List<ExternalDistribution> _externalDistributions = new();
+
     /// <summary>
-    /// MVP version: single external distribution
-    /// (can evolve later into collection)
+    /// Read-only access to external platform distributions.
+    /// Use aggregate methods to modify this collection.
     /// </summary>
-    public string? ExternalPostUrl { get; private set; }
+    public IReadOnlyList<ExternalDistribution> ExternalDistributions
+        => _externalDistributions.AsReadOnly();
 
     // =========================================================
-    // Versioning
+    // Versioning & EF Core
     // =========================================================
 
     public int Version { get; private set; }
 
-    // =========================================================
-    // EF Core
-    // =========================================================
-
+    /// <summary>
+    /// Private parameterless constructor for EF Core.
+    /// Do not use directly in application code.
+    /// </summary>
     private PostMarketing() { }
 
     // =========================================================
-    // Factory
+    // Factory Method
     // =========================================================
 
+    /// <summary>
+    /// Creates a new PostMarketing aggregate in Draft status.
+    /// </summary>
     public static PostMarketing CreateDraft(
         Guid eventId,
         Guid organizerId,
@@ -116,7 +123,6 @@ public sealed class PostMarketing : AggregateRoot<Guid>
             Summary = summary?.Trim(),
             Slug = slug ?? GenerateSlug(title),
             ImageUrl = imageUrl?.Trim(),
-            // Tags = tags ?? new List<string>(),
             PromptUsed = promptUsed?.Trim(),
             AiModel = aiModel?.Trim(),
             AiTokensUsed = aiTokensUsed,
@@ -124,7 +130,8 @@ public sealed class PostMarketing : AggregateRoot<Guid>
             TrackingToken = trackingToken.Trim().ToLowerInvariant(),
             Status = PostStatus.Draft,
             Version = 1,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            // _externalDistributions = new List<ExternalDistribution>()
         };
 
         post.RaiseDomainEvent(new PostCreatedDomainEvent(
@@ -137,20 +144,20 @@ public sealed class PostMarketing : AggregateRoot<Guid>
     }
 
     // =========================================================
-    // Organizer Behaviors
+    // Organizer Behaviors (Content Management)
     // =========================================================
 
     public Result Update(
-    string? title,
-    string? body,
-    string? summary,
-    string? imageUrl,
-    string? slug = null,
-    string? promptUsed = null,
-    string? aiModel = null,
-    int? additionalTokensUsed = null, // Accumulate new usage
-    decimal? additionalAiCost = null,  // Accumulate new cost
-    string? trackingToken = null)
+        string? title,
+        string? body,
+        string? summary,
+        string? imageUrl,
+        string? slug = null,
+        string? promptUsed = null,
+        string? aiModel = null,
+        int? additionalTokensUsed = null,
+        decimal? additionalAiCost = null,
+        string? trackingToken = null)
     {
         if (Status is not (PostStatus.Draft or PostStatus.Rejected))
             return Result.Failure(MarketingErrors.Post.CannotEditInStatus(Status));
@@ -161,7 +168,6 @@ public sealed class PostMarketing : AggregateRoot<Guid>
                 return Result.Failure(MarketingErrors.Post.TitleCannotBeEmpty);
 
             Title = title.Trim();
-            // If slug isn't provided, we regenerate it from the new title
             Slug = slug ?? GenerateSlug(Title);
         }
 
@@ -173,8 +179,11 @@ public sealed class PostMarketing : AggregateRoot<Guid>
             Body = body.Trim();
         }
 
-        if (summary is not null)
-            Summary = summary.Trim();
+        if (summary is not null) Summary = summary.Trim();
+        if (slug is not null) Slug = slug.Trim().ToLowerInvariant();
+        if (imageUrl is not null) ImageUrl = imageUrl.Trim();
+        if (promptUsed is not null) PromptUsed = promptUsed.Trim();
+        if (aiModel is not null) AiModel = aiModel.Trim();
 
         if (slug is not null)
             Slug = slug.Trim().ToLowerInvariant();
@@ -183,12 +192,11 @@ public sealed class PostMarketing : AggregateRoot<Guid>
             ImageUrl = imageUrl.Trim();
 
         if (promptUsed is not null)
-            PromptUsed = promptUsed.Trim();
+            PromptUsed = promptUsed?.Trim();
 
         if (aiModel is not null)
-            AiModel = aiModel.Trim();
+            AiModel = aiModel?.Trim();
 
-        // Logic: Add new usage to existing totals
         if (additionalTokensUsed.HasValue)
             AiTokensUsed = (AiTokensUsed ?? 0) + additionalTokensUsed.Value;
 
@@ -201,13 +209,11 @@ public sealed class PostMarketing : AggregateRoot<Guid>
         Version++;
         ModifiedAt = DateTime.UtcNow;
 
-        // Reset status to Draft if it was previously approved/published
         if (Status == PostStatus.Approved || Status == PostStatus.Published)
             Status = PostStatus.Draft;
 
         return Result.Success();
     }
-
 
     public Result Submit()
     {
@@ -219,7 +225,6 @@ public sealed class PostMarketing : AggregateRoot<Guid>
 
         SubmittedAt = DateTime.UtcNow;
         ModifiedAt = SubmittedAt;
-
         Status = PostStatus.Pending;
         RejectionReason = null;
 
@@ -270,7 +275,7 @@ public sealed class PostMarketing : AggregateRoot<Guid>
     }
 
     // =========================================================
-    // Admin Behaviors
+    // Admin Behaviors (Moderation)
     // =========================================================
 
     public Result Approve(Guid adminId)
@@ -353,30 +358,172 @@ public sealed class PostMarketing : AggregateRoot<Guid>
     }
 
     // =========================================================
-    // External Distribution
+    // External Distribution Behaviors (Manual Trigger Flow)
     // =========================================================
 
-    public Result RecordExternalDistribution(string externalUrl)
+    /// <summary>
+    /// Queues this published post for distribution to a specific external platform.
+    /// This is the entry point for manual trigger: user clicks "Post to Facebook".
+    /// 
+    /// Raises PostQueuedForDistributionDomainEvent for n8n webhook handler.
+    /// </summary>
+    /// <param name="platform">Target platform (Facebook, LinkedIn, etc.)</param>
+    /// <returns>Success if queued, Failure with reason otherwise</returns>
+    public Result QueueForExternalDistribution(ExternalPlatform platform)
     {
+        // Invariant: Only published posts can be distributed externally
         if (Status != PostStatus.Published)
-            return Result.Failure(MarketingErrors.Post.CannotRecordDistributionInStatus(Status));
+            return Result.Failure(MarketingErrors.Post.CannotDistributeInStatus(Status));
+
+        // Invariant: Platform must be specified
+        if (platform == ExternalPlatform.Unknown)
+            return Result.Failure(MarketingErrors.Distribution.PlatformRequired);
+
+        // Invariant: Prevent duplicate pending distributions for same platform
+        var existingPending = _externalDistributions.FirstOrDefault(d =>
+            d.Platform == platform && !d.IsSent() && !d.IsFailed());
+
+        if (existingPending is not null)
+            return Result.Failure(MarketingErrors.Distribution.AlreadyQueued(platform));
+
+        // Create new distribution entity in Pending state
+        var distribution = ExternalDistribution.Create(
+    postMarketingId: this.Id,  // ← Pass parent ID
+    platform: platform);
+        _externalDistributions.Add(distribution);
+
+        ModifiedAt = DateTime.UtcNow;
+        Version++;
+
+        // Raise event for infrastructure layer to trigger n8n webhook
+        RaiseDomainEvent(new PostQueuedForDistributionDomainEvent(
+            PostId: Id,
+            Platform: platform,
+            QueuedAt: DateTime.UtcNow));
+
+        return Result.Success();
+    }
+
+    /// <summary>
+    /// Confirms successful distribution to external platform.
+    /// Called by n8n callback handler after Facebook/LinkedIn post succeeds.
+    /// 
+    /// Updates the ExternalDistribution with the actual external URL and metadata.
+    /// </summary>
+    /// <param name="platform">Platform that was distributed to</param>
+    /// <param name="externalUrl">Public URL of the post on the platform</param>
+    /// <param name="externalPostId">Platform's internal post ID (optional)</param>
+    /// <param name="platformMetadata">Platform-specific JSON metadata (optional)</param>
+    /// <returns>Success if confirmed, Failure if distribution not found</returns>
+    public Result ConfirmExternalDistribution(
+        ExternalPlatform platform,
+        string externalUrl,
+        string? externalPostId = null,
+        string? platformMetadata = null)
+    {
+        // Find the pending distribution for this platform
+        var distribution = _externalDistributions.FirstOrDefault(d =>
+            d.Platform == platform && !d.IsSent() && !d.IsFailed());
+
+        if (distribution is null)
+            return Result.Failure(MarketingErrors.Distribution.NotFound(platform));
 
         if (string.IsNullOrWhiteSpace(externalUrl))
-            return Result.Failure(MarketingErrors.Post.ExternalUrlRequired);
+            return Result.Failure(MarketingErrors.Distribution.UrlRequired);
 
-        ExternalPostUrl = externalUrl.Trim();
+        // Update distribution state
+        distribution.UpdateExternalUrl(externalUrl);
+        distribution.UpdateMetadata(externalPostId, platformMetadata);
+        distribution.MarkAsSent();
+
+        ModifiedAt = DateTime.UtcNow;
+
+        // Raise event for analytics, notifications, UI updates
+        RaiseDomainEvent(new PostDistributedToPlatformDomainEvent(
+            PostId: Id,
+            Platform: platform,
+            ExternalUrl: externalUrl,
+            DistributedAt: distribution.SentAt!.Value));
+
+        return Result.Success();
+    }
+
+    /// <summary>
+    /// Records a failed distribution attempt.
+    /// Called by n8n callback handler when platform API returns error.
+    /// </summary>
+    /// <param name="platform">Platform that failed</param>
+    /// <param name="errorMessage">Error details from platform/n8n</param>
+    /// <returns>Success if recorded, Failure if distribution not found</returns>
+    public Result FailExternalDistribution(ExternalPlatform platform, string errorMessage)
+    {
+        var distribution = _externalDistributions.FirstOrDefault(d =>
+            d.Platform == platform && !d.IsSent() && !d.IsFailed());
+
+        if (distribution is null)
+            return Result.Failure(MarketingErrors.Distribution.NotFound(platform));
+
+        distribution.MarkAsFailed(errorMessage);
+        ModifiedAt = DateTime.UtcNow;
+
+        return Result.Success();
+    }
+
+    public Result MarkDistributionAsInProgress(ExternalPlatform platform)
+    {
+        var distribution = _externalDistributions.FirstOrDefault(d =>
+            d.Platform == platform && d.IsPending());
+
+        if (distribution is null)
+            return Result.Failure(MarketingErrors.Distribution.NotFound(platform));
+
+        distribution.MarkAsInProgress();  // ← internal call, same assembly
+        ModifiedAt = DateTime.UtcNow;
+
+        return Result.Success();
+    }
+
+    /// <summary>
+    /// Removes a distribution record for a platform.
+    /// Use when user wants to "unpost" or retry from scratch.
+    /// </summary>
+    /// <param name="platform">Platform to remove</param>
+    /// <returns>Success if removed, Failure if not found</returns>
+    public Result RemoveExternalDistribution(ExternalPlatform platform)
+    {
+        var distribution = _externalDistributions.FirstOrDefault(d => d.Platform == platform);
+
+        if (distribution is null)
+            return Result.Failure(MarketingErrors.Distribution.NotFound(platform));
+
+        _externalDistributions.Remove(distribution);
         ModifiedAt = DateTime.UtcNow;
 
         return Result.Success();
     }
 
     // =========================================================
-    // Queries
+    // Query Methods (Read-Only)
     // =========================================================
 
     public bool IsVisible() => Status == PostStatus.Published;
+
     public bool IsEditable() => Status is PostStatus.Draft or PostStatus.Rejected;
-    public bool IsDistributedExternally() => !string.IsNullOrWhiteSpace(ExternalPostUrl);
+
+    public bool IsDistributedTo(ExternalPlatform platform)
+        => _externalDistributions.Any(d => d.Platform == platform && d.IsSent());
+
+    public ExternalDistribution? GetDistribution(ExternalPlatform platform)
+        => _externalDistributions.FirstOrDefault(d => d.Platform == platform);
+
+    public IReadOnlyList<ExternalDistribution> GetPendingDistributions()
+        => _externalDistributions.Where(d => d.IsPending()).ToList().AsReadOnly();
+
+    public IReadOnlyList<ExternalDistribution> GetSuccessfulDistributions()
+        => _externalDistributions.Where(d => d.IsSent()).ToList().AsReadOnly();
+
+    public IReadOnlyList<ExternalDistribution> GetFailedDistributions()
+        => _externalDistributions.Where(d => d.IsFailed()).ToList().AsReadOnly();
 
     // =========================================================
     // Helpers
@@ -384,12 +531,25 @@ public sealed class PostMarketing : AggregateRoot<Guid>
 
     private static string GenerateSlug(string title)
     {
+        if (string.IsNullOrWhiteSpace(title))
+            return string.Empty;
+
         return title
             .ToLowerInvariant()
             .Replace(" ", "-")
             .Replace(".", "")
-            .Replace(",", "");
+            .Replace(",", "")
+            .Replace("?", "")
+            .Replace("!", "")
+            .Replace("'", "")
+            .Replace("\"", "")
+            .Replace(":", "")
+            .Replace(";", "");
     }
 
-    protected override void Apply(IDomainEvent @event) { }
+    protected override void Apply(IDomainEvent @event)
+    {
+        // Event sourcing support: apply state changes from events
+        // Currently not used, but available for future implementation
+    }
 }

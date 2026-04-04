@@ -26,6 +26,9 @@ using RabbitMQ.Client;
 using Shared.Infrastructure.Configs.MessageBroker;
 using AI.Domain.Repositories;
 using AI.Infrastructure.Data.Repository;
+using Marketing.Infrastructure.Configs;
+using Marketing.Application.Services;
+using Marketing.Infrastructure.Services;
 using AI.PublicApi.PublicApi;
 using AI.Infrastructure.PublicApi;
 
@@ -172,6 +175,24 @@ public static class DependencyInjection
 
         services.AddSingleton<IEmbeddingService, RabbitMqEmbeddingService>();
         services.AddScoped<IAiPackagePublicApi, AiPackagePublicApi>();
+
+
+        services.AddHttpClient("N8n", (services, client) =>
+        {
+            var n8nConfig = services.GetRequiredService<IOptions<N8nIntegrationConfig>>().Value;
+            
+            client.BaseAddress = new Uri(n8nConfig.DistributionWebhookUrl);
+            client.Timeout = TimeSpan.FromSeconds(n8nConfig.HttpTimeoutSeconds);
+            client.DefaultRequestHeaders.Add("User-Agent", "MarketingBackend/1.0");
+            
+            if (!string.IsNullOrEmpty(n8nConfig.ApiKey))
+            {
+                client.DefaultRequestHeaders.Add("X-API-Key", n8nConfig.ApiKey);
+            }
+        });
+
+        // ── Register n8n service abstraction ──
+        services.AddScoped<IN8nDistributionService, N8nDistributionService>();
 
         return services;
     }

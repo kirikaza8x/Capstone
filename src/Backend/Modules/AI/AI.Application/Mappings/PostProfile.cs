@@ -14,7 +14,7 @@ public class MarketingProfile : Profile
         // ========================
         CreateMap<PostMarketing, PostDto>()
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()));
-            // Removed Platform mapping - property doesn't exist on Post entity
+        // Removed Platform mapping - property doesn't exist on Post entity
 
         // ========================
         // ADMIN LIST ITEM (Moderation queue)
@@ -58,5 +58,12 @@ public class MarketingProfile : Profile
             // These fields are populated via Events.PublicApi / Users.PublicApi in handler
             .ForMember(dest => dest.EventTitle, opt => opt.Ignore())
             .ForMember(dest => dest.OrganizerName, opt => opt.Ignore());
+
+
+        // ========================
+        // DISTRIBUTION STATUS (for query responses)
+        // ========================
+        CreateMap<ExternalDistribution, DistributionStatusDto>()
+            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()));
     }
 }
