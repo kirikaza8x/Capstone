@@ -15,76 +15,109 @@ internal sealed class GetSalesTrendQueryHandler(
         GetSalesTrendQuery query,
         CancellationToken cancellationToken)
     {
+        var startDate = query.StartDate.Date;
+        var endDate = query.EndDate.Date;
+
+        if (endDate < startDate)
+        {
+            return Result.Failure<SalesTrendResponse>(Error.Validation(
+                "SalesTrend.InvalidDateRange",
+                "EndDate must be greater than or equal to StartDate."));
+        }
+
         var ticketTypes = await eventTicketingPublicApi.GetAllTicketTypesByEventIdAsync(
             query.EventId,
             cancellationToken);
 
         if (ticketTypes is null || !ticketTypes.Any())
         {
-            return Result.Success(new SalesTrendResponse(query.EventId, query.Period.ToString(), []));
+            return Result.Success(CreateResponse(
+                query.EventId,
+                startDate,
+                endDate,
+                BuildTrend(startDate, endDate, new Dictionary<DateTime, DailyAggregate>())));
         }
 
         var ticketTypeIds = ticketTypes.Select(t => t.Id).ToList();
 
-        var orders = await orderRepository.GetPaidOrdersByTicketTypeIdsAsync(ticketTypeIds, cancellationToken);
+        var orders = await orderRepository.GetPaidOrdersByTicketTypeIdsAsync(
+            ticketTypeIds,
+            cancellationToken);
 
-        if (orders.Count == 0)
-        {
-            return Result.Success(new SalesTrendResponse(query.EventId, query.Period.ToString(), []));
-        }
-
-        var validOrders = orders
+        var grouped = orders
+            .Where(o => o.CreatedAt.HasValue)
             .Select(o => new
             {
-                CreatedAt = o.CreatedAt.GetValueOrDefault(),
-                Revenue = o.TotalPrice,
+                Date = o.CreatedAt!.Value.Date,
+                GrossRevenue = o.TotalPrice,
+                NetRevenue = o.Tickets
+                    .Where(t => t.Status != OrderTicketStatus.Cancelled)
+                    .Sum(t => t.Price),
                 TicketsSold = o.Tickets.Count(t => t.Status != OrderTicketStatus.Cancelled)
             })
-            .Where(o => o.TicketsSold > 0)
-            .ToList();
-
-        IEnumerable<SalesTrendPoint> trend = query.Period switch
-        {
-            SalesTrendPeriod.Week => validOrders
-                .Select(o => new
-                {
-                    Bucket = GetStartOfWeek(o.CreatedAt.Date),
-                    o.TicketsSold,
-                    o.Revenue
-                })
-                .GroupBy(x => x.Bucket)
-                .OrderBy(g => g.Key)
-                .Select(g => new SalesTrendPoint(
-                    g.Key,
+            .Where(x => x.Date >= startDate && x.Date <= endDate)
+            .GroupBy(x => x.Date)
+            .ToDictionary(
+                g => g.Key,
+                g => new DailyAggregate(
                     g.Sum(x => x.TicketsSold),
-                    g.Sum(x => x.Revenue)
-                )),
+                    g.Sum(x => x.NetRevenue),
+                    g.Sum(x => x.GrossRevenue)));
 
-            _ => validOrders
-                .Select(o => new
-                {
-                    Bucket = o.CreatedAt.Date,
-                    o.TicketsSold,
-                    o.Revenue
-                })
-                .GroupBy(x => x.Bucket)
-                .OrderBy(g => g.Key)
-                .Select(g => new SalesTrendPoint(
-                    g.Key,
-                    g.Sum(x => x.TicketsSold),
-                    g.Sum(x => x.Revenue)
-                ))
-        };
+        var trend = BuildTrend(startDate, endDate, grouped);
 
-        return Result.Success(new SalesTrendResponse(
+        return Result.Success(CreateResponse(
             query.EventId,
-            query.Period.ToString(),
-            trend.ToList()));
+            startDate,
+            endDate,
+            trend));
     }
 
-    private static DateTime GetStartOfWeek(DateTime dt, DayOfWeek startOfWeek = DayOfWeek.Monday)
+    private static SalesTrendResponse CreateResponse(
+        Guid eventId,
+        DateTime startDate,
+        DateTime endDate,
+        IReadOnlyList<SalesTrendPoint> trend)
     {
-        int diff = (7 + (dt.DayOfWeek - startOfWeek)) % 7;
-        return dt.AddDays(-1 * diff).Date;
+        return new SalesTrendResponse(
+            eventId,
+            startDate,
+            endDate,
+            trend);
     }
+
+    private static IReadOnlyList<SalesTrendPoint> BuildTrend(
+        DateTime startDate,
+        DateTime endDate,
+        IReadOnlyDictionary<DateTime, DailyAggregate> grouped)
+    {
+        var totalDays = (endDate - startDate).Days + 1;
+
+        return Enumerable.Range(0, totalDays)
+            .Select(offset =>
+            {
+                var day = startDate.AddDays(offset);
+
+                if (grouped.TryGetValue(day, out var value))
+                {
+                    return new SalesTrendPoint(
+                        day,
+                        value.TicketsSold,
+                        value.NetRevenue,
+                        value.GrossRevenue);
+                }
+
+                return new SalesTrendPoint(
+                    day,
+                    0,
+                    0m,
+                    0m);
+            })
+            .ToList();
+    }
+
+    private sealed record DailyAggregate(
+        int TicketsSold,
+        decimal NetRevenue,
+        decimal GrossRevenue);
 }
