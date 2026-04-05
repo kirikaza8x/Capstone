@@ -9,7 +9,7 @@ using Shared.Application.Abstractions.EventBus;
 
 namespace AI.Application.Features.AiPackages.EventHandlers;
 
-internal sealed class PaymentSuccessIntegrationEventHandler(
+public sealed class PaymentSuccessIntegrationEventHandler(
     IAiPackageRepository aiPackageRepository,
     IOrganizerAiQuotaRepository organizerAiQuotaRepository,
     IAiTokenTransactionRepository aiTokenTransactionRepository,

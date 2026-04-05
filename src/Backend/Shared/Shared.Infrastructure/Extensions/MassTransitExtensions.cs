@@ -65,7 +65,7 @@ public static class MassTransitExtentions
         services.Scan(scan => scan
             .FromAssemblies(assemblies)
             .AddClasses(classes => classes
-                .AssignableTo(typeof(IIntegrationEventHandler<>)))
+                .AssignableTo(typeof(IIntegrationEventHandler<>)), publicOnly: false)
             .AsImplementedInterfaces()
             .WithScopedLifetime());
     }
@@ -97,21 +97,20 @@ public static class MassTransitExtentions
 
     private static void RegisterIntegrationEventConsumers(IRegistrationConfigurator config, Assembly[] assemblies)
     {
-        // Find all IntegrationEventHandler
-        var handlerTypes = assemblies
+        // Find all integration event types handled in provided assemblies.
+        var eventTypes = assemblies
             .SelectMany(a => a.GetTypes())
             .Where(t => t.IsClass && !t.IsAbstract &&
                    t.GetInterfaces().Any(i => i.IsGenericType &&
                    i.GetGenericTypeDefinition() == typeof(IIntegrationEventHandler<>)))
+            .SelectMany(t => t.GetInterfaces())
+            .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IIntegrationEventHandler<>))
+            .Select(i => i.GetGenericArguments()[0])
+            .Distinct()
             .ToList();
 
-        foreach (var handlerType in handlerTypes)
+        foreach (var eventType in eventTypes)
         {
-            // Get event type
-            var eventType = handlerType.GetInterfaces()
-                .First(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IIntegrationEventHandler<>))
-                .GetGenericArguments()[0];
-
             // Create consumer wrapper type
             var consumerType = typeof(IntegrationEventConsumer<>).MakeGenericType(eventType);
             config.AddConsumer(consumerType);

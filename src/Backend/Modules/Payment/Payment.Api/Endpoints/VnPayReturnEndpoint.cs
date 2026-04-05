@@ -30,6 +30,7 @@ public class VnPayReturnEndpoints : ICarterModule
             return result.ToOk();
 
         })
+        .AllowAnonymous()
         .WithName("VnPayReturn")
         .WithSummary("Handle VNPay payment return callback")
         .WithDescription("""

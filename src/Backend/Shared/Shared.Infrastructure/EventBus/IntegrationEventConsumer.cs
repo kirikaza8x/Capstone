@@ -6,13 +6,18 @@ namespace Shared.Infrastructure.EventBus;
 public class IntegrationEventConsumer<TIntegrationEvent> : IConsumer<TIntegrationEvent>
     where TIntegrationEvent : class, IIntegrationEvent
 {
-    private readonly IIntegrationEventHandler<TIntegrationEvent> _handler;
+    private readonly IEnumerable<IIntegrationEventHandler<TIntegrationEvent>> _handlers;
 
-    public IntegrationEventConsumer(IIntegrationEventHandler<TIntegrationEvent> handler)
+    public IntegrationEventConsumer(IEnumerable<IIntegrationEventHandler<TIntegrationEvent>> handlers)
     {
-        _handler = handler;
+        _handlers = handlers;
     }
 
-    public Task Consume(ConsumeContext<TIntegrationEvent> context) =>
-        _handler.Handle(context.Message, context.CancellationToken);
+    public async Task Consume(ConsumeContext<TIntegrationEvent> context)
+    {
+        foreach (var handler in _handlers)
+        {
+            await handler.Handle(context.Message, context.CancellationToken);
+        }
+    }
 }
