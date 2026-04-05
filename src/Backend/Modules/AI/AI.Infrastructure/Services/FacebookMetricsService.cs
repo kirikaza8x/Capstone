@@ -33,9 +33,16 @@ public sealed class FacebookMetricsService : IFacebookMetricsService
         {
             var client = _httpClientFactory.CreateClient("Facebook");
 
+            var pageToken = await GetPageAccessTokenAsync(client, ct);
+            if (pageToken is null)
+            {
+                _logger.LogWarning("Could not retrieve page access token for post {PostId}", externalPostId);
+                return null;
+            }
+
             var fields = "likes.summary(true),comments.summary(true),shares";
             var url = $"{_config.GraphApiBaseUrl}/{_config.GraphApiVersion}/{externalPostId}" +
-                      $"?fields={fields}&access_token={_config.PageAccessToken}";
+                      $"?fields={fields}&access_token={pageToken}";
 
             var response = await client.GetAsync(url, ct);
 
@@ -71,6 +78,37 @@ public sealed class FacebookMetricsService : IFacebookMetricsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to fetch Facebook metrics for post {PostId}", externalPostId);
+            return null;
+        }
+    }
+
+    private async Task<string?> GetPageAccessTokenAsync(HttpClient client, CancellationToken ct)
+    {
+        try
+        {
+            var url = $"{_config.GraphApiBaseUrl}/{_config.GraphApiVersion}/me/accounts" +
+                      $"?access_token={_config.PageAccessToken}";
+
+            var response = await client.GetAsync(url, ct);
+            var raw = await response.Content.ReadAsStringAsync(ct);
+
+            _logger.LogInformation("Page accounts response: {Response}", raw);
+
+            if (!response.IsSuccessStatusCode) return null;
+
+            var json = JsonSerializer.Deserialize<JsonElement>(raw);
+
+            var page = json.GetProperty("data")
+                .EnumerateArray()
+                .FirstOrDefault(p => p.GetProperty("id").GetString() == _config.PageId);
+
+            return page.ValueKind != JsonValueKind.Undefined
+                ? page.GetProperty("access_token").GetString()
+                : null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to retrieve page access token");
             return null;
         }
     }
