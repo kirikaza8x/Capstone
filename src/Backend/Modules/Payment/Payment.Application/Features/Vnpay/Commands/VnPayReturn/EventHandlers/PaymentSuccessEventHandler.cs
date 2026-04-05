@@ -28,15 +28,15 @@ public sealed class PaymentSuccessDomainEventHandler(
 
             await eventBus.PublishAsync(
                 new PaymentSuccessIntegrationEvent(
-                    id: Guid.NewGuid(),
-                    occurredOnUtc: DateTime.UtcNow,
-                    paymentTransactionId: @event.PaymentTransactionId,
-                    userId: @event.UserId,
-                    referenceType: integrationReferenceType,
-                    referenceId: @event.ReferenceId,
-                    amount: @event.Amount,
-                    paidAtUtc: @event.CompletedAtUtc,
-                    orderId: @event.OrderId),
+                    Id: Guid.NewGuid(),
+                    OccurredOnUtc: DateTime.UtcNow,
+                    PaymentTransactionId: @event.PaymentTransactionId,
+                    UserId: @event.UserId,
+                    ReferenceType: integrationReferenceType,
+                    ReferenceId: @event.ReferenceId,
+                    Amount: @event.Amount,
+                    PaidAtUtc: @event.CompletedAtUtc,
+                    OrderId: @event.OrderId ?? Guid.Empty),
                 cancellationToken);
 
             logger.LogInformation(
