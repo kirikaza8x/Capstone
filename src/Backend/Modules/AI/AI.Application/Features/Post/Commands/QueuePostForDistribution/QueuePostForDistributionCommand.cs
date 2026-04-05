@@ -10,5 +10,6 @@ namespace Marketing.Application.Posts.Commands;
 /// </summary>
 public record QueuePostForDistributionCommand(
     Guid PostId,
-    ExternalPlatform Platform
-) : ICommand<Result>;
+    ExternalPlatform Platform,
+    bool IsRetry = true
+) : ICommand;

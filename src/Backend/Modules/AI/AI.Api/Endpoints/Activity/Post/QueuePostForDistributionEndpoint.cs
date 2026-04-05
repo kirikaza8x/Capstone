@@ -23,13 +23,14 @@ public class QueuePostForDistributionEndpoint : ICarterModule
         {
             var command = new QueuePostForDistributionCommand(
                 PostId: postId,
-                Platform: request.Platform
+                Platform: request.Platform,
+                IsRetry: request.IsRetry
             );
 
             var result = await sender.Send(command, cancellationToken);
             return result.ToOk();
         })
-        .RequireAuthorization()
+        // .RequireAuthorization()
         .WithTags("Posts")
         .WithName("QueuePostForDistribution")
         .WithSummary("Manually trigger distribution of a published post to an external platform (e.g., Facebook)");
@@ -42,4 +43,6 @@ public sealed class QueuePostForDistributionRequestDto
     /// Target platform for distribution (Facebook, LinkedIn, etc.)
     /// </summary>
     public ExternalPlatform Platform { get; init; }
+
+    public bool IsRetry { get; init; } = true;
 }

@@ -8,7 +8,7 @@ using Marketing.Application.Posts.Commands;
 namespace Marketing.Application.Posts.Handlers;
 
 public class QueuePostForDistributionCommandHandler
-    : ICommandHandler<QueuePostForDistributionCommand, Result>
+    : ICommandHandler<QueuePostForDistributionCommand>
 {
     private readonly IPostRepository _postRepository;
     private readonly IAiUnitOfWork _unitOfWork;
@@ -21,7 +21,9 @@ public class QueuePostForDistributionCommandHandler
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<Result<Result>> Handle(
+    // Marketing.Application/Posts/Handlers/QueuePostForDistributionCommandHandler.cs
+
+    public async Task<Result> Handle(
         QueuePostForDistributionCommand command,
         CancellationToken cancellationToken)
     {
@@ -32,22 +34,24 @@ public class QueuePostForDistributionCommandHandler
 
         if (post is null)
         {
-            return Result.Failure<Result>(
+            return Result.Failure(
                 MarketingErrors.Post.NotFound(command.PostId));
         }
 
         // ─────────────────────────────────────────────────────────────
-        // Execute domain behavior
+        // Execute domain behavior ← PASS IsRetry HERE
         // ─────────────────────────────────────────────────────────────
-        var distributionResult = post.QueueForExternalDistribution(command.Platform);
+        var distributionResult = command.IsRetry
+            ? post.QueueForExternalDistribution(command.Platform, allowRetry: true)  // ← Changed
+            : post.QueueForExternalDistribution(command.Platform);
 
         if (distributionResult.IsFailure)
         {
-            return Result.Failure<Result>(distributionResult.Error);
+            return Result.Failure(distributionResult.Error);
         }
 
         // ─────────────────────────────────────────────────────────────
-        // Persist changes (triggers domain event for n8n handler later)
+        // Persist changes
         // ─────────────────────────────────────────────────────────────
         _postRepository.Update(post);
         await _unitOfWork.SaveChangesAsync(cancellationToken);

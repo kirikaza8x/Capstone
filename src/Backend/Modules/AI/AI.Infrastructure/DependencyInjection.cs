@@ -193,6 +193,9 @@ public static class DependencyInjection
 
         // ── Register n8n service abstraction ──
         services.AddScoped<IN8nDistributionService, N8nDistributionService>();
+        services.Configure<FacebookConfig>(configuration.GetSection("Facebook"));
+        services.AddHttpClient("Facebook");
+        services.AddScoped<IFacebookMetricsService, FacebookMetricsService>();
 
         return services;
     }

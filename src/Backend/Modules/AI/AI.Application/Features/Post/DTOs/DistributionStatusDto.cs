@@ -2,11 +2,15 @@ using Marketing.Domain.Enums;
 
 namespace Marketing.Application.Posts.Dtos;
 
+
+
 public record DistributionStatusDto(
-    ExternalPlatform Platform,
-    string Status,              // "Pending", "Sent", "Failed"
+    Guid Id,
+    string Platform,
+    string Status,
     string? ExternalUrl,
     string? ExternalPostId,
-    DateTime? SentAt,
-    string? ErrorMessage
+    string? PlatformMetadata,
+    string? ErrorMessage,
+    DateTime? SentAt
 );

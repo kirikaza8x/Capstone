@@ -10,11 +10,19 @@ public class MarketingProfile : Profile
     public MarketingProfile()
     {
         // ========================
+        // DISTRIBUTION STATUS
+        // ========================
+        CreateMap<ExternalDistribution, DistributionStatusDto>()
+            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
+            .ForMember(dest => dest.Platform, opt => opt.MapFrom(src => src.Platform.ToString()))
+            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()));
+
+        // ========================
         // BASE DTO (Generic list views)
         // ========================
         CreateMap<PostMarketing, PostDto>()
-            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()));
-        // Removed Platform mapping - property doesn't exist on Post entity
+            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
+            .ForMember(dest => dest.Distributions, opt => opt.MapFrom(src => src.ExternalDistributions));
 
         // ========================
         // ADMIN LIST ITEM (Moderation queue)
@@ -22,7 +30,7 @@ public class MarketingProfile : Profile
         CreateMap<PostMarketing, PostAdminListItemDto>()
             .ForMember(dest => dest.PostId, opt => opt.MapFrom(src => src.Id))
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
-            // These fields are populated via Events.PublicApi / Users.PublicApi in handler
+            .ForMember(dest => dest.Distributions, opt => opt.MapFrom(src => src.ExternalDistributions))
             .ForMember(dest => dest.EventTitle, opt => opt.Ignore())
             .ForMember(dest => dest.OrganizerName, opt => opt.Ignore());
 
@@ -32,7 +40,7 @@ public class MarketingProfile : Profile
         CreateMap<PostMarketing, PostDetailDto>()
             .ForMember(dest => dest.PostId, opt => opt.MapFrom(src => src.Id))
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
-            // Computed permissions - use traditional comparisons (not pattern matching)
+            .ForMember(dest => dest.Distributions, opt => opt.MapFrom(src => src.ExternalDistributions))
             .ForMember(dest => dest.CanEdit, opt => opt.MapFrom(src =>
                 src.Status == PostStatus.Draft || src.Status == PostStatus.Rejected))
             .ForMember(dest => dest.CanSubmit, opt => opt.MapFrom(src =>
@@ -47,7 +55,6 @@ public class MarketingProfile : Profile
         // ========================
         CreateMap<PostMarketing, PostPublicDto>()
             .ForMember(dest => dest.PostId, opt => opt.MapFrom(src => src.Id))
-            // TrackingUrl is built in handler with baseUrl + eventCode
             .ForMember(dest => dest.TrackingUrl, opt => opt.Ignore());
 
         // ========================
@@ -55,15 +62,7 @@ public class MarketingProfile : Profile
         // ========================
         CreateMap<PostMarketing, PostPendingItemDto>()
             .ForMember(dest => dest.PostId, opt => opt.MapFrom(src => src.Id))
-            // These fields are populated via Events.PublicApi / Users.PublicApi in handler
             .ForMember(dest => dest.EventTitle, opt => opt.Ignore())
             .ForMember(dest => dest.OrganizerName, opt => opt.Ignore());
-
-
-        // ========================
-        // DISTRIBUTION STATUS (for query responses)
-        // ========================
-        CreateMap<ExternalDistribution, DistributionStatusDto>()
-            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()));
     }
 }

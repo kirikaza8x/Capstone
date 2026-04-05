@@ -29,4 +29,7 @@ public class PostDetailDto
     public bool CanSubmit { get; set; }
     public bool CanPublish { get; set; }
     public bool CanArchive { get; set; }
+
+    public IReadOnlyList<DistributionStatusDto> Distributions { get; set; } 
+        = new List<DistributionStatusDto>();
 }
