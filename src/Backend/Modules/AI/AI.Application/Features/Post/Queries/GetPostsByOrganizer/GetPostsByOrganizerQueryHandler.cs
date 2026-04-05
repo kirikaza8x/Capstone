@@ -6,6 +6,8 @@ using Marketing.Application.Posts.Queries;
 using Marketing.Domain.Repositories;
 using Shared.Domain.Pagination;
 using Shared.Application.Abstractions.Authentication;
+using System.Linq.Expressions;
+using Marketing.Domain.Entities;
 
 namespace Marketing.Application.Posts.Handlers;
 
@@ -85,8 +87,11 @@ public class GetOrganizerPostsQueryHandler
                 //         ? p.ExternalPostUrl != null
                 //         : p.ExternalPostUrl == null)
                 // )
-                ,
-            cancellationToken: cancellationToken);
+                , includes: new Expression<Func<PostMarketing, object>>[]
+                {
+                    p => p.ExternalDistributions
+                },
+                cancellationToken: cancellationToken);
 
         var dtoItems = _mapper.Map<IReadOnlyList<PostDto>>(posts.Items);
 

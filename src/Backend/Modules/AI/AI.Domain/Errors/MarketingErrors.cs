@@ -140,6 +140,14 @@ public static class MarketingErrors
         public static Error AlreadyQueued(ExternalPlatform platform) => Error.Conflict(
             "Distribution.AlreadyQueued",
             $"A distribution to {platform} is already pending. Wait for completion or remove it first.");
+
+        public static Error ExternalPostIdMissing => Error.Validation(
+            "Distribution.ExternalPostIdMissing",
+            "No external post ID stored for this distribution.");
+
+        public static Error MetricsFetchFailed => Error.Failure(
+            "Distribution.MetricsFetchFailed",
+            "Failed to fetch metrics from Facebook API.");
     }
 }
 

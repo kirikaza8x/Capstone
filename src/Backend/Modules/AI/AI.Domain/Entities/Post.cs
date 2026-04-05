@@ -369,7 +369,13 @@ public sealed class PostMarketing : AggregateRoot<Guid>
     /// </summary>
     /// <param name="platform">Target platform (Facebook, LinkedIn, etc.)</param>
     /// <returns>Success if queued, Failure with reason otherwise</returns>
-    public Result QueueForExternalDistribution(ExternalPlatform platform)
+    /// <summary>
+    /// Queues this published post for distribution to a specific external platform.
+    /// </summary>
+    /// <param name="platform">Target platform (Facebook, LinkedIn, etc.)</param>
+    /// <param name="allowRetry">If true, allows re-queuing even if a pending/failed distribution exists</param>
+    /// <returns>Success if queued, Failure with reason otherwise</returns>
+    public Result QueueForExternalDistribution(ExternalPlatform platform, bool allowRetry = false)
     {
         // Invariant: Only published posts can be distributed externally
         if (Status != PostStatus.Published)
@@ -379,17 +385,33 @@ public sealed class PostMarketing : AggregateRoot<Guid>
         if (platform == ExternalPlatform.Unknown)
             return Result.Failure(MarketingErrors.Distribution.PlatformRequired);
 
-        // Invariant: Prevent duplicate pending distributions for same platform
-        var existingPending = _externalDistributions.FirstOrDefault(d =>
-            d.Platform == platform && !d.IsSent() && !d.IsFailed());
+        // If NOT a retry: prevent duplicate pending distributions for same platform
+        if (!allowRetry)
+        {
+            var existingPending = _externalDistributions.FirstOrDefault(d =>
+                d.Platform == platform && !d.IsSent() && !d.IsFailed());
 
-        if (existingPending is not null)
-            return Result.Failure(MarketingErrors.Distribution.AlreadyQueued(platform));
+            if (existingPending is not null)
+                return Result.Failure(MarketingErrors.Distribution.AlreadyQueued(platform));
+        }
+        // If IS a retry: we allow re-queuing, but optionally clean up old pending/failed first
+        else
+        {
+            // Optional: Remove old pending/failed distribution for this platform to avoid duplicates
+            var oldDistribution = _externalDistributions.FirstOrDefault(d =>
+                d.Platform == platform && !d.IsSent());
+
+            if (oldDistribution is not null)
+            {
+                _externalDistributions.Remove(oldDistribution);
+            }
+        }
 
         // Create new distribution entity in Pending state
         var distribution = ExternalDistribution.Create(
-    postMarketingId: this.Id,  // ← Pass parent ID
-    platform: platform);
+            postMarketingId: this.Id,
+            platform: platform);
+
         _externalDistributions.Add(distribution);
 
         ModifiedAt = DateTime.UtcNow;
@@ -403,7 +425,6 @@ public sealed class PostMarketing : AggregateRoot<Guid>
 
         return Result.Success();
     }
-
     /// <summary>
     /// Confirms successful distribution to external platform.
     /// Called by n8n callback handler after Facebook/LinkedIn post succeeds.

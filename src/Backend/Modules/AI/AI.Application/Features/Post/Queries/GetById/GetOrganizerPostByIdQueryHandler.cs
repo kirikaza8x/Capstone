@@ -36,7 +36,7 @@ public class GetPostByIdQueryHandler
         // ─────────────────────────────────────────────────────────────
         CurrentUserDto? currentUser = _currentUserService.GetCurrentUser();
         Guid requesterId = currentUser?.UserId ?? Guid.Empty;
-        var post = await _postRepository.GetByIdAsync(query.PostId, cancellationToken);
+        var post = await _postRepository.GetByIdWithDistributionsAsync(query.PostId, cancellationToken);
 
         if (post == null)
         {
