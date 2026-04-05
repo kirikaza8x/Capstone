@@ -2,4 +2,6 @@
 
 namespace Events.Domain.DomainEvents;
 
-public sealed record EventCreatedDomainEvent(Guid EventId, Guid OrganizerId) : DomainEvent;
+public sealed record EventCreatedDomainEvent(
+    Guid AggregateEventId,
+    Guid OrganizerId) : DomainEvent;

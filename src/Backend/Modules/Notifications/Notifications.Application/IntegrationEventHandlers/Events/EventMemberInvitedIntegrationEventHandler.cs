@@ -6,7 +6,7 @@ using Users.PublicApi.PublicApi;
 
 namespace Notifications.Application.IntegrationEventHandlers.Events;
 
-internal sealed class EventMemberInvitedIntegrationEventHandler(
+public sealed class EventMemberInvitedIntegrationEventHandler(
     IUserPublicApi userPublicApi,
     IEmailSender emailSender,
     ILogger<EventMemberInvitedIntegrationEventHandler> logger)

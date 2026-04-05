@@ -13,7 +13,7 @@ internal sealed class EventSuspendedDomainEventHandler(
         var integrationEvent = new EventSuspendedIntegrationEvent(
             id: domainEvent.EventId,
             occurredOnUtc: domainEvent.OccurredOn,
-            eventId: domainEvent.EventId,
+            eventId: domainEvent.AggregateEventId,
             organizerId: domainEvent.OrganizerId,
             suspendedBy: domainEvent.SuspendedBy,
             eventTitle: domainEvent.EventTitle,

@@ -7,7 +7,7 @@ using Users.PublicApi.PublicApi;
 
 namespace Notifications.Application.IntegrationEventHandlers;
 
-internal sealed class EventReminderTriggeredIntegrationEventHandler(
+public sealed class EventReminderTriggeredIntegrationEventHandler(
     IUserPublicApi userPublicApi,
     IEmailSender emailSender,
     ILogger<EventReminderTriggeredIntegrationEventHandler> logger)
