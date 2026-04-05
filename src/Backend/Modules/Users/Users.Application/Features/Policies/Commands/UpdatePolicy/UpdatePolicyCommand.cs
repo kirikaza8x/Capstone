@@ -6,4 +6,5 @@ namespace Users.Application.Features.Policies.Commands.UpdatePolicy;
 public sealed record UpdatePolicyCommand(
     Guid PolicyId,
     string Type,
+    string? FileUrl,
     string Description) : ICommand<PolicyDto>;

@@ -62,6 +62,7 @@ public sealed class InitiatePackagePaymentCommandHandler(
                 command.PackageId,
                 totalAmount,
                 orderInfo,
+                command.ReturnUrl,
                 cancellationToken),
 
             PaymentType.BatchWalletPay => await HandleWalletPayAsync(
@@ -82,6 +83,7 @@ public sealed class InitiatePackagePaymentCommandHandler(
         Guid packageId,
         decimal totalAmount,
         string orderInfo,
+        string? returnUrl,
         CancellationToken cancellationToken)
     {
         var txnRef = Guid.NewGuid().ToString("N");
@@ -100,7 +102,12 @@ public sealed class InitiatePackagePaymentCommandHandler(
 
         try
         {
-            var url = vnPayService.CreatePaymentUrl(totalAmount, txnRef, orderInfo, ipAddress);
+            var url = vnPayService.CreatePaymentUrl(
+                totalAmount,
+                txnRef,
+                orderInfo,
+                ipAddress,
+                returnUrl);
 
             return Result.Success(new InitiatePaymentResult(
                 txn.Id,

@@ -19,20 +19,24 @@ public class GetSalesTrendEndpoint : ICarterModule
     {
         app.MapGet(Constants.Routes.SalesTrend, async (
             Guid eventId,
-            [FromQuery] SalesTrendPeriod? period,
+            [FromQuery] DateTime startDate,
+            [FromQuery] DateTime endDate,
             ISender sender,
             CancellationToken cancellationToken) =>
         {
-            var safePeriod = period ?? SalesTrendPeriod.Day;
+            var query = new GetSalesTrendQuery(
+                eventId,
+                startDate,
+                endDate);
 
-            var query = new GetSalesTrendQuery(eventId, safePeriod);
             var result = await sender.Send(query, cancellationToken);
 
             return result.IsFailure ? result.ToProblem() : result.ToOk();
         })
         .WithTags(Constants.Tags.Reports)
         .WithName("GetSalesTrend")
-        .WithSummary("Get sales trend chart data")
+        .WithSummary("Get sales trend chart data by date range")
+        .WithDescription("Returns daily sales trend from startDate to endDate.")
         .Produces<ApiResult<SalesTrendResponse>>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status401Unauthorized)

@@ -19,6 +19,10 @@ public class UpdatePolicyCommandValidator : AbstractValidator<UpdatePolicyComman
             .NotEmpty()
             .MaximumLength(100);
 
+        RuleFor(x => x.FileUrl)
+            .MaximumLength(1000)
+            .When(x => !string.IsNullOrWhiteSpace(x.FileUrl));
+
         RuleFor(x => x.Description)
             .NotEmpty()
             .MaximumLength(2000);
@@ -61,7 +65,7 @@ public sealed class UpdatePolicyCommandHandler : ICommandHandler<UpdatePolicyCom
                 Error.NotFound("Policy.NotFound", "Policy not found."));
         }
 
-        policy.Update(request.Type, request.Description);
+        policy.Update(request.Type, request.FileUrl, request.Description);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Success(_mapper.Map<PolicyDto>(policy));
