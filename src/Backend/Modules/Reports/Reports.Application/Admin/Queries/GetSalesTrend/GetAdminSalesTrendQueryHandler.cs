@@ -8,9 +8,9 @@ namespace Reports.Application.Admin.Queries.GetSalesTrend;
 internal sealed class GetAdminSalesTrendQueryHandler(
     ITicketingPublicApi ticketingApi,
     IDateTimeProvider dateTimeProvider)
-    : IQueryHandler<GetAdminSalesTrendQuery, AdminSalesTrendResponse>
+    : IQueryHandler<GetAdminSalesTrendQuery, AdminSalesTrendForAllEventResponse>
 {
-    public async Task<Result<AdminSalesTrendResponse>> Handle(
+    public async Task<Result<AdminSalesTrendForAllEventResponse>> Handle(
         GetAdminSalesTrendQuery query,
         CancellationToken cancellationToken)
     {
@@ -26,6 +26,6 @@ internal sealed class GetAdminSalesTrendQueryHandler(
             Transactions: d.Transactions
         )).ToList();
 
-        return Result.Success(new AdminSalesTrendResponse(chartData));
+        return Result.Success(new AdminSalesTrendForAllEventResponse(chartData));
     }
 }

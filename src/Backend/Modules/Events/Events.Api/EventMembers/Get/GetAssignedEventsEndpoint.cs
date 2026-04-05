@@ -29,8 +29,8 @@ public sealed class GetAssignedEventsEndpoint : ICarterModule
         })
         .WithTags(Constants.Tags.Member)
         .WithName("GetAssignedEvents")
-        .WithSummary("Get events assigned to the current user")
-        .WithDescription("Retrieves a list of events where the current authenticated user is an active member/staff.")
+        .WithSummary("Get assigned events or organizer published upcoming/ongoing events")
+        .WithDescription("Organizer: published upcoming/ongoing events by start date. Others: assigned active-member events.")
         .Produces<ApiResult<IReadOnlyCollection<AssignedEventResponse>>>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status401Unauthorized)
         .RequireRoles(Roles.AttendeeAndOrganizer);

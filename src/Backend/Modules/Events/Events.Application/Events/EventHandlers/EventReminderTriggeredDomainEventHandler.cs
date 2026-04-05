@@ -13,7 +13,7 @@ internal sealed class EventReminderTriggeredDomainEventHandler(
         var integrationEvent = new EventReminderTriggeredIntegrationEvent(
             id: domainEvent.EventId,
             occurredOnUtc: domainEvent.OccurredOn,
-            eventId: domainEvent.EventId,
+            eventId: domainEvent.AggregateEventId,
             organizerId: domainEvent.OrganizerId,
             eventTitle: domainEvent.EventTitle,
             eventStartAtUtc: domainEvent.EventStartAtUtc);

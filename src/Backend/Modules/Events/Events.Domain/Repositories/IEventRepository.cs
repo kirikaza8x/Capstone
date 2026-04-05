@@ -66,7 +66,14 @@ public interface IEventRepository : IRepository<Event, Guid>
 
     Task<IReadOnlyList<Event>> GetMiniByIdsAsync(IEnumerable<Guid> ids, CancellationToken ct = default);
 
-    Task<IReadOnlyCollection<Event>> GetAssignedEventsAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyCollection<Event>> GetAssignedEventsAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyCollection<Event>> GetPublishedUpcomingOrOngoingByOrganizerAsync(
+        Guid organizerId,
+        DateTime utcNow,
+        CancellationToken cancellationToken = default);
 
     Task<PagedResult<Event>> SearchEventsAsync(
         string? keyword,

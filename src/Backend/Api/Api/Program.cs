@@ -48,6 +48,9 @@ public class Program
             // Reports
             Reports.Application.AssemblyReference.Assembly,
             Reports.Api.AssemblyReference.Assembly,
+
+            // Notifications
+            Notifications.Application.AssemblyReference.Assembly
         };
 
         // Add Application Services

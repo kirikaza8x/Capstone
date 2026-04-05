@@ -2,19 +2,20 @@
 
 namespace Ticketing.Application.Reports.GetSalesTrend;
 
-public sealed record GetSalesTrendQuery(
-    Guid EventId,
-    DateTime StartDate,
-    DateTime EndDate) : IQuery<SalesTrendResponse>;
+public enum SalesTrendPeriod
+{
+    Day,
+    Week
+}
+
+public sealed record GetSalesTrendQuery(Guid EventId, SalesTrendPeriod Period) : IQuery<SalesTrendResponse>;
 
 public sealed record SalesTrendResponse(
     Guid EventId,
-    DateTime StartDate,
-    DateTime EndDate,
+    string Period,
     IReadOnlyList<SalesTrendPoint> Trend);
 
 public sealed record SalesTrendPoint(
-    DateTime Time,
+    DateTime TimeLabel,
     int TicketsSold,
-    decimal NetRevenue,
-    decimal GrossRevenue);
+    decimal Revenue);

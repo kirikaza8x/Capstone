@@ -13,7 +13,7 @@ internal sealed class EventCompletedDomainEventHandler(
         var integrationEvent = new EventCompletedIntegrationEvent(
             id: domainEvent.EventId,
             occurredOnUtc: domainEvent.OccurredOn,
-            eventId: domainEvent.EventId);
+            eventId: domainEvent.AggregateEventId);
 
         await eventBus.PublishAsync(integrationEvent, cancellationToken);
     }

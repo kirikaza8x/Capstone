@@ -27,7 +27,7 @@ public class GetAdminSalesTrendEndpoint : ICarterModule
         .WithTags(Constants.Tags.Admin)
         .WithName("GetAdminSalesTrend")
         .WithSummary("Get daily sales and transaction trend for charting")
-        .Produces<ApiResult<AdminSalesTrendResponse>>(StatusCodes.Status200OK)
+        .Produces<ApiResult<AdminSalesTrendForAllEventResponse>>(StatusCodes.Status200OK)
         .RequireRoles(Roles.Admin);
     }
 }

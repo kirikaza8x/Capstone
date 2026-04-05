@@ -80,7 +80,9 @@ public sealed class Event : AggregateRoot<Guid>
             CreatedAt = DateTime.UtcNow
         };
 
-        @event.RaiseDomainEvent(new EventCreatedDomainEvent(@event.Id, organizerId));
+        @event.RaiseDomainEvent(new EventCreatedDomainEvent(
+            AggregateEventId: @event.Id,
+            OrganizerId: organizerId));
         return @event;
     }
 
@@ -254,7 +256,7 @@ public sealed class Event : AggregateRoot<Guid>
         ModifiedAt = now;
 
         RaiseDomainEvent(new EventSuspendedDomainEvent(
-            EventId: Id,
+            AggregateEventId: Id,
             OrganizerId: OrganizerId,
             SuspendedBy: suspendedBy,
             EventTitle: Title,
@@ -275,7 +277,9 @@ public sealed class Event : AggregateRoot<Guid>
             CancellationReason = reason;
 
         ModifiedAt = DateTime.UtcNow;
-        RaiseDomainEvent(new EventCancelledDomainEvent(Id, CancellationReason));
+        RaiseDomainEvent(new EventCancelledDomainEvent(
+            AggregateEventId: Id,
+            CancellationReason: CancellationReason));
         return Result.Success();
     }
 
@@ -372,10 +376,10 @@ public sealed class Event : AggregateRoot<Guid>
         ModifiedAt = DateTime.UtcNow;
 
         RaiseDomainEvent(new EventMemberInvitedDomainEvent(
-            member.Id,
-            Id,
-            userId,
-            email));
+            EventMemberId: member.Id,
+            AggregateEventId: Id,
+            UserId: userId,
+            Email: email));
 
         return member;
     }
@@ -410,7 +414,8 @@ public sealed class Event : AggregateRoot<Guid>
         Status = EventStatus.Completed;
         ModifiedAt = now;
 
-        RaiseDomainEvent(new EventCompletedDomainEvent(Id));
+        RaiseDomainEvent(new EventCompletedDomainEvent(
+            AggregateEventId: Id));
         return Result.Success();
     }
 
@@ -440,7 +445,7 @@ public sealed class Event : AggregateRoot<Guid>
         ModifiedAt = now;
 
         RaiseDomainEvent(new EventReminderTriggeredDomainEvent(
-            EventId: Id,
+            AggregateEventId: Id,
             OrganizerId: OrganizerId,
             EventTitle: Title,
             EventStartAtUtc: startAt));
