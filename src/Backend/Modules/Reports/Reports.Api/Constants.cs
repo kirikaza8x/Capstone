@@ -14,6 +14,6 @@ internal static class Constants
         public const string AdminOverview = $"{Admin}/overview";
         public const string AdminSalesTrend = $"{Admin}/sales-trend";
         public const string AdminTopEvents = $"{Admin}/top-events";
-
+        public const string AdminAiPackageOverview = $"{Admin}/ai-package-overview";
     }
 }
