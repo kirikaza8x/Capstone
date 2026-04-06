@@ -1,7 +1,7 @@
 using AI.Application.Features.Tracking.Commands;
+using AI.IntegrationEvents.IntergrationEvents;
 using MediatR;
 using Shared.Application.Abstractions.EventBus;
-using Shared.IntegrationEvents.AI;
 
 namespace AI.Application.Features.Tracking.Consumers;
 

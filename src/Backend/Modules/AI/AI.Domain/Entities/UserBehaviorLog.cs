@@ -1,6 +1,6 @@
 using AI.Domain.Events;
 using AI.Domain.Helpers;
-using AI.Domain.ValueObjects;
+using AI.PublicApi.Enums;
 using Shared.Domain.DDD;
 
 namespace AI.Domain.Entities;

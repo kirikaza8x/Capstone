@@ -1,17 +1,20 @@
-﻿using Events.PublicApi.PublicApi;
+﻿using AI.IntegrationEvents.IntergrationEvents;
+using AI.PublicApi.Enums;
+using Events.PublicApi.PublicApi;
 using Events.PublicApi.Records;
 using Microsoft.Extensions.Logging;
 using Shared.Application.Abstractions.Authentication;
+using Shared.Application.Abstractions.EventBus;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Application.Abstractions.Time;
 using Shared.Domain.Abstractions;
 using Ticketing.Application.Abstractions.Locks;
 using Ticketing.Application.Helpers;
 using Ticketing.Domain.Entities;
-using Ticketing.Domain.Enums;
 using Ticketing.Domain.Errors;
 using Ticketing.Domain.Repositories;
 using Ticketing.Domain.Uow;
+using Users.PublicApi.Constants;
 
 namespace Ticketing.Application.Orders.Commands.CreateOrder;
 
@@ -22,7 +25,8 @@ internal sealed class CreateOrderCommandHandler(
     ITicketLockService ticketLockService,
     IOrderRepository orderRepository,
     ILogger<CreateOrderCommandHandler> logger,
-    ITicketingUnitOfWork unitOfWork) : ICommandHandler<CreateOrderCommand, Guid>
+    ITicketingUnitOfWork unitOfWork,
+    IEventBus eventBus) : ICommandHandler<CreateOrderCommand, Guid>
 {
     private static readonly TimeSpan LockTtl = TimeSpan.FromMinutes(15);
 
@@ -33,6 +37,10 @@ internal sealed class CreateOrderCommandHandler(
         var userId = currentUserService.UserId;
         if (userId == Guid.Empty)
             return Result.Failure<Guid>(Error.Unauthorized("Order.Create.Unauthorized", "Current user is not authenticated."));
+
+        var isBehaviorActor =
+            currentUserService.Roles.Contains(Roles.Attendee) ||
+            currentUserService.Roles.Contains(Roles.Organizer);
 
         var utcNow = dateTimeProvider.UtcNow;
         var seatLocks = new List<(Guid SessionId, Guid SeatId)>();
@@ -111,6 +119,23 @@ internal sealed class CreateOrderCommandHandler(
             await unitOfWork.SaveChangesAsync(cancellationToken);
 
             isSaved = true;
+
+            if (isBehaviorActor)
+            {
+                var checkoutEvent = TrackUserActivityIntegrationEvent.Create(
+                    userId: userId,
+                    actionType: ActionTypes.Checkout,
+                    targetId: order.Id.ToString(),
+                    targetType: TargetType.Ticket,
+                    metadata: new Dictionary<string, string>
+                    {
+                        ["eventId"] = command.EventId.ToString(),
+                        ["ticketCount"] = command.Tickets.Count.ToString(),
+                        ["amount"] = order.TotalPrice.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                    });
+
+                await eventBus.PublishAsync(checkoutEvent, cancellationToken);
+            }
 
             logger.LogInformation(
                 "Order {OrderId} created successfully for User {UserId}. Total Price: {TotalPrice}.",

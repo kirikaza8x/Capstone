@@ -1,4 +1,4 @@
-namespace Payments.Domain.Enums;
+namespace Payment.Domain.Enums;
 
 public enum WithdrawalRequestStatus
 {
@@ -8,5 +8,4 @@ public enum WithdrawalRequestStatus
     Completed,  // Admin confirmed the bank transfer is done
     Cancelled,  // Cancelled by the user before admin action
     Failed
-
 }
