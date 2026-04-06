@@ -1,0 +1,322 @@
+{
+  "name": "Post to Facebook - AIPromo",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "post-distribute",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "35513de6-d571-44df-b8b1-fec763080e75",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -448,
+        128
+      ],
+      "webhookId": "post-distribute"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v23.0/1120894677764816/feed",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "message",
+              "value": "={{ $json.body.title + \"\\n\\n\" + $json.body.body + \"\\n\\n\" + ($json.body.summary ?? \"\") }}"
+            },
+            {
+              "name": "picture",
+              "value": "={{ $json.body.image_url }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0d243e1a-25df-4ad3-9863-b1c1d1e8a800",
+      "name": "Post to Facebook",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -272,
+        128
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "MSNFHOR71ftEos6S",
+          "name": "Header Auth account"
+        },
+        "facebookGraphApi": {
+          "id": "X5IHk5sMuyhwi1Yq",
+          "name": "Facebook Graph account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:5197/api/webhooks/n8n/distribution-success",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "aipromo-webhook-key-2026"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "post_id",
+              "value": "={{ $node[\"Webhook\"].json.body.post_id }}"
+            },
+            {
+              "name": "platform",
+              "value": "Facebook"
+            },
+            {
+              "name": "external_url",
+              "value": "=https://www.facebook.com/{{ $json.id }}"
+            },
+            {
+              "name": "external_post_id",
+              "value": "={{ $json.id }}"
+            },
+            {
+              "name": "platform_metadata",
+              "value": "={{ JSON.stringify({ facebook_post_id: $json.id, app_id: \"1755288118783416\", page_id: \"1120894677764816\" }) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "bb86b82b-8638-4d4f-8d6f-c031c0e688f9",
+      "name": "Callback Success",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "MSNFHOR71ftEos6S",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:5197/api/webhooks/n8n/distribution-failed",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "aipromo-webhook-key-2026"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "post_id",
+              "value": "={{ $node[\"Webhook\"].json.body.post_id }}"
+            },
+            {
+              "name": "platform",
+              "value": "Facebook"
+            },
+            {
+              "name": "error_message",
+              "value": "={{ $json.error?.message || $json.message || 'Unknown Facebook API Error' }}"
+            },
+            {
+              "name": "can_retry",
+              "value": "true"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "30b7cbe8-57c5-448c-9ecf-f65e61e1c6ed",
+      "name": "Callback Failed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        240
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "MSNFHOR71ftEos6S",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-post-id",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "538e1d00-9335-41be-80d6-cd7e7c505486",
+      "name": "Post Success?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -112,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, message: 'Post distributed to Facebook', facebook_post_id: $node['Post to Facebook'].json.id }) }}",
+        "options": {}
+      },
+      "id": "6864c9eb-601d-4dd3-8b56-4bb4834a8411",
+      "name": "Respond Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: false, message: 'Facebook distribution failed', error: $json.error?.message || $json.message }) }}",
+        "options": {
+          "responseCode": 500
+        }
+      },
+      "id": "353616ab-2edb-4f04-b451-f8538680fa5d",
+      "name": "Respond Failed",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        240
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Post to Facebook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post to Facebook": {
+      "main": [
+        [
+          {
+            "node": "Post Success?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Success?": {
+      "main": [
+        [
+          {
+            "node": "Callback Success",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Callback Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Callback Success": {
+      "main": [
+        [
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Callback Failed": {
+      "main": [
+        [
+          {
+            "node": "Respond Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "0ed8ef3d-45fa-4c28-9ec2-ef7f4bff9343",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5229ad676c3a8d293c6db345f673ae85f2faeec97332d940e6b8ecea4c050d50"
+  },
+  "id": "0Q6s9e4BPLGcM7mD",
+  "tags": []
+}
