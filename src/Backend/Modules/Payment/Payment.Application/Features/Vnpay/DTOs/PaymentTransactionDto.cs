@@ -2,24 +2,49 @@ using Payment.Domain.Enums;
 
 namespace Payments.Application.DTOs.Payment;
 
-public record PaymentTransactionDto(
-    Guid Id,
-    PaymentType Type,
-    PaymentInternalStatus InternalStatus,
-    decimal Amount,
-    string Currency,
-    Guid? OrderId,
-    IReadOnlyList<BatchPaymentItemDto> Items,
-    string? GatewayTxnRef,
-    string? GatewayTransactionNo,
-    string? GatewayResponseCode,
-    string? GatewayBankCode,
-    DateTime? CreatedAt,
-    DateTime? CompletedAt,
-    DateTime? FailedAt,
-    DateTime? RefundedAt
-);
+public record PaymentTransactionDto
+{
+    public Guid Id { get; init; }
+    public Guid UserId { get; init; }   // <-- Added
+    public string? Username { get; set; } // <-- Changed to settable
+    public PaymentType Type { get; init; }
+    public PaymentInternalStatus InternalStatus { get; init; }
+    public decimal Amount { get; init; }
+    public string Currency { get; init; } = "VND";
+    public Guid? OrderId { get; init; }
+    // public IReadOnlyList<BatchPaymentItemDto> Items { get; init; } = new List<BatchPaymentItemDto>();
+    public string? GatewayTxnRef { get; init; }
+    public string? GatewayTransactionNo { get; init; }
+    public string? GatewayResponseCode { get; init; }
+    public string? GatewayBankCode { get; init; }
+    public DateTime? CreatedAt { get; init; }
+    public DateTime? CompletedAt { get; init; }
+    public DateTime? FailedAt { get; init; }
+    public DateTime? RefundedAt { get; init; }
+}
 
+
+
+public record PaymentTransactionDetailDto
+{
+    public Guid Id { get; init; }
+    public Guid UserId { get; init; }   // <-- Added
+    public string? Username { get; set; } // <-- Changed to settable
+    public PaymentType Type { get; init; }
+    public PaymentInternalStatus InternalStatus { get; init; }
+    public decimal Amount { get; init; }
+    public string Currency { get; init; } = "VND";
+    public Guid? OrderId { get; init; }
+    public IReadOnlyList<BatchPaymentItemDto> Items { get; init; } = new List<BatchPaymentItemDto>();
+    public string? GatewayTxnRef { get; init; }
+    public string? GatewayTransactionNo { get; init; }
+    public string? GatewayResponseCode { get; init; }
+    public string? GatewayBankCode { get; init; }
+    public DateTime? CreatedAt { get; init; }
+    public DateTime? CompletedAt { get; init; }
+    public DateTime? FailedAt { get; init; }
+    public DateTime? RefundedAt { get; init; }
+}
 public record BatchPaymentItemDto(
     Guid Id,
     Guid OrderTicketId,

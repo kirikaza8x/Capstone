@@ -12,6 +12,11 @@ public partial interface IRepository<TEntity, TId>
         TId id,
         CancellationToken cancellationToken = default);
 
+     Task<TEntity?> GetByIdAsync(
+        TId id,
+        IEnumerable<Expression<Func<TEntity, object>>>? includes = null,
+        CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<TEntity>> GetAllAsync(
         CancellationToken cancellationToken = default);
 
