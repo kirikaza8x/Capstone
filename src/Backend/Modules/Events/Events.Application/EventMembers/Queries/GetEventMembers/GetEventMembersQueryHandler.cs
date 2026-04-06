@@ -26,12 +26,7 @@ internal sealed class GetEventMembersQueryHandler(
             return Result.Failure<IReadOnlyList<EventMemberResponse>>(EventErrors.Event.NotOwner);
 
         var userIds = @event.Members.Select(m => m.UserId).Distinct().ToList();
-        var userInfos = await Task.WhenAll(
-            userIds.Select(id => userPublicApi.GetByIdAsync(id, cancellationToken)));
-
-        var userMap = userInfos
-            .Where(u => u is not null)
-            .ToDictionary(u => u!.Id, u => u!);
+        var userMap = await userPublicApi.GetUserMapByIdsAsync(userIds, cancellationToken);
 
         var response = @event.Members.Select(m =>
         {
