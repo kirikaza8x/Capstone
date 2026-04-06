@@ -307,7 +307,9 @@ internal sealed class EventRepository(EventsDbContext context)
         return await _context.Events
             .Include(e => e.Sessions) 
             .Include(e => e.Members)
-            .Where(e => e.Members.Any(m => m.UserId == userId && m.Status == EventMemberStatus.Active))
+            .Where(e =>
+                e.Status == EventStatus.Published &&
+                e.Members.Any(m => m.UserId == userId && m.Status == EventMemberStatus.Active))
             .AsNoTracking()
             .ToListAsync(cancellationToken);
     }

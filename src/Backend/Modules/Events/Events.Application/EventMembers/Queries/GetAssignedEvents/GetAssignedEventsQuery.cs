@@ -13,5 +13,7 @@ public sealed record AssignedEventResponse
     public DateTime? EventStartAt { get; init; }
     public DateTime? EventEndAt { get; init; }
     public IReadOnlyCollection<EventSessionDto> Sessions { get; init; } = [];
+    public List<string> Permissions { get; set; } = [];
+
 };
 

@@ -27,9 +27,24 @@ internal class GetAssignedEventsQueryHandler(
                 cancellationToken)
             : await eventRepository.GetAssignedEventsAsync(userId, cancellationToken);
 
-        var response = mapper.Map<IReadOnlyCollection<AssignedEventResponse>>(events);
+        var response = mapper.Map<List<AssignedEventResponse>>(events);
 
-        return Result.Success(response);
+        if (!isOrganizer)
+        {
+            var permissionsByEventId = events.ToDictionary(
+                e => e.Id,
+                e => e.Members.FirstOrDefault(m => m.UserId == userId)?.Permissions ?? []);
+
+            foreach (var item in response)
+            {
+                if (permissionsByEventId.TryGetValue(item.EventId, out var permissions))
+                {
+                    item.Permissions = [.. permissions];
+                }
+            }
+        }
+
+        return Result.Success<IReadOnlyCollection<AssignedEventResponse>>(response);
     }
 }
 
