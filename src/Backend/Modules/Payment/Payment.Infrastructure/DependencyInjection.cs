@@ -1,4 +1,3 @@
-
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -10,14 +9,16 @@ using Payments.Application.Features.Refunds.Services;
 using Payments.Domain.UOW;
 using Payments.Infrastructure.Data.UOW;
 using Payments.Infrastructure.Persistence.Contexts;
+using Payments.Infrastructure.PublicApi;
 using Payments.Infrastructure.Services;
+using Payments.PublicApi.PublicApi;
 using Shared.Domain.Data.Repositories;
 using Shared.Infrastructure.Configs;
 using Shared.Infrastructure.Configs.Database;
 using Shared.Infrastructure.Data.Seeds;
+
 namespace Payments.Infrastructure
 {
-
     public static class DependencyInjection
     {
         public static IServiceCollection AddPaymentsInfrastructure(this IServiceCollection services, IConfiguration configuration)
@@ -56,16 +57,18 @@ namespace Payments.Infrastructure
                 .UseSnakeCaseNamingConvention()
                 .AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
             });
+
             services.AddScoped<IPaymentUnitOfWork, PaymentUnitOfWork>();
             services.AddScoped<IVnPayService, VnPayService>();
             services.AddScoped<MassRefundService>();
-            // Public Api
+
+            services.AddScoped<IAiPackageRevenuePublicApi, AiPackageRevenuePublicApi>();
+
             return services;
         }
 
         public static IApplicationBuilder UseUserInfrastructure(this IApplicationBuilder app)
         {
-            // app.UseMigration<UserModuleDbContext>();
             return app;
         }
     }

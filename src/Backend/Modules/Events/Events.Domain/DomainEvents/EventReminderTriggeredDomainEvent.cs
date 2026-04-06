@@ -3,7 +3,7 @@
 namespace Events.Domain.DomainEvents;
 
 public sealed record EventReminderTriggeredDomainEvent(
-    Guid EventId,
+    Guid AggregateEventId,
     Guid OrganizerId,
     string EventTitle,
     DateTime EventStartAtUtc) : DomainEvent;

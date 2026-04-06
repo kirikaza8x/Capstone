@@ -2,4 +2,5 @@
 
 namespace Events.Domain.DomainEvents;
 
-public sealed record EventUnpublishedDomainEvent(Guid EventId) : DomainEvent;
+public sealed record EventUnpublishedDomainEvent(
+    Guid AggregateEventId) : DomainEvent;

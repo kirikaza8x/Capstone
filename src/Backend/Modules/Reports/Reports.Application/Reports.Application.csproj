@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\Shared\Shared.Application\Shared.Application.csproj" />
+    <ProjectReference Include="..\..\AI\AI.PublicApi\AI.PublicApi.csproj" />
     <ProjectReference Include="..\..\Events\Events.PublicApi\Events.PublicApi.csproj" />
     <ProjectReference Include="..\..\Payment\Payment.PublicApi\Payment.PublicApi.csproj" />
     <ProjectReference Include="..\..\Ticketing\Ticketing.PublicApi\Ticketing.PublicApi.csproj" />

@@ -6,21 +6,21 @@ using Shared.Application.Abstractions.Messaging;
 
 namespace Events.Application.EventMembers.EventHandlers;
 
-internal sealed class EventMemberInvitedDomainEventHandler(
+public sealed class EventMemberInvitedDomainEventHandler(
     IEventRepository eventRepository,
     IEventBus eventBus) : IDomainEventHandler<EventMemberInvitedDomainEvent>
 {
     public async Task Handle(EventMemberInvitedDomainEvent domainEvent, CancellationToken cancellationToken)
     {
-        var @event = await eventRepository.GetByIdAsync(domainEvent.EventId, cancellationToken);
+        var @event = await eventRepository.GetByIdAsync(domainEvent.AggregateEventId, cancellationToken);
 
         if (@event is null)
             return;
 
         var integrationEvent = new EventMemberInvitedIntegrationEvent(
-            id: Guid.NewGuid(), 
+            id: Guid.NewGuid(),
             occurredOnUtc: DateTime.UtcNow,
-            eventId: domainEvent.EventId,
+            eventId: domainEvent.AggregateEventId,
             eventTitle: @event.Title,
             eventMemberId: domainEvent.EventMemberId,
             userId: domainEvent.UserId,

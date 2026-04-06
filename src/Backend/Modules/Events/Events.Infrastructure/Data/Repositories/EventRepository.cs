@@ -312,6 +312,27 @@ internal sealed class EventRepository(EventsDbContext context)
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyCollection<Event>> GetPublishedUpcomingOrOngoingByOrganizerAsync(
+        Guid organizerId,
+        DateTime utcNow,
+        CancellationToken cancellationToken = default)
+    {
+        return await _context.Events
+            .AsNoTracking()
+            .Include(e => e.Sessions)
+            .Where(e =>
+                e.OrganizerId == organizerId &&
+                e.Status == EventStatus.Published &&
+                (!e.EventEndAt.HasValue || e.EventEndAt.Value >= utcNow))
+            .OrderBy(e =>
+                e.EventStartAt.HasValue &&
+                e.EventStartAt.Value <= utcNow &&
+                (!e.EventEndAt.HasValue || e.EventEndAt.Value >= utcNow) ? 0 : 1)
+            .ThenBy(e => e.EventStartAt ?? DateTime.MaxValue) 
+            .ToListAsync(cancellationToken);
+    }
+
+
     public async Task<PagedResult<Event>> SearchEventsAsync(
         string keyword,
         PagedQuery query,

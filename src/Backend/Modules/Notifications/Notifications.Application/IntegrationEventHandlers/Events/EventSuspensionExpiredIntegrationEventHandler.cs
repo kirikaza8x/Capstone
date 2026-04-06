@@ -6,7 +6,7 @@ using Users.PublicApi.PublicApi;
 
 namespace Notifications.Application.IntegrationEventHandlers.Events;
 
-internal sealed class EventSuspensionExpiredIntegrationEventHandler(
+public sealed class EventSuspensionExpiredIntegrationEventHandler(
     IUserPublicApi userPublicApi,
     IEmailSender emailSender,
     ILogger<EventSuspensionExpiredIntegrationEventHandler> logger)
