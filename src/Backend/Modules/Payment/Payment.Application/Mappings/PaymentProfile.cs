@@ -32,28 +32,7 @@ public class PaymentProfile : Profile
 
         CreateMap<WalletTransaction, WalletTransactionDto>();
 
-        // --- RefundRequest → RefundRequestDto ---
         CreateMap<RefundRequest, RefundRequestDto>();
-
-        // --- Request bodies → Commands ---
-        // UserId and IpAddress always come from ICurrentUserService in endpoint
-        // — mapped there, never trusted from request body
-
-        // CreateMap<InitiateTopUpRequest, InitiateTopUpCommand>()
-        //     .ConstructUsing((src, _) => new InitiateTopUpCommand(
-        //         UserId: Guid.Empty,
-        //         IpAddress: string.Empty,
-        //         Amount: src.Amount,
-        //         Description: src.Description));
-
-        // CreateMap<InitiatePaymentRequest, InitiatePaymentCommand>()
-        //     .ConstructUsing((src, _) => new InitiatePaymentCommand(
-        //         UserId: Guid.Empty,
-        //         IpAddress: string.Empty,
-        //         Method: src.Method,
-        //         Items: src.Items,
-        //         Description: src.Description));
-
 
     }
 }
