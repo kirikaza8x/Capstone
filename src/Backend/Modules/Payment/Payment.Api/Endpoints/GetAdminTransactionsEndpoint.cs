@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using System.Linq.Dynamic.Core;
 using Carter;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
@@ -9,6 +8,7 @@ using Payment.Domain.Enums;
 using Payments.Application.DTOs.Payment;
 using Payments.Application.Features.Payments.Queries.GetAdminTransactions;
 using Shared.Api.Results;
+using Shared.Domain.Pagination;
 
 namespace Payments.Api.Features.Payments.GetAdminTransactions;
 
@@ -27,6 +27,7 @@ public class GetAdminTransactionsEndpoint : ICarterModule
                 OrderId = request.OrderId,
                 EventId = request.EventId,
                 Type = request.Type,
+                ReferenceType = request.ReferenceType,
                 Status = request.Status,
                 AmountMin = request.AmountMin,
                 AmountMax = request.AmountMax,
@@ -37,14 +38,13 @@ public class GetAdminTransactionsEndpoint : ICarterModule
                 PageSize = request.PageSize,
                 SortColumn = request.SortColumn,
                 SortOrder = request.SortOrder?.ToLower() == "asc"
-                                ? Shared.Domain.Queries.SortOrder.Ascending
-                                : Shared.Domain.Queries.SortOrder.Descending
+                    ? Shared.Domain.Queries.SortOrder.Ascending
+                    : Shared.Domain.Queries.SortOrder.Descending
             };
 
             var result = await sender.Send(query, cancellationToken);
             return result.ToOk();
         })
-        // .RequireAuthorization("Admin")
         .WithName("GetAdminTransactions")
         .WithTags("Payments")
         .Produces<PagedResult<PaymentTransactionDto>>(StatusCodes.Status200OK)
@@ -64,6 +64,7 @@ public sealed record GetAdminTransactionsRequestDto
     public Guid? OrderId { get; init; }
     public Guid? EventId { get; init; }
     public PaymentType? Type { get; init; }
+    public PaymentReferenceType? ReferenceType { get; init; }
     public PaymentInternalStatus? Status { get; init; }
     public decimal? AmountMin { get; init; }
     public decimal? AmountMax { get; init; }
