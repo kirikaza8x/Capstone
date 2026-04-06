@@ -29,16 +29,19 @@ public class N8nDistributionService : IN8nDistributionService
         ExternalPlatform platform,
         CancellationToken ct = default)
     {
-        // Service builds public URL using its own config
+        var cleanTitle = GeminiTextStripper.StripHtml(post.Title);
+        var cleanSummary = GeminiTextStripper.StripHtml(post.Summary);
+        var cleanBody = GeminiTextStripper.BodyBlocksToPlainText(post.Body);
+
         var publicUrl = $"{_config.AppBaseUrl}/posts/{post.Slug}";
 
         var payload = new
         {
             post_id = post.Id,
             tracking_token = post.TrackingToken,
-            title = post.Title,
-            body = post.Body,
-            summary = post.Summary,
+            title = cleanTitle,
+            summary = cleanSummary,
+            body = cleanBody,
             image_url = post.ImageUrl,
             platform = platform.ToString(),
             public_url = publicUrl,
@@ -48,12 +51,12 @@ public class N8nDistributionService : IN8nDistributionService
         try
         {
             var client = _httpClientFactory.CreateClient("N8n");
-            
+
             var response = await client.PostAsJsonAsync(
                 string.Empty,  // BaseAddress is the full webhook URL from config
                 payload,
                 ct);
-            
+
             return response.IsSuccessStatusCode;
         }
         catch (Exception ex)

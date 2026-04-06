@@ -123,6 +123,33 @@ public static class MarketingErrors
     // =========================================================
     // Distribution Errors (NEW - sibling of Post, not nested)
     // =========================================================
+
+    public static class ExternalDistribution
+    {
+        public static Error NotFound(Guid distributionId) => Error.NotFound(
+            "ExternalDistribution.NotFound",
+            $"External distribution with ID '{distributionId}' was not found.");
+
+        public static Error PlatformRequired => Error.Validation(
+            "ExternalDistribution.PlatformRequired",
+            "Platform must be specified and cannot be Unknown.");
+
+        public static Error UrlRequired => Error.Validation(
+            "ExternalDistribution.UrlRequired",
+            "External URL is required for distribution.");
+
+        public static Error AlreadyQueued(ExternalPlatform platform) => Error.Conflict(
+            "ExternalDistribution.AlreadyQueued",
+            $"A distribution to {platform} is already pending.");
+
+        public static Error SendFailed(string reason) => Error.Failure(
+            "ExternalDistribution.SendFailed",
+            $"Failed to send distribution: {reason}");
+
+        public static Error MetricsFetchFailed => Error.Failure(
+            "ExternalDistribution.MetricsFetchFailed",
+            "Failed to fetch metrics from external platform.");
+    }
     public static class Distribution
     {
         public static Error PlatformRequired => Error.Validation(
