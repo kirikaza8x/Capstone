@@ -16,7 +16,7 @@ public class GetAdminTransactionsEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapGet("/api/admin/transactions", async (
+        app.MapGet("/api/payments", async (
             [AsParameters] GetAdminTransactionsRequestDto request,
             ISender sender,
             CancellationToken cancellationToken) =>
@@ -46,7 +46,7 @@ public class GetAdminTransactionsEndpoint : ICarterModule
         })
         // .RequireAuthorization("Admin")
         .WithName("GetAdminTransactions")
-        .WithTags("Admin", "Transactions")
+        .WithTags("Payments")
         .Produces<PagedResult<PaymentTransactionDto>>(StatusCodes.Status200OK)
         .WithSummary("Admin: paginated list of all payment transactions with filters");
     }
