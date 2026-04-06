@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Payment.Domain.Enums;
 using Payments.Domain.Entities;
-using Payments.Domain.Enums;
 using Payments.Domain.Repositories;
 using Payments.Infrastructure.Persistence.Contexts;
 using Shared.Infrastructure.Data;

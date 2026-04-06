@@ -1,9 +1,7 @@
 using Shared.Application.Abstractions.Authentication;
-using Shared.Application.Abstractions.EventBus;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Application.DTOs;
 using Shared.Domain.Abstractions;
-using Shared.IntegrationEvents.AI;
 using Users.Application.Features.Users.Commands.Records;
 using Users.Application.Features.Users.Dtos;
 using Users.Domain.Entities;

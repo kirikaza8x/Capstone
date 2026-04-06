@@ -1,4 +1,6 @@
-﻿using MediatR;
+﻿using AI.IntegrationEvents.IntergrationEvents;
+using AI.PublicApi.Enums;
+using MediatR;
 using Microsoft.Extensions.Logging;
 using Payment.IntegrationEvents;
 using Shared.Application.Abstractions.EventBus;
@@ -8,6 +10,7 @@ namespace Ticketing.Application.Orders.EventHandlers;
 
 public class PaymentSuccessIntegrationEventHandler(
     ISender sender,
+    IEventBus eventBus,
     ILogger<PaymentSuccessIntegrationEventHandler> logger)
     : IntegrationEventHandler<PaymentSuccessIntegrationEvent>
 {
@@ -44,6 +47,20 @@ public class PaymentSuccessIntegrationEventHandler(
                 orderId,
                 result.Error.Code,
                 result.Error.Description);
+            return;
         }
+
+        var purchaseEvent = TrackUserActivityIntegrationEvent.Create(
+            userId: integrationEvent.UserId,
+            actionType: ActionTypes.Purchase,
+            targetId: orderId.ToString(),
+            targetType: TargetType.Ticket,
+            metadata: new Dictionary<string, string>
+            {
+                ["paymentTransactionId"] = integrationEvent.PaymentTransactionId.ToString(),
+                ["amount"] = integrationEvent.Amount.ToString(System.Globalization.CultureInfo.InvariantCulture)
+            });
+
+        await eventBus.PublishAsync(purchaseEvent, cancellationToken);
     }
 }

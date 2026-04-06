@@ -1,6 +1,6 @@
 ﻿using AI.Domain.Entities;
-using AI.Domain.ValueObjects;
 using AI.Infrastructure.Data;
+using AI.PublicApi.Enums;
 using Microsoft.EntityFrameworkCore;
 using Shared.Infrastructure.Data.Seeds;
 

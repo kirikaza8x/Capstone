@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Payment.Domain.Enums;
-using Payments.Domain.Enums;
 using Payments.Infrastructure.Persistence.Contexts;
 using Payments.PublicApi.PublicApi;
 
