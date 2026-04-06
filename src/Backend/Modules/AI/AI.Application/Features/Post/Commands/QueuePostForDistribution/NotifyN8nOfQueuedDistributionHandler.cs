@@ -16,47 +16,44 @@ public class NotifyN8nOfQueuedDistributionHandler(
 {
     public async Task Handle(PostQueuedForDistributionDomainEvent notification, CancellationToken cancellationToken)
     {
-        // Load aggregate WITH child entities
         var post = await postRepository.GetByIdWithDistributionsAsync(
-            notification.PostId, 
+            notification.PostId,
             cancellationToken);
-        
+
         if (post is null)
         {
             logger.LogWarning("Post {PostId} not found for distribution notification", notification.PostId);
             return;
         }
 
-        // Fire-and-forget: notify n8n + update status
-        _ = Task.Run(async () =>
+        try
         {
-            try
-            {
-                // 1. Call n8n service (service handles config, URL, HTTP)
-                var sentToN8n = await n8nService.SendAsync(
-                    post, 
-                    notification.Platform, 
-                    CancellationToken.None);
+            var sentToN8n = await n8nService.SendAsync(
+                post,
+                notification.Platform,
+                cancellationToken);
 
-                // 2. If n8n accepted, update status via aggregate method
-                if (sentToN8n)
+            if (sentToN8n)
+            {
+                var result = post.MarkDistributionAsInProgress(notification.Platform);
+                if (result.IsSuccess)
                 {
-                    var result = post.MarkDistributionAsInProgress(notification.Platform);
-                    if (result.IsSuccess)
-                    {
-                        postRepository.Update(post);
-                        await unitOfWork.SaveChangesAsync(CancellationToken.None);
-                        
-                        logger.LogInformation("Post {PostId} → {Platform} marked as InProgress", 
-                            post.Id, notification.Platform);
-                    }
+                    postRepository.Update(post);
+                    await unitOfWork.SaveChangesAsync(cancellationToken);
+
+                    logger.LogInformation("Post {PostId} → {Platform} marked as InProgress",
+                        post.Id, notification.Platform);
                 }
             }
-            catch (Exception ex)
+            else
             {
-                // Log but don't throw — status stays Pending for retry/monitoring
-                logger.LogError(ex, "Failed to notify n8n for Post {PostId}", post.Id);
+                logger.LogWarning("n8n rejected the request for Post {PostId} → {Platform}",
+                    post.Id, notification.Platform);
             }
-        }, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to notify n8n for Post {PostId}", post.Id);
+        }
     }
 }

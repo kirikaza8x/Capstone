@@ -18,14 +18,49 @@ public static class GeminiTextStripper
     public static string StripHtml(string? input)
     {
         if (string.IsNullOrWhiteSpace(input)) return string.Empty;
-        return Regex.Replace(input, "<.*?>", string.Empty, RegexOptions.Singleline).Trim();
+
+        // Strip HTML tags
+        var result = Regex.Replace(input, "<.*?>", string.Empty, RegexOptions.Singleline);
+
+        // Strip markdown bold/italic (**text** or *text*)
+        result = Regex.Replace(result, @"\*{1,2}(.*?)\*{1,2}", "$1");
+
+        // Strip markdown links [text](url) → text
+        result = Regex.Replace(result, @"\[([^\]]+)\]\([^\)]+\)", "$1");
+
+        return result.Trim();
     }
 
     public static string BodyBlocksToPlainText(string? bodyJson)
     {
         if (string.IsNullOrWhiteSpace(bodyJson)) return string.Empty;
 
-        var blocks = JsonSerializer.Deserialize<JsonElement[]>(bodyJson);
+        var trimmed = bodyJson.Trim();
+
+        // Case 1: double-serialized quoted string → unwrap outer quotes first
+        if (trimmed.StartsWith('"'))
+        {
+            try { trimmed = JsonSerializer.Deserialize<string>(trimmed) ?? trimmed; }
+            catch { /* use as-is */ }
+        }
+
+        // Case 2: stored with escaped quotes (\" instead of ") → unescape
+        if (trimmed.Contains("\\\""))
+        {
+            trimmed = trimmed.Replace("\\\"", "\"");
+        }
+
+        JsonElement[]? blocks;
+        try
+        {
+            blocks = JsonSerializer.Deserialize<JsonElement[]>(trimmed);
+        }
+        catch (JsonException)
+        {
+            // Not a block array at all — fall back to plain HTML strip
+            return StripHtml(bodyJson);
+        }
+
         if (blocks is null) return string.Empty;
 
         var sb = new StringBuilder();
@@ -37,8 +72,8 @@ public static class GeminiTextStripper
             switch (type)
             {
                 case "heading":
-                    var level = block.TryGetProperty("level", out var l) ? l.GetInt32() : 1;
-                    var headTxt = block.TryGetProperty("text", out var ht) ? ht.GetString() : "";
+                    var level   = block.TryGetProperty("level", out var l) ? l.GetInt32() : 1;
+                    var headTxt = block.TryGetProperty("text",  out var ht) ? ht.GetString() : "";
                     sb.AppendLine($"{new string('#', level)} {StripHtml(headTxt)}");
                     break;
 
@@ -67,7 +102,7 @@ public static class GeminiTextStripper
 
                 case "button":
                     var label = block.TryGetProperty("label", out var lb) ? lb.GetString() : "";
-                    var href = block.TryGetProperty("href", out var hr) ? hr.GetString() : "";
+                    var href  = block.TryGetProperty("href",  out var hr) ? hr.GetString() : "";
                     sb.AppendLine($"[{StripHtml(label)}] → {href}");
                     break;
 
@@ -93,4 +128,3 @@ public static class GeminiTextStripper
         return sb.ToString().Trim();
     }
 }
-
