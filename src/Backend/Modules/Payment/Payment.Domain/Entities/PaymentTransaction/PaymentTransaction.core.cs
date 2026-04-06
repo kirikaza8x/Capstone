@@ -1,7 +1,6 @@
 using Payment.Domain.Enums;
 using Payment.Domain.Events;
 using Payments.Domain.Events;
-using Shared.Domain.Abstractions;
 using Shared.Domain.DDD;
 
 namespace Payments.Domain.Entities;

@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Shared.Application.Abstractions.Time;
+using Users.Domain.Entities;
 using Users.Infrastructure.Persistence.Contexts;
 using Users.PublicApi.PublicApi;
 using Users.PublicApi.Records;
@@ -8,7 +9,7 @@ namespace Users.Infrastructure.PublicApi;
 
 internal sealed class UserPublicApi(
     UserModuleDbContext dbContext,
-    IDateTimeProvider dateTimeProvider) 
+    IDateTimeProvider dateTimeProvider)
     : IUserPublicApi
 {
     public async Task<UserInfo?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
@@ -23,6 +24,7 @@ internal sealed class UserPublicApi(
         return new UserInfo(
             user.Id,
             user.Email,
+            user.UserName,
             $"{user.FirstName} {user.LastName}".Trim(),
             user.Roles.Select(r => r.Name).ToList());
     }
@@ -39,6 +41,7 @@ internal sealed class UserPublicApi(
         return new UserInfo(
             user.Id,
             user.Email,
+            user.UserName,
             $"{user.FirstName} {user.LastName}".Trim(),
             user.Roles.Select(r => r.Name).ToList());
     }
@@ -58,6 +61,7 @@ internal sealed class UserPublicApi(
             u => new UserInfo(
                 u.Id,
                 u.Email,
+                u.UserName,
                 $"{u.FirstName} {u.LastName}".Trim(),
                 u.Roles.Select(r => r.Name).ToList()
             )

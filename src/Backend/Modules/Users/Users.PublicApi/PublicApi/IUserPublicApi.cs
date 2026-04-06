@@ -2,7 +2,7 @@
 
 namespace Users.PublicApi.PublicApi;
 
-public sealed record UserInfo(Guid Id, string? Email, string FullName, IReadOnlyList<string> Roles);
+public sealed record UserInfo(Guid Id, string? Email, string Username ,string FullName, IReadOnlyList<string> Roles);
 
 
 public interface IUserPublicApi
