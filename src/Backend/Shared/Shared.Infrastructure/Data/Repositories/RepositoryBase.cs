@@ -27,6 +27,27 @@ public partial class RepositoryBase<TEntity, TId> : IRepository<TEntity, TId>
         return await DbSet.FindAsync([id], cancellationToken);
     }
 
+    public async Task<TEntity?> GetByIdAsync(
+    TId id,
+    IEnumerable<Expression<Func<TEntity, object>>>? includes = null,
+    CancellationToken cancellationToken = default)
+{
+    IQueryable<TEntity> query = Context.Set<TEntity>();
+
+    if (includes != null)
+    {
+        foreach (var include in includes)
+        {
+            query = query.Include(include);
+        }
+
+        query = query.AsSplitQuery();
+    }
+
+    return await query.FirstOrDefaultAsync(e => e.Id!.Equals(id), cancellationToken);
+}
+
+
     public virtual async Task<IReadOnlyList<TEntity>> GetAllAsync(
         CancellationToken cancellationToken = default)
     {
