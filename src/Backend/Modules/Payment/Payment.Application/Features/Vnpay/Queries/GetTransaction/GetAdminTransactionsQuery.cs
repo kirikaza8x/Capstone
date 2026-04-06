@@ -1,5 +1,3 @@
-// Payments.Application/Features/Payments/Queries/GetAdminTransactions/GetAdminTransactionsQuery.cs
-
 using Payment.Domain.Enums;
 using Payments.Application.DTOs.Payment;
 using Shared.Application.Abstractions.Messaging;
@@ -14,6 +12,7 @@ public sealed record GetAdminTransactionsQuery : PagedQuery, IQuery<PagedResult<
     public Guid? OrderId { get; init; }
     public Guid? EventId { get; init; }
     public PaymentType? Type { get; init; }
+    public PaymentReferenceType? ReferenceType { get; init; }
     public PaymentInternalStatus? Status { get; init; }
     public decimal? AmountMin { get; init; }
     public decimal? AmountMax { get; init; }

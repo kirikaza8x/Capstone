@@ -5,14 +5,16 @@ namespace Payments.Application.DTOs.Payment;
 public record PaymentTransactionDto
 {
     public Guid Id { get; init; }
-    public Guid UserId { get; init; }   // <-- Added
-    public string? Username { get; set; } // <-- Changed to settable
+    public Guid UserId { get; init; }
+    public string? Username { get; set; }
     public PaymentType Type { get; init; }
+    public PaymentReferenceType? ReferenceType { get; init; }
+    public Guid? ReferenceId { get; init; }
+
     public PaymentInternalStatus InternalStatus { get; init; }
     public decimal Amount { get; init; }
     public string Currency { get; init; } = "VND";
     public Guid? OrderId { get; init; }
-    // public IReadOnlyList<BatchPaymentItemDto> Items { get; init; } = new List<BatchPaymentItemDto>();
     public string? GatewayTxnRef { get; init; }
     public string? GatewayTransactionNo { get; init; }
     public string? GatewayResponseCode { get; init; }
@@ -23,14 +25,15 @@ public record PaymentTransactionDto
     public DateTime? RefundedAt { get; init; }
 }
 
-
-
 public record PaymentTransactionDetailDto
 {
     public Guid Id { get; init; }
-    public Guid UserId { get; init; }   // <-- Added
-    public string? Username { get; set; } // <-- Changed to settable
+    public Guid UserId { get; init; }
+    public string? Username { get; set; }
     public PaymentType Type { get; init; }
+    public PaymentReferenceType? ReferenceType { get; init; }
+    public Guid? ReferenceId { get; init; }
+
     public PaymentInternalStatus InternalStatus { get; init; }
     public decimal Amount { get; init; }
     public string Currency { get; init; } = "VND";
@@ -45,6 +48,7 @@ public record PaymentTransactionDetailDto
     public DateTime? FailedAt { get; init; }
     public DateTime? RefundedAt { get; init; }
 }
+
 public record BatchPaymentItemDto(
     Guid Id,
     Guid OrderTicketId,
