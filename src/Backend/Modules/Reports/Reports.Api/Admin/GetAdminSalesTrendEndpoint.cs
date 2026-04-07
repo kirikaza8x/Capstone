@@ -8,7 +8,7 @@ using Shared.Api.Extensions;
 using Shared.Api.Results;
 using Users.PublicApi.Constants;
 
-namespace Reports.Api.Endpoints.AdminDashboards;
+namespace Reports.Api.Admin;
 
 public class GetAdminSalesTrendEndpoint : ICarterModule
 {
