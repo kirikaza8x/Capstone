@@ -15,8 +15,9 @@ namespace Marketing.Application.Posts.Handlers;
 public class UpdatePostCommandV2Handler : ICommandHandler<UpdatePostCommandV2>
 {
     private readonly IPostRepository _postRepository;
-    private readonly IEventTicketingPublicApi _eventApi; // Added to get event context
+    private readonly IEventTicketingPublicApi _eventApi;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IAiTokenQuotaService _aiTokenQuotaService;
     private readonly IAiUnitOfWork _unitOfWork;
     private readonly IGeminiService _geminiService;
     private readonly ILogger<UpdatePostCommandV2Handler> _logger;
@@ -25,6 +26,7 @@ public class UpdatePostCommandV2Handler : ICommandHandler<UpdatePostCommandV2>
         IPostRepository postRepository,
         IEventTicketingPublicApi eventApi,
         ICurrentUserService currentUserService,
+        IAiTokenQuotaService aiTokenQuotaService,
         IAiUnitOfWork unitOfWork,
         IGeminiService geminiService,
         ILogger<UpdatePostCommandV2Handler> logger)
@@ -32,6 +34,7 @@ public class UpdatePostCommandV2Handler : ICommandHandler<UpdatePostCommandV2>
         _postRepository = postRepository;
         _eventApi = eventApi;
         _currentUserService = currentUserService;
+        _aiTokenQuotaService = aiTokenQuotaService;
         _unitOfWork = unitOfWork;
         _geminiService = geminiService;
         _logger = logger;
@@ -113,12 +116,26 @@ public class UpdatePostCommandV2Handler : ICommandHandler<UpdatePostCommandV2>
             slug: finalSlug,
             promptUsed: command.UserPromptRequirement ?? post.PromptUsed,
             aiModel: _geminiService.GetModelInfo(),
-            additionalTokensUsed: additionalTokens, 
+            additionalTokensUsed: additionalTokens,
             additionalAiCost: additionalCost,
             trackingToken: command.TrackingToken ?? post.TrackingToken
         );
 
-        if (result.IsFailure) return result;
+        if (result.IsFailure)
+            return result;
+
+        // Consume AI tokens if generated new content
+        if (command.GenerateWithAi && additionalTokens.GetValueOrDefault() > 0)
+        {
+            var consumeResult = await _aiTokenQuotaService.ConsumeAsync(
+                post.OrganizerId,
+                additionalTokens.Value,
+                post.Id,
+                ct);
+
+            if (consumeResult.IsFailure)
+                return Result.Failure(consumeResult.Error);
+        }
 
         _postRepository.Update(post);
         await _unitOfWork.SaveChangesAsync(ct);

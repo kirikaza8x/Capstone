@@ -2,7 +2,7 @@ using AI.Application.Abstractions;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
 
-namespace AI.Application.Features.ChatBot.Commands
+namespace AI.Application.Features.ChatBot.Commands.Chat
 {
     public class ChatCommandHandler : ICommandHandler<ChatCommand, string>
     {
