@@ -57,6 +57,32 @@ public class RegisterRequestDto
     public string? Address { get; set; } = default!;
 }
 
+
+public class CreateRequestDto
+{
+    [DefaultValue("admin@example.com")]
+    public string Email { get; set; } = default!;
+    [DefaultValue("Admin")]
+    public string UserName { get; set; } = default!;
+
+    [DefaultValue("123456789")]
+    public string Password { get; set; } = default!;
+
+    [DefaultValue("Admin")]
+    public string? FirstName { get; set; } = default!;
+    [DefaultValue("User")]
+    public string? LastName { get; set; } = default!;
+
+    [DefaultValue("0123456789")]
+    public string? PhoneNumber { get; set; } = default!;
+
+    [DefaultValue("some where in vietnam of course lmao")]
+    public string? Address { get; set; } = default!;
+
+    [DefaultValue(RolesType.Staff)]
+    public RolesType role { get; set; } = RolesType.Staff;
+}
+
 public class GoogleLoginRequestDto
 {
     [DefaultValue("server id token")]
