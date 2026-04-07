@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Payment.Infrastructure.PublicApi;
+using Payment.PublicApi.PublicApi;
 using Payments.Application.Abstractions;
 using Payments.Application.Features.Refunds.Services;
 using Payments.Domain.UOW;
@@ -63,6 +65,7 @@ namespace Payments.Infrastructure
             services.AddScoped<MassRefundService>();
 
             services.AddScoped<IAiPackageRevenuePublicApi, AiPackageRevenuePublicApi>();
+            services.AddScoped<IPaymentPublicApi, PaymentPublicApi>();
 
             return services;
         }

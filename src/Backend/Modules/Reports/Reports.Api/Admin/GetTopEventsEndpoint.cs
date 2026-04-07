@@ -5,12 +5,11 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Reports.Application.Admin.Queries.GetTopEvents;
-using Reports.Application.AdminDashboards.Queries.GetTopEvents;
 using Shared.Api.Extensions;
 using Shared.Api.Results;
 using Users.PublicApi.Constants;
 
-namespace Reports.Api.Endpoints.AdminDashboards;
+namespace Reports.Api.Admin;
 
 public class GetTopEventsEndpoint : ICarterModule
 {
