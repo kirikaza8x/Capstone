@@ -5,6 +5,7 @@
     <ProjectReference Include="..\..\Events\Events.IntegrationEvents\Events.IntegrationEvents.csproj" />
     <ProjectReference Include="..\..\Events\Events.PublicApi\Events.PublicApi.csproj" />
     <ProjectReference Include="..\..\Payment\Payment.IntegrationEvents\Payment.IntegrationEvents.csproj" />
+    <ProjectReference Include="..\..\Users\Users.PublicApi\Users.PublicApi.csproj" />
     <ProjectReference Include="..\AI.Domain\AI.Domain.csproj" />
     <ProjectReference Include="..\AI.IntegrationEvents\AI.IntegrationEvents.csproj" />
   </ItemGroup>
