@@ -1,4 +1,6 @@
 
+using Marketing.Domain.Enums;
+
 namespace Marketing.Application.Posts.Dtos;
 
 public sealed record FacebookMetricsDto
@@ -19,6 +21,8 @@ public class FacebookPageMetricsDto
 {
     public string PageId { get; set; } = string.Empty;
     public string PageUrl { get; set; } = string.Empty;
+
+    public FacebookPeriod Period { get; set; }
 
     // Audience Growth (28 Days)
     public long DailyUnfollowsUnique { get; set; } // Maps to: page_daily_unfollows_unique

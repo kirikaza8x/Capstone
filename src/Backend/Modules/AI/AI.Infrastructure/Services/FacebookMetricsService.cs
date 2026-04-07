@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using Marketing.Application.Posts.Dtos;
 using Marketing.Application.Services;
 using Marketing.Infrastructure.Configs;
+using Marketing.Domain.Enums;
 
 namespace Marketing.Infrastructure.Services;
 
@@ -82,7 +83,7 @@ public sealed class FacebookMetricsService : IFacebookMetricsService
         }
     }
 
-    public async Task<FacebookPageMetricsDto?> GetPageTotalsAsync(CancellationToken ct = default)
+    public async Task<FacebookPageMetricsDto?> GetPageTotalsAsync(FacebookPeriod period = FacebookPeriod.days_28, CancellationToken ct = default)
     {
         try
         {
@@ -90,34 +91,32 @@ public sealed class FacebookMetricsService : IFacebookMetricsService
             var pageToken = await GetPageAccessTokenAsync(client, ct);
             if (pageToken is null) return null;
 
-            // ✅ EXACT metrics from your successful JSON payload
             var metrics = "page_daily_unfollows_unique,page_daily_follows_unique,page_views_total,page_impressions_unique,page_actions_post_reactions_like_total,page_post_engagements";
-            var period = "days_28";
 
-            // ✅ Properly encode the URL
+            var periodString = period.ToString().ToLower();
+
             var baseUrl = $"{_config.GraphApiBaseUrl}/{_config.GraphApiVersion}/{_config.PageId}/insights";
-            var queryParams = $"?metric={Uri.EscapeDataString(metrics)}&period={period}&access_token={pageToken}";
+            var queryParams = $"?metric={Uri.EscapeDataString(metrics)}&period={periodString}&access_token={pageToken}";
             var url = baseUrl + queryParams;
 
-            _logger.LogDebug("Fetching Facebook insights: {Url}", url);
+            _logger.LogDebug("Fetching Facebook insights for period {Period}: {Url}", periodString, url);
 
             var response = await client.GetAsync(url, ct);
             var raw = await response.Content.ReadAsStringAsync(ct);
 
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogWarning("Facebook Insights {Status}: {Error}", response.StatusCode, raw);
+                _logger.LogWarning("Facebook Insights {Status} for period {Period}: {Error}", response.StatusCode, periodString, raw);
                 return null;
             }
 
             var json = JsonDocument.Parse(raw).RootElement;
 
-            // ✅ Map directly to the redefined DTO
             return new FacebookPageMetricsDto
             {
                 PageId = _config.PageId,
                 PageUrl = $"https://facebook.com/{_config.PageId}",
-
+                Period = period, 
                 DailyUnfollowsUnique = ExtractMetric(json, "page_daily_unfollows_unique"),
                 DailyFollowsUnique = ExtractMetric(json, "page_daily_follows_unique"),
                 ViewsTotal = ExtractMetric(json, "page_views_total"),
@@ -130,7 +129,7 @@ public sealed class FacebookMetricsService : IFacebookMetricsService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to fetch Facebook page totals");
+            _logger.LogError(ex, "Failed to fetch Facebook page totals for period {Period}", period);
             return null;
         }
     }

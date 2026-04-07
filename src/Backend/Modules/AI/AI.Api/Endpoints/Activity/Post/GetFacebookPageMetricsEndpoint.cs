@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Shared.Api.Results;
 using Marketing.Application.Posts.Queries;
+using Microsoft.AspNetCore.Mvc;
+using Marketing.Domain.Enums; 
 
 namespace Marketing.Api.Features.Posts.GetFacebookPageMetrics;
 
@@ -14,9 +16,10 @@ public class GetFacebookPageMetricsEndpoint : ICarterModule
     {
         app.MapGet("api/facebook/page/metrics", async (
             ISender sender,
-            CancellationToken cancellationToken) =>
+            [FromQuery] FacebookPeriod period = FacebookPeriod.Day, 
+            CancellationToken cancellationToken = default) =>
         {
-            var query = new GetFacebookPageMetricsQuery();
+            var query = new GetFacebookPageMetricsQuery(period);
 
             var result = await sender.Send(query, cancellationToken);
             return result.ToOk();

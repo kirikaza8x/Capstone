@@ -22,7 +22,7 @@ public sealed class GetFacebookPageMetricsQueryHandler
         GetFacebookPageMetricsQuery query,
         CancellationToken cancellationToken)
     {
-        var metrics = await _facebookMetricsService.GetPageTotalsAsync(cancellationToken);
+        var metrics = await _facebookMetricsService.GetPageTotalsAsync(query.Period,cancellationToken);
 
         if (metrics is null)
             return Result.Failure<FacebookPageMetricsDto>(
