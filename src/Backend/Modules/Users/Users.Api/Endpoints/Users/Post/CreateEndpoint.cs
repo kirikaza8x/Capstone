@@ -15,7 +15,7 @@ public class CreateUserEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPost("api/admin/user/Create", async (
+        app.MapPost("api/admin/user/create", async (
             [FromForm] CreateRequestDto request,
             ISender sender,
             CancellationToken cancellationToken) =>
