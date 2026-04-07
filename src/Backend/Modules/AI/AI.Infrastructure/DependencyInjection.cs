@@ -196,6 +196,7 @@ public static class DependencyInjection
         services.Configure<FacebookConfig>(configuration.GetSection("Facebook"));
         services.AddHttpClient("Facebook");
         services.AddScoped<IFacebookMetricsService, FacebookMetricsService>();
+        services.AddScoped<IAiTokenQuotaService, AiTokenQuotaService>();
 
         return services;
     }
