@@ -17,6 +17,7 @@ public class CreatePostDraftCommandHandlerV2 : ICommandHandler<CreatePostDraftCo
     private readonly IPostRepository _postRepository;
     private readonly IEventTicketingPublicApi _eventApi;
     private readonly IGeminiService _geminiService;
+    private readonly IAiTokenQuotaService _aiTokenQuotaService;
     private readonly IAiUnitOfWork _unitOfWork;
     private readonly ILogger<CreatePostDraftCommandHandlerV2> _logger;
 
@@ -24,12 +25,14 @@ public class CreatePostDraftCommandHandlerV2 : ICommandHandler<CreatePostDraftCo
         IPostRepository postRepository,
         IEventTicketingPublicApi eventApi,
         IGeminiService geminiService,
+        IAiTokenQuotaService aiTokenQuotaService,
         IAiUnitOfWork unitOfWork,
         ILogger<CreatePostDraftCommandHandlerV2> logger)
     {
         _postRepository = postRepository;
         _eventApi = eventApi;
         _geminiService = geminiService;
+        _aiTokenQuotaService = aiTokenQuotaService;
         _unitOfWork = unitOfWork;
         _logger = logger;
     }
@@ -107,6 +110,20 @@ public class CreatePostDraftCommandHandlerV2 : ICommandHandler<CreatePostDraftCo
         );
 
         _postRepository.Add(post);
+
+        // Consume AI tokens if generated
+        if (command.GenerateWithAi && aiTokensUsed.GetValueOrDefault() > 0)
+        {
+            var consumeResult = await _aiTokenQuotaService.ConsumeAsync(
+                command.OrganizerId,
+                aiTokensUsed.Value,
+                post.Id,
+                ct);
+
+            if (consumeResult.IsFailure)
+                return Result.Failure<Guid>(consumeResult.Error);
+        }
+
         await _unitOfWork.SaveChangesAsync(ct);
 
         return Result.Success(post.Id);

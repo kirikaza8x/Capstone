@@ -1,9 +1,10 @@
 using AI.Application.Abstractions;
+using AI.Domain.Interfaces.UOW;
 using Events.PublicApi.PublicApi;
 using Marketing.Domain.Errors;
+using Microsoft.Extensions.Logging;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
-using Microsoft.Extensions.Logging;
 
 namespace Marketing.Application.Posts.Commands;
 
@@ -12,15 +13,21 @@ public class GeneratePostDraftCommandHandler
 {
     private readonly IEventTicketingPublicApi _eventApi;
     private readonly IGeminiService _geminiService;
+    private readonly IAiTokenQuotaService _aiTokenQuotaService;
+    private readonly IAiUnitOfWork _unitOfWork;
     private readonly ILogger<GeneratePostDraftCommandHandler> _logger;
 
     public GeneratePostDraftCommandHandler(
         IEventTicketingPublicApi eventApi,
         IGeminiService geminiService,
+        IAiTokenQuotaService aiTokenQuotaService,
+        IAiUnitOfWork unitOfWork,
         ILogger<GeneratePostDraftCommandHandler> logger)
     {
         _eventApi = eventApi;
         _geminiService = geminiService;
+        _aiTokenQuotaService = aiTokenQuotaService;
+        _unitOfWork = unitOfWork;
         _logger = logger;
     }
 
@@ -60,11 +67,27 @@ public class GeneratePostDraftCommandHandler
             var requestDto = geminiResult.Data;
             var actualTokens = geminiResult.TotalTokens;
 
-            // 4. Accurate Pricing (Gemini 1.5 Flash approx $0.00001875 per 1k tokens)
+            // 4. Credit Consumption
+            if (actualTokens > 0)
+            {
+                var consumeResult = await _aiTokenQuotaService.ConsumeAsync(
+                    command.OrganizerId,
+                    actualTokens,
+                    null,
+                    cancellationToken);
+
+                // Handle potential failure of the token consumption gracefully
+                if (consumeResult.IsFailure)
+                    return Result.Failure<GeneratedPostDto>(consumeResult.Error);
+
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+            }
+
+            // 5. Accurate Pricing (Gemini 1.5 Flash approx $0.00001875 per 1k tokens)
             // Using your specific multiplier:
             decimal estimatedCost = (actualTokens / 1000m) * 0.002m; 
 
-            // 5. Map to Response DTO
+            // 6. Map to Response DTO
             var result = new GeneratedPostDto
             {
                 Title = requestDto.Title,

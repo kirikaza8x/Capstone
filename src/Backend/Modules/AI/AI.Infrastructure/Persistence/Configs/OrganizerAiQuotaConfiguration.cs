@@ -49,6 +49,10 @@ public class OrganizerAiQuotaConfiguration : IEntityTypeConfiguration<OrganizerA
             .HasColumnName("modified_by")
             .HasMaxLength(100);
 
+        builder.Property(x => x.SubscriptionExpiresAtUtc)
+            .HasColumnName("subscription_expires_at_utc")
+            .HasColumnType("timestamp with time zone");
+
         builder.HasIndex(x => x.OrganizerId)
             .IsUnique()
             .HasDatabaseName("ux_organizer_ai_quota_organizer");
