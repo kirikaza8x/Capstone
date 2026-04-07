@@ -82,7 +82,99 @@ public sealed class FacebookMetricsService : IFacebookMetricsService
         }
     }
 
-    private async Task<string?> GetPageAccessTokenAsync(HttpClient client, CancellationToken ct)
+    public async Task<FacebookPageMetricsDto?> GetPageTotalsAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            var client = _httpClientFactory.CreateClient("Facebook");
+            var pageToken = await GetPageAccessTokenAsync(client, ct);
+            if (pageToken is null) return null;
+
+            // ✅ EXACT metrics from your successful JSON payload
+            var metrics = "page_daily_unfollows_unique,page_daily_follows_unique,page_views_total,page_impressions_unique,page_actions_post_reactions_like_total,page_post_engagements";
+            var period = "days_28";
+
+            // ✅ Properly encode the URL
+            var baseUrl = $"{_config.GraphApiBaseUrl}/{_config.GraphApiVersion}/{_config.PageId}/insights";
+            var queryParams = $"?metric={Uri.EscapeDataString(metrics)}&period={period}&access_token={pageToken}";
+            var url = baseUrl + queryParams;
+
+            _logger.LogDebug("Fetching Facebook insights: {Url}", url);
+
+            var response = await client.GetAsync(url, ct);
+            var raw = await response.Content.ReadAsStringAsync(ct);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("Facebook Insights {Status}: {Error}", response.StatusCode, raw);
+                return null;
+            }
+
+            var json = JsonDocument.Parse(raw).RootElement;
+
+            // ✅ Map directly to the redefined DTO
+            return new FacebookPageMetricsDto
+            {
+                PageId = _config.PageId,
+                PageUrl = $"https://facebook.com/{_config.PageId}",
+
+                DailyUnfollowsUnique = ExtractMetric(json, "page_daily_unfollows_unique"),
+                DailyFollowsUnique = ExtractMetric(json, "page_daily_follows_unique"),
+                ViewsTotal = ExtractMetric(json, "page_views_total"),
+                ImpressionsUnique = ExtractMetric(json, "page_impressions_unique"),
+                LikesTotal = ExtractMetric(json, "page_actions_post_reactions_like_total"),
+                PostEngagements = ExtractMetric(json, "page_post_engagements"),
+
+                FetchedAt = DateTime.UtcNow
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to fetch Facebook page totals");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Safely extracts the metric value from the Facebook Insights JSON structure.
+    /// Navigates through: data[] -> values[] -> value
+    /// </summary>
+    private long ExtractMetric(JsonElement json, string metricName)
+    {
+        try
+        {
+            if (!json.TryGetProperty("data", out var data)) return 0;
+
+            // Find the specific metric object in the data array
+            var metricNode = data.EnumerateArray()
+                .FirstOrDefault(m => m.TryGetProperty("name", out var name) && name.GetString() == metricName);
+
+            // Ensure the metric exists and has a 'values' array
+            if (metricNode.ValueKind != JsonValueKind.Undefined && metricNode.TryGetProperty("values", out var values))
+            {
+                var valuesList = values.EnumerateArray().ToList();
+
+                if (valuesList.Any())
+                {
+                    // The API returns a time-series. We take the last entry for the most recent 28-day snapshot.
+                    var lastEntry = valuesList.Last();
+
+                    if (lastEntry.TryGetProperty("value", out var val))
+                    {
+                        return val.ValueKind == JsonValueKind.Number ? val.GetInt64() : 0;
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug("JSON extraction failed for metric {MetricName}: {Message}", metricName, ex.Message);
+        }
+
+        return 0;
+    }
+
+    public async Task<string?> GetPageAccessTokenAsync(HttpClient client, CancellationToken ct)
     {
         try
         {
@@ -111,5 +203,6 @@ public sealed class FacebookMetricsService : IFacebookMetricsService
             _logger.LogError(ex, "Failed to retrieve page access token");
             return null;
         }
+
     }
 }
