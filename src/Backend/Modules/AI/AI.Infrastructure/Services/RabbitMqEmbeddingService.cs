@@ -20,8 +20,6 @@ public sealed class RabbitMqEmbeddingService : IEmbeddingService, IAsyncDisposab
 
     private readonly ConcurrentDictionary<string, TaskCompletionSource<float[]>> _pending = new();
     private readonly SemaphoreSlim _batchThrottle = new(10, 10);
-
-    // 🔥 NEW: safe async init
     private readonly SemaphoreSlim _initLock = new(1, 1);
     private bool _initialized = false;
 
@@ -180,7 +178,7 @@ public sealed class RabbitMqEmbeddingService : IEmbeddingService, IAsyncDisposab
             DeliveryMode  = DeliveryModes.Persistent,
             MessageId     = Guid.NewGuid().ToString(),
             CorrelationId = correlationId,
-            ReplyTo       = _options.ResponseQueue, // 🔥 added
+            ReplyTo       = _options.ResponseQueue, 
             Timestamp     = new AmqpTimestamp(DateTimeOffset.UtcNow.ToUnixTimeSeconds())
         };
 
