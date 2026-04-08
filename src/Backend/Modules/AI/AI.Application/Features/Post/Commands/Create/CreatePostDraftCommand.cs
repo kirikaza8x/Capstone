@@ -10,7 +10,8 @@ public record CreatePostDraftCommand(
     string? Summary = null,
     string? PromptUsed = null,
     string? AiModel = null,
-    int? AiTokensUsed = null
+    int? AiTokensUsed = null,
+    string? ImageUrl =null
 ) : ICommand<Guid>;
 
 public record CreatePostDraftCommandV2(

@@ -20,3 +20,12 @@ public enum PostStatus
     /// <summary>Removed from platform (by organizer or admin force-remove).</summary>
     Archived,
 }
+
+public enum FacebookPeriod
+{
+    Day,
+
+    Week,
+
+    days_28
+}

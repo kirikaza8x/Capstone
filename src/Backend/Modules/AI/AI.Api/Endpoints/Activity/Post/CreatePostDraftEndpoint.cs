@@ -25,7 +25,8 @@ public class CreatePostDraftEndpoint : ICarterModule
                 Body: request.Body,
                 PromptUsed: request.PromptUsed,
                 AiModel: request.AiModel,
-                AiTokensUsed: request.AiTokensUsed
+                AiTokensUsed: request.AiTokensUsed,
+                ImageUrl : request.imageUrl
             );
 
             var result = await sender.Send(command, cancellationToken);
@@ -47,4 +48,5 @@ public sealed class CreatePostDraftRequestDto
     public string? PromptUsed { get; init; }
     public string? AiModel { get; init; }
     public int? AiTokensUsed { get; init; }
+    public string? imageUrl { get; init; }
 }
