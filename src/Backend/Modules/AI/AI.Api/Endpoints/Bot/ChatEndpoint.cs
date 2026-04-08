@@ -2,7 +2,9 @@ using Carter;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Routing;
+using Shared.Api.RateLimiting;
 using Shared.Api.Results;
 using Shared.Domain.Abstractions;
 
@@ -13,14 +15,15 @@ public class ChatEndpoint : ICarterModule
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         app.MapPost("api/bot/chat", async (
-        ChatCommand command,
-        ISender sender,
-        CancellationToken cancellationToken) =>
+            ChatCommand command,
+            ISender sender,
+            CancellationToken cancellationToken) =>
         {
             Result<string> result = await sender.Send(command, cancellationToken);
 
             return result.ToOk();
         })
+        .RequireRateLimiting(RateLimitPolicies.AiGenerate)
         .WithTags("Bot")
         .WithName("Chat")
         .WithSummary("Send a prompt to Gemini")

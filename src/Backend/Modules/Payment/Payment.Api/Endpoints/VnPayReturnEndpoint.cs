@@ -2,8 +2,10 @@ using Carter;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Routing;
 using Payments.Application.Features.Payments.Commands.VnPayReturn;
+using Shared.Api.RateLimiting;
 using Shared.Api.Results;
 
 namespace Payments.Api.Features.VnPay;
@@ -15,7 +17,6 @@ public class VnPayReturnEndpoints : ICarterModule
         var group = app.MapGroup("api/payments/vnpay")
             .WithTags("Payments — VNPay");
 
-        // No auth — VNPay calls this directly as a redirect
         group.MapGet("return", async (
             HttpContext context,
             ISender sender,
@@ -28,8 +29,8 @@ public class VnPayReturnEndpoints : ICarterModule
                 new VnPayReturnCommand(queryParams), ct);
 
             return result.ToOk();
-
         })
+        .RequireRateLimiting(RateLimitPolicies.Webhook)
         .AllowAnonymous()
         .WithName("VnPayReturn")
         .WithSummary("Handle VNPay payment return callback")

@@ -2,9 +2,12 @@ using Carter;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Routing;
+using Shared.Api.RateLimiting;
 using Shared.Api.Results;
 using Users.Application.Features.Users.Commands.Records;
+
 namespace Users.Api.Users;
 
 public class ResetPasswordEndpoint : ICarterModule
@@ -25,6 +28,7 @@ public class ResetPasswordEndpoint : ICarterModule
 
             return result.ToOk("Password has been reset successfully.");
         })
+        .RequireRateLimiting(RateLimitPolicies.Auth)
         .WithTags("Authentication")
         .WithName("ResetPassword")
         .WithSummary("Reset password using OTP")

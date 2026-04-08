@@ -3,8 +3,10 @@ using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Routing;
 using Shared.Api.Extensions;
+using Shared.Api.RateLimiting;
 using Shared.Api.Results;
 using Ticketing.Api;
 using Ticketing.Application.Orders.Commands.ApplyVoucher;
@@ -29,10 +31,13 @@ public class ApplyVoucherEndpoint : ICarterModule
                 cancellationToken);
 
             if (result.IsFailure)
+            {
                 return result.ToProblem();
+            }
 
             return Results.Ok(result.Value);
         })
+        .RequireRateLimiting(RateLimitPolicies.Order)
         .WithTags(Constants.Tags.Orders)
         .WithName("ApplyVoucherToOrder")
         .WithSummary("Apply a discount voucher to a pending order")

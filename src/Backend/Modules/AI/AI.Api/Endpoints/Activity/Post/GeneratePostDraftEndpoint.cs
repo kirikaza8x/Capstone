@@ -2,7 +2,9 @@ using Carter;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Routing;
+using Shared.Api.RateLimiting;
 using Shared.Api.Results;
 using Shared.Application.Abstractions.Authentication;
 
@@ -35,6 +37,7 @@ public class GeneratePostDraftEndpoint : ICarterModule
 
             return result.ToOk();
         })
+        .RequireRateLimiting(RateLimitPolicies.AiGenerate)
         .WithTags("Posts")
         .WithName("GeneratePostDraft")
         .WithSummary("Generate a post draft using Gemini based on event details");

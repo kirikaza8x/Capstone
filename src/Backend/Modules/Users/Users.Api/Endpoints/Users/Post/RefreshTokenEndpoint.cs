@@ -3,7 +3,9 @@ using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Routing;
+using Shared.Api.RateLimiting;
 using Shared.Api.Results;
 using Shared.Domain.Abstractions;
 using Users.Application.Features.Users.Commands.Records;
@@ -32,6 +34,7 @@ public class RefreshTokenEndpoint : ICarterModule
 
             return result.ToOk();
         })
+        .RequireRateLimiting(RateLimitPolicies.Auth)
         .WithTags("Authentication")
         .WithName("RefreshToken")
         .WithSummary("Refresh user tokens")

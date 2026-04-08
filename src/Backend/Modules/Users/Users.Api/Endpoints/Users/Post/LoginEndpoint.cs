@@ -3,13 +3,15 @@ using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Routing;
+using Shared.Api.RateLimiting;
 using Shared.Api.Results;
 using Shared.Domain.Abstractions;
 using Users.Application.Features.Users.Commands.Records;
 using Users.Application.Features.Users.Dtos;
 
-namespace Users.Api.Users.Post;
+namespace Users.Api.Endpoints.Users.Post;
 
 public class LoginUserEndpoint : ICarterModule
 {
@@ -31,6 +33,7 @@ public class LoginUserEndpoint : ICarterModule
 
             return result.ToOk();
         })
+        .RequireRateLimiting(RateLimitPolicies.Auth)
         .WithTags("Authentication")
         .WithName("LoginUser")
         .WithSummary("Login a user")
