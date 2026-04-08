@@ -1,12 +1,14 @@
 using Carter;
+using Marketing.Api.Filters;
+using Marketing.Application.Posts.Commands;
+using Marketing.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Routing;
+using Shared.Api.RateLimiting;
 using Shared.Api.Results;
-using Marketing.Application.Posts.Commands;
-using Marketing.Api.Filters;
-using Marketing.Domain.Enums;
 
 namespace Marketing.Api.Features.Webhooks.N8n.DistributionSuccess;
 
@@ -30,6 +32,7 @@ public class N8nDistributionSuccessEndpoint : ICarterModule
             var result = await sender.Send(command, cancellationToken);
             return result.ToOk();
         })
+        .RequireRateLimiting(RateLimitPolicies.Webhook)
         .AddEndpointFilter<ValidateN8nApiKeyAttribute>()  // ← Validate API key
         .AllowAnonymous()  // ← Webhooks don't have user auth
         .WithTags("Webhooks", "n8n")
@@ -41,7 +44,7 @@ public class N8nDistributionSuccessEndpoint : ICarterModule
 public sealed class N8nDistributionSuccessRequestDto
 {
     public Guid post_id { get; init; }
-    public  ExternalPlatform platform { get; init; }  // "Facebook", "LinkedIn", etc.
+    public ExternalPlatform platform { get; init; }  // "Facebook", "LinkedIn", etc.
     public string external_url { get; init; } = string.Empty;  // https://facebook.com/...
     public string? external_post_id { get; init; }  // Platform's internal ID
     public string? platform_metadata { get; init; }  // JSON string with extra data

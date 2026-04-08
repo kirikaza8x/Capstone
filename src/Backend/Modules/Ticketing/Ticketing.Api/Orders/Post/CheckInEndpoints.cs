@@ -35,7 +35,9 @@ public class CheckInEndpoint : ICarterModule
             var result = await sender.Send(command, cancellationToken);
 
             if (result.IsFailure)
+            {
                 return result.ToProblem();
+            }
 
             return result.ToOk();
         })

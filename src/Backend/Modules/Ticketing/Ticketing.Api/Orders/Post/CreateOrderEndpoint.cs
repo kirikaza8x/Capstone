@@ -3,8 +3,10 @@ using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Routing;
 using Shared.Api.Extensions;
+using Shared.Api.RateLimiting;
 using Shared.Api.Results;
 using Ticketing.Application.Orders.Commands.CreateOrder;
 using Users.PublicApi.Constants;
@@ -41,12 +43,15 @@ public class CreateOrderEndpoint : ICarterModule
             var result = await sender.Send(command, cancellationToken);
 
             if (result.IsFailure)
+            {
                 return result.ToProblem();
+            }
 
             return result.ToCreated(
                 $"{Constants.Routes.Orders}/{result.Value}",
                 "Order created successfully.");
         })
+        .RequireRateLimiting(RateLimitPolicies.Order)
         .WithTags(Constants.Tags.Orders)
         .WithName("CreateOrder")
         .WithSummary("Create a pending order")

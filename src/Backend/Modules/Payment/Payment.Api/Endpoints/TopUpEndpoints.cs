@@ -2,8 +2,10 @@ using Carter;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Routing;
 using Payments.Application.Features.Payments.Commands.InitiateTopUp;
+using Shared.Api.RateLimiting;
 using Shared.Api.Results;
 
 namespace Payments.Api.Features.TopUp;
@@ -14,8 +16,7 @@ public class TopUpEndpoints : ICarterModule
     {
         var group = app.MapGroup("api/payments/topup")
             .WithTags("Payments — Top Up")
-            // .RequireAuthorization()
-            ;
+            .RequireRateLimiting(RateLimitPolicies.Payment);
 
         group.MapPost("", async (
             InitiateTopUpRequest request,

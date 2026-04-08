@@ -6,10 +6,10 @@ using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using Shared.Api.RateLimiting;
 using Shared.Api.Results;
-using Shared.Domain.Abstractions;
 
-namespace AI.Api.ImageGeneration;
+namespace AI.Api.Endpoints.Bot;
 
 public class ImageGenerationEndpoint : ICarterModule
 {
@@ -22,11 +22,11 @@ public class ImageGenerationEndpoint : ICarterModule
         {
             var command = new GenerateImageCommand(dto.Prompt);
 
-           var result =
-                await sender.Send(command, cancellationToken);
+            var result = await sender.Send(command, cancellationToken);
 
             return result.ToOk();
         })
+        .RequireRateLimiting(RateLimitPolicies.AiGenerate)
         .WithTags("Bot")
         .WithName("GenerateImage")
         .WithSummary("Generate images from a text prompt")

@@ -1,12 +1,14 @@
 using Carter;
+using Marketing.Api.Filters;
+using Marketing.Application.Posts.Commands;
+using Marketing.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Routing;
+using Shared.Api.RateLimiting;
 using Shared.Api.Results;
-using Marketing.Application.Posts.Commands;
-using Marketing.Api.Filters;
-using Marketing.Domain.Enums;
 
 namespace Marketing.Api.Features.Webhooks.N8n.DistributionFailed;
 
@@ -28,6 +30,7 @@ public class N8nDistributionFailedEndpoint : ICarterModule
             var result = await sender.Send(command, cancellationToken);
             return result.ToOk();
         })
+        .RequireRateLimiting(RateLimitPolicies.Webhook)
         .AddEndpointFilter<ValidateN8nApiKeyAttribute>()
         .AllowAnonymous()
         .WithTags("Webhooks", "n8n")
@@ -36,12 +39,10 @@ public class N8nDistributionFailedEndpoint : ICarterModule
     }
 }
 
-
-
 public sealed class N8nDistributionFailedRequestDto
 {
     public Guid post_id { get; init; }
-    public ExternalPlatform platform { get; init; } 
+    public ExternalPlatform platform { get; init; }
     public string error_message { get; init; } = string.Empty;
-    public bool can_retry { get; init; } = true;  // n8n can indicate if retry is possible
+    public bool can_retry { get; init; } = true;
 }

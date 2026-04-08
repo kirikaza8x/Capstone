@@ -3,10 +3,13 @@ using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Routing;
+using Shared.Api.RateLimiting;
 using Shared.Api.Results;
 using Users.Application.Features.Users.Commands.LoginGoogle;
 using Users.Application.Features.Users.Dtos;
+
 namespace Users.Api.Endpoints.Users.Post;
 
 public class GoogleLoginEndpoint : ICarterModule
@@ -24,6 +27,7 @@ public class GoogleLoginEndpoint : ICarterModule
 
             return result.ToOk();
         })
+        .RequireRateLimiting(RateLimitPolicies.Auth)
         .WithTags("Authentication")
         .WithName("GoogleLogin")
         .Produces<LoginResponseDto>(StatusCodes.Status200OK)

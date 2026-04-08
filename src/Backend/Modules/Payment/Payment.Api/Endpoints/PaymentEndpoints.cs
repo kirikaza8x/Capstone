@@ -2,12 +2,14 @@ using Carter;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Routing;
 using Payment.Application.Features.Vnpay.Commands.InitialPackagePayment;
 using Payment.Domain.Enums;
 using Payments.Application.Features.Payments.Commands.GetPaymentUrl;
 using Payments.Application.Features.Payments.Commands.InitiatePayment;
 using Payments.Application.Features.Payments.Queries.GetMyTransactions;
+using Shared.Api.RateLimiting;
 using Shared.Api.Results;
 
 namespace Payments.Api.Features.Payments;
@@ -18,8 +20,7 @@ public class PaymentEndpoints : ICarterModule
     {
         var group = app.MapGroup("api/payments")
             .WithTags("Payments")
-            // .RequireAuthorization()
-            ;
+            .RequireRateLimiting(RateLimitPolicies.Payment);
 
         // --- Initiate payment ---
         group.MapPost("", async (

@@ -20,10 +20,10 @@ public class ManualCheckInEndpoint : ICarterModule
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         app.MapPost("api/ticketing/events/{eventId:guid}/check-in/manual", async (
-             Guid eventId,
-             [FromBody] ManualCheckInRequest request,
-             ISender sender,
-             CancellationToken cancellationToken) =>
+            Guid eventId,
+            [FromBody] ManualCheckInRequest request,
+            ISender sender,
+            CancellationToken cancellationToken) =>
         {
             var command = new ManualCheckInCommand(
                 eventId,
@@ -33,21 +33,23 @@ public class ManualCheckInEndpoint : ICarterModule
             var result = await sender.Send(command, cancellationToken);
 
             if (result.IsFailure)
+            {
                 return result.ToProblem();
+            }
 
             return result.ToOk("Check-in successfully");
         })
-         .WithTags(Constants.Tags.Orders)
-         .WithName("ManualCheckIn")
-         .WithSummary("Manually check in tickets")
-         .WithDescription("Marks selected tickets as used for the given session and event.")
-         .Produces<ApiResult<int>>(StatusCodes.Status200OK)
-         .ProducesProblem(StatusCodes.Status400BadRequest)
-         .ProducesProblem(StatusCodes.Status401Unauthorized)
-         .ProducesProblem(StatusCodes.Status403Forbidden)
-         .ProducesProblem(StatusCodes.Status404NotFound)
-         .ProducesProblem(StatusCodes.Status409Conflict)
-         .RequireRoles(Roles.AttendeeAndOrganizer)
-         .RequireEventPermission(EventPermissions.CheckIn);
+        .WithTags(Constants.Tags.Orders)
+        .WithName("ManualCheckIn")
+        .WithSummary("Manually check in tickets")
+        .WithDescription("Marks selected tickets as used for the given session and event.")
+        .Produces<ApiResult<int>>(StatusCodes.Status200OK)
+        .ProducesProblem(StatusCodes.Status400BadRequest)
+        .ProducesProblem(StatusCodes.Status401Unauthorized)
+        .ProducesProblem(StatusCodes.Status403Forbidden)
+        .ProducesProblem(StatusCodes.Status404NotFound)
+        .ProducesProblem(StatusCodes.Status409Conflict)
+        .RequireRoles(Roles.AttendeeAndOrganizer)
+        .RequireEventPermission(EventPermissions.CheckIn);
     }
 }

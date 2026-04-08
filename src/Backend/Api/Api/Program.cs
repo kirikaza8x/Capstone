@@ -84,16 +84,16 @@ public class Program
             .AddPaymentModule(Configuration)
         ;
 
-        builder.Services.AddCors(options =>
-        {
-            options.AddDefaultPolicy(policy =>
-            {
-                policy.SetIsOriginAllowed(origin => true)
-                      .AllowAnyMethod()
-                      .AllowAnyHeader()
-                      .AllowCredentials();
-            });
-        });
+        //builder.Services.AddCors(options =>
+        //{
+        //    options.AddDefaultPolicy(policy =>
+        //    {
+        //        policy.SetIsOriginAllowed(origin => true)
+        //              .AllowAnyMethod()
+        //              .AllowAnyHeader()
+        //              .AllowCredentials();
+        //    });
+        //});
 
         builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
         builder.Services.AddProblemDetails();
@@ -113,6 +113,7 @@ public class Program
 
         app.UseCors();
         app.UseAuthentication();
+        app.UseRateLimiter();
         app.UseAuthorization();
         app.UseExceptionHandler();
 
@@ -121,7 +122,7 @@ public class Program
         app
         .UseNotificationModule()
         .UseUserModule()
-        // .UseEventModule()
+        .UseEventModule()
         .UseAiModule()
         .UseTicketingModule()
         .UsePaymentModule()
