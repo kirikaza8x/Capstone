@@ -28,7 +28,7 @@ public class PublishUserCreatedIntegrationHandler(
             DateTime.UtcNow
         );
 
-        _ = Task.Run(() => eventBus.PublishAsync(integrationEvent, CancellationToken.None)); 
+        await eventBus.PublishAsync(integrationEvent, CancellationToken.None); 
         logger.LogInformation("Integration event published for User: {UserId}", user.Id);
     }
 }
