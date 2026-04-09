@@ -34,8 +34,8 @@ public class GetPostByIdQueryHandler
         // ─────────────────────────────────────────────────────────────
         // Fetch aggregate
         // ─────────────────────────────────────────────────────────────
-        CurrentUserDto? currentUser = _currentUserService.GetCurrentUser();
-        Guid requesterId = currentUser?.UserId ?? Guid.Empty;
+        // CurrentUserDto? currentUser = _currentUserService.GetCurrentUser();
+        // Guid requesterId = currentUser?.UserId ?? Guid.Empty;
         var post = await _postRepository.GetByIdWithDistributionsAsync(query.PostId, cancellationToken);
 
         if (post == null)
@@ -45,14 +45,14 @@ public class GetPostByIdQueryHandler
         }
 
         // Determine if requester is admin
-        bool isAdmin = currentUser?.Roles.Contains("Admin") ?? false;
+        // bool isAdmin = currentUser?.Roles.Contains("Admin") ?? false;
 
-        // Authorization check
-        if (post.OrganizerId != requesterId && !isAdmin)
-        {
-            return Result.Failure<PostDetailDto>(
-                MarketingErrors.Post.NotAuthorized(requesterId));
-        }
+        // // Authorization check
+        // if (post.OrganizerId != requesterId && !isAdmin)
+        // {
+        //     return Result.Failure<PostDetailDto>(
+        //         MarketingErrors.Post.NotAuthorized(requesterId));
+        // }
 
         // ─────────────────────────────────────────────────────────────
         // Map to DTO
