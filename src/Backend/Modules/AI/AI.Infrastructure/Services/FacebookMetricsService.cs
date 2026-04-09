@@ -24,11 +24,10 @@ public sealed class FacebookMetricsService : IFacebookMetricsService
         _config = config.Value;
         _logger = logger;
     }
-
     public async Task<FacebookMetricsDto?> GetMetricsAsync(
-        string externalPostId,
-        string externalUrl,
-        CancellationToken ct = default)
+    string externalPostId,
+    string externalUrl,
+    CancellationToken ct = default)
     {
         try
         {
@@ -42,37 +41,69 @@ public sealed class FacebookMetricsService : IFacebookMetricsService
             }
 
             var fields = "likes.summary(true),comments.summary(true),shares";
-            var url = $"{_config.GraphApiBaseUrl}/{_config.GraphApiVersion}/{externalPostId}" +
-                      $"?fields={fields}&access_token={pageToken}";
+            var postUrl = $"{_config.GraphApiBaseUrl}/{_config.GraphApiVersion}/{externalPostId}" +
+                          $"?fields={fields}&access_token={pageToken}";
 
-            var response = await client.GetAsync(url, ct);
+            var postResponse = await client.GetAsync(postUrl, ct);
 
-            if (!response.IsSuccessStatusCode)
+            if (!postResponse.IsSuccessStatusCode)
             {
-                var error = await response.Content.ReadAsStringAsync(ct);
-                _logger.LogWarning("Facebook API returned {Status} for post {PostId}: {Error}",
-                    response.StatusCode, externalPostId, error);
+                var error = await postResponse.Content.ReadAsStringAsync(ct);
+                _logger.LogWarning("Facebook Post API returned {Status} for post {PostId}: {Error}",
+                    postResponse.StatusCode, externalPostId, error);
                 return null;
             }
 
-            var json = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: ct);
+            var postJson = await postResponse.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: ct);
+            var metrics = "post_clicks,post_impressions_unique";
+            var insightsUrl = $"{_config.GraphApiBaseUrl}/{_config.GraphApiVersion}/{externalPostId}/insights" +
+                              $"?metric={Uri.EscapeDataString(metrics)}&access_token={pageToken}";
+
+            var insightsResponse = await client.GetAsync(insightsUrl, ct);
+            var insightsRaw = await insightsResponse.Content.ReadAsStringAsync(ct);
+
+            _logger.LogInformation("Facebook insights raw response for post {PostId}: {Raw}",
+                externalPostId, insightsRaw);
+
+            long reach = 0;
+            long clicks = 0;
+
+            if (insightsResponse.IsSuccessStatusCode)
+            {
+                var insightsJson = JsonDocument.Parse(insightsRaw).RootElement;
+
+                reach = ExtractMetric(insightsJson, "post_impressions_unique");
+                clicks = ExtractMetric(insightsJson, "post_clicks");
+            }
+            else
+            {
+                _logger.LogWarning("Facebook Insights API returned {Status} for post {PostId}: {Error}",
+                    insightsResponse.StatusCode, externalPostId, insightsRaw);
+            }
 
             return new FacebookMetricsDto
             {
                 ExternalPostId = externalPostId,
                 ExternalUrl = externalUrl,
-                Likes = json.TryGetProperty("likes", out var likes)
-                    ? likes.GetProperty("summary").GetProperty("total_count").GetInt32()
-                    : 0,
-                Comments = json.TryGetProperty("comments", out var comments)
-                    ? comments.GetProperty("summary").GetProperty("total_count").GetInt32()
-                    : 0,
-                Shares = json.TryGetProperty("shares", out var shares)
-                    ? shares.GetProperty("count").GetInt32()
-                    : 0,
-                Impressions = 0,
-                Reach = 0,
-                Clicks = 0,
+                Likes = postJson.TryGetProperty("likes", out var likes)
+                    && likes.TryGetProperty("summary", out var likesSummary)
+                    && likesSummary.TryGetProperty("total_count", out var likesCount)
+                        ? likesCount.GetInt32()
+                        : 0,
+
+                Comments = postJson.TryGetProperty("comments", out var comments)
+                    && comments.TryGetProperty("summary", out var commentsSummary)
+                    && commentsSummary.TryGetProperty("total_count", out var commentsCount)
+                        ? commentsCount.GetInt32()
+                        : 0,
+
+                Shares = postJson.TryGetProperty("shares", out var shares)
+                    && shares.TryGetProperty("count", out var sharesCount)
+                        ? sharesCount.GetInt32()
+                        : 0,
+
+                Reach = reach,
+                Clicks = clicks,
                 FetchedAt = DateTime.UtcNow
             };
         }
@@ -116,7 +147,7 @@ public sealed class FacebookMetricsService : IFacebookMetricsService
             {
                 PageId = _config.PageId,
                 PageUrl = $"https://facebook.com/{_config.PageId}",
-                Period = period, 
+                Period = period,
                 DailyUnfollowsUnique = ExtractMetric(json, "page_daily_unfollows_unique"),
                 DailyFollowsUnique = ExtractMetric(json, "page_daily_follows_unique"),
                 ViewsTotal = ExtractMetric(json, "page_views_total"),
