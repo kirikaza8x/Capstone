@@ -11,6 +11,9 @@ namespace Marketing.Infrastructure.Services;
 
 public sealed class FacebookMetricsService : IFacebookMetricsService
 {
+    /// <summary>
+    /// 
+    /// </summary>
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly FacebookConfig _config;
     private readonly ILogger<FacebookMetricsService> _logger;
