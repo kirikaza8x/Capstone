@@ -239,11 +239,11 @@ namespace Users.Api.Tests.Endpoints
 
             var unauthorizedError = Error.Unauthorized("Refresh token expired", "TOKEN_EXPIRED");
 
-           _mockMediator
-                .Setup(m => m.Send(
-                    It.IsAny<RefreshTokenCommand>(),
-                    It.IsAny<CancellationToken>()))
-                .Returns(() => Task.FromResult(Result<LoginResponseDto>.Failure(unauthorizedError)));  
+            _mockMediator
+                 .Setup(m => m.Send(
+                     It.IsAny<RefreshTokenCommand>(),
+                     It.IsAny<CancellationToken>()))
+                 .Returns(() => Task.FromResult(Result<LoginResponseDto>.Failure(unauthorizedError)));
 
             // Act
             var result = await _mockMediator.Object.Send(refreshRequest, CancellationToken.None);
