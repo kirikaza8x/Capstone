@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Shared\Shared.Application\Shared.Application.csproj" />
+    <ProjectReference Include="..\..\AI\AI.PublicApi\AI.PublicApi.csproj" />
+    <ProjectReference Include="..\..\Events\Events.PublicApi\Events.PublicApi.csproj" />
+    <ProjectReference Include="..\..\Payment\Payment.PublicApi\Payment.PublicApi.csproj" />
+    <ProjectReference Include="..\..\Ticketing\Ticketing.PublicApi\Ticketing.PublicApi.csproj" />
+    <ProjectReference Include="..\..\Users\Users.PublicApi\Users.PublicApi.csproj" />
+    <ProjectReference Include="..\Reports.Domain\Reports.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

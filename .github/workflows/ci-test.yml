@@ -1,0 +1,19 @@
+name: CI - Unit Tests
+
+on:
+  pull_request:
+    branches: [ "dev", "main" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Run Unit Tests
+      run: dotnet test src/Backend/Capstone.sln --configuration Release --logger "trx;LogFileName=test_results.trx"

@@ -1,0 +1,21 @@
+# ─────────────────────────────────────────────────────────────
+# AIPromo - Main Docker Compose Configuration
+# ─────────────────────────────────────────────────────────────
+# 
+# Usage:
+#   Start all services:        docker-compose up -d
+#   Start infrastructure only: docker-compose -f docker-compose.infrastructure.yml up -d
+#   Start backend only:        docker-compose -f docker-compose.infrastructure.yml -f docker-compose.backend.yml up -d
+#   Start embedding only:      docker-compose -f docker-compose.infrastructure.yml -f docker-compose.embedding.yml up -d
+#   Stop all:                  docker-compose down
+#
+# ─────────────────────────────────────────────────────────────
+
+include:
+  - docker-compose.infrastructure.yml
+  - docker-compose.backend.yml
+  - docker-compose.embedding.yml
+
+networks:
+  aipromo-network:
+    driver: bridge

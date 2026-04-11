@@ -1,0 +1,40 @@
+name: CI - EF Core Migrations
+
+on:
+  pull_request:
+    branches: [ "dev", "main" ]
+
+jobs:
+  check-migrations:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Load Central Environment Variables
+      # This reads the .env.ci file, ignores empty lines, and pushes variables to the OS environment
+      run: |
+        while read -r line; do
+          if [[ -n "$line" && "$line" != /* ]]; then
+            echo "$line" >> $GITHUB_ENV
+          fi
+        done < .github/.env.ci
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Install EF Core CLI
+      run: dotnet tool install --global dotnet-ef
+
+    - name: Restore dependencies
+      run: dotnet restore src/Backend/Capstone.sln
+
+    - name: Build solution
+      run: dotnet build src/Backend/Capstone.sln --configuration Debug --no-restore
+
+    - name: Run Dynamic Migration Checker
+      shell: pwsh
+      run: ./Scripts/Shells/ci_check_migrations.ps1

@@ -1,0 +1,35 @@
+# name: CI - CodeQL Security Scan
+
+# on:
+#   pull_request:
+#     branches: [ "dev", "main" ]
+#   schedule:
+#     - cron: '30 1 * * 0' # Also runs automatically in the background every Sunday
+
+# jobs:
+#   analyze:
+#     name: Analyze Code
+#     runs-on: ubuntu-latest
+#     permissions:
+#       security-events: write
+#       contents: read
+
+#     steps:
+#     - name: Checkout repository
+#       uses: actions/checkout@v4
+
+#     - name: Initialize CodeQL
+#       uses: github/codeql-action/init@v3
+#       with:
+#         languages: csharp
+
+#     - name: Setup .NET
+#       uses: actions/setup-dotnet@v4
+#       with:
+#         dotnet-version: '9.0.x'
+
+#     - name: Build project
+#       run: dotnet build src/Backend/Capstone.sln
+
+#     - name: Perform CodeQL Analysis
+#       uses: github/codeql-action/analyze@v3

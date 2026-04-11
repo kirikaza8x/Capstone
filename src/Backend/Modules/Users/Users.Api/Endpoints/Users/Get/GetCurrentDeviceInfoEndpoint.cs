@@ -1,0 +1,39 @@
+using Carter;
+using MediatR;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
+using Shared.Api.Results;
+using Shared.Application.DTOs;
+using Shared.Domain.Abstractions;
+using Users.Application.Features.Users.Queries;
+
+namespace Users.Api.Users.Get;
+
+public class GetCurrentDeviceInfoEndpoint : ICarterModule
+{
+    public void AddRoutes(IEndpointRouteBuilder app)
+    {
+        app.MapGet("api/user/device-info", async (
+            HttpContext httpContext,
+            ISender sender,
+            CancellationToken cancellationToken) =>
+        {
+            var userAgent = httpContext.Request.Headers["User-Agent"].ToString();
+            var ipAddress = httpContext.Connection.RemoteIpAddress?.ToString();
+            var deviceId = httpContext.Request.Headers["X-Device-ID"].ToString();
+
+            Result<DeviceInfo> result = await sender.Send(
+                new GetCurrentDeviceInfoQuery(userAgent, ipAddress, deviceId),
+                cancellationToken);
+
+            return result.ToOk();
+        })
+        .WithTags("Users")
+        .WithName("GetCurrentDeviceInfo")
+        .WithSummary("Get current device info")
+        .WithDescription("Returns information about the device making the current request")
+        .Produces<DeviceInfo>(StatusCodes.Status200OK)
+        .ProducesProblem(StatusCodes.Status404NotFound);
+    }
+}

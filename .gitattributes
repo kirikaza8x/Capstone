@@ -1,0 +1,2 @@
+# Set default behavior to strictly use LF (Linux) line endings
+* text=auto eol=lf

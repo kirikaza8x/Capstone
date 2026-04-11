@@ -1,0 +1,21 @@
+﻿using System.Reflection;
+using FluentValidation;
+using Microsoft.Extensions.DependencyInjection;
+using Shared.Application.Extensions;
+
+namespace Shared.Application;
+
+public static class ApplicationConfiguration
+{
+    public static IServiceCollection AddApplication(
+        this IServiceCollection services,
+        Assembly[] moduleAssemblies)
+    {
+        services.AddMediatRWithAssemblies(moduleAssemblies);
+        services.AddAutoMapper(_ => { }, moduleAssemblies);
+        services.AddValidatorsFromAssemblies(
+             moduleAssemblies,
+             includeInternalTypes: true);
+        return services;
+    }
+}

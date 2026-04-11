@@ -1,0 +1,8 @@
+using Shared.Application.Abstractions.Messaging;
+using Marketing.Application.Posts.Dtos;
+
+namespace Marketing.Application.Posts.Queries;
+
+public record GetOrganizerPostByIdQuery(
+    Guid PostId
+) : IQuery<PostDetailDto>;
