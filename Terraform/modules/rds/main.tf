@@ -1,3 +1,7 @@
+# ============================================
+# RDS PostgreSQL — Database
+# ============================================
+
 resource "aws_db_subnet_group" "main" {
   name       = "${var.project}-${var.environment}-db-subnet"
   subnet_ids = var.private_subnet_ids
@@ -11,10 +15,10 @@ resource "aws_db_subnet_group" "main" {
 
 resource "aws_security_group" "rds" {
   name        = "${var.project}-${var.environment}-rds-sg"
-  description = "Security group for RDS"
+  description = "Security group for RDS PostgreSQL"
   vpc_id      = var.vpc_id
 
-  # PostgreSQL — chỉ cho EC2 và localhost team access
+  # PostgreSQL — allow from EC2 host SG (ECS bridge mode shares host ENI)
   ingress {
     from_port       = 5432
     to_port         = 5432
@@ -55,7 +59,11 @@ resource "aws_db_instance" "main" {
   publicly_accessible     = false
   skip_final_snapshot     = true
   deletion_protection     = false
-  backup_retention_period = 3
+  backup_retention_period = 3  # Hold backups for 3 days
+
+  # Performance
+  multi_az               = false  # Single-AZ for dev
+  auto_minor_version_upgrade = true
 
   tags = {
     Name        = "${var.project}-${var.environment}-db"
