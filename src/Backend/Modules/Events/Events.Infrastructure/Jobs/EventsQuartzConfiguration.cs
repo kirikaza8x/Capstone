@@ -1,0 +1,59 @@
+using Microsoft.Extensions.DependencyInjection;
+using Quartz;
+
+namespace Events.Infrastructure.Jobs;
+
+public static class EventsQuartzConfiguration
+{
+    private const int AutoCompleteIntervalMinutes = 5;
+    private const int ReminderIntervalMinutes = 60;
+    private const int SuspensionExpiredNotifyIntervalMinutes = 15;
+
+    public static IServiceCollection AddEventsQuartzJobs(this IServiceCollection services)
+    {
+        var autoCompleteJobKey = new JobKey("events.auto-complete-published");
+        var reminderJobKey = new JobKey("events.send-reminder-24h");
+        var suspensionExpiredNotifyJobKey = new JobKey("events.notify-suspension-expired");
+
+        services.AddQuartz(options =>
+        {
+            options.AddJob<AutoCompletePublishedEventsJob>(job => job
+                .WithIdentity(autoCompleteJobKey)
+                .StoreDurably());
+
+            options.AddTrigger(trigger => trigger
+                .ForJob(autoCompleteJobKey)
+                .WithIdentity("events.auto-complete-published.trigger")
+                .StartNow()
+                .WithSimpleSchedule(schedule => schedule
+                    .WithIntervalInMinutes(AutoCompleteIntervalMinutes)
+                    .RepeatForever()));
+
+            options.AddJob<SendEventReminderJob>(job => job
+                .WithIdentity(reminderJobKey)
+                .StoreDurably());
+
+            options.AddTrigger(trigger => trigger
+                .ForJob(reminderJobKey)
+                .WithIdentity("events.send-reminder-24h.trigger")
+                .StartNow()
+                .WithSimpleSchedule(schedule => schedule
+                    .WithIntervalInMinutes(ReminderIntervalMinutes)
+                    .RepeatForever()));
+
+            options.AddJob<NotifySuspensionExpiredEventsJob>(job => job
+                .WithIdentity(suspensionExpiredNotifyJobKey)
+                .StoreDurably());
+
+            options.AddTrigger(trigger => trigger
+                .ForJob(suspensionExpiredNotifyJobKey)
+                .WithIdentity("events.notify-suspension-expired.trigger")
+                .StartNow()
+                .WithSimpleSchedule(schedule => schedule
+                    .WithIntervalInMinutes(SuspensionExpiredNotifyIntervalMinutes)
+                    .RepeatForever()));
+        });
+
+        return services;
+    }
+}

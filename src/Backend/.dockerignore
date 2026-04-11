@@ -1,0 +1,96 @@
+# ─────────────────────────────────────────────
+# Universal Docker Ignore
+# ─────────────────────────────────────────────
+
+# VCS
+**/.git
+**/.gitignore
+!**/.gitignore
+!.git/HEAD
+!.git/config
+!.git/packed-refs
+!.git/refs/heads/**
+
+# Docker & Compose
+**/.dockerignore
+**/docker-compose*
+**/Dockerfile*
+
+# Environment & Secrets
+**/.env
+**/secrets.*.yaml
+**/values.*.yaml
+
+# Build Artifacts (.NET, Java, Python, Node)
+**/bin
+**/obj
+**/*.dbmdl
+**/*.jfm
+**/*.*proj.user
+**/.classpath
+**/.project
+**/.settings
+**/.toolstarget
+**/.vs
+**/.vscode
+**/node_modules
+**/npm-debug.log
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.env
+.venv
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# IDE & Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Models (downloaded at runtime)
+models/
+*.pt
+*.bin
+*.onnx
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+LICENSE
+README.md

@@ -1,0 +1,36 @@
+using AI.PublicApi.PublicApi;
+using AI.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+
+namespace AI.Infrastructure.PublicApi;
+
+internal sealed class AiPackagePublicApi(AIModuleDbContext dbContext) : IAiPackagePublicApi
+{
+    public async Task<AiPackagePaymentInfoDto?> GetPackageForPaymentAsync(
+        Guid packageId,
+        CancellationToken cancellationToken = default)
+    {
+        return await dbContext.AiPackages
+            .AsNoTracking()
+            .Where(x => x.Id == packageId)
+            .Select(x => new AiPackagePaymentInfoDto(
+                x.Id,
+                x.Price,
+                x.IsActive))
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    public async Task<AiPackageBasicInfoDto?> GetPackageBasicInfoAsync(
+        Guid packageId,
+        CancellationToken cancellationToken = default)
+    {
+        return await dbContext.AiPackages
+            .AsNoTracking()
+            .Where(x => x.Id == packageId)
+            .Select(x => new AiPackageBasicInfoDto(
+                x.Id,
+                x.Name,
+                x.IsActive))
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+}
