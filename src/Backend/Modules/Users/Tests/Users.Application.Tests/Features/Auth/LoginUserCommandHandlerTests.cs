@@ -3,6 +3,8 @@ using Moq;
 using FluentAssertions;
 using Users.Domain.Entities;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Users.Domain.Repositories;
@@ -11,6 +13,7 @@ using Users.Domain.UOW;
 using Shared.Domain.Abstractions;
 using Users.Application.Features.Users.Commands.Records;
 using Users.Application.Features.Users.Commands.Handlers;
+using Shared.Application.DTOs;
 
 namespace Users.Application.Tests.Features.Auth
 {
@@ -35,6 +38,8 @@ namespace Users.Application.Tests.Features.Auth
             _mockDeviceDetectionService = new Mock<IDeviceDetectionService>();
             _mockUnitOfWork = new Mock<IUserUnitOfWork>();
 
+            SetupUniversalMocks();
+
             _handler = new LoginUserCommandHandler(
                 _mockUserRepository.Object,
                 _mockPasswordHasher.Object,
@@ -46,11 +51,107 @@ namespace Users.Application.Tests.Features.Auth
             );
         }
 
+        private void SetupUniversalMocks()
+        {
+            // ✅ ICurrentUserService
+            _mockCurrentUserService
+                .Setup(x => x.UserId)
+                .Returns(Guid.Empty);
+            _mockCurrentUserService
+                .Setup(x => x.Email)
+                .Returns((string?)null);
+            _mockCurrentUserService
+                .Setup(x => x.Name)
+                .Returns((string?)null);
+            _mockCurrentUserService
+                .Setup(x => x.Roles)
+                .Returns(Enumerable.Empty<string>());
+            _mockCurrentUserService
+                .Setup(x => x.Jti)
+                .Returns((string?)null);
+            _mockCurrentUserService
+                .Setup(x => x.IpAddress)
+                .Returns((string?)null);
+            _mockCurrentUserService
+                .Setup(x => x.UserAgent)
+                .Returns((string?)null);
+            _mockCurrentUserService
+                .Setup(x => x.DeviceId)
+                .Returns((string?)null);
+            _mockCurrentUserService
+                .Setup(x => x.GetCurrentUser())
+                .Returns((CurrentUserDto?)null);
+
+            // ✅ IDeviceDetectionService - ALL non-nullable DeviceInfo properties MUST be set
+            _mockDeviceDetectionService
+                .Setup(x => x.GenerateDeviceId())
+                .Returns(Guid.NewGuid().ToString());
+            
+            _mockDeviceDetectionService
+                .Setup(x => x.ResolveDeviceName(It.IsAny<string?>()))
+                .Returns((string? ua) => string.IsNullOrWhiteSpace(ua) ? "Unknown Device" : "Detected Device");
+            
+            _mockDeviceDetectionService
+                .Setup(x => x.GetDeviceInfo(
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>()))
+                .Returns((string? userAgent, string? ipAddress, string? existingDeviceId) => 
+                {
+                    var deviceId = !string.IsNullOrWhiteSpace(existingDeviceId) 
+                        ? existingDeviceId 
+                        : Guid.NewGuid().ToString();
+                    
+                    return new DeviceInfo
+                    {
+                        DeviceId = deviceId,
+                        DeviceName = !string.IsNullOrWhiteSpace(userAgent) ? "Detected Device" : "Unknown Device",
+                        Browser = "Chrome",
+                        OperatingSystem = "Windows",
+                        DeviceType = "Desktop",
+                        BrowserVersion = "120.0",
+                        OSVersion = "10",
+                        UserAgent = userAgent,
+                        IpAddress = ipAddress
+                    };
+                });
+
+            // ✅ IJwtTokenService
+            _mockJwtTokenService
+                .Setup(j => j.GenerateToken(
+                    It.IsAny<Guid>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<IReadOnlyList<string>>()))
+                .Returns("default_access_token");
+            
+            // 🔥 CRITICAL: ExpiryMinutes property used in BuildResponse
+            _mockJwtTokenService
+                .SetupGet(j => j.ExpiryMinutes)
+                .Returns(15);
+
+            // ✅ IRefreshTokenService - Returns RefreshToken entity, NOT tuple
+            _mockRefreshTokenService
+                .Setup(r => r.GenerateToken(It.IsAny<Guid>()))
+                .Returns((Guid userId) => RefreshToken.Create(
+                    token: Guid.NewGuid().ToString("N"),
+                    expiryDate: DateTime.UtcNow.AddDays(7),
+                    userId: userId,
+                    deviceId: null,
+                    deviceName: null,
+                    ipAddress: null,
+                    userAgent: null));
+
+            // Default UnitOfWork
+            _mockUnitOfWork
+                .Setup(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(1);
+        }
+
         [Fact]
         public async Task Handle_WithValidEmailAndPassword_ShouldReturnLoginResponseDto()
         {
             // Arrange
-            var userId = Guid.NewGuid();
             var command = new LoginUserCommand(
                 "test@example.com",
                 "Password123!",
@@ -66,17 +167,22 @@ namespace Users.Application.Tests.Features.Auth
                 "John",
                 "Doe"
             );
+            user.AssignRole(Role.Create("User",""));
 
             var accessToken = "access_token_jwt";
             var refreshTokenEntity = RefreshToken.Create(
                 token: "refresh_token_string",
                 expiryDate: DateTime.UtcNow.AddDays(7),
-                userId: user.Id
+                userId: user.Id,
+                deviceId: "device_123",
+                deviceName: "Test Device",
+                ipAddress: "192.168.1.1",
+                userAgent: "Mozilla/5.0..."
             );
 
             _mockUserRepository
-                .Setup(r => r.FirstOrDefaultAsync(
-                    It.IsAny<System.Linq.Expressions.Expression<Func<User, bool>>>(),
+                .Setup(r => r.GetUserByMailOrUserNameAsync(
+                    It.IsAny<string>(),
                     It.IsAny<CancellationToken>()))
                 .ReturnsAsync(user);
 
@@ -85,16 +191,24 @@ namespace Users.Application.Tests.Features.Auth
                 .Returns(true);
 
             _mockJwtTokenService
-                .Setup(j => j.GenerateToken(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<System.Collections.Generic.IReadOnlyList<string>>()))
+                .Setup(j => j.GenerateToken(
+                    It.IsAny<Guid>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<IReadOnlyList<string>>()))
                 .Returns(accessToken);
 
+            // ✅ FIXED: Return RefreshToken entity, not tuple
             _mockRefreshTokenService
                 .Setup(r => r.GenerateToken(user.Id))
                 .Returns(refreshTokenEntity);
 
-            _mockUnitOfWork
-                .Setup(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()))
-                .ReturnsAsync(1);
+            _mockUserRepository
+                .Setup(r => r.AddOrUpdateRefreshTokenAsync(
+                    It.IsAny<User>(),
+                    It.IsAny<RefreshToken>(),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(refreshTokenEntity);
 
             // Act
             var result = await _handler.Handle(command, CancellationToken.None);
@@ -104,9 +218,14 @@ namespace Users.Application.Tests.Features.Auth
             result.Value.Should().NotBeNull();
             result.Value.AccessToken.Should().Be(accessToken);
             result.Value.RefreshToken.Should().Be(refreshTokenEntity.Token);
+            result.Value.DeviceId.Should().NotBeNullOrEmpty();
+            result.Value.DeviceName.Should().NotBeNullOrEmpty();
 
             _mockPasswordHasher.Verify(
                 p => p.VerifyPassword(command.Password, user.PasswordHash),
+                Times.Once);
+            _mockUnitOfWork.Verify(
+                u => u.SaveChangesAsync(It.IsAny<CancellationToken>()),
                 Times.Once);
         }
 
@@ -114,7 +233,6 @@ namespace Users.Application.Tests.Features.Auth
         public async Task Handle_WithUsername_ShouldReturnLoginResponseDto()
         {
             // Arrange
-            var userId = Guid.NewGuid();
             var command = new LoginUserCommand(
                 "testuser",
                 "Password123!",
@@ -128,16 +246,21 @@ namespace Users.Application.Tests.Features.Auth
                 "testuser",
                 "hashed_password"
             );
+            user.AssignRole(Role.Create("User",""));
 
             var refreshTokenEntity = RefreshToken.Create(
                 token: "refresh_token_string",
                 expiryDate: DateTime.UtcNow.AddDays(7),
-                userId: user.Id
+                userId: user.Id,
+                deviceId: Guid.NewGuid().ToString(),
+                deviceName: "Unknown Device",
+                ipAddress: null,
+                userAgent: null
             );
 
             _mockUserRepository
-                .Setup(r => r.FirstOrDefaultAsync(
-                    It.IsAny<System.Linq.Expressions.Expression<Func<User, bool>>>(),
+                .Setup(r => r.GetUserByMailOrUserNameAsync(
+                    It.IsAny<string>(),
                     It.IsAny<CancellationToken>()))
                 .ReturnsAsync(user);
 
@@ -145,17 +268,17 @@ namespace Users.Application.Tests.Features.Auth
                 .Setup(p => p.VerifyPassword(command.Password, user.PasswordHash))
                 .Returns(true);
 
-            _mockJwtTokenService
-                .Setup(j => j.GenerateToken(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<System.Collections.Generic.IReadOnlyList<string>>()))
-                .Returns("access_token");
-
+            // ✅ FIXED: Return RefreshToken entity
             _mockRefreshTokenService
-                .Setup(r => r.GenerateToken(It.IsAny<Guid>()))
+                .Setup(r => r.GenerateToken(user.Id))
                 .Returns(refreshTokenEntity);
 
-            _mockUnitOfWork
-                .Setup(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()))
-                .ReturnsAsync(1);
+            _mockUserRepository
+                .Setup(r => r.AddOrUpdateRefreshTokenAsync(
+                    It.IsAny<User>(),
+                    It.IsAny<RefreshToken>(),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(refreshTokenEntity);
 
             // Act
             var result = await _handler.Handle(command, CancellationToken.None);
@@ -163,6 +286,8 @@ namespace Users.Application.Tests.Features.Auth
             // Assert
             result.IsSuccess.Should().BeTrue();
             result.Value.Should().NotBeNull();
+            result.Value.AccessToken.Should().NotBeNullOrEmpty();
+            result.Value.RefreshToken.Should().Be("refresh_token_string");
         }
 
         [Fact]
@@ -184,8 +309,8 @@ namespace Users.Application.Tests.Features.Auth
             );
 
             _mockUserRepository
-                .Setup(r => r.FirstOrDefaultAsync(
-                    It.IsAny<System.Linq.Expressions.Expression<Func<User, bool>>>(),
+                .Setup(r => r.GetUserByMailOrUserNameAsync(
+                    It.IsAny<string>(),
                     It.IsAny<CancellationToken>()))
                 .ReturnsAsync(user);
 
@@ -198,10 +323,14 @@ namespace Users.Application.Tests.Features.Auth
 
             // Assert
             result.IsSuccess.Should().BeFalse();
+            result.Error.Type.Should().Be(ErrorType.Unauthorized);
             result.Error.Description.Should().ContainEquivalentOf("password");
 
             _mockJwtTokenService.Verify(
-                j => j.GenerateToken(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<System.Collections.Generic.IReadOnlyList<string>>()),
+                j => j.GenerateToken(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<string>>()),
+                Times.Never);
+            _mockRefreshTokenService.Verify(
+                r => r.GenerateToken(It.IsAny<Guid>()),
                 Times.Never);
         }
 
@@ -218,8 +347,8 @@ namespace Users.Application.Tests.Features.Auth
             );
 
             _mockUserRepository
-                .Setup(r => r.FirstOrDefaultAsync(
-                    It.IsAny<System.Linq.Expressions.Expression<Func<User, bool>>>(),
+                .Setup(r => r.GetUserByMailOrUserNameAsync(
+                    It.IsAny<string>(),
                     It.IsAny<CancellationToken>()))
                 .ReturnsAsync((User?)null);
 
@@ -255,8 +384,8 @@ namespace Users.Application.Tests.Features.Auth
             user.Deactivate();
 
             _mockUserRepository
-                .Setup(r => r.FirstOrDefaultAsync(
-                    It.IsAny<System.Linq.Expressions.Expression<Func<User, bool>>>(),
+                .Setup(r => r.GetUserByMailOrUserNameAsync(
+                    It.IsAny<string>(),
                     It.IsAny<CancellationToken>()))
                 .ReturnsAsync(user);
 
@@ -270,11 +399,12 @@ namespace Users.Application.Tests.Features.Auth
 
         [Theory]
         [InlineData("")]
-        public async Task Handle_WithInvalidEmailOrUserName_ShouldReturnFailure(string invalidInput)
+        [InlineData(null)]
+        public async Task Handle_WithInvalidEmailOrUserName_ShouldReturnFailure(string? invalidInput)
         {
             // Arrange
             var command = new LoginUserCommand(
-                invalidInput,
+                invalidInput!,
                 "Password123!",
                 null,
                 null,
@@ -292,7 +422,6 @@ namespace Users.Application.Tests.Features.Auth
         public async Task Handle_ShouldCreateRefreshTokenRecord()
         {
             // Arrange
-            var userId = Guid.NewGuid();
             var command = new LoginUserCommand(
                 "test@example.com",
                 "Password123!",
@@ -306,16 +435,21 @@ namespace Users.Application.Tests.Features.Auth
                 "testuser",
                 "hashed_password"
             );
+            user.AssignRole(Role.Create("User",""));
 
             var refreshTokenEntity = RefreshToken.Create(
                 token: "refresh_token_string",
                 expiryDate: DateTime.UtcNow.AddDays(7),
-                userId: user.Id
+                userId: user.Id,
+                deviceId: Guid.NewGuid().ToString(),
+                deviceName: "Test Device",
+                ipAddress: null,
+                userAgent: null
             );
 
             _mockUserRepository
-                .Setup(r => r.FirstOrDefaultAsync(
-                    It.IsAny<System.Linq.Expressions.Expression<Func<User, bool>>>(),
+                .Setup(r => r.GetUserByMailOrUserNameAsync(
+                    It.IsAny<string>(),
                     It.IsAny<CancellationToken>()))
                 .ReturnsAsync(user);
 
@@ -323,25 +457,36 @@ namespace Users.Application.Tests.Features.Auth
                 .Setup(p => p.VerifyPassword(command.Password, user.PasswordHash))
                 .Returns(true);
 
-            _mockJwtTokenService
-                .Setup(j => j.GenerateToken(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<System.Collections.Generic.IReadOnlyList<string>>()))
-                .Returns("access_token");
-
+            // ✅ FIXED: Return RefreshToken entity
             _mockRefreshTokenService
-                .Setup(r => r.GenerateToken(It.IsAny<Guid>()))
+                .Setup(r => r.GenerateToken(user.Id))
                 .Returns(refreshTokenEntity);
 
-            _mockUnitOfWork
-                .Setup(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()))
-                .ReturnsAsync(1);
+            _mockUserRepository
+                .Setup(r => r.AddOrUpdateRefreshTokenAsync(
+                    It.IsAny<User>(),
+                    It.IsAny<RefreshToken>(),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(refreshTokenEntity);
 
             // Act
             var result = await _handler.Handle(command, CancellationToken.None);
 
             // Assert
             result.IsSuccess.Should().BeTrue();
-            _mockRefreshTokenService.Verify(r => r.GenerateToken(It.IsAny<Guid>()), Times.Once);
-            _mockUnitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+            
+            _mockRefreshTokenService.Verify(
+                r => r.GenerateToken(It.IsAny<Guid>()), 
+                Times.Once);
+            _mockUserRepository.Verify(
+                r => r.AddOrUpdateRefreshTokenAsync(
+                    It.IsAny<User>(),
+                    It.IsAny<RefreshToken>(),
+                    It.IsAny<CancellationToken>()),
+                Times.Once);
+            _mockUnitOfWork.Verify(
+                u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), 
+                Times.Once);
         }
     }
 }

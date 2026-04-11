@@ -96,10 +96,11 @@ namespace Users.Application.Tests.Features.Roles.Commands
             );
 
             _mockRoleRepository
-                .Setup(r => r.AnyAsync(
-                    It.IsAny<Expression<Func<Role, bool>>>(),
-                    It.IsAny<CancellationToken>()))
-                .ReturnsAsync(true);
+            .Setup(r => r.GetByRoleNameAsync(
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Role.Create("Admin", "Administrator role"));
+
 
             // Act
             var result = await _handler.Handle(command, CancellationToken.None);
