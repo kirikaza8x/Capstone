@@ -1,62 +1,51 @@
-data "aws_ami" "ubuntu" {
+# ============================================
+# Amazon Linux 2023 AMI (ECS-optimized)
+# ============================================
+
+data "aws_ami" "amazon_linux" {
   most_recent = true
-  owners      = ["099720109477"] # Canonical
+  owners      = ["137112412989"] # Amazon
 
   filter {
     name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-22.04-amd64-server-*"]
+    values = ["al2023-ami-2023.*-x86_64"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
   }
 }
 
+# ============================================
+# Security Group cho EC2 (Nginx + SSH)
+# ============================================
+
 resource "aws_security_group" "ec2" {
   name        = "${var.project}-${var.environment}-ec2-sg"
-  description = "Security group for EC2 services"
+  description = "Security group for EC2 — Nginx reverse proxy + SSH"
   vpc_id      = var.vpc_id
 
-  # SSH
+  # HTTP — cho Let's Encrypt validation + redirect to HTTPS
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # HTTPS — public API access
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # SSH — Just allow from CIDR
   ingress {
     from_port   = 22
     to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = var.allowed_cidr
-  }
-
-  # RabbitMQ Management UI
-  ingress {
-    from_port   = 15672
-    to_port     = 15672
-    protocol    = "tcp"
-    cidr_blocks = var.allowed_cidr
-  }
-
-  # RabbitMQ AMQP
-  ingress {
-    from_port   = 5672
-    to_port     = 5672
-    protocol    = "tcp"
-    cidr_blocks = var.allowed_cidr
-  }
-
-  # Redis
-  ingress {
-    from_port   = 6379
-    to_port     = 6379
-    protocol    = "tcp"
-    cidr_blocks = var.allowed_cidr
-  }
-
-  # Qdrant HTTP
-  ingress {
-    from_port   = 6333
-    to_port     = 6333
-    protocol    = "tcp"
-    cidr_blocks = var.allowed_cidr
-  }
-
-  # Qdrant gRPC
-  ingress {
-    from_port   = 6334
-    to_port     = 6334
     protocol    = "tcp"
     cidr_blocks = var.allowed_cidr
   }
@@ -75,26 +64,45 @@ resource "aws_security_group" "ec2" {
   }
 }
 
-resource "aws_instance" "services" {
-  ami                    = data.aws_ami.ubuntu.id
-  instance_type          = var.instance_type
-  subnet_id              = var.public_subnet_id
-  vpc_security_group_ids = [aws_security_group.ec2.id]
-  key_name               = var.key_name
+# ============================================
+# EC2 Instance — ECS Container Host + Nginx
+# ============================================
 
-  user_data = file("${path.module}/user_data.sh")
+resource "aws_instance" "services" {
+  ami                         = data.aws_ami.amazon_linux.id
+  instance_type               = var.instance_type
+  subnet_id                   = var.public_subnet_id
+  vpc_security_group_ids      = [aws_security_group.ec2.id]
+  key_name                    = var.key_name
+  iam_instance_profile        = var.ecs_instance_profile_name
+  associate_public_ip_address = true
+
+  user_data = templatefile("${path.module}/user_data.sh", {
+    project       = var.project
+    environment   = var.environment
+    domain_name   = var.domain_name
+    rabbitmq_user = var.rabbitmq_user
+    rabbitmq_pass = var.rabbitmq_pass
+    redis_pass    = var.redis_pass
+    backend_port  = var.backend_port
+  })
 
   root_block_device {
     volume_size = 30
     volume_type = "gp3"
+    encrypted   = true
   }
 
   tags = {
-    Name        = "${var.project}-${var.environment}-services"
+    Name        = "${var.project}-${var.environment}-ecs-host"
     Project     = var.project
     Environment = var.environment
   }
 }
+
+# ============================================
+# Elastic IP
+# ============================================
 
 resource "aws_eip" "services" {
   instance = aws_instance.services.id

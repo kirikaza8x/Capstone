@@ -460,3 +460,13 @@ Terraform/**/.terraform.lock.hcl
 Terraform/**/terraform.tfvars
 Terraform/**/*.tfvars.json
 Terraform/**/*.auto.tfvars
+*.md
+!README.md
+!readme.md
+
+# Language Server cache files
+*.lscache
+**/*.lscache
+
+
+
