@@ -46,7 +46,7 @@ resource "aws_iam_role" "ecs_instance_role" {
 
 resource "aws_iam_role_policy_attachment" "ecs_instance_role" {
   role       = aws_iam_role.ecs_instance_role.name
-  policy_arn = "arn:aws:iam::policy/service-role/AmazonEC2ContainerServiceforEC2Role"
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
 }
 
 resource "aws_iam_instance_profile" "ecs_instance_profile" {
@@ -83,7 +83,7 @@ resource "aws_iam_role" "ecs_task_execution_role" {
 
 resource "aws_iam_role_policy_attachment" "ecs_task_execution_role" {
   role       = aws_iam_role.ecs_task_execution_role.name
-  policy_arn = "arn:aws:iam::policy/service-role/AmazonECSTaskExecutionRolePolicy"
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
 # ============================================

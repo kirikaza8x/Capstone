@@ -75,8 +75,8 @@ module "ecs" {
 
   # Backend API settings
   backend_port    = var.backend_port
-  backend_cpu     = "512"
-  backend_memory  = "512"
+  backend_cpu     = "1024"
+  backend_memory  = "1024"
 
   # Embedding service settings
   embedding_port   = var.embedding_port
@@ -88,59 +88,67 @@ module "ecs" {
     # ASP.NET Core
     "ASPNETCORE_ENVIRONMENT" = "Production"
 
-    # Database — .env: DATABASE_CONNECTION_STRING
-    "DATABASE_CONNECTION_STRING" = "Host=${module.rds.endpoint};Port=5432;Database=${module.rds.db_name};Username=${var.db_username};Password=${var.db_password};SSL Mode=Require;Trust Server Certificate=true"
+    # Database — Section: "Database"
+    "Database__ConnectionString" = "Host=${module.rds.endpoint};Database=${module.rds.db_name};Username=${var.db_username};Password=${var.db_password};SSL Mode=Require;Trust Server Certificate=true"
+    "Database__MaxRetryCount"    = "3"
+    "Database__CommandTimeout"   = "30"
+    "Database__EnableDetailedErrors"       = "true"
+    "Database__EnableSensitiveDataLogging" = "false"
 
-    # Redis — .env: REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, REDIS_INSTANCE_NAME
-    "REDIS_HOST"          = module.ec2.private_ip
-    "REDIS_PORT"          = "6379"
-    "REDIS_PASSWORD"      = var.redis_pass
-    "REDIS_INSTANCE_NAME" = "AIPromo"
+    # Redis — Section: "Redis"
+    "Redis__Host"         = module.ec2.private_ip
+    "Redis__Port"         = "6379"
+    "Redis__Password"     = var.redis_pass
+    "Redis__InstanceName" = "AIPromo"
 
-    # RabbitMQ — .env: RABBITMQ_HOST, RABBITMQ_PORT, RABBITMQ_USER, RABBITMQ_PASS
-    "RABBITMQ_HOST" = module.ec2.private_ip
-    "RABBITMQ_PORT" = "5672"
-    "RABBITMQ_USER" = var.rabbitmq_user
-    "RABBITMQ_PASS" = var.rabbitmq_pass
+    # RabbitMQ — Section: "MessageBroker"
+    "MessageBroker__Host"     = "rabbitmq://${module.ec2.private_ip}/"
+    "MessageBroker__UserName" = var.rabbitmq_user
+    "MessageBroker__Password" = var.rabbitmq_pass
 
-    # Qdrant — .env: QDRANT_HOST, QDRANT_PORT, QDRANT_USE_HTTPS, QDRANT_API_KEY
-    "QDRANT_HOST"      = module.ec2.private_ip
-    "QDRANT_PORT"      = "6334"
-    "QDRANT_USE_HTTPS" = "false"
-    "QDRANT_API_KEY"   = ""
+    # Qdrant — Section: "Qdrant"
+    "Qdrant__Host"      = module.ec2.private_ip
+    "Qdrant__Port"      = "6334" #gRPC port
+    "Qdrant__UseHttps"  = "false"
+    "Qdrant__ApiKey"    = ""
 
-    # MinIO (S3) — .env: MINIO_ENDPOINT, MINIO_ACCESS_KEY, MINIO_SECRET_KEY, MINIO_USE_SSL
-    "MINIO_ENDPOINT"   = "${module.s3.bucket_name}.s3.${var.aws_region}.amazonaws.com"
-    "MINIO_ACCESS_KEY" = module.s3.iam_access_key_id
-    "MINIO_SECRET_KEY" = module.s3.iam_secret_access_key
-    "MINIO_USE_SSL"    = "true"
+    # Storage — Section: "Storage"
+    "Storage__Endpoint"   = "s3.${var.aws_region}.amazonaws.com"
+    "Storage__AccessKey"  = module.s3.iam_access_key_id
+    "Storage__SecretKey"  = module.s3.iam_secret_access_key
+    "Storage__BucketName" = module.s3.bucket_name
+    "Storage__Region"     = var.aws_region
+    "Storage__UseSSL"     = "true"
 
-    # JWT — .env: JWT_SECRET, JWT_ISSUER, JWT_AUDIENCE, JWT_EXPIRY_MINUTES, JWT_REFRESH_TOKEN_EXPIRY_DAYS
-    "JWT_SECRET"                    = var.jwt_secret
-    "JWT_ISSUER"                    = "aipromo"
-    "JWT_AUDIENCE"                  = "aipromo-api"
-    "JWT_EXPIRY_MINUTES"            = "60"
-    "JWT_REFRESH_TOKEN_EXPIRY_DAYS" = "7"
+    # JWT — Section: "JwtConfigs"
+    "JwtConfigs__Secret"                = var.jwt_secret
+    "JwtConfigs__Issuer"                = "aipromo"
+    "JwtConfigs__Audience"              = "aipromo-api"
+    "JwtConfigs__ExpiryMinutes"         = "60"
+    "JwtConfigs__RefreshTokenExpiryDays" = "7"
 
-    # Embedding Service — .env: EMBEDDING_BASE_URL, EMBEDDING_TIMEOUT_SECONDS
-    "EMBEDDING_BASE_URL"        = "http://${module.ec2.private_ip}:${var.embedding_port}"
-    "EMBEDDING_TIMEOUT_SECONDS" = "30"
+    # Gemini AI
+    "Gemini__ApiKey" = ""
+    "Gemini__Model"  = "gemini-2.5-flash"
 
-    # Embedding Queue — .env: EMBEDDING_REQUEST_QUEUE, EMBEDDING_RESPONSE_QUEUE
-    "EMBEDDING_REQUEST_QUEUE"  = "embedding.requests"
-    "EMBEDDING_RESPONSE_QUEUE" = "embedding.responses"
+    # OpenRouter AI
+    "OpenRouter__ApiKey" = ""
+    "OpenRouter__Model"  = "black-forest-labs/flux.2-pro"
 
-    # AI Model APIs
-    "GEMINI_API_KEY"     = ""
-    "GEMINI_MODEL"       = "gemini-2.5-flash"
-    "OPENROUTER_API_KEY" = ""
-    "OPENROUTER_MODEL"   = "black-forest-labs/flux.2-pro"
+    # Embedding Service — Section: "Embedding"
+    "Embedding__Http__BaseUrl"        = "http://${module.ec2.private_ip}:${var.embedding_port}"
+    "Embedding__Http__TimeoutSeconds" = "30"
+
+    # Embedding Queue — Section: "Embedding__Queue"
+    "Embedding__Queue__RequestQueue"  = "embedding.requests"
+    "Embedding__Queue__ResponseQueue" = "embedding.responses"
+    "Embedding__Queue__TimeoutSeconds" = "30"
 
     # Logging
-    "LOG_LEVEL_DEFAULT"   = "Information"
-    "LOG_LEVEL_MICROSOFT" = "Warning"
-    "LOG_LEVEL_EF"        = "Warning"
-    "LOG_LEVEL_QUARTZ"    = "Warning"
+    "Logging__LogLevel__Default"                = "Information"
+    "Logging__LogLevel__Microsoft.AspNetCore"   = "Warning"
+    "Logging__LogLevel__Microsoft.EntityFrameworkCore" = "Warning"
+    "Logging__LogLevel__Quartz"                 = "Warning"
   }
 
   # Embedding service env vars
@@ -171,7 +179,7 @@ module "ec2" {
   key_name                    = var.ec2_key_name
   allowed_cidr                = var.allowed_cidr
   ecs_instance_profile_name   = module.ecs.ecs_instance_profile_name
-  domain_name                 = var.domain_name
+  domain_name                 = "${var.api_subdomain}.${var.domain_name}" 
   rabbitmq_user               = var.rabbitmq_user
   rabbitmq_pass               = var.rabbitmq_pass
   redis_pass                  = var.redis_pass
