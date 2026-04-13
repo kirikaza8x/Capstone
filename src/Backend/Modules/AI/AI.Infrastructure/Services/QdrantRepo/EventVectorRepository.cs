@@ -37,9 +37,28 @@ public sealed class EventVectorRepository : QdrantRepositoryBase, IEventVectorRe
     public override async Task EnsureCollectionAsync(CancellationToken ct = default)
     {
         await base.EnsureCollectionAsync(ct);
-        await CreatePayloadIndexAsync("category", PayloadSchemaType.Keyword, ct);
-        await CreatePayloadIndexAsync("hashtags",  PayloadSchemaType.Keyword, ct);
-        await CreatePayloadIndexAsync("start_at",  PayloadSchemaType.Datetime, ct);
+
+        // Create payload indexes with error handling.
+        // Note: "InvalidArgument" errors often occur due to Qdrant.Client library 
+        // version mismatches with the server (e.g., Datetime type support).
+        // We swallow exceptions here to allow the app to start even if indexing fails.
+        await CreatePayloadIndexSafeAsync("category", PayloadSchemaType.Keyword, ct);
+        await CreatePayloadIndexSafeAsync("hashtags",  PayloadSchemaType.Keyword, ct);
+        await CreatePayloadIndexSafeAsync("start_at",  PayloadSchemaType.Datetime, ct);
+    }
+
+    private async Task CreatePayloadIndexSafeAsync(string field, PayloadSchemaType type, CancellationToken ct)
+    {
+        try
+        {
+            await CreatePayloadIndexAsync(field, type, ct);
+            Logger.LogDebug("Created payload index for field '{Field}'", field);
+        }
+        catch (Exception ex)
+        {
+            // Log warning but do not crash. The app can still function without this specific index.
+            Logger.LogWarning(ex, "Failed to create payload index for field '{Field}'. App will continue without this index.", field);
+        }
     }
 
     // ── Write ─────────────────────────────────────────────────────
