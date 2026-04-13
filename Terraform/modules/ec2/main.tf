@@ -1,20 +1,9 @@
 # ============================================
-# Amazon Linux 2023 AMI (ECS-optimized)
+# Amazon ECS-Optimized AMI (Amazon Linux 2)
 # ============================================
 
-data "aws_ami" "amazon_linux" {
-  most_recent = true
-  owners      = ["137112412989"] # Amazon
-
-  filter {
-    name   = "name"
-    values = ["al2023-ami-2023.*-x86_64"]
-  }
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
+data "aws_ssm_parameter" "ecs_ami" {
+  name = "/aws/service/ecs/optimized-ami/amazon-linux-2/recommended"
 }
 
 # ============================================
@@ -23,7 +12,7 @@ data "aws_ami" "amazon_linux" {
 
 resource "aws_security_group" "ec2" {
   name        = "${var.project}-${var.environment}-ec2-sg"
-  description = "Security group for EC2 — Nginx reverse proxy + SSH"
+  description = "Security group for EC2 - Nginx reverse proxy + SSH"
   vpc_id      = var.vpc_id
 
   # HTTP — cho Let's Encrypt validation + redirect to HTTPS
@@ -69,13 +58,19 @@ resource "aws_security_group" "ec2" {
 # ============================================
 
 resource "aws_instance" "services" {
-  ami                         = data.aws_ami.amazon_linux.id
+  ami                         = jsondecode(data.aws_ssm_parameter.ecs_ami.value).image_id
   instance_type               = var.instance_type
   subnet_id                   = var.public_subnet_id
   vpc_security_group_ids      = [aws_security_group.ec2.id]
   key_name                    = var.key_name
   iam_instance_profile        = var.ecs_instance_profile_name
   associate_public_ip_address = true
+
+  user_data_replace_on_change = true
+
+  lifecycle {
+    create_before_destroy = true
+  }
 
   user_data = templatefile("${path.module}/user_data.sh", {
     project       = var.project
@@ -84,7 +79,7 @@ resource "aws_instance" "services" {
     rabbitmq_user = var.rabbitmq_user
     rabbitmq_pass = var.rabbitmq_pass
     redis_pass    = var.redis_pass
-    backend_port  = var.backend_port
+    backend_port  = tostring(var.backend_port)
   })
 
   root_block_device {
