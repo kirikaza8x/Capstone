@@ -4,6 +4,11 @@
 
 name: CD - Deploy Services to ECS
 
+# Permissions required for OIDC authentication with AWS
+permissions:
+  id-token: write
+  contents: read
+
 on:
   push:
     branches: [ "main" ]
