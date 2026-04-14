@@ -1,0 +1,551 @@
+# ============================================
+# CD — Deploy Services to ECS
+# ============================================
+
+name: CD - Deploy Services to ECS
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+    inputs:
+      service:
+        description: 'Service to deploy'
+        required: true
+        default: 'backend'
+        type: choice
+        options:
+          - backend
+          - embedding
+          - both
+      force_deploy:
+        description: 'Force deploy (skip health check)'
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: deploy-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: ap-southeast-1
+  BACKEND_ECR_REPOSITORY: aipromo-dev-backend-api
+  EMBEDDING_ECR_REPOSITORY: aipromo-dev-embedding
+  ECS_CLUSTER: aipromo-dev-cluster
+  BACKEND_ECS_SERVICE: aipromo-dev-backend-api-service
+  EMBEDDING_ECS_SERVICE: aipromo-dev-embedding-service
+
+jobs:
+  # ============================================
+  # JOB 0: DETECT CHANGES
+  # ============================================
+  # Detect which directories have changes
+  # Decide which services need deployment
+  # ============================================
+  detect-changes:
+    name: Detect Changed Services
+    runs-on: ubuntu-latest
+    outputs:
+      deploy_backend: ${{ steps.filter.outputs.backend }}
+      deploy_embedding: ${{ steps.filter.outputs.embedding }}
+      any_service_changed: ${{ steps.filter.outputs.any }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    # Get list of changed files between previous and current commit
+    - name: Detect file changes
+      id: filter
+      run: |
+        echo "Detecting changed files..."
+
+        # If manual trigger → deploy based on user selection
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          SERVICE="${{ github.event.inputs.service }}"
+          echo "Manual trigger: deploying $SERVICE"
+
+          if [ "$SERVICE" = "backend" ]; then
+            echo "backend=true" >> $GITHUB_OUTPUT
+            echo "embedding=false" >> $GITHUB_OUTPUT
+            echo "any=true" >> $GITHUB_OUTPUT
+          elif [ "$SERVICE" = "embedding" ]; then
+            echo "backend=false" >> $GITHUB_OUTPUT
+            echo "embedding=true" >> $GITHUB_OUTPUT
+            echo "any=true" >> $GITHUB_OUTPUT
+          else
+            echo "backend=true" >> $GITHUB_OUTPUT
+            echo "embedding=true" >> $GITHUB_OUTPUT
+            echo "any=true" >> $GITHUB_OUTPUT
+          fi
+          exit 0
+        fi
+
+        # If push → auto-detect changes
+        # Get parent commit SHA
+        if [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]; then
+          # First commit to branch → compare with root
+          BEFORE="${{ github.sha }}^"
+        else
+          BEFORE="${{ github.event.before }}"
+        fi
+
+        echo "Comparing: $BEFORE → ${{ github.sha }}"
+
+        # Get list of changed files
+        CHANGED_FILES=$(git diff --name-only $BEFORE ${{ github.sha }} || echo "")
+
+        if [ -z "$CHANGED_FILES" ]; then
+          echo "No files changed"
+          echo "backend=false" >> $GITHUB_OUTPUT
+          echo "embedding=false" >> $GITHUB_OUTPUT
+          echo "any=false" >> $GITHUB_OUTPUT
+          exit 0
+        fi
+
+        echo "Changed files:"
+        echo "$CHANGED_FILES"
+        echo ""
+
+        # Check if changes are in src/Backend
+        BACKEND_CHANGED=false
+        EMBEDDING_CHANGED=false
+
+        while IFS= read -r file; do
+          # Backend: code in src/Backend/
+          if echo "$file" | grep -q "^src/Backend/"; then
+            BACKEND_CHANGED=true
+          fi
+
+          # Embedding: code in Embedding/
+          if echo "$file" | grep -q "^Embedding/"; then
+            EMBEDDING_CHANGED=true
+          fi
+        done <<< "$CHANGED_FILES"
+
+        echo "Backend changed: $BACKEND_CHANGED"
+        echo "Embedding changed: $EMBEDDING_CHANGED"
+
+        echo "backend=$BACKEND_CHANGED" >> $GITHUB_OUTPUT
+        echo "embedding=$EMBEDDING_CHANGED" >> $GITHUB_OUTPUT
+
+        if [ "$BACKEND_CHANGED" = "true" ] || [ "$EMBEDDING_CHANGED" = "true" ]; then
+          echo "any=true" >> $GITHUB_OUTPUT
+        else
+          echo "any=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Summary
+      run: |
+        echo "========================================"
+        echo "  CHANGE DETECTION RESULT"
+        echo "========================================"
+        echo "Backend:    ${{ steps.filter.outputs.backend }}"
+        echo "Embedding:  ${{ steps.filter.outputs.embedding }}"
+        echo "Any change: ${{ steps.filter.outputs.any }}"
+        echo "========================================"
+
+        # If no service changed → exit early
+        if [ "${{ steps.filter.outputs.any }}" = "false" ]; then
+          echo ""
+          echo "No service code changed. Skipping deployment."
+          echo "Only docs, Terraform, or other files were changed."
+          exit 0
+        fi
+
+  # ============================================
+  # JOB 1: BUILD & PUSH BACKEND
+  # ============================================
+  build-and-push-backend:
+    name: Build & Push Backend to ECR
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.deploy_backend == 'true'
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Build Backend Docker image
+      id: build-image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        echo "Building Backend image..."
+        echo "  ECR: $ECR_REGISTRY/${{ env.BACKEND_ECR_REPOSITORY }}"
+        echo "  Tags: $IMAGE_TAG, latest"
+
+        docker build \
+          -t $ECR_REGISTRY/${{ env.BACKEND_ECR_REPOSITORY }}:$IMAGE_TAG \
+          -t $ECR_REGISTRY/${{ env.BACKEND_ECR_REPOSITORY }}:latest \
+          -f src/Backend/Dockerfile \
+          .
+
+        echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+    - name: Push Backend to ECR
+      id: push
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        echo "Pushing Backend image to ECR..."
+
+        docker push $ECR_REGISTRY/${{ env.BACKEND_ECR_REPOSITORY }}:$IMAGE_TAG
+        docker push $ECR_REGISTRY/${{ env.BACKEND_ECR_REPOSITORY }}:latest
+
+        echo "Backend image pushed!"
+
+  # ============================================
+  # JOB 2: DEPLOY BACKEND TO ECS
+  # ============================================
+  deploy-backend-to-ecs:
+    name: Deploy Backend to ECS
+    runs-on: ubuntu-latest
+    needs: build-and-push-backend
+
+    steps:
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Force Backend ECS deployment
+      run: |
+        echo "Starting ECS force-new-deployment for Backend..."
+        echo "  Cluster: ${{ env.ECS_CLUSTER }}"
+        echo "  Service: ${{ env.BACKEND_ECS_SERVICE }}"
+
+        aws ecs update-service \
+          --cluster "${{ env.ECS_CLUSTER }}" \
+          --service "${{ env.BACKEND_ECS_SERVICE }}" \
+          --force-new-deployment \
+          --no-cli-pager
+
+        echo "Backend deployment triggered!"
+
+    - name: Wait for Backend deployment
+      run: |
+        echo "Waiting for Backend deployment..."
+
+        TIMEOUT=600
+        INTERVAL=15
+        ELAPSED=0
+
+        while [ $ELAPSED -lt $TIMEOUT ]; do
+          SERVICE_INFO=$(aws ecs describe-services \
+            --cluster "${{ env.ECS_CLUSTER }}" \
+            --services "${{ env.BACKEND_ECS_SERVICE }}" \
+            --query "services[0]" \
+            --output json)
+
+          RUNNING_COUNT=$(echo "$SERVICE_INFO" | jq -r '.runningCount')
+          PENDING_COUNT=$(echo "$SERVICE_INFO" | jq -r '.pendingCount')
+          DESIRED_COUNT=$(echo "$SERVICE_INFO" | jq -r '.desiredCount')
+          DEPLOYMENT_ROLLBACK=$(echo "$SERVICE_INFO" | jq -r '.deployments[0].rolloutState')
+
+          echo "  [${ELAPSED}s] Running: $RUNNING_COUNT/$DESIRED_COUNT | Pending: $PENDING_COUNT"
+
+          if [ "$RUNNING_COUNT" -eq "$DESIRED_COUNT" ] && [ "$PENDING_COUNT" -eq "0" ]; then
+            if [ "$DEPLOYMENT_ROLLBACK" = "COMPLETED" ] || [ "$DEPLOYMENT_ROLLBACK" = "SUCCEEDED" ]; then
+              echo "Backend deployment completed!"
+              exit 0
+            fi
+          fi
+
+          # Check for failures
+          FAILED_EVENTS=$(aws ecs describe-services \
+            --cluster "${{ env.ECS_CLUSTER }}" \
+            --services "${{ env.BACKEND_ECS_SERVICE }}" \
+            --query "services[0].events[?contains(message, 'was unable')].message" \
+            --output text)
+
+          if [ -n "$FAILED_EVENTS" ] && [ "$FAILED_EVENTS" != "None" ]; then
+            echo "Backend deployment FAILED!"
+            echo "Events: $FAILED_EVENTS"
+            echo ""
+            echo "To rollback:"
+            echo "  aws ecs update-service \\"
+            echo "    --cluster ${{ env.ECS_CLUSTER }} \\"
+            echo "    --service ${{ env.BACKEND_ECS_SERVICE }} \\"
+            echo "    --task-definition <old-revision>"
+            exit 1
+          fi
+
+          sleep $INTERVAL
+          ELAPSED=$((ELAPSED + INTERVAL))
+        done
+
+        echo "Backend deployment timed out!"
+        exit 1
+
+  # ============================================
+  # JOB 3: BUILD & PUSH EMBEDDING
+  # ============================================
+  build-and-push-embedding:
+    name: Build & Push Embedding to ECR
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.deploy_embedding == 'true'
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Build Embedding Docker image
+      id: build-image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        echo "Building Embedding image..."
+        echo "  ECR: $ECR_REGISTRY/${{ env.EMBEDDING_ECR_REPOSITORY }}"
+        echo "  Tags: $IMAGE_TAG, latest"
+
+        docker build \
+          -t $ECR_REGISTRY/${{ env.EMBEDDING_ECR_REPOSITORY }}:$IMAGE_TAG \
+          -t $ECR_REGISTRY/${{ env.EMBEDDING_ECR_REPOSITORY }}:latest \
+          -f Embedding/Dockerfile \
+          Embedding/
+
+        echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+    - name: Push Embedding to ECR
+      id: push
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        echo "Pushing Embedding image to ECR..."
+
+        docker push $ECR_REGISTRY/${{ env.EMBEDDING_ECR_REPOSITORY }}:$IMAGE_TAG
+        docker push $ECR_REGISTRY/${{ env.EMBEDDING_ECR_REPOSITORY }}:latest
+
+        echo "Embedding image pushed!"
+
+  # ============================================
+  # JOB 4: DEPLOY EMBEDDING TO ECS
+  # ============================================
+  deploy-embedding-to-ecs:
+    name: Deploy Embedding to ECS
+    runs-on: ubuntu-latest
+    needs: build-and-push-embedding
+
+    steps:
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Check if Embedding service is enabled
+      id: check
+      run: |
+        # Check if Embedding service is running (desired_count > 0)
+        DESIRED_COUNT=$(aws ecs describe-services \
+          --cluster "${{ env.ECS_CLUSTER }}" \
+          --services "${{ env.EMBEDDING_ECS_SERVICE }}" \
+          --query "services[0].desiredCount" \
+          --output text)
+
+        echo "Embedding desired_count: $DESIRED_COUNT"
+
+        if [ "$DESIRED_COUNT" -eq "0" ]; then
+          echo "Embedding service is OFF (desired_count=0). Skipping deployment."
+          echo "To enable: Update ECS service desired_count to 1 or more."
+          echo "skip=true" >> $GITHUB_OUTPUT
+        else
+          echo "skip=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Force Embedding ECS deployment
+      if: steps.check.outputs.skip == 'false'
+      run: |
+        echo "Starting ECS force-new-deployment for Embedding..."
+        echo "  Cluster: ${{ env.ECS_CLUSTER }}"
+        echo "  Service: ${{ env.EMBEDDING_ECS_SERVICE }}"
+
+        aws ecs update-service \
+          --cluster "${{ env.ECS_CLUSTER }}" \
+          --service "${{ env.EMBEDDING_ECS_SERVICE }}" \
+          --force-new-deployment \
+          --no-cli-pager
+
+        echo "Embedding deployment triggered!"
+
+    - name: Wait for Embedding deployment
+      if: steps.check.outputs.skip == 'false'
+      run: |
+        echo "Waiting for Embedding deployment..."
+
+        TIMEOUT=600
+        INTERVAL=15
+        ELAPSED=0
+
+        while [ $ELAPSED -lt $TIMEOUT ]; do
+          SERVICE_INFO=$(aws ecs describe-services \
+            --cluster "${{ env.ECS_CLUSTER }}" \
+            --services "${{ env.EMBEDDING_ECS_SERVICE }}" \
+            --query "services[0]" \
+            --output json)
+
+          RUNNING_COUNT=$(echo "$SERVICE_INFO" | jq -r '.runningCount')
+          PENDING_COUNT=$(echo "$SERVICE_INFO" | jq -r '.pendingCount')
+          DESIRED_COUNT=$(echo "$SERVICE_INFO" | jq -r '.desiredCount')
+          DEPLOYMENT_ROLLBACK=$(echo "$SERVICE_INFO" | jq -r '.deployments[0].rolloutState')
+
+          echo "  [${ELAPSED}s] Running: $RUNNING_COUNT/$DESIRED_COUNT | Pending: $PENDING_COUNT"
+
+          if [ "$RUNNING_COUNT" -eq "$DESIRED_COUNT" ] && [ "$PENDING_COUNT" -eq "0" ]; then
+            if [ "$DEPLOYMENT_ROLLBACK" = "COMPLETED" ] || [ "$DEPLOYMENT_ROLLBACK" = "SUCCEEDED" ]; then
+              echo "Embedding deployment completed!"
+              exit 0
+            fi
+          fi
+
+          FAILED_EVENTS=$(aws ecs describe-services \
+            --cluster "${{ env.ECS_CLUSTER }}" \
+            --services "${{ env.EMBEDDING_ECS_SERVICE }}" \
+            --query "services[0].events[?contains(message, 'was unable')].message" \
+            --output text)
+
+          if [ -n "$FAILED_EVENTS" ] && [ "$FAILED_EVENTS" != "None" ]; then
+            echo "Embedding deployment FAILED!"
+            echo "Events: $FAILED_EVENTS"
+            exit 1
+          fi
+
+          sleep $INTERVAL
+          ELAPSED=$((ELAPSED + INTERVAL))
+        done
+
+        echo "Embedding deployment timed out!"
+        exit 1
+
+  # ============================================
+  # JOB 5: HEALTH CHECK
+  # ============================================
+  health-check:
+    name: Post-Deployment Health Check
+    runs-on: ubuntu-latest
+    needs: [deploy-backend-to-ecs, deploy-embedding-to-ecs]
+    if: always() && (needs.deploy-backend-to-ecs.result == 'success' || needs.deploy-embedding-to-ecs.result == 'success')
+
+    steps:
+    - name: Wait for services to start
+      run: |
+        echo "Waiting 30 seconds for services to start..."
+        sleep 30
+
+    - name: Check Backend API health
+      if: needs.deploy-backend-to-ecs.result == 'success'
+      run: |
+        echo "Checking Backend API health..."
+
+        MAX_RETRIES=3
+        for i in $(seq 1 $MAX_RETRIES); do
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            https://api.aipromo.online/health || echo "000")
+
+          echo "  Attempt $i/$MAX_RETRIES: HTTP $HTTP_STATUS"
+
+          if [ "$HTTP_STATUS" = "200" ] || [ "$HTTP_STATUS" = "404" ]; then
+            echo "Backend API is responding!"
+            exit 0
+          fi
+
+          sleep 10
+        done
+
+        echo "Backend API health check failed!"
+        echo "Check manually: curl -v https://api.aipromo.online/health"
+
+    - name: Check Embedding service health
+      if: needs.deploy-embedding-to-ecs.result == 'success'
+      run: |
+        echo "Checking Embedding service..."
+
+        # Embedding service has no public endpoint
+        # Check via ECS describe-services
+        aws ecs describe-services \
+          --cluster "${{ env.ECS_CLUSTER }}" \
+          --services "${{ env.EMBEDDING_ECS_SERVICE }}" \
+          --query "services[0].runningCount" \
+          --output text | grep -q "1" && echo "Embedding task is running!" || echo "Embedding task may not be running"
+
+  # ============================================
+  # JOB 6: NOTIFY
+  # ============================================
+  notify:
+    name: Send Notification
+    runs-on: ubuntu-latest
+    needs: [detect-changes, deploy-backend-to-ecs, deploy-embedding-to-ecs, health-check]
+    if: always() && needs.detect-changes.outputs.any == 'true'
+
+    steps:
+    - name: Determine status
+      id: status
+      run: |
+        BACKEND_RESULT="${{ needs.deploy-backend-to-ecs.result }}"
+        EMBEDDING_RESULT="${{ needs.deploy-embedding-to-ecs.result }}"
+
+        # If both skipped or success
+        if [ "$BACKEND_RESULT" = "success" ] || [ "$BACKEND_RESULT" = "skipped" ] && \
+           [ "$EMBEDDING_RESULT" = "success" ] || [ "$EMBEDDING_RESULT" = "skipped" ]; then
+          echo "status=SUCCESS" >> $GITHUB_OUTPUT
+        else
+          echo "status=FAILED" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Print deployment result
+      run: |
+        echo "============================================"
+        echo "  DEPLOYMENT RESULT"
+        echo "============================================"
+        echo ""
+        echo "Status: ${{ steps.status.outputs.status }}"
+        echo "Branch: ${{ github.ref_name }}"
+        echo "Commit: ${{ github.sha }}"
+        echo "Author: ${{ github.actor }}"
+        echo ""
+        echo "Services deployed:"
+        echo "  Backend:   ${{ needs.detect-changes.outputs.deploy_backend }}"
+        echo "  Embedding: ${{ needs.detect-changes.outputs.deploy_embedding }}"
+        echo ""
+
+        if [ "${{ needs.detect-changes.outputs.deploy_backend }}" = "true" ]; then
+          echo "Backend ECR: ${{ env.BACKEND_ECR_REPOSITORY }}:${{ github.sha }}"
+          echo "Backend ECS: ${{ env.BACKEND_ECS_SERVICE }}"
+        fi
+
+        if [ "${{ needs.detect-changes.outputs.deploy_embedding }}" = "true" ]; then
+          echo "Embedding ECR: ${{ env.EMBEDDING_ECR_REPOSITORY }}:${{ github.sha }}"
+          echo "Embedding ECS: ${{ env.EMBEDDING_ECS_SERVICE }}"
+        fi
+
+        echo ""
+        echo "API URL: https://api.aipromo.online"
+        echo "============================================"
