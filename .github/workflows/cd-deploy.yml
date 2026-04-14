@@ -196,7 +196,7 @@ jobs:
           -t $ECR_REGISTRY/${{ env.BACKEND_ECR_REPOSITORY }}:$IMAGE_TAG \
           -t $ECR_REGISTRY/${{ env.BACKEND_ECR_REPOSITORY }}:latest \
           -f src/Backend/Api/Api/Dockerfile \
-          src/Backend/Api/Api/
+          src/Backend/
 
         echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
 
