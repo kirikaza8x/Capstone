@@ -162,8 +162,8 @@ public partial class PaymentTransaction : AggregateRoot<Guid>
         if (itemList.Count == 0)
             throw new ArgumentException("Batch must contain at least one item.");
 
-        if (itemList.Any(i => i.Amount <= 0))
-            throw new ArgumentException("All item amounts must be greater than zero.");
+        // if (itemList.Any(i => i.Amount <= 0))
+        //     throw new ArgumentException("All item amounts must be greater than zero.");
 
         var now = DateTime.UtcNow;
 
