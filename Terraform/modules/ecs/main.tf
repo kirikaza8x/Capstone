@@ -328,8 +328,10 @@ resource "aws_ecs_service" "backend_api" {
   desired_count   = 1
   launch_type     = "EC2"
 
-  deployment_maximum_percent         = 200
-  deployment_minimum_healthy_percent = 50
+  # Allow 0% healthy for bridge mode (only 1 task per port)
+  # ECS will stop old task before starting new one
+  deployment_maximum_percent         = 100
+  deployment_minimum_healthy_percent = 0
 
   tags = {
     Name        = "${var.project}-${var.environment}-backend-api-service"

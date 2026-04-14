@@ -228,11 +228,14 @@ jobs:
         role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
         aws-region: ${{ env.AWS_REGION }}
 
-    - name: Force Backend ECS deployment
+    - name: Trigger Backend ECS deployment
       run: |
-        echo "Starting ECS force-new-deployment for Backend..."
+        echo "Triggering ECS force-new-deployment for Backend..."
         echo "  Cluster: ${{ env.ECS_CLUSTER }}"
         echo "  Service: ${{ env.BACKEND_ECS_SERVICE }}"
+        echo ""
+        echo "Note: ECS will pull the new :latest image automatically."
+        echo "Deployment status will be checked in the Health Check job."
 
         aws ecs update-service \
           --cluster "${{ env.ECS_CLUSTER }}" \
@@ -241,61 +244,6 @@ jobs:
           --no-cli-pager
 
         echo "Backend deployment triggered!"
-
-    - name: Wait for Backend deployment
-      run: |
-        echo "Waiting for Backend deployment..."
-
-        TIMEOUT=600
-        INTERVAL=15
-        ELAPSED=0
-
-        while [ $ELAPSED -lt $TIMEOUT ]; do
-          SERVICE_INFO=$(aws ecs describe-services \
-            --cluster "${{ env.ECS_CLUSTER }}" \
-            --services "${{ env.BACKEND_ECS_SERVICE }}" \
-            --query "services[0]" \
-            --output json)
-
-          RUNNING_COUNT=$(echo "$SERVICE_INFO" | jq -r '.runningCount')
-          PENDING_COUNT=$(echo "$SERVICE_INFO" | jq -r '.pendingCount')
-          DESIRED_COUNT=$(echo "$SERVICE_INFO" | jq -r '.desiredCount')
-          DEPLOYMENT_ROLLBACK=$(echo "$SERVICE_INFO" | jq -r '.deployments[0].rolloutState')
-
-          echo "  [${ELAPSED}s] Running: $RUNNING_COUNT/$DESIRED_COUNT | Pending: $PENDING_COUNT"
-
-          if [ "$RUNNING_COUNT" -eq "$DESIRED_COUNT" ] && [ "$PENDING_COUNT" -eq "0" ]; then
-            if [ "$DEPLOYMENT_ROLLBACK" = "COMPLETED" ] || [ "$DEPLOYMENT_ROLLBACK" = "SUCCEEDED" ]; then
-              echo "Backend deployment completed!"
-              exit 0
-            fi
-          fi
-
-          # Check for failures
-          FAILED_EVENTS=$(aws ecs describe-services \
-            --cluster "${{ env.ECS_CLUSTER }}" \
-            --services "${{ env.BACKEND_ECS_SERVICE }}" \
-            --query "services[0].events[?contains(message, 'was unable')].message" \
-            --output text)
-
-          if [ -n "$FAILED_EVENTS" ] && [ "$FAILED_EVENTS" != "None" ]; then
-            echo "Backend deployment FAILED!"
-            echo "Events: $FAILED_EVENTS"
-            echo ""
-            echo "To rollback:"
-            echo "  aws ecs update-service \\"
-            echo "    --cluster ${{ env.ECS_CLUSTER }} \\"
-            echo "    --service ${{ env.BACKEND_ECS_SERVICE }} \\"
-            echo "    --task-definition <old-revision>"
-            exit 1
-          fi
-
-          sleep $INTERVAL
-          ELAPSED=$((ELAPSED + INTERVAL))
-        done
-
-        echo "Backend deployment timed out!"
-        exit 1
 
   # ============================================
   # JOB 3: BUILD & PUSH EMBEDDING
@@ -386,12 +334,15 @@ jobs:
           echo "skip=false" >> $GITHUB_OUTPUT
         fi
 
-    - name: Force Embedding ECS deployment
+    - name: Trigger Embedding ECS deployment
       if: steps.check.outputs.skip == 'false'
       run: |
-        echo "Starting ECS force-new-deployment for Embedding..."
+        echo "Triggering ECS force-new-deployment for Embedding..."
         echo "  Cluster: ${{ env.ECS_CLUSTER }}"
         echo "  Service: ${{ env.EMBEDDING_ECS_SERVICE }}"
+        echo ""
+        echo "Note: ECS will pull the new :latest image automatically."
+        echo "Deployment status will be checked in the Health Check job."
 
         aws ecs update-service \
           --cluster "${{ env.ECS_CLUSTER }}" \
@@ -400,55 +351,6 @@ jobs:
           --no-cli-pager
 
         echo "Embedding deployment triggered!"
-
-    - name: Wait for Embedding deployment
-      if: steps.check.outputs.skip == 'false'
-      run: |
-        echo "Waiting for Embedding deployment..."
-
-        TIMEOUT=600
-        INTERVAL=15
-        ELAPSED=0
-
-        while [ $ELAPSED -lt $TIMEOUT ]; do
-          SERVICE_INFO=$(aws ecs describe-services \
-            --cluster "${{ env.ECS_CLUSTER }}" \
-            --services "${{ env.EMBEDDING_ECS_SERVICE }}" \
-            --query "services[0]" \
-            --output json)
-
-          RUNNING_COUNT=$(echo "$SERVICE_INFO" | jq -r '.runningCount')
-          PENDING_COUNT=$(echo "$SERVICE_INFO" | jq -r '.pendingCount')
-          DESIRED_COUNT=$(echo "$SERVICE_INFO" | jq -r '.desiredCount')
-          DEPLOYMENT_ROLLBACK=$(echo "$SERVICE_INFO" | jq -r '.deployments[0].rolloutState')
-
-          echo "  [${ELAPSED}s] Running: $RUNNING_COUNT/$DESIRED_COUNT | Pending: $PENDING_COUNT"
-
-          if [ "$RUNNING_COUNT" -eq "$DESIRED_COUNT" ] && [ "$PENDING_COUNT" -eq "0" ]; then
-            if [ "$DEPLOYMENT_ROLLBACK" = "COMPLETED" ] || [ "$DEPLOYMENT_ROLLBACK" = "SUCCEEDED" ]; then
-              echo "Embedding deployment completed!"
-              exit 0
-            fi
-          fi
-
-          FAILED_EVENTS=$(aws ecs describe-services \
-            --cluster "${{ env.ECS_CLUSTER }}" \
-            --services "${{ env.EMBEDDING_ECS_SERVICE }}" \
-            --query "services[0].events[?contains(message, 'was unable')].message" \
-            --output text)
-
-          if [ -n "$FAILED_EVENTS" ] && [ "$FAILED_EVENTS" != "None" ]; then
-            echo "Embedding deployment FAILED!"
-            echo "Events: $FAILED_EVENTS"
-            exit 1
-          fi
-
-          sleep $INTERVAL
-          ELAPSED=$((ELAPSED + INTERVAL))
-        done
-
-        echo "Embedding deployment timed out!"
-        exit 1
 
   # ============================================
   # JOB 5: HEALTH CHECK
@@ -462,8 +364,9 @@ jobs:
     steps:
     - name: Wait for services to start
       run: |
-        echo "Waiting 30 seconds for services to start..."
-        sleep 30
+        echo "Waiting 60 seconds for ECS deployment to complete..."
+        echo "(ECS needs time to pull image and start new task)"
+        sleep 60
 
     - name: Check Backend API health
       if: needs.deploy-backend-to-ecs.result == 'success'
