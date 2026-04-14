@@ -12,28 +12,29 @@ using UserRoles = Users.PublicApi.Constants.Roles;
 
 namespace Users.Api.Endpoints.Users.Patch;
 
-public sealed record UpdateUserStatusRequest(Guid UserId, UserStatus UserStatus);
-
 public class UpdateUserStatusEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         app.MapPatch("api/users/status", async (
-            [FromBody] UpdateUserStatusRequest request,
+            Guid userId,          
+            UserStatus userStatus,
             ISender sender,
             CancellationToken cancellationToken) =>
         {
             var result = await sender.Send(
-                new UpdateStatusCommand(request.UserId, request.UserStatus),
+                new UpdateStatusCommand(userId, userStatus),
                 cancellationToken);
-            return result.ToOk(); 
+
+            return result.ToOk();
         })
         .WithTags("Users")
         .WithName("UpdateUserStatus")
         .WithSummary("Update user status")
-        .Produces(StatusCodes.Status204NoContent)
+        .Produces(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status404NotFound)
-        .RequireRoles(UserRoles.Admin);
+        // .RequireRoles(UserRoles.Admin)
+        ;
     }
 }
