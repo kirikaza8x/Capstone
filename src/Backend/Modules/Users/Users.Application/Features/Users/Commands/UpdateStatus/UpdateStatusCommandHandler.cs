@@ -14,20 +14,18 @@ public class UpdateStatusCommandHandler : ICommandHandler<UpdateStatusCommand>
 {
     private readonly IUserRepository _userRepository;
     private readonly IUserUnitOfWork _unitOfWork;
-    private readonly IValidator<UpdateStatusCommand> _validator;
 
     private readonly IMapper _mapper;
 
     public UpdateStatusCommandHandler(
         IUserRepository userRepository,
-        IUserUnitOfWork unitOfWork,
-        IValidator<UpdateStatusCommand> validator,
+        IUserUnitOfWork unitOfWork
+       ,
         IMapper mapper)
     {
         {
             _userRepository = userRepository;
             _unitOfWork = unitOfWork;
-            _validator = validator;
             _mapper = mapper;
         }
     }
