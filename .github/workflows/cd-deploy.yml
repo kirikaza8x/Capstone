@@ -362,47 +362,125 @@ jobs:
     if: always() && (needs.deploy-backend-to-ecs.result == 'success' || needs.deploy-embedding-to-ecs.result == 'success')
 
     steps:
-    - name: Wait for services to start
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Wait for ECS deployment to stabilize
       run: |
-        echo "Waiting 60 seconds for ECS deployment to complete..."
-        echo "(ECS needs time to pull image and start new task)"
-        sleep 60
+        echo "Waiting 90 seconds for ECS to pull image and start task..."
+        sleep 90
+
+    - name: Wait for Backend deployment to complete
+      if: needs.deploy-backend-to-ecs.result == 'success'
+      run: |
+        echo "Waiting for Backend ECS deployment to complete..."
+
+        MAX_WAIT=300  # 5 minutes max
+        INTERVAL=15
+        ELAPSED=0
+
+        while [ $ELAPSED -lt $MAX_WAIT ]; do
+          DEPLOY_STATUS=$(aws ecs describe-services \
+            --cluster "${{ env.ECS_CLUSTER }}" \
+            --services "${{ env.BACKEND_ECS_SERVICE }}" \
+            --query "services[0].deployments[0].status" \
+            --output text 2>/dev/null || echo "UNKNOWN")
+
+          RUNNING_COUNT=$(aws ecs describe-services \
+            --cluster "${{ env.ECS_CLUSTER }}" \
+            --services "${{ env.BACKEND_ECS_SERVICE }}" \
+            --query "services[0].runningCount" \
+            --output text 2>/dev/null || echo "0")
+
+          echo "  [$(( ELAPSED ))s] Deployment: $DEPLOY_STATUS | Running tasks: $RUNNING_COUNT"
+
+          # Check if deployment completed and at least 1 task is running
+          if [[ "$DEPLOY_STATUS" == "PRIMARY" || "$DEPLOY_STATUS" == "ACTIVE" ]] && [ "$RUNNING_COUNT" -ge "1" ]; then
+            echo "Backend deployment completed successfully!"
+            exit 0
+          fi
+
+          # Check for failures
+          FAIL_REASON=$(aws ecs describe-services \
+            --cluster "${{ env.ECS_CLUSTER }}" \
+            --services "${{ env.BACKEND_ECS_SERVICE }}" \
+            --query "services[0].events[0].message" \
+            --output text 2>/dev/null || echo "")
+
+          if echo "$FAIL_REASON" | grep -qi "unable to place\|failed to start"; then
+            echo "ECS deployment failed!"
+            echo "Last event: $FAIL_REASON"
+            exit 1
+          fi
+
+          sleep $INTERVAL
+          ELAPSED=$(( ELAPSED + INTERVAL ))
+        done
+
+        echo "❌ Timeout waiting for Backend deployment"
+        exit 1
 
     - name: Check Backend API health
       if: needs.deploy-backend-to-ecs.result == 'success'
       run: |
-        echo "Checking Backend API health..."
+        echo "Checking Backend API health via HTTP (no need to wait for HTTPS cert)..."
 
-        MAX_RETRIES=3
+        MAX_RETRIES=10
+        RETRY_INTERVAL=15
+
         for i in $(seq 1 $MAX_RETRIES); do
+          # Use HTTP first - faster and no dependency on SSL certificate
           HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-            https://api.aipromo.online/health || echo "000")
+            --connect-timeout 10 \
+            --max-time 30 \
+            http://api.aipromo.online/health || echo "000")
 
           echo "  Attempt $i/$MAX_RETRIES: HTTP $HTTP_STATUS"
 
           if [ "$HTTP_STATUS" = "200" ] || [ "$HTTP_STATUS" = "404" ]; then
-            echo "Backend API is responding!"
+            echo "Backend API is healthy (HTTP $HTTP_STATUS)!"
             exit 0
           fi
 
-          sleep 10
+          sleep $RETRY_INTERVAL
         done
 
-        echo "Backend API health check failed!"
-        echo "Check manually: curl -v https://api.aipromo.online/health"
+        echo "Backend API health check failed after $(( MAX_RETRIES * RETRY_INTERVAL )) seconds!"
+        echo "Check manually: curl -v http://api.aipromo.online/health"
+        exit 1
 
-    - name: Check Embedding service health
+    - name: Wait for Embedding deployment to complete
       if: needs.deploy-embedding-to-ecs.result == 'success'
       run: |
-        echo "Checking Embedding service..."
+        echo "Checking Embedding ECS deployment status..."
 
-        # Embedding service has no public endpoint
-        # Check via ECS describe-services
-        aws ecs describe-services \
-          --cluster "${{ env.ECS_CLUSTER }}" \
-          --services "${{ env.EMBEDDING_ECS_SERVICE }}" \
-          --query "services[0].runningCount" \
-          --output text | grep -q "1" && echo "Embedding task is running!" || echo "Embedding task may not be running"
+        MAX_WAIT=300
+        INTERVAL=15
+        ELAPSED=0
+
+        while [ $ELAPSED -lt $MAX_WAIT ]; do
+          RUNNING_COUNT=$(aws ecs describe-services \
+            --cluster "${{ env.ECS_CLUSTER }}" \
+            --services "${{ env.EMBEDDING_ECS_SERVICE }}" \
+            --query "services[0].runningCount" \
+            --output text 2>/dev/null || echo "0")
+
+          echo "  [$(( ELAPSED ))s] Running tasks: $RUNNING_COUNT"
+
+          if [ "$RUNNING_COUNT" -ge "1" ]; then
+            echo "Embedding task is running!"
+            exit 0
+          fi
+
+          sleep $INTERVAL
+          ELAPSED=$(( ELAPSED + INTERVAL ))
+        done
+
+        echo "Timeout waiting for Embedding task"
+        exit 1
 
   # ============================================
   # JOB 6: NOTIFY

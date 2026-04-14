@@ -113,3 +113,86 @@ variable "jwt_secret" {
   type        = string
   sensitive   = true
 }
+
+# ─────────────────────────────────────────────────────────────
+# Google OAuth Configuration
+# ─────────────────────────────────────────────────────────────
+variable "google_client_id" {
+  description = "Google OAuth Client ID for server-side validation"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+# ─────────────────────────────────────────────────────────────
+# SMS / Email (Gmail SMTP) Configuration
+# ─────────────────────────────────────────────────────────────
+variable "smtp_server" {
+  description = "SMTP server for sending emails"
+  type        = string
+  default     = "smtp.gmail.com"
+}
+
+variable "smtp_port" {
+  description = "SMTP server port"
+  type        = number
+  default     = 587
+}
+
+variable "sender_email" {
+  description = "Email address used to send notifications"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "sender_password" {
+  description = "App password for sender email (Gmail App Password)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+# ─────────────────────────────────────────────────────────────
+# VNPay Payment Gateway Configuration
+# ─────────────────────────────────────────────────────────────
+variable "vnpay_url" {
+  description = "VNPay payment gateway URL"
+  type        = string
+  default     = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
+}
+
+variable "vnpay_tmn_code" {
+  description = "VNPay Terminal Code (TmnCode) from VNPay merchant account"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "vnpay_hash_secret" {
+  description = "VNPay Hash Secret for signing requests"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "vnpay_return_url" {
+  description = "VNPay return URL after payment completion"
+  type        = string
+  default     = "https://aipromo.online/payment/return"
+}
+
+# ─────────────────────────────────────────────────────────────
+# CORS Configuration
+# ─────────────────────────────────────────────────────────────
+variable "cors_allowed_origins" {
+  description = "List of allowed origins for CORS (comma-separated for env var)"
+  type        = list(string)
+  default     = ["https://aipromo.online"]
+}
+
+variable "cors_allow_any_origin" {
+  description = "Allow any origin (NOT recommended for production)"
+  type        = bool
+  default     = false
+}

@@ -144,11 +144,56 @@ module "ecs" {
     "Embedding__Queue__ResponseQueue" = "embedding.responses"
     "Embedding__Queue__TimeoutSeconds" = "30"
 
+    # Google OAuth — Section: "Authentication__Google"
+    "Authentication__Google__ServerClientId" = var.google_client_id
+
+    # SMS / Email (Gmail SMTP) — Section: "Sms__Gmail"
+    "Sms__Gmail__SmtpServer"     = var.smtp_server
+    "Sms__Gmail__SmtpPort"       = tostring(var.smtp_port)
+    "Sms__Gmail__SenderEmail"    = var.sender_email
+    "Sms__Gmail__SenderPassword" = var.sender_password
+
+    # VNPay Payment Gateway — Section: "VNPay"
+    "VNPay__Url"         = var.vnpay_url
+    "VNPay__TmnCode"     = var.vnpay_tmn_code
+    "VNPay__HashSecret"  = var.vnpay_hash_secret
+    "VNPay__ReturnUrl"   = var.vnpay_return_url
+
+    # CORS — Section: "Cors"
+    "Cors__AllowAnyOrigin" = var.cors_allow_any_origin ? "true" : "false"
+    "Cors__AllowedOrigins__0" = var.cors_allowed_origins[0]
+    "Cors__AllowedOrigins__1" = length(var.cors_allowed_origins) > 1 ? var.cors_allowed_origins[1] : ""
+    "Cors__AllowedOrigins__2" = length(var.cors_allowed_origins) > 2 ? var.cors_allowed_origins[2] : ""
+    "Cors__AllowedOrigins__3" = length(var.cors_allowed_origins) > 3 ? var.cors_allowed_origins[3] : ""
+    "Cors__AllowedOrigins__4" = length(var.cors_allowed_origins) > 4 ? var.cors_allowed_origins[4] : ""
+    "Cors__AllowedOrigins__5" = length(var.cors_allowed_origins) > 5 ? var.cors_allowed_origins[5] : ""
+
     # Logging
     "Logging__LogLevel__Default"                = "Information"
     "Logging__LogLevel__Microsoft.AspNetCore"   = "Warning"
     "Logging__LogLevel__Microsoft.EntityFrameworkCore" = "Warning"
     "Logging__LogLevel__Quartz"                 = "Warning"
+
+    # Rate Limiting — Section: "RateLimiting"
+    "RateLimiting__GlobalPolicy" = "Global"
+    "RateLimiting__Policies__Global__PermitLimit" = "120"
+    "RateLimiting__Policies__Global__WindowSeconds" = "60"
+    "RateLimiting__Policies__Global__QueueLimit" = "0"
+    "RateLimiting__Policies__Auth__PermitLimit" = "10"
+    "RateLimiting__Policies__Auth__WindowSeconds" = "60"
+    "RateLimiting__Policies__Auth__QueueLimit" = "0"
+    "RateLimiting__Policies__AiGenerate__PermitLimit" = "10"
+    "RateLimiting__Policies__AiGenerate__WindowSeconds" = "60"
+    "RateLimiting__Policies__AiGenerate__QueueLimit" = "0"
+    "RateLimiting__Policies__Payment__PermitLimit" = "20"
+    "RateLimiting__Policies__Payment__WindowSeconds" = "60"
+    "RateLimiting__Policies__Payment__QueueLimit" = "0"
+    "RateLimiting__Policies__Webhook__PermitLimit" = "60"
+    "RateLimiting__Policies__Webhook__WindowSeconds" = "60"
+    "RateLimiting__Policies__Webhook__QueueLimit" = "0"
+    "RateLimiting__Policies__Order__PermitLimit" = "15"
+    "RateLimiting__Policies__Order__WindowSeconds" = "60"
+    "RateLimiting__Policies__Order__QueueLimit" = "0"
   }
 
   # Embedding service env vars
