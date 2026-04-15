@@ -75,13 +75,13 @@ module "ecs" {
 
   # Backend API settings
   backend_port    = var.backend_port
-  backend_cpu     = "1024"
-  backend_memory  = "1024"
+  backend_cpu     = "512"   # 0.5 vCPU (dev only)
+  backend_memory  = "512"   # 512 MB
 
   # Embedding service settings
   embedding_port   = var.embedding_port
-  embedding_cpu    = "1024"
-  embedding_memory = "2048"
+  embedding_cpu    = "512"  # 0.5 vCPU (dev only)
+  embedding_memory = "1024" # 1 GB
 
   # Environment variables For Backend API
   backend_env_vars = {
@@ -112,6 +112,12 @@ module "ecs" {
     "Qdrant__UseHttps"  = "false"
     "Qdrant__ApiKey"    = ""
 
+    # Qdrant Collections — Section: "Qdrant:Collections"
+    "Qdrant__Collections__Events__Name"        = "event_embeddings"
+    "Qdrant__Collections__Events__VectorSize"  = "384"
+    "Qdrant__Collections__UserBehavior__Name"        = "user_behavior_embeddings"
+    "Qdrant__Collections__UserBehavior__VectorSize"  = "384"
+
     # Storage — Section: "Storage"
     "Storage__Endpoint"   = "s3.${var.aws_region}.amazonaws.com"
     "Storage__AccessKey"  = module.s3.iam_access_key_id
@@ -128,11 +134,11 @@ module "ecs" {
     "JwtConfigs__RefreshTokenExpiryDays" = "7"
 
     # Gemini AI
-    "Gemini__ApiKey" = ""
+    "Gemini__ApiKey" = var.gemini_api_key
     "Gemini__Model"  = "gemini-2.5-flash"
 
     # OpenRouter AI
-    "OpenRouter__ApiKey" = ""
+    "OpenRouter__ApiKey" = var.openrouter_api_key
     "OpenRouter__Model"  = "black-forest-labs/flux.2-pro"
 
     # Embedding Service — Section: "Embedding"
@@ -194,6 +200,17 @@ module "ecs" {
     "RateLimiting__Policies__Order__PermitLimit" = "15"
     "RateLimiting__Policies__Order__WindowSeconds" = "60"
     "RateLimiting__Policies__Order__QueueLimit" = "0"
+
+    # N8n Integration — Section: "N8nIntegration"
+    "N8nIntegration__DistributionWebhookUrl" = "https://n8n.yourdomain.com/webhook/post-distribute"  # URL n8n của bạn
+    "N8nIntegration__WebhookApiKey"          = var.n8n_webhook_api_key
+    "N8nIntegration__AppBaseUrl"             = "https://aipromo.online"
+
+    # Facebook — Section: "Facebook"
+    "Facebook__PageAccessToken"     = var.facebook_page_access_token
+    "Facebook__PageId"              = var.facebook_page_id
+    "Facebook__GraphApiVersion"     = "v23.0"
+    "Facebook__GraphApiBaseUrl"     = "https://graph.facebook.com/"
   }
 
   # Embedding service env vars

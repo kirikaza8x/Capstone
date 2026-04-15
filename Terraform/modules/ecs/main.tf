@@ -328,10 +328,15 @@ resource "aws_ecs_service" "backend_api" {
   desired_count   = 1
   launch_type     = "EC2"
 
-  # Allow 0% healthy for bridge mode (only 1 task per port)
-  # ECS will stop old task before starting new one
+  # Bridge mode: stop old before start new (port conflict prevention)
   deployment_maximum_percent         = 100
   deployment_minimum_healthy_percent = 0
+
+  # Circuit breaker: temporarily disabled to allow slow startups
+  # deployment_circuit_breaker {
+  #   enable   = true
+  #   rollback = true
+  # }
 
   tags = {
     Name        = "${var.project}-${var.environment}-backend-api-service"
@@ -341,18 +346,24 @@ resource "aws_ecs_service" "backend_api" {
 }
 
 # ============================================
-# ECS Service — Embedding (Off by default, turn on when needed.)
+# ECS Service — Embedding (Always on for API dependency)
 # ============================================
 
 resource "aws_ecs_service" "embedding" {
   name            = "${var.project}-${var.environment}-embedding-service"
   cluster         = aws_ecs_cluster.main.id
   task_definition = aws_ecs_task_definition.embedding.arn
-  desired_count   = 0  # Off by default, turn on when needed
+  desired_count   = 1  # Always on
   launch_type     = "EC2"
 
   deployment_maximum_percent         = 200
-  deployment_minimum_healthy_percent = 0  # Allow complete shutdown
+  deployment_minimum_healthy_percent = 0
+
+  # Circuit breaker: temporarily disabled
+  # deployment_circuit_breaker {
+  #   enable   = true
+  #   rollback = true
+  # }
 
   tags = {
     Name        = "${var.project}-${var.environment}-embedding-service"

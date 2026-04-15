@@ -109,6 +109,7 @@ public record UserProfileDto
     public string? SocialLink { get; init; }
     public string? ProfileImageUrl { get; init; }
     public UserStatus Status { get; init; }
+    public DateTime? CreatedAt { get; init; }
     public IEnumerable<string> Roles { get; init; } = new List<string>();
 }
 
