@@ -405,6 +405,25 @@ else
     echo "Docker cleanup scheduled."
 fi
 
+# ============================================
+# 8. Initial Cleanup — Ensure enough resources for ECS tasks
+# ============================================
+
+echo "[8/8] Running initial Docker cleanup to free resources..."
+
+# Remove stopped containers
+docker container prune -f || true
+
+# Remove unused images (older than 24h)
+docker image prune -af --filter "until=24h" || true
+
+# Remove unused volumes
+docker volume prune -f || true
+
+# Remove unused networks
+docker network prune -f || true
+
+echo "Initial cleanup complete."
 echo "============================================"
 echo " EC2 initialization complete!"
 echo " Server will auto-upgrade to HTTPS when DNS is ready."

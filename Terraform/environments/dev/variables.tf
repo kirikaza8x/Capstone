@@ -183,6 +183,35 @@ variable "vnpay_return_url" {
 }
 
 # ─────────────────────────────────────────────────────────────
+# N8n & Facebook Integration Configuration
+# ─────────────────────────────────────────────────────────────
+variable "n8n_webhook_api_key" {
+  description = "API Key for validating n8n webhook callbacks"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "n8n_distribution_webhook_url" {
+  description = "n8n webhook URL for post distribution (e.g., https://n8n.domain.com/webhook/post-distribute)"
+  type        = string
+  default     = ""
+}
+
+variable "facebook_page_access_token" {
+  description = "Facebook Page Access Token (long-lived) for posting and fetching metrics"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "facebook_page_id" {
+  description = "Facebook Page ID"
+  type        = string
+  default     = ""
+}
+
+# ─────────────────────────────────────────────────────────────
 # CORS Configuration
 # ─────────────────────────────────────────────────────────────
 variable "cors_allowed_origins" {
@@ -195,4 +224,18 @@ variable "cors_allow_any_origin" {
   description = "Allow any origin (NOT recommended for production)"
   type        = bool
   default     = false
+}
+
+variable "gemini_api_key" {
+  description = "API Key for Google Gemini"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "openrouter_api_key" {
+  description = "API Key for OpenRouter"
+  type        = string
+  sensitive   = true
+  default     = ""
 }
