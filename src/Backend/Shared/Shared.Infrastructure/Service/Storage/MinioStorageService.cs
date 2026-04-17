@@ -61,8 +61,7 @@ public sealed class MinioStorageService : IStorageService
                 InputStream = fileStream,
                 Key = objectKey,
                 BucketName = _config.BucketName,
-                ContentType = contentType,
-                CannedACL = S3CannedACL.PublicRead
+                ContentType = contentType
             };
 
             using var transferUtility = new TransferUtility(_s3Client);
