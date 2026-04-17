@@ -422,7 +422,7 @@ jobs:
           ELAPSED=$(( ELAPSED + INTERVAL ))
         done
 
-        echo "❌ Timeout waiting for Backend deployment"
+        echo "Timeout waiting for Backend deployment"
         exit 1
 
     - name: Check Backend API health
