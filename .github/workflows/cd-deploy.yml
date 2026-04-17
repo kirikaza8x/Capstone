@@ -59,6 +59,8 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v5
+      with:
+        fetch-depth: 2  # Fetch at least 2 commits for proper git diff in merge commits
 
     # Get list of changed files between previous and current commit
     - name: Detect file changes
