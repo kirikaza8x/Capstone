@@ -30,6 +30,6 @@ public class GetEventSpecForCheckingEndpoint : ICarterModule
         .WithDescription("Retrieves the JSON spec and image URL for the event layout, used by staff for reference.")
         .Produces<ApiResult<GetEventSpecForCheckingResponse>>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status404NotFound)
-        .RequireRoles(Roles.Staff);
+        .RequireRoles(Roles.AdminAndStaff);
     }
 }
