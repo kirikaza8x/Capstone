@@ -138,7 +138,7 @@ public sealed class MinioStorageService : IStorageService
             return $"{_config.PublicUrl.TrimEnd('/')}/{objectKey}";
         }
 
-        return $"{_config.Endpoint}/{_config.BucketName}/{objectKey}";
+        return $"https://{_config.BucketName}.s3.{_config.Region}.amazonaws.com/{objectKey}";
     }
 
     private async Task EnsureBucketExistsAsync(CancellationToken cancellationToken = default)
