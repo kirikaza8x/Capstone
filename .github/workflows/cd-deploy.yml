@@ -422,7 +422,7 @@ jobs:
           ELAPSED=$(( ELAPSED + INTERVAL ))
         done
 
-        echo "❌ Timeout waiting for Backend deployment"
+        echo "Timeout waiting for Backend deployment"
         exit 1
 
     - name: Check Backend API health
@@ -438,7 +438,7 @@ jobs:
           HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
             --connect-timeout 10 \
             --max-time 30 \
-            http://api.aipromo.online/health || echo "000")
+            https://api.aipromo.online/health || echo "000")
 
           echo "  Attempt $i/$MAX_RETRIES: HTTP $HTTP_STATUS"
 
@@ -451,7 +451,7 @@ jobs:
         done
 
         echo "Backend API health check failed after $(( MAX_RETRIES * RETRY_INTERVAL )) seconds!"
-        echo "Check manually: curl -v http://api.aipromo.online/health"
+        echo "Check manually: curl -v https://api.aipromo.online/health"
         exit 1
 
     - name: Wait for Embedding deployment to complete

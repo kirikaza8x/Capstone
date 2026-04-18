@@ -8,6 +8,7 @@ using Notifications.Infrastructure;
 using Payments.Api;
 using Payments.Application;
 using Shared.Api;
+using Shared.Api.Results;
 using Shared.Application;
 using Shared.Infrastructure;
 using Ticketing.Infrastructure;
@@ -84,17 +85,6 @@ public class Program
             .AddPaymentModule(Configuration)
         ;
 
-        //builder.Services.AddCors(options =>
-        //{
-        //    options.AddDefaultPolicy(policy =>
-        //    {
-        //        policy.SetIsOriginAllowed(origin => true)
-        //              .AllowAnyMethod()
-        //              .AllowAnyHeader()
-        //              .AllowCredentials();
-        //    });
-        //});
-
         builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
         builder.Services.AddProblemDetails();
 
@@ -116,6 +106,13 @@ public class Program
         app.UseRateLimiter();
         app.UseAuthorization();
         app.UseExceptionHandler();
+
+        app.MapGet("/health", () => TypedResults.Ok(ApiResult.Success("Healthy")))
+            .AllowAnonymous()
+            .WithTags("System")
+            .WithName("HealthCheck")
+            .WithSummary("Health check")
+            .WithDescription("Returns 200 when API is running.");
 
         app.MapCarter();
         app.UseApi();
