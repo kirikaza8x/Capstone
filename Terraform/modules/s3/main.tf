@@ -11,10 +11,37 @@ resource "aws_s3_bucket" "media" {
 resource "aws_s3_bucket_public_access_block" "media" {
   bucket = aws_s3_bucket.media.id
 
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
+  block_public_acls       = false
+  block_public_policy     = false
+  ignore_public_acls      = false
+  restrict_public_buckets = false
+}
+
+resource "aws_s3_bucket_ownership_controls" "media" {
+  bucket = aws_s3_bucket.media.id
+
+  rule {
+    object_ownership = "BucketOwnerEnforced"
+  }
+}
+
+resource "aws_s3_bucket_policy" "media" {
+  bucket = aws_s3_bucket.media.id
+
+  # phải depends_on public_access_block, nếu block_public_policy = true thì policy sẽ bị reject
+  depends_on = [aws_s3_bucket_public_access_block.media]
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect    = "Allow"
+        Principal = "*"
+        Action    = "s3:GetObject"
+        Resource  = "${aws_s3_bucket.media.arn}/*"
+      }
+    ]
+  })
 }
 
 resource "aws_s3_bucket_cors_configuration" "media" {

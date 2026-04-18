@@ -31,6 +31,15 @@ resource "aws_security_group" "ec2" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+    # N8N — internal only
+  ingress {
+    from_port       = 5678
+    to_port         = 5678
+    protocol        = "tcp"
+    self            = true
+    cidr_blocks     = ["10.0.0.0/16"]               # VPC CIDR only
+  }
+
   # SSH — Just allow from CIDR
   ingress {
     from_port   = 22
@@ -80,6 +89,11 @@ resource "aws_instance" "services" {
     rabbitmq_pass = var.rabbitmq_pass
     redis_pass    = var.redis_pass
     backend_port  = tostring(var.backend_port)
+    n8n_encryption_key = var.n8n_encryption_key    # ← THÊM
+    db_host            = var.db_host               # ← THÊM
+    db_name            = var.db_name               # ← THÊM
+    db_username        = var.db_username           # ← THÊM
+    db_password        = var.db_password   
   })
 
   root_block_device {

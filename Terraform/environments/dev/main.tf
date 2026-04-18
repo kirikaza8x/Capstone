@@ -246,6 +246,11 @@ module "ec2" {
   rabbitmq_pass               = var.rabbitmq_pass
   redis_pass                  = var.redis_pass
   backend_port                = var.backend_port
+  n8n_encryption_key          = var.n8n_encryption_key        
+  db_host                     = module.rds.endpoint           
+  db_name                     = var.db_name                   
+  db_username                 = var.db_username               
+  db_password                 = var.db_password    
 }
 
 # ============================================
