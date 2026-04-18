@@ -32,6 +32,8 @@ public class WithdrawalRequestProfile : Profile
         // ADMIN DETAIL
         // ========================
         CreateMap<WithdrawalRequest, WithdrawalRequestAdminDetailDto>()
-            .ForMember(d => d.Status, o => o.MapFrom(s => s.Status.ToString()));
+            .ForMember(d => d.Status, o => o.MapFrom(s => s.Status.ToString()))
+            .ForMember(d => d.ReceiverName, o => o.MapFrom(s => s.Name))
+            ;
     }
 }
