@@ -56,7 +56,7 @@ resource "aws_db_instance" "main" {
   vpc_security_group_ids = [aws_security_group.rds.id]
 
   # Dev settings
-  publicly_accessible     = false
+  publicly_accessible     = true
   skip_final_snapshot     = true
   deletion_protection     = false
   backup_retention_period = 3  # Hold backups for 3 days
