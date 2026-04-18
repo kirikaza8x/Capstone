@@ -32,7 +32,7 @@ public sealed class MinioStorageService : IStorageService
         var s3Config = new AmazonS3Config
         {
             ServiceURL = endpoint,
-            ForcePathStyle = true,
+            ForcePathStyle = false,
             UseHttp = !_config.UseSSL
         };
 

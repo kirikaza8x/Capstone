@@ -127,11 +127,40 @@ services:
       - aipromo-network
     mem_limit: 512m
 
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n
+    restart: always
+    ports:
+      - "5678:5678"
+    environment:
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: ${db_host}
+      DB_POSTGRESDB_PORT: 5432
+      DB_POSTGRESDB_DATABASE: ${db_name}
+      DB_POSTGRESDB_USER: ${db_username}
+      DB_POSTGRESDB_PASSWORD: ${db_password}
+      N8N_REDIS_HOST: redis
+      N8N_REDIS_PORT: 6379
+      N8N_REDIS_PASSWORD: ${redis_pass}
+      N8N_PORT: 5678
+      N8N_HOST: 0.0.0.0
+      N8N_PROTOCOL: http
+      N8N_ENCRYPTION_KEY: ${n8n_encryption_key}
+    volumes:
+      - n8n_data:/home/node/.n8n
+    networks:
+      - aipromo-network
+    mem_limit: 512m
+    depends_on:
+      - redis
+
 volumes:
   rabbitmq_data:
   redis_data:
   qdrant_data:
-
+  n8n_data:
+  
 networks:
   aipromo-network:
     driver: bridge

@@ -195,14 +195,21 @@ variable "n8n_webhook_api_key" {
 variable "n8n_distribution_webhook_url" {
   description = "n8n webhook URL for post distribution (e.g., https://n8n.domain.com/webhook/post-distribute)"
   type        = string
-  default     = ""
+  default     = "supersecretkey"
+}
+
+variable "n8n_encryption_key" {
+  description = "N8N encryption key for securing credentials"
+  type        = string
+  sensitive   = true
+  default     = "supersecretkey"
 }
 
 variable "facebook_page_access_token" {
   description = "Facebook Page Access Token (long-lived) for posting and fetching metrics"
   type        = string
   sensitive   = true
-  default     = ""
+  default     = "supersecretkey"
 }
 
 variable "facebook_page_id" {

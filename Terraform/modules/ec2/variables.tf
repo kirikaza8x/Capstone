@@ -71,3 +71,30 @@ variable "backend_port" {
   type        = number
   default     = 5000
 }
+
+variable "n8n_encryption_key" {
+  description = "N8N encryption key"
+  type        = string
+  sensitive   = true
+}
+
+variable "db_host" {
+  description = "RDS endpoint for n8n database connection"
+  type        = string
+}
+
+variable "db_name" {
+  description = "Database name"
+  type        = string
+}
+
+variable "db_username" {
+  description = "Database username"
+  type        = string
+}
+
+variable "db_password" {
+  description = "Database password"
+  type        = string
+  sensitive   = true
+}
