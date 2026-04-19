@@ -45,6 +45,7 @@ public interface ITicketingPublicApi
     Task<IReadOnlyList<TopEventTicketMetricsDto>> GetTopEventsMetricsAsync(
         int top,
         DateTime? startDate = null,
+        IReadOnlyList<Guid>? allowedEventIds = null,
         CancellationToken cancellationToken = default);
 
 }
