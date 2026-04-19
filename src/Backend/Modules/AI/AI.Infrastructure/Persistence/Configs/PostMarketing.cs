@@ -61,6 +61,7 @@ public class PostConfiguration : IEntityTypeConfiguration<PostMarketing>
                .OnDelete(DeleteBehavior.Cascade);
 
         builder.Navigation(p => p.ExternalDistributions)
-               .UsePropertyAccessMode(PropertyAccessMode.Field);
+                .HasField("_externalDistributions")
+                .UsePropertyAccessMode(PropertyAccessMode.Field);
     }
 }
