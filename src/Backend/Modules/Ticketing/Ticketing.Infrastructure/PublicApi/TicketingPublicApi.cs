@@ -253,6 +253,7 @@ internal sealed class TicketingPublicApi(
     public async Task<IReadOnlyList<TopEventTicketMetricsDto>> GetTopEventsMetricsAsync(
             int top,
             DateTime? startDate = null,
+            IReadOnlyList<Guid>? allowedEventIds = null,
             CancellationToken cancellationToken = default)
     {
         var query = dbContext.Orders
@@ -262,6 +263,9 @@ internal sealed class TicketingPublicApi(
         {
             query = query.Where(o => o.CreatedAt >= startDate.Value);
         }
+
+        if (allowedEventIds is { Count: > 0 })
+            query = query.Where(o => allowedEventIds.Contains(o.EventId));
 
         // get top events by revenue
         var topRevenueEvents = await query

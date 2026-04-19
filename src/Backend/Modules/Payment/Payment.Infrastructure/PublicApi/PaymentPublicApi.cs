@@ -14,9 +14,18 @@ internal sealed class PaymentPublicApi(PaymentModuleDbContext dbContext) : IPaym
         var currentMonthStart = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
         var previousMonthStart = currentMonthStart.AddMonths(-1);
 
+        var validTypes = new[]
+        {
+            PaymentType.BatchDirectPay,
+            PaymentType.BatchWalletPay
+        };
+
         var baseQuery = dbContext.PaymentTransactions
             .AsNoTracking()
-            .Where(x => x.InternalStatus == PaymentInternalStatus.Completed);
+            .Where(x =>
+                x.InternalStatus == PaymentInternalStatus.Completed &&
+                validTypes.Contains(x.Type)
+            );
 
         var grossRevenue = await baseQuery
             .SumAsync(x => (decimal?)x.Amount, cancellationToken) ?? 0m;

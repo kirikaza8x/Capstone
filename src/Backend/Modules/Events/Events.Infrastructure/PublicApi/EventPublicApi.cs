@@ -11,6 +11,15 @@ internal sealed class EventPublicApi(
     EventsDbContext dbContext,
     IDateTimeProvider dateTimeProvider) : IEventPublicApi
 {
+    public async Task<IReadOnlyList<Guid>> GetPublishedEventIdsAsync(
+    CancellationToken cancellationToken = default)
+    {
+        return await dbContext.Events
+            .Where(e => e.Status == EventStatus.Published)
+            .Select(e => e.Id)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<EventMetricsDto> GetEventMetricsAsync(CancellationToken cancellationToken = default)
     {
         var totalEvents = await dbContext.Events.CountAsync(cancellationToken);
