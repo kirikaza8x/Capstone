@@ -98,6 +98,7 @@ public sealed class UploadPostImageEndpoint : ICarterModule
 
             return Result.Success(new UploadPostImageResponse(imageUrl, folder)).ToOk();
         })
+        .DisableAntiforgery()
         .Accepts<UploadPostImageRequest>("multipart/form-data")
         .WithTags("Posts")
         .WithName("UploadPostImage")
