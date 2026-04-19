@@ -1,5 +1,4 @@
 # AIPromo Backend – Event Management & AI Marketing System
-**Project Code:** SP26SE115  
 **Architecture:** Modular Monolith
 
 # 1. Project Overview
