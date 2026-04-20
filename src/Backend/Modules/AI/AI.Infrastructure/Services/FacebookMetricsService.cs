@@ -42,8 +42,10 @@ public sealed class FacebookMetricsService : IFacebookMetricsService
                 _logger.LogWarning("Could not retrieve page access token for post {PostId}", externalPostId);
                 return null;
             }
-
-            var fields = "likes.summary(true),comments.summary(true),shares";
+            // 1. PUBLIC ENGAGEMENT LOOKUP (Likes, Comments, and Shares)
+            // Note: We use the URL endpoint because the Post ID endpoint often returns 
+            // empty objects for shares due to "Page Public Content Access" restrictions.
+            var fields = "likes.summary(true),comments.summary(true)";
             var postUrl = $"{_config.GraphApiBaseUrl}/{_config.GraphApiVersion}/{externalPostId}" +
                           $"?fields={fields}&access_token={pageToken}";
 
@@ -99,12 +101,6 @@ public sealed class FacebookMetricsService : IFacebookMetricsService
                     && commentsSummary.TryGetProperty("total_count", out var commentsCount)
                         ? commentsCount.GetInt32()
                         : 0,
-
-                Shares = postJson.TryGetProperty("shares", out var shares)
-                    && shares.TryGetProperty("count", out var sharesCount)
-                        ? sharesCount.GetInt32()
-                        : 0,
-
                 Reach = reach,
                 Clicks = clicks,
                 FetchedAt = DateTime.UtcNow
