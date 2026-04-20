@@ -1,5 +1,6 @@
 using AI.Domain.Entities;
 using AI.Domain.ReadModels;
+using Marketing.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Shared.Infrastructure.Outbox;
 
@@ -13,11 +14,11 @@ namespace AI.Infrastructure.Data
         public DbSet<UserInterestScore> UserInterestScores { get; set; }
         public DbSet<GlobalCategoryStat> GlobalCategoryStats { get; set; }
         public DbSet<InteractionWeight> InteractionWeights { get; set; }
-
+        public DbSet<PostMarketing> Posts { get; set; }
+        public DbSet<ExternalDistribution> ExternalDistributions { get; set; }
         public DbSet<AiPackage> AiPackages { get; set; }
         public DbSet<OrganizerAiQuota> OrganizerAiQuotas { get; set; }
         public DbSet<AiTokenTransaction> AiTokenTransactions { get; set; }
-
         public DbSet<OutboxMessage> OutboxMessages { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

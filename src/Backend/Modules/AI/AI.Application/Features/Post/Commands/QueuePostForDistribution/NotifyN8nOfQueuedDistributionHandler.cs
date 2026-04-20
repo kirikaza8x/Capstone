@@ -3,22 +3,22 @@ using Shared.Application.Abstractions.Messaging;
 using Marketing.Domain.Events;
 using Marketing.Domain.Repositories;
 using Marketing.Application.Services;
-using AI.Domain.Interfaces.UOW;
 
 namespace Marketing.Application.Features.Posts.EventHandlers;
 
 public class NotifyN8nOfQueuedDistributionHandler(
     IPostRepository postRepository,
     IN8nDistributionService n8nService,
-    IAiUnitOfWork unitOfWork,
     ILogger<NotifyN8nOfQueuedDistributionHandler> logger
 ) : IDomainEventHandler<PostQueuedForDistributionDomainEvent>
 {
     public async Task Handle(PostQueuedForDistributionDomainEvent notification, CancellationToken cancellationToken)
     {
+        logger.LogInformation("NotifyN8n started: postId={PostId} platform={Platform}",
+            notification.PostId, notification.Platform);
+
         var post = await postRepository.GetByIdWithDistributionsAsync(
-            notification.PostId,
-            cancellationToken);
+            notification.PostId, cancellationToken);
 
         if (post is null)
         {
@@ -35,20 +35,13 @@ public class NotifyN8nOfQueuedDistributionHandler(
 
             if (sentToN8n)
             {
-                var result = post.MarkDistributionAsInProgress(notification.Platform);
-                if (result.IsSuccess)
-                {
-                    postRepository.Update(post);
-                    await unitOfWork.SaveChangesAsync(cancellationToken);
-
-                    logger.LogInformation("Post {PostId} → {Platform} marked as InProgress",
-                        post.Id, notification.Platform);
-                }
+                logger.LogInformation("n8n accepted request for Post {PostId} → {Platform}",
+                    notification.PostId, notification.Platform);
             }
             else
             {
                 logger.LogWarning("n8n rejected the request for Post {PostId} → {Platform}",
-                    post.Id, notification.Platform);
+                    notification.PostId, notification.Platform);
             }
         }
         catch (Exception ex)

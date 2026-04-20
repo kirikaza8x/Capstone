@@ -30,7 +30,7 @@ public class QueuePostForDistributionCommandHandler
         // ─────────────────────────────────────────────────────────────
         // Load aggregate
         // ─────────────────────────────────────────────────────────────
-        var post = await _postRepository.GetByIdAsync(command.PostId, cancellationToken);
+        var post = await _postRepository.GetByIdWithDistributionsAsync(command.PostId, cancellationToken);
 
         if (post is null)
         {
