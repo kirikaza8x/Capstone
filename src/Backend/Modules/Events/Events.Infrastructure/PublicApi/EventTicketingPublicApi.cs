@@ -37,6 +37,8 @@ internal sealed class EventTicketingPublicApi(EventsDbContext dbContext) : IEven
                 tt.Event.TicketSaleStartAt,
                 tt.Event.TicketSaleEndAt,
                 tt.Event.EventStartAt,
+                Categories = tt.Event.EventCategories.Select(c => c.Category.Name).ToList(),
+                Hashtags = tt.Event.EventHashtags.Select(h => h.Hashtag.Name).ToList(),
                 ValidSessionIds = tt.Event.Sessions
                     .Where(s => sessionIds.Contains(s.Id))
                     .Select(s => s.Id)
@@ -70,7 +72,9 @@ internal sealed class EventTicketingPublicApi(EventsDbContext dbContext) : IEven
                     AreaType: MapAreaType(row.AreaType),
                     Price: row.Price,
                     Quantity: row.Quantity,
-                    IsPurchasable: isPurchasable);
+                    IsPurchasable: isPurchasable,
+                    Categories: row.Categories,
+                    Hashtags: row.Hashtags);
             }
         }
 
