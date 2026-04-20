@@ -1,4 +1,5 @@
-﻿using AI.IntegrationEvents.IntergrationEvents;
+﻿using System.Text.Json;
+using AI.IntegrationEvents.IntergrationEvents;
 using AI.PublicApi.Enums;
 using AutoMapper;
 using Events.Domain.Errors;
@@ -45,7 +46,9 @@ internal sealed class GetEventByUrlPathQueryHandler(
                 targetType: TargetType.Event,
                 metadata: new Dictionary<string, string>
                 {
-                    ["urlPath"] = query.UrlPath
+                    ["urlPath"] = query.UrlPath,
+                    ["categories"] = JsonSerializer.Serialize(@event.EventCategories.Select(c => c.Category.Name).ToList()),
+                    ["hashtags"] = JsonSerializer.Serialize(@event.EventHashtags.Select(h => h.Hashtag.Name).ToList()),
                 });
 
             await eventBus.PublishAsync(trackEvent, cancellationToken);
