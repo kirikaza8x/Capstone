@@ -43,4 +43,5 @@ public interface IEventVectorRepository
 
     Task DeleteAsync(Guid eventId, CancellationToken ct = default);
     Task<int> CountAsync(CancellationToken ct = default);
+    Task<IReadOnlyList<Guid>> GetAllEventIdsAsync(CancellationToken ct = default);
 }
