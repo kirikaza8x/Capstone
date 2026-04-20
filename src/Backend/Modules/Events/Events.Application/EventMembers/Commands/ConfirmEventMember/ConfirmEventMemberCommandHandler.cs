@@ -1,6 +1,4 @@
-﻿using Events.Application.Abstractions.Caching;
-using Events.Domain.Enums;
-using Events.Domain.Errors;
+﻿using Events.Domain.Errors;
 using Events.Domain.Repositories;
 using Events.Domain.Uow;
 using Shared.Application.Abstractions.Authentication;

@@ -26,6 +26,9 @@ internal sealed class SendOrderConfirmationEmailCommandHandler(
             return Result.Failure(NotificationErrors.Email.UserNotFound(command.UserId));
         }
 
+        var vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+        var paidAtVietnam = TimeZoneInfo.ConvertTimeFromUtc(command.PaidAtUtc, vietnamTimeZone);
+
         var ticketRows = string.Join("\n", command.Items.Select((item, index) =>
         {
             var qrUrl = $"https://quickchart.io/qr?text={Uri.EscapeDataString(item.QrCode)}&size=160&margin=2";
@@ -94,7 +97,7 @@ internal sealed class SendOrderConfirmationEmailCommandHandler(
                       <tr>
                         <td colspan="2" style="padding:14px 20px;">
                           <span style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#6b60a0;">Thời gian thanh toán</span><br>
-                          <span style="font-size:14px;color:#e2e8f0;">{command.PaidAtUtc:dd/MM/yyyy HH:mm:ss} UTC</span>
+                          <span style="font-size:14px;color:#e2e8f0;">{paidAtVietnam:dd/MM/yyyy HH:mm:ss} (GMT+7)</span>
                         </td>
                       </tr>
                     </table>
