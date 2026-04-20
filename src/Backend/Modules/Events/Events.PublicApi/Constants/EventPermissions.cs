@@ -2,7 +2,7 @@
 
 public static class EventPermissions
 {
-    public const string CheckIn = "check_in";
-    public const string ViewReports = "view_reports";
+    public const string CheckIn = "CheckIn";
+    public const string ViewReports = "ViewReports";
     public const string Organizer = "ORGANIZER";
 }
