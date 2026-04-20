@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using AI.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AI.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AIModuleDbContext))]
-    partial class AIModuleDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260419172441_migrate_auto_20260420002426")]
+    partial class migrate_auto_20260420002426
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -910,7 +913,7 @@ namespace AI.Infrastructure.Persistence.Migrations
                         .HasForeignKey("PostMarketingId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_external_distribution_posts_post_marketing_id");
+                        .HasConstraintName("fk_external_distribution_post_marketing_post_marketing_id");
                 });
 
             modelBuilder.Entity("Marketing.Domain.Entities.PostMarketing", b =>

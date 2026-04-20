@@ -1,42 +1,24 @@
+// ExternalDistribution.cs
 using Marketing.Domain.Enums;
 using Shared.Domain.DDD;
 
 namespace Marketing.Domain.Entities;
 
 /// <summary>
-/// Child entity representing the distribution of a PostMarketing 
+/// Child entity representing the distribution of a PostMarketing
 /// to a specific external platform (Facebook, LinkedIn, etc.).
-/// 
-/// This entity is owned by the PostMarketing aggregate root and 
-/// cannot exist independently. It is accessed and modified only 
-/// through the aggregate's methods.
+/// Owned by the PostMarketing aggregate — never modified directly.
 /// </summary>
 public sealed class ExternalDistribution : Entity<Guid>
 {
-    // =========================================================
-    // Properties
-    // =========================================================
-
     public ExternalPlatform Platform { get; private set; }
-
     public string ExternalUrl { get; private set; } = string.Empty;
-
     public string? ExternalPostId { get; private set; }
-
     public string? PlatformMetadata { get; private set; }
-
     public DistributionStatus Status { get; private set; } = DistributionStatus.Pending;
-
     public DateTime? SentAt { get; private set; }
-
     public string? ErrorMessage { get; private set; }
-
-    // ── FK to Parent Aggregate ──
     public Guid PostMarketingId { get; private set; }
-
-    // =========================================================
-    // Constructors
-    // =========================================================
 
     private ExternalDistribution() { }
 
@@ -55,7 +37,7 @@ public sealed class ExternalDistribution : Entity<Guid>
             throw new ArgumentException("PostMarketingId is required", nameof(postMarketingId));
 
         if (platform == ExternalPlatform.Unknown)
-            throw new ArgumentException("Platform must be specified and cannot be Unknown", nameof(platform));
+            throw new ArgumentException("Platform must be specified", nameof(platform));
 
         if (!string.IsNullOrWhiteSpace(externalUrl))
             ExternalUrl = externalUrl.Trim();
@@ -66,10 +48,6 @@ public sealed class ExternalDistribution : Entity<Guid>
         ExternalPostId = externalPostId?.Trim();
         PlatformMetadata = platformMetadata?.Trim();
     }
-
-    // =========================================================
-    // Factory Method
-    // =========================================================
 
     public static ExternalDistribution Create(
         Guid postMarketingId,
@@ -87,15 +65,11 @@ public sealed class ExternalDistribution : Entity<Guid>
             platformMetadata);
     }
 
-    // =========================================================
-    // State Transition Methods (Internal - Aggregate Only)
-    // =========================================================
+    // ── State Transitions (internal — aggregate only) ──
 
     internal void MarkAsSent()
     {
-        if (Status == DistributionStatus.Sent)
-            return;
-
+        if (Status == DistributionStatus.Sent) return;
         Status = DistributionStatus.Sent;
         SentAt = DateTime.UtcNow;
         ErrorMessage = null;
@@ -106,9 +80,7 @@ public sealed class ExternalDistribution : Entity<Guid>
         if (string.IsNullOrWhiteSpace(errorMessage))
             throw new ArgumentException("Error message cannot be empty", nameof(errorMessage));
 
-        if (Status == DistributionStatus.Failed)
-            return;
-
+        if (Status == DistributionStatus.Failed) return;
         Status = DistributionStatus.Failed;
         ErrorMessage = errorMessage.Trim();
     }
@@ -121,33 +93,16 @@ public sealed class ExternalDistribution : Entity<Guid>
         ExternalUrl = newUrl.Trim();
     }
 
-    internal void MarkAsInProgress()
-    {
-        // Don't downgrade or override terminal states
-        if (Status is DistributionStatus.Sent or DistributionStatus.Failed)
-            return;
-
-        Status = DistributionStatus.InProgress;
-        // Keep SentAt null until platform confirms
-    }
-
     internal void UpdateMetadata(string? externalPostId, string? platformMetadata)
     {
         ExternalPostId = externalPostId?.Trim();
         PlatformMetadata = platformMetadata?.Trim();
     }
 
-    // =========================================================
-    // Query Methods (Public - Read-Only)
-    // =========================================================
+    // ── Query Methods ──
 
     public bool IsSent() => Status == DistributionStatus.Sent;
-
     public bool IsFailed() => Status == DistributionStatus.Failed;
-
-    public bool CanRetry() => Status == DistributionStatus.Failed;
-
     public bool IsPending() => Status == DistributionStatus.Pending;
-
-    public bool IsInProgress() => Status == DistributionStatus.InProgress;
+    public bool CanRetry() => Status == DistributionStatus.Failed;
 }
