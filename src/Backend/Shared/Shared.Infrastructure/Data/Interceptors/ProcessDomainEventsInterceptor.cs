@@ -9,59 +9,66 @@ namespace Shared.Infrastructure.Data.Interceptors;
 
 public sealed class ProcessDomainEventsInterceptor(IMediator mediator) : SaveChangesInterceptor
 {
+    private readonly List<IDomainEvent> _pendingEvents = new();
+
     public override async ValueTask<InterceptionResult<int>> SavingChangesAsync(
         DbContextEventData eventData,
         InterceptionResult<int> result,
         CancellationToken cancellationToken = default)
     {
-        if (eventData.Context is null)
-        {
-            return await base.SavingChangesAsync(eventData, result, cancellationToken);
-        }
-
-        await ProcessEventsAsync(eventData.Context, cancellationToken);
+        if (eventData.Context is not null)
+            await CollectEventsAndSaveOutboxAsync(eventData.Context, cancellationToken);
 
         return await base.SavingChangesAsync(eventData, result, cancellationToken);
     }
 
-    private async Task ProcessEventsAsync(DbContext context, CancellationToken cancellationToken)
+    public override async ValueTask<int> SavedChangesAsync(
+    SaveChangesCompletedEventData eventData,
+    int result,
+    CancellationToken cancellationToken = default)
     {
-        while (true)
+        if (_pendingEvents.Any())
         {
-            var aggregates = context.ChangeTracker
-                .Entries<IAggregateRoot>()
-                .Where(entry => entry.Entity.DomainEvents.Any())
-                .Select(entry => entry.Entity)
-                .ToList();
+            var eventsToDispatch = _pendingEvents.ToList();
+            _pendingEvents.Clear();
 
-            if (!aggregates.Any())
-            {
-                break;
-            }
-
-            // 1. Collect and CLEAR the events so they don't fire twice
-            var domainEvents = aggregates
-                .SelectMany(aggregate => aggregate.ClearDomainEvents())
-                .ToList();
-
-            // 2. Save to Outbox for MassTransit / External Modules
-            var outboxMessages = domainEvents
-                .Select(domainEvent => new OutboxMessage
-                {
-                    Id = Guid.NewGuid(),
-                    Type = domainEvent.GetType().AssemblyQualifiedName!,
-                    Content = JsonSerializer.Serialize(domainEvent, domainEvent.GetType()),
-                    OccurredOnUtc = DateTime.UtcNow
-                })
-                .ToList();
-
-            await context.Set<OutboxMessage>().AddRangeAsync(outboxMessages, cancellationToken);
-
-            // 3. Dispatch via MediatR for Internal Module logic
-            foreach (var domainEvent in domainEvents)
-            {
+            foreach (var domainEvent in eventsToDispatch)
                 await mediator.Publish(domainEvent, cancellationToken);
-            }
         }
+
+        return await base.SavedChangesAsync(eventData, result, cancellationToken);
+    }
+
+    private async Task CollectEventsAndSaveOutboxAsync(
+        DbContext context,
+        CancellationToken cancellationToken)
+    {
+        var aggregates = context.ChangeTracker
+            .Entries<IAggregateRoot>()
+            .Where(e => e.Entity.DomainEvents.Any())
+            .Select(e => e.Entity)
+            .ToList();
+
+        if (!aggregates.Any()) return;
+
+        var domainEvents = aggregates
+            .SelectMany(a => a.ClearDomainEvents())
+            .ToList();
+
+        // Stage for dispatch after save
+        _pendingEvents.AddRange(domainEvents);
+
+        // Save to Outbox in same transaction
+        var outboxMessages = domainEvents
+            .Select(e => new OutboxMessage
+            {
+                Id = Guid.NewGuid(),
+                Type = e.GetType().AssemblyQualifiedName!,
+                Content = JsonSerializer.Serialize(e, e.GetType()),
+                OccurredOnUtc = DateTime.UtcNow
+            })
+            .ToList();
+
+        await context.Set<OutboxMessage>().AddRangeAsync(outboxMessages, cancellationToken);
     }
 }

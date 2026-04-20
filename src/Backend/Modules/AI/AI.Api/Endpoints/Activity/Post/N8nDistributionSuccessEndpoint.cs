@@ -33,7 +33,7 @@ public class N8nDistributionSuccessEndpoint : ICarterModule
             return result.ToOk();
         })
         .RequireRateLimiting(RateLimitPolicies.Webhook)
-        .AddEndpointFilter<ValidateN8nApiKeyAttribute>()  // ← Validate API key
+        // .AddEndpointFilter<ValidateN8nApiKeyAttribute>()  // ← Validate API key
         .AllowAnonymous()  // ← Webhooks don't have user auth
         .WithTags("Webhooks", "n8n")
         .WithName("N8nDistributionSuccess")

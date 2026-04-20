@@ -7,10 +7,10 @@ public enum DistributionStatus
     /// </summary>
     Pending = 0,
     
-    /// <summary>
-    /// Successfully sent to n8n, awaiting platform confirmation
-    /// </summary>
-    InProgress = 1,
+    // /// <summary>
+    // /// Successfully sent to n8n, awaiting platform confirmation
+    // /// </summary>
+    // InProgress = 1,
     
     /// <summary>
     /// Confirmed posted to external platform (via n8n callback)

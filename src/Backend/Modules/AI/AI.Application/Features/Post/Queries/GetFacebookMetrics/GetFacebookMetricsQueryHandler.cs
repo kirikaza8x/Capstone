@@ -1,5 +1,3 @@
-// Marketing.Application/Posts/Handlers/GetFacebookMetricsQueryHandler.cs
-
 using Marketing.Application.Posts.Dtos;
 using Marketing.Application.Posts.Queries;
 using Marketing.Application.Services;
@@ -37,7 +35,7 @@ public sealed class GetFacebookMetricsQueryHandler
                 MarketingErrors.Post.NotFound(query.PostId));
 
         var distribution = post.ExternalDistributions
-            .FirstOrDefault(d => d.Id == query.DistributionId 
+            .FirstOrDefault(d => d.Id == query.DistributionId
                               && d.Platform == ExternalPlatform.Facebook
                               && d.IsSent());
 
