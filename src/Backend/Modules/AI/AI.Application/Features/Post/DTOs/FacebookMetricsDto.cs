@@ -9,7 +9,6 @@ public sealed record FacebookMetricsDto
     public string ExternalUrl { get; init; } = string.Empty;
     public int Likes { get; init; }
     public int Comments { get; init; }
-    public int Shares { get; init; }
     public long Reach { get; init; }
     public long Clicks { get; init; }
     public DateTime FetchedAt { get; init; }
