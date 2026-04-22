@@ -9,10 +9,15 @@ public interface IPaymentPublicApi
         DateTime startDateUtc,
         DateTime endDateUtc,
         CancellationToken cancellationToken = default);
+
+    Task<FundFlowSummaryDto> GetFundFlowSummaryAsync(
+        DateTime? startDateUtc = null,
+        DateTime? endDateUtc = null,
+        CancellationToken cancellationToken = default);
 }
 
 public sealed record GlobalRevenueOverviewDto(
-    decimal GrossRevenue,
+    decimal NetRevenue,
     double MonthlyGrowthRate,
     bool IsPositiveGrowth);
 
@@ -20,3 +25,10 @@ public sealed record DailyRevenueTrendDto(
     DateTime Date,
     decimal Revenue,
     int Transactions);
+
+public sealed record FundFlowSummaryDto(
+    decimal TicketPurchaseAmount,
+    decimal AiPackagePurchaseAmount,
+    decimal WalletTopUpAmount,
+    decimal RefundAmount,
+    decimal WithdrawalAmount);

@@ -14,40 +14,55 @@ internal sealed class PaymentPublicApi(PaymentModuleDbContext dbContext) : IPaym
         var currentMonthStart = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
         var previousMonthStart = currentMonthStart.AddMonths(-1);
 
-        var validTypes = new[]
+        var validReferenceTypes = new[]
         {
-            PaymentType.BatchDirectPay,
-            PaymentType.BatchWalletPay
+            PaymentReferenceType.TicketOrder,
+            PaymentReferenceType.AiPackage,
         };
 
         var baseQuery = dbContext.PaymentTransactions
             .AsNoTracking()
             .Where(x =>
                 x.InternalStatus == PaymentInternalStatus.Completed &&
-                validTypes.Contains(x.Type)
-            );
+                (x.ReferenceType == PaymentReferenceType.TicketOrder ||
+                 x.ReferenceType == PaymentReferenceType.AiPackage));
 
-        var grossRevenue = await baseQuery
-            .SumAsync(x => (decimal?)x.Amount, cancellationToken) ?? 0m;
+        var netRevenue = await baseQuery
+            .Select(x =>
+                x.Amount -
+                x.Items
+                    .Where(i => i.InternalStatus == PaymentInternalStatus.Refunded)
+                    .Sum(i => i.Amount))
+            .SumAsync(cancellationToken);
 
-        var currentMonthRevenue = await baseQuery
+        var currentMonthNetRevenue = await baseQuery
             .Where(x =>
                 (x.CompletedAt ?? x.CreatedAt ?? DateTime.MinValue) >= currentMonthStart &&
                 (x.CompletedAt ?? x.CreatedAt ?? DateTime.MinValue) < now)
-            .SumAsync(x => (decimal?)x.Amount, cancellationToken) ?? 0m;
+            .Select(x =>
+                x.Amount -
+                x.Items
+                    .Where(i => i.InternalStatus == PaymentInternalStatus.Refunded)
+                    .Sum(i => i.Amount))
+            .SumAsync(cancellationToken);
 
-        var previousMonthRevenue = await baseQuery
+        var previousMonthNetRevenue = await baseQuery
             .Where(x =>
                 (x.CompletedAt ?? x.CreatedAt ?? DateTime.MinValue) >= previousMonthStart &&
                 (x.CompletedAt ?? x.CreatedAt ?? DateTime.MinValue) < currentMonthStart)
-            .SumAsync(x => (decimal?)x.Amount, cancellationToken) ?? 0m;
+            .Select(x =>
+                x.Amount -
+                x.Items
+                    .Where(i => i.InternalStatus == PaymentInternalStatus.Refunded)
+                    .Sum(i => i.Amount))
+            .SumAsync(cancellationToken);
 
-        var monthlyGrowthRate = previousMonthRevenue == 0m
-            ? (currentMonthRevenue > 0m ? 100d : 0d)
-            : (double)((currentMonthRevenue - previousMonthRevenue) / previousMonthRevenue * 100m);
+        var monthlyGrowthRate = previousMonthNetRevenue == 0m
+            ? (currentMonthNetRevenue > 0m ? 100d : 0d)
+            : (double)((currentMonthNetRevenue - previousMonthNetRevenue) / previousMonthNetRevenue * 100m);
 
         return new GlobalRevenueOverviewDto(
-            GrossRevenue: grossRevenue,
+            NetRevenue: netRevenue,
             MonthlyGrowthRate: Math.Round(monthlyGrowthRate, 2),
             IsPositiveGrowth: monthlyGrowthRate >= 0d);
     }
@@ -82,5 +97,70 @@ internal sealed class PaymentPublicApi(PaymentModuleDbContext dbContext) : IPaym
                 x.Revenue,
                 x.Transactions))
             .ToList();
+    }
+
+    public async Task<FundFlowSummaryDto> GetFundFlowSummaryAsync(
+    DateTime? startDateUtc = null,
+    DateTime? endDateUtc = null,
+    CancellationToken cancellationToken = default)
+    {
+        var paymentTransactions = dbContext.PaymentTransactions
+            .AsNoTracking()
+            .Where(x => x.InternalStatus == PaymentInternalStatus.Completed);
+
+        if (startDateUtc.HasValue)
+        {
+            paymentTransactions = paymentTransactions.Where(x =>
+                (x.CompletedAt ?? x.CreatedAt ?? DateTime.MinValue) >= startDateUtc.Value);
+        }
+
+        if (endDateUtc.HasValue)
+        {
+            paymentTransactions = paymentTransactions.Where(x =>
+                (x.CompletedAt ?? x.CreatedAt ?? DateTime.MinValue) < endDateUtc.Value);
+        }
+
+        var walletTransactions = dbContext.WalletTransactions
+            .AsNoTracking()
+            .Where(x => x.Status == TransactionStatus.Completed);
+
+        if (startDateUtc.HasValue)
+        {
+            walletTransactions = walletTransactions.Where(x =>
+                (x.CreatedAt ?? DateTime.MinValue) >= startDateUtc.Value);
+        }
+
+        if (endDateUtc.HasValue)
+        {
+            walletTransactions = walletTransactions.Where(x =>
+                (x.CreatedAt ?? DateTime.MinValue) < endDateUtc.Value);
+        }
+
+        var ticketPurchaseAmount = await paymentTransactions
+            .Where(x => x.ReferenceType == PaymentReferenceType.TicketOrder)
+            .SumAsync(x => (decimal?)x.Amount, cancellationToken) ?? 0m;
+
+        var aiPackagePurchaseAmount = await paymentTransactions
+            .Where(x => x.ReferenceType == PaymentReferenceType.AiPackage)
+            .SumAsync(x => (decimal?)x.Amount, cancellationToken) ?? 0m;
+
+        var walletTopUpAmount = await paymentTransactions
+            .Where(x => x.Type == PaymentType.WalletTopUp)
+            .SumAsync(x => (decimal?)x.Amount, cancellationToken) ?? 0m;
+
+        var refundAmount = await walletTransactions
+            .Where(x => x.Type == TransactionType.Refund)
+            .SumAsync(x => (decimal?)x.Amount, cancellationToken) ?? 0m;
+
+        var withdrawalAmount = await walletTransactions
+            .Where(x => x.Type == TransactionType.Withdrawal)
+            .SumAsync(x => (decimal?)x.Amount, cancellationToken) ?? 0m;
+
+        return new FundFlowSummaryDto(
+            TicketPurchaseAmount: ticketPurchaseAmount,
+            AiPackagePurchaseAmount: aiPackagePurchaseAmount,
+            WalletTopUpAmount: walletTopUpAmount,
+            RefundAmount: refundAmount,
+            WithdrawalAmount: withdrawalAmount);
     }
 }
