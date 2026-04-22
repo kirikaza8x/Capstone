@@ -26,7 +26,7 @@ public sealed class EventMemberInvitedIntegrationEventHandler(
             return;
         }
 
-        var confirmUrl = $"{FrontendBaseUrl}/verify-member?eventId={integrationEvent.EventId}&memberId={integrationEvent.UserId}";
+        var confirmUrl = $"{FrontendBaseUrl}/verify-member?eventId={integrationEvent.EventId}&memberId={integrationEvent.EventMemberId}";
         var subject = $"[AIPromo] Lời mời tham gia quản lý sự kiện: {integrationEvent.EventTitle}";
 
         var body = $"""

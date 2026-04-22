@@ -12,7 +12,12 @@ public sealed record AdminKpisDto(
     TotalRevenueDto TotalRevenue,
     ActiveUsersDto ActiveUsers,
     EventsSummaryDto Events,
-    TicketsSoldSummaryDto TicketsSold);
+    TicketsSoldSummaryDto TicketsSold,
+    RevenueBreakdownDto RevenueBreakdown);
+
+public sealed record RevenueBreakdownDto(
+    decimal TicketRevenue,
+    decimal AiPackageRevenue);
 
 public sealed record TotalRevenueDto(
     decimal Value,

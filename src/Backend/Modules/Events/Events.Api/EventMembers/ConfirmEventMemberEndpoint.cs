@@ -32,7 +32,6 @@ public sealed class ConfirmEventMemberEndpoint : ICarterModule
         .Produces(StatusCodes.Status204NoContent)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status403Forbidden)
-        .ProducesProblem(StatusCodes.Status404NotFound)
-        .RequireRoles(Roles.AttendeeAndOrganizer); 
+        .ProducesProblem(StatusCodes.Status404NotFound);
     }
 }

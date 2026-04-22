@@ -1,4 +1,5 @@
-﻿using AI.IntegrationEvents.IntergrationEvents;
+﻿using System.Text.Json;
+using AI.IntegrationEvents.IntergrationEvents;
 using AI.PublicApi.Enums;
 using Events.PublicApi.PublicApi;
 using Events.PublicApi.Records;
@@ -122,6 +123,16 @@ internal sealed class CreateOrderCommandHandler(
 
             if (isBehaviorActor)
             {
+                var allCategories = itemMap.Values
+                    .SelectMany(i => i.Categories)
+                    .Distinct()
+                    .ToList();
+
+                var allHashtags = itemMap.Values
+                    .SelectMany(i => i.Hashtags)
+                    .Distinct()
+                    .ToList();
+
                 var checkoutEvent = TrackUserActivityIntegrationEvent.Create(
                     userId: userId,
                     actionType: ActionTypes.Checkout,
@@ -131,7 +142,9 @@ internal sealed class CreateOrderCommandHandler(
                     {
                         ["eventId"] = command.EventId.ToString(),
                         ["ticketCount"] = command.Tickets.Count.ToString(),
-                        ["amount"] = order.TotalPrice.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                        ["amount"] = order.TotalPrice.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                        ["categories"] = JsonSerializer.Serialize(allCategories),
+                        ["hashtags"] = JsonSerializer.Serialize(allHashtags),
                     });
 
                 await eventBus.PublishAsync(checkoutEvent, cancellationToken);

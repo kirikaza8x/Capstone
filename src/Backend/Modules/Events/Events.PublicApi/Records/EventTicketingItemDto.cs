@@ -8,7 +8,9 @@ public sealed record EventTicketingItemDto(
     EventAreaType AreaType,
     decimal Price,
     int Quantity,
-    bool IsPurchasable);
+    bool IsPurchasable,
+    IReadOnlyList<string> Categories,
+    IReadOnlyList<string> Hashtags);
 
 public sealed record EventSeatDto(
     Guid SeatId,

@@ -23,13 +23,6 @@ internal sealed class ConfirmEventMemberCommandHandler(
         if (member is null)
             return Result.Failure(EventErrors.EventMemberErrors.NotFound(member.Id));
 
-        if (member.UserId != currentUserService.UserId)
-        {
-            return Result.Failure(Error.Forbidden(
-                "EventMember.Confirm.Forbidden",
-                "You are not authorized to confirm this invitation."));
-        }
-
         var result = member.Confirm();
         if (result.IsFailure)
             return result;
