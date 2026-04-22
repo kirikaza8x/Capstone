@@ -154,7 +154,41 @@ public sealed class EventVectorRepository : QdrantRepositoryBase, IEventVectorRe
             .ToList();
     }
 
-    // ── Private Helpers ───────────────────────────────────────────
+    public async Task<IReadOnlyList<Guid>> GetAllEventIdsAsync(CancellationToken ct = default)
+    {
+        var allPoints = new List<Guid>();
+        uint offset = 0;
+        const uint batchSize = 1000;
+
+        while (true)
+        {
+            var scrollResult = await Client.ScrollAsync(
+                collectionName: CollectionName,
+                filter: null,  // No filter to get all points
+                limit: batchSize,
+                offset: offset > 0 ? new PointId { Num = offset } : null,
+                payloadSelector: true,
+                vectorsSelector: false,
+                cancellationToken: ct
+            );
+
+            if (scrollResult.Result.Count == 0)
+                break;
+
+            foreach (var point in scrollResult.Result)
+            {
+                var reader = new QdrantPayloadReader(point.Payload);
+                allPoints.Add(reader.GetGuid("event_id"));
+            }
+
+            if (scrollResult.Result.Count < batchSize)
+                break;
+
+            offset += batchSize;
+        }
+
+        return allPoints;
+    }
 
     private static IDictionary<string, Value> BuildPayload(EventVectorPayload evt) =>
         new Dictionary<string, Value>

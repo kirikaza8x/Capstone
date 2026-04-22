@@ -3,6 +3,7 @@ using AI.Application.Abstractions.Qdrant;
 using AI.Application.Abstractions.Qdrant.Model;
 using AI.Application.Helpers;
 using Events.PublicApi.PublicApi;
+using Events.PublicApi.Records;
 using Microsoft.Extensions.Logging;
 using Shared.Application.Abstractions.Embbeding;
 
@@ -25,20 +26,53 @@ public sealed class EventReIndexService(
     {
         logger.LogInformation("Starting full event re-index...");
 
-        int page = 1;
-        int totalCount = 0;
-        int errorCount = 0;
+        // Step 1: Get all event IDs currently in Qdrant
+        var currentEventIds = await eventVectorRepo.GetAllEventIdsAsync(ct);
+        logger.LogInformation("Found {Count} events currently in Qdrant", currentEventIds.Count);
 
+        // Step 2: Get all valid event IDs from database (active + published)
+        var validEvents = new List<EventRecommendationFeature>();
+        int page = 1;
         while (true)
         {
             var events = await eventApi.GetAllForReIndexAsync(page, PageSize, ct);
             if (events.Count == 0) break;
+            validEvents.AddRange(events);
+            if (events.Count < PageSize) break;
+            page++;
+        }
 
-            logger.LogInformation(
-                "Re-indexing page {Page} — {Count} events", page, events.Count);
+        var validEventIds = new HashSet<Guid>(validEvents.Select(e => e.Id));
+        logger.LogInformation("Found {Count} valid events in database", validEvents.Count);
+
+        // Step 3: Delete stale events (in Qdrant but not in valid list)
+        var staleEventIds = currentEventIds.Where(id => !validEventIds.Contains(id)).ToList();
+        if (staleEventIds.Any())
+        {
+            logger.LogInformation("Removing {Count} stale events from Qdrant", staleEventIds.Count);
+            foreach (var eventId in staleEventIds)
+            {
+                try
+                {
+                    await eventVectorRepo.DeleteAsync(eventId, ct);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Failed to delete stale event {EventId}", eventId);
+                }
+            }
+        }
+
+        // Step 4: Upsert all valid events
+        int totalCount = 0;
+        int errorCount = 0;
+
+        foreach (var batch in validEvents.Chunk(100))  // Process in batches of 100
+        {
+            logger.LogInformation("Re-indexing batch of {Count} events", batch.Length);
 
             // Build batch: embed all texts in one call (more efficient)
-            var texts = events
+            var texts = batch
                 .Select(e => EmbeddingTextBuilder.ForEvent(
                     title: e.Title,
                     categories: e.Categories.ToList() ?? new List<string>(),
@@ -53,15 +87,13 @@ public sealed class EventReIndexService(
             }
             catch (Exception ex)
             {
-                logger.LogError(ex,
-                    "Batch embedding failed for page {Page} — skipping", page);
-                page++;
-                errorCount += events.Count;
+                logger.LogError(ex, "Batch embedding failed — skipping batch");
+                errorCount += batch.Length;
                 continue;
             }
 
             // Upsert all as a batch
-            var batch = events
+            var upsertBatch = batch
                 .Select((e, i) => (
                     new EventVectorPayload(
                         EventId: e.Id,
@@ -78,23 +110,19 @@ public sealed class EventReIndexService(
 
             try
             {
-                await eventVectorRepo.UpsertBatchAsync(batch, ct);
-                totalCount += events.Count;
+                await eventVectorRepo.UpsertBatchAsync(upsertBatch, ct);
+                totalCount += batch.Length;
             }
             catch (Exception ex)
             {
-                logger.LogError(ex,
-                    "Batch upsert failed for page {Page}", page);
-                errorCount += events.Count;
+                logger.LogError(ex, "Batch upsert failed");
+                errorCount += batch.Length;
             }
-
-            if (events.Count < PageSize) break; // last page
-            page++;
         }
 
         logger.LogInformation(
-            "Re-index complete — {Total} indexed, {Errors} errors",
-            totalCount, errorCount);
+            "Re-index complete — {Total} indexed, {Errors} errors, {Stale} stale events removed",
+            totalCount, errorCount, staleEventIds.Count);
 
         return totalCount;
     }
