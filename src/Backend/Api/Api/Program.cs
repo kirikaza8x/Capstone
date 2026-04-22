@@ -123,7 +123,7 @@ public class Program
         .UseAiModule()
         .UseTicketingModule()
         .UsePaymentModule()
-            ;
+        ;
         app.Run();
     }
 }

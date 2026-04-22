@@ -12,7 +12,7 @@ namespace Events.Infrastructure.Data.Repositories;
 internal sealed class EventRepository(EventsDbContext context)
     : RepositoryBase<Event, Guid>(context), IEventRepository
 {
-    private readonly EventsDbContext _context = context;
+    private readonly EventsDbContext _context = context ?? throw new ArgumentNullException(nameof(context));
 
     public async Task<Event?> GetByIdWithSessionsAsync(Guid id, CancellationToken cancellationToken = default)
     {
@@ -254,7 +254,7 @@ internal sealed class EventRepository(EventsDbContext context)
     {
         return await _context.Set<Event>()
             .AsNoTracking()
-            .Where(e => e.IsActive)
+            .Where(e => e.IsActive && e.Status == EventStatus.Published)
             .Include(e => e.EventCategories).ThenInclude(ec => ec.Category)
             .Include(e => e.EventHashtags).ThenInclude(eh => eh.Hashtag)
             .Include(e => e.TicketTypes)
@@ -294,7 +294,7 @@ internal sealed class EventRepository(EventsDbContext context)
 
         return await _context.Events
             .AsNoTracking()
-            .Where(e => idList.Contains(e.Id) && e.IsActive)
+            .Where(e => idList.Contains(e.Id) && e.IsActive && e.Status == EventStatus.Published)
             .Include(e => e.EventCategories).ThenInclude(ec => ec.Category)
             .Include(e => e.EventHashtags).ThenInclude(eh => eh.Hashtag)
             .Include(e => e.TicketTypes)
@@ -336,7 +336,7 @@ internal sealed class EventRepository(EventsDbContext context)
 
 
     public async Task<PagedResult<Event>> SearchEventsAsync(
-        string keyword,
+        string? keyword,
         PagedQuery query,
         CancellationToken cancellationToken = default)
     {
