@@ -68,9 +68,9 @@ namespace Users.Application.Features.Users.Queries
 
             var pagedResult = new PagedResult<UserProfileDto>(
                 dtoItems,
-                list.TotalCount,
                 list.PageNumber,
-                list.PageSize);
+                list.PageSize,
+                list.TotalCount);
 
             return Result.Success(pagedResult);
         }
