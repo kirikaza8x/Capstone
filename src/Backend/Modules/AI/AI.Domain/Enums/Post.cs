@@ -29,3 +29,15 @@ public enum FacebookPeriod
 
     days_28
 }
+
+
+
+public enum InstagramPeriod
+{
+    day,
+    week,           
+    days_28,
+    month,
+    lifetime,
+    total_over_range
+}
