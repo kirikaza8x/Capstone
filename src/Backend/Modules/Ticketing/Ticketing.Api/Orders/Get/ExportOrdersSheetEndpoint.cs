@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Shared.Api.Extensions;
+using Shared.Api.Results;
 using Ticketing.Application.Orders.Queries.ExportOrdersSheet;
 using Users.PublicApi.Constants;
 
@@ -21,7 +22,16 @@ public class ExportOrdersSheetEndpoint : ICarterModule
         {
             var query = new ExportOrdersSheetQuery(eventId);
             var result = await sender.Send(query, cancellationToken);
-            return Results.File(result.Value, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "orders.xlsx");
+
+            if (result.IsFailure)
+            {
+                return result.ToProblem();
+            }
+
+            return Results.File(
+                result.Value,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                "orders.xlsx");
         })
         .WithTags(Constants.Tags.Orders)
         .WithName("ExportOrdersSheet")
