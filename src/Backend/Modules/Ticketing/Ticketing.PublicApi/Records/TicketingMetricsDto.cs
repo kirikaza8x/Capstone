@@ -1,5 +1,4 @@
-﻿
-namespace Ticketing.PublicApi.Records;
+﻿namespace Ticketing.PublicApi.Records;
 
 public sealed record TicketingMetricsDto(
     decimal TotalRevenue,

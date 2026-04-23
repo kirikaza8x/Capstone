@@ -49,6 +49,13 @@ internal sealed class GetOverviewQueryHandler(
             ? Math.Round((double)userMetrics.TotalOrganizers / totalUsers * 100, 1)
             : 0;
 
+        // Keep revenue breakdown consistent with TotalRevenue (net).
+        var ticketRevenueNet = globalRevenue.NetRevenue - aiPackageRevenue.TotalRevenue;
+        if (ticketRevenueNet < 0m)
+        {
+            ticketRevenueNet = 0m;
+        }
+
         var response = new OverviewResponse(
             Kpis: new AdminKpisDto(
                 TotalRevenue: new TotalRevenueDto(
@@ -59,7 +66,7 @@ internal sealed class GetOverviewQueryHandler(
                 Events: new EventsSummaryDto(eventMetrics.TotalEvents, eventMetrics.LiveEventsNow),
                 TicketsSold: new TicketsSoldSummaryDto(ticketMetrics.TotalTicketsSold),
                 RevenueBreakdown: new RevenueBreakdownDto(
-                    TicketRevenue: ticketMetrics.TotalRevenue,
+                    TicketRevenue: ticketRevenueNet,
                     AiPackageRevenue: aiPackageRevenue.TotalRevenue)
             ),
             UserDistribution: new UserDistributionDto(

@@ -117,6 +117,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Users.Api.Tests", "Modules\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Users.Application.Tests", "Modules\Users\Tests\Users.Application.Tests\Users.Application.Tests.csproj", "{B124A6D4-D324-4F7F-8BB3-2612679AA135}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "N8N", "N8N", "{4F0C2B5A-BBA8-4A03-8788-9F4BC43B0B79}"
+	ProjectSection(SolutionItems) = preProject
+		N8N\n8n.json = N8N\n8n.json
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -714,6 +719,7 @@ Global
 		{9DC77C1F-E1C4-4D46-4C40-8FCF61162BCA} = {471029B9-4767-42FD-BF16-9BD2A75AB52B}
 		{B4D02467-50DA-4836-B28D-B51ACB73B177} = {9DC77C1F-E1C4-4D46-4C40-8FCF61162BCA}
 		{B124A6D4-D324-4F7F-8BB3-2612679AA135} = {9DC77C1F-E1C4-4D46-4C40-8FCF61162BCA}
+		{4F0C2B5A-BBA8-4A03-8788-9F4BC43B0B79} = {8A51F964-002C-4A50-B47F-66440EFC3EE6}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {211C7E79-0242-4D74-8098-0AFD07A77637}
