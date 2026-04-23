@@ -34,58 +34,35 @@ public sealed class InstagramMetricsService : IInstagramMetricsService
         {
             var client = _httpClientFactory.CreateClient("Instagram");
             var token = _config.PageAccessToken;
-
-            var metrics = "impressions,reach,likes,comments,saved";
-            
-            var url = $"{_config.GraphApiBaseUrl}/{_config.GraphApiVersion}/{externalPostId}" +
-                      $"?fields=insights.metric({metrics})&access_token={token}";
-
-            _logger.LogInformation("Fetching Instagram post metrics: {Url}", url);
+            var url = $"{_config.GraphApiBaseUrl}/{_config.GraphApiVersion}/{externalPostId}?fields=insights.metric(impressions,reach,likes,comments,saved)&access_token={token}";
 
             var response = await client.GetAsync(url, ct);
+            if (!response.IsSuccessStatusCode) return null;
+
             var raw = await response.Content.ReadAsStringAsync(ct);
-
-            _logger.LogInformation("Instagram Post API response ({Status}): {Raw}", 
-                response.StatusCode, raw);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                _logger.LogWarning("Instagram Post API returned {Status} for post {PostId}: {Error}",
-                    response.StatusCode, externalPostId, raw);
-                return null;
-            }
-
             var json = JsonDocument.Parse(raw).RootElement;
-
-            var likes = ExtractInsightValue(json, "likes");
-            var comments = ExtractInsightValue(json, "comments");
-            var reach = ExtractInsightValue(json, "reach");
-            var saves = ExtractInsightValue(json, "saved");
-
-            _logger.LogInformation("Extracted post metrics - Likes: {Likes}, Comments: {Comments}, Reach: {Reach}, Saves: {Saves}",
-                likes, comments, reach, saves);
 
             return new InstagramMetricsDto
             {
                 ExternalPostId = externalPostId,
                 ExternalUrl = externalUrl,
-                Likes = (int)likes,           
-                Comments = (int)comments,     
-                Reach = reach,               
-                Saves = saves,               
+                Likes = (int)ExtractInsightValue(json, "likes"),
+                Comments = (int)ExtractInsightValue(json, "comments"),
+                Reach = ExtractInsightValue(json, "reach"),
+                Saves = ExtractInsightValue(json, "saved"),
                 FetchedAt = DateTime.UtcNow
             };
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to fetch Instagram metrics for post {PostId}", externalPostId);
+            _logger.LogError(ex, "Failed to fetch post metrics {Id}", externalPostId);
             return null;
         }
     }
 
     public async Task<InstagramPageMetricsDto?> GetPageTotalsAsync(
-        InstagramPeriod period = InstagramPeriod.days_28,
-        CancellationToken ct = default)
+    InstagramPeriod period = InstagramPeriod.days_28,
+    CancellationToken ct = default)
     {
         try
         {
@@ -93,158 +70,105 @@ public sealed class InstagramMetricsService : IInstagramMetricsService
             var token = _config.PageAccessToken;
             var accountId = _config.AccountId;
 
-            // ✅ VALID Instagram User insights metrics ONLY (no follower_count)
-            var metrics = "reach,profile_views,total_interactions,website_clicks";
-            
-            var periodString = period switch
+            int daysCount = period switch
             {
-                InstagramPeriod.week => "week",
-                InstagramPeriod.day => "day",
-                InstagramPeriod.days_28 => "days_28",
-                InstagramPeriod.month => "month",
-                InstagramPeriod.lifetime => "lifetime",
-                _ => "days_28"
+                InstagramPeriod.day => 1,
+                InstagramPeriod.week => 7,
+                InstagramPeriod.days_28 => 28,
+                _ => 1
             };
 
-            // ✅ Page insights: use /insights with metric_type=total_value
-            var insightsUrl = $"{_config.GraphApiBaseUrl}/{_config.GraphApiVersion}/{accountId}/insights" +
-                              $"?metric={Uri.EscapeDataString(metrics)}" +
-                              $"&period={periodString}" +
-                              $"&metric_type=total_value" +
-                              $"&access_token={token}";
+            var periodString = (period == InstagramPeriod.day) ? "day" :
+                               (period == InstagramPeriod.week) ? "week" : "days_28";
 
-            _logger.LogInformation("Fetching Instagram page insights: {Url}", insightsUrl);
+            var reachUrl = $"{_config.GraphApiBaseUrl}/{_config.GraphApiVersion}/{accountId}/insights?metric=reach&period={periodString}&access_token={token}";
 
-            var response = await client.GetAsync(insightsUrl, ct);
-            var raw = await response.Content.ReadAsStringAsync(ct);
+            var interUrl = $"{_config.GraphApiBaseUrl}/{_config.GraphApiVersion}/{accountId}/insights?metric=likes,comments,total_interactions&period=day&metric_type=total_value&access_token={token}";
 
-            _logger.LogInformation("Instagram Insights response ({Status}): {Raw}", 
-                response.StatusCode, raw);
+            var userUrl = $"{_config.GraphApiBaseUrl}/{_config.GraphApiVersion}/{accountId}?fields=followers_count&access_token={token}";
 
-            if (!response.IsSuccessStatusCode)
-            {
-                _logger.LogWarning("Instagram Insights {Status} for period {Period}: {Error}",
-                    response.StatusCode, periodString, raw);
-                return null;
-            }
+            var reachTask = client.GetAsync(reachUrl, ct);
+            var interTask = client.GetAsync(interUrl, ct);
+            var userTask = client.GetAsync(userUrl, ct);
 
-            var json = JsonDocument.Parse(raw).RootElement;
+            await Task.WhenAll(reachTask, interTask, userTask);
 
-            // ✅ Follower count: fetch from direct User endpoint (NOT /insights)
-            var followerUrl = $"{_config.GraphApiBaseUrl}/{_config.GraphApiVersion}/{accountId}" +
-                              $"?fields=follower_count&access_token={token}";
+            var reachRaw = await (await reachTask).Content.ReadAsStringAsync(ct);
+            var interRaw = await (await interTask).Content.ReadAsStringAsync(ct);
+            var userRaw = await (await userTask).Content.ReadAsStringAsync(ct);
 
-            _logger.LogInformation("Fetching follower_count from User endpoint: {Url}", followerUrl);
+            var reachJson = JsonDocument.Parse(reachRaw).RootElement;
+            var interJson = JsonDocument.Parse(interRaw).RootElement;
+            var userJson = JsonDocument.Parse(userRaw).RootElement;
 
-            var followerResponse = await client.GetAsync(followerUrl, ct);
-            var followerRaw = await followerResponse.Content.ReadAsStringAsync(ct);
-            _logger.LogInformation("Follower response ({Status}): {Raw}", followerResponse.StatusCode, followerRaw);
-
-            long followers = 0;
-            if (followerResponse.IsSuccessStatusCode)
-            {
-                var followerJson = await followerResponse.Content.ReadFromJsonAsync<JsonElement>(ct);
-                followers = followerJson.TryGetProperty("follower_count", out var fc) && fc.ValueKind == JsonValueKind.Number
-                    ? fc.GetInt64()
-                    : 0;
-                
-                _logger.LogInformation("Extracted follower_count = {Followers} (from User endpoint)", followers);
-            }
-
-            var reach = ExtractInsightValue(json, "reach");
-            var profileViews = ExtractInsightValue(json, "profile_views");
-            var engagement = ExtractInsightValue(json, "total_interactions");
-            var websiteClicks = ExtractInsightValue(json, "website_clicks");
-
-            _logger.LogInformation("Extracted page metrics - Followers: {Followers}, Reach: {Reach}, ProfileViews: {ProfileViews}, Engagement: {Engagement}, WebsiteClicks: {WebsiteClicks}",
-                followers, reach, profileViews, engagement, websiteClicks);
+            long followers = userJson.TryGetProperty("followers_count", out var fc) ? fc.GetInt64() : 0;
 
             return new InstagramPageMetricsDto
             {
-                AccountId = _config.AccountId,
-                AccountUrl = $"https://instagram.com/{_config.AccountId}",
+                AccountId = accountId,
+                AccountUrl = $"https://instagram.com/{accountId}", 
                 Period = period,
                 FollowersCount = followers,
-                Reach = reach,
-                ProfileViews = profileViews,
-                Engagement = engagement,
+                Reach = ExtractInsightValue(reachJson, "reach"),
+                Engagement = SumMetricValues(interJson, "total_interactions", daysCount), 
                 FetchedAt = DateTime.UtcNow
             };
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to fetch Instagram page totals for period {Period}", period);
+            _logger.LogError(ex, "💥 Failed to fetch page totals");
             return null;
         }
     }
 
-    /// <summary>
-    /// Extracts a single metric value from Instagram Insights JSON.
-    /// Handles BOTH response structures:
-    /// - metric_type=total_value: data[].total_value.value
-    /// - default period-based: data[].values[].value OR insights.data[].values[].value
-    /// </summary>
     private long ExtractInsightValue(JsonElement json, string metricName)
     {
         try
         {
-            // ✅ Structure A: { "data": [ { "name": "...", "total_value": { "value": 123 } } ] }
-            if (json.TryGetProperty("data", out var dataArray))
-            {
-                var metricNode = dataArray.EnumerateArray()
-                    .FirstOrDefault(m => m.TryGetProperty("name", out var name) && name.GetString() == metricName);
+            JsonElement dataArray;
+            if (json.TryGetProperty("data", out dataArray)) { }
+            else if (json.TryGetProperty("insights", out var insights) && insights.TryGetProperty("data", out dataArray)) { }
+            else return 0;
 
-                if (metricNode.ValueKind != JsonValueKind.Undefined)
-                {
-                    // Try total_value (for metric_type=total_value)
-                    if (metricNode.TryGetProperty("total_value", out var totalVal) &&
-                        totalVal.TryGetProperty("value", out var val) &&
-                        val.ValueKind == JsonValueKind.Number)
-                    {
-                        _logger.LogInformation("Extracted {MetricName} = {Value} (from total_value)", metricName, val.GetInt64());
-                        return val.GetInt64();
-                    }
+            var metricNode = dataArray.EnumerateArray().FirstOrDefault(m => m.GetProperty("name").GetString() == metricName);
+            if (metricNode.ValueKind == JsonValueKind.Undefined) return 0;
 
-                    // Try values[] (for period-based responses without metric_type)
-                    if (metricNode.TryGetProperty("values", out var values) && values.EnumerateArray().Any())
-                    {
-                        var lastValue = values.EnumerateArray().Last();
-                        if (lastValue.TryGetProperty("value", out var v) && v.ValueKind == JsonValueKind.Number)
-                        {
-                            _logger.LogInformation("Extracted {MetricName} = {Value} (from values[])", metricName, v.GetInt64());
-                            return v.GetInt64();
-                        }
-                    }
-                }
-            }
+            if (metricNode.TryGetProperty("total_value", out var tv)) return tv.GetProperty("value").GetInt64();
 
-            // ✅ Structure B (fallback): { "insights": { "data": [...] } }
-            if (json.TryGetProperty("insights", out var insights) &&
-                insights.TryGetProperty("data", out var data))
-            {
-                var metricNode = data.EnumerateArray()
-                    .FirstOrDefault(m => m.TryGetProperty("name", out var name) && name.GetString() == metricName);
+            if (metricNode.TryGetProperty("values", out var vs) && vs.GetArrayLength() > 0)
+                return vs.EnumerateArray().Last().GetProperty("value").GetInt64();
 
-                if (metricNode.ValueKind != JsonValueKind.Undefined &&
-                    metricNode.TryGetProperty("values", out var values) &&
-                    values.EnumerateArray().Any())
-                {
-                    var lastValue = values.EnumerateArray().Last();
-                    if (lastValue.TryGetProperty("value", out var val) && val.ValueKind == JsonValueKind.Number)
-                    {
-                        _logger.LogInformation("Extracted {MetricName} = {Value} (from insights.values[])", metricName, val.GetInt64());
-                        return val.GetInt64();
-                    }
-                }
-            }
-
-            _logger.LogInformation("Metric {MetricName} not found or has no value", metricName);
             return 0;
         }
-        catch (Exception ex)
-        {
-            _logger.LogInformation(ex, "JSON extraction failed for Instagram metric {MetricName}", metricName);
-            return 0;
-        }
+        catch { return 0; }
     }
+
+    private long SumMetricValues(JsonElement json, string metricName, int days)
+    {
+        try
+        {
+            if (!json.TryGetProperty("data", out var dataArray)) return 0;
+
+            var metricNode = dataArray.EnumerateArray()
+                .FirstOrDefault(m => m.GetProperty("name").GetString() == metricName);
+
+            if (metricNode.ValueKind == JsonValueKind.Undefined) return 0;
+
+            if (metricNode.TryGetProperty("total_value", out var tv))
+            {
+                return tv.GetProperty("value").GetInt64();
+            }
+
+            if (metricNode.TryGetProperty("values", out var values) && values.GetArrayLength() > 0)
+            {
+                return values.EnumerateArray()
+                    .TakeLast(days)
+                    .Sum(v => v.TryGetProperty("value", out var val) ? val.GetInt64() : 0);
+            }
+
+            return 0;
+        }
+        catch { return 0; }
+    }
+
 }

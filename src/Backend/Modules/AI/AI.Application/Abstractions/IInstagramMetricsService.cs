@@ -11,6 +11,6 @@ public interface IInstagramMetricsService
         CancellationToken ct = default);
 
     Task<InstagramPageMetricsDto?> GetPageTotalsAsync(
-        InstagramPeriod period = InstagramPeriod.days_28,
+        InstagramPeriod period = InstagramPeriod.day,
         CancellationToken ct = default);
 }

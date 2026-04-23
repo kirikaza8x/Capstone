@@ -8,5 +8,5 @@ namespace Marketing.Application.Posts.Queries;
 /// Query to fetch aggregate Instagram account metrics for a specified period
 /// </summary>
 public sealed record GetInstagramPageMetricsQuery(
-    InstagramPeriod Period = InstagramPeriod.days_28
+    InstagramPeriod Period = InstagramPeriod.day
 ) : IQuery<InstagramPageMetricsDto>;
