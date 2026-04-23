@@ -12,90 +12,136 @@ using Users.PublicApi.PublicApi;
 namespace Ticketing.Application.Orders.Queries.ExportOrdersSheet;
 
 internal class ExportOrdersSheetQueryHandler(
-    IFileImportExportService<OrderExportDto> _excelService,
-    IOrderRepository _orderRepository,
-    IUserPublicApi _userPublicApi,
-    IVoucherRepository _voucherRepository,
+    IFileImportExportService<OrderExportDto> excelService,
+    IOrderRepository orderRepository,
+    IUserPublicApi userPublicApi,
+    IVoucherRepository voucherRepository,
     ICurrentUserService currentUserService,
-    IEventTicketingPublicApi eventTicketingPublicApi
-    )
+    IEventTicketingPublicApi eventTicketingPublicApi)
     : IQueryHandler<ExportOrdersSheetQuery, byte[]>
 {
-
     public async Task<Result<byte[]>> Handle(
-           ExportOrdersSheetQuery query,
-           CancellationToken cancellationToken)
+        ExportOrdersSheetQuery query,
+        CancellationToken cancellationToken)
     {
         var userId = currentUserService.UserId;
+
         var eventSummaryMap = await eventTicketingPublicApi.GetEventSummaryByEventIdsAsync(
-            new[] { query.EventId }, cancellationToken);
-        var eventSummary = eventSummaryMap.TryGetValue(query.EventId, out var summary) ? summary : null;
-        if (eventSummary == null)
+            [query.EventId],
+            cancellationToken);
+
+        var eventSummary = eventSummaryMap.TryGetValue(query.EventId, out var summary)
+            ? summary
+            : null;
+
+        if (eventSummary is null)
             return Result.Failure<byte[]>(TicketingErrors.Order.NotFound(query.EventId));
 
-        // Check owner event
         if (eventSummary.OrganizerId != userId)
             return Result.Failure<byte[]>(TicketingErrors.Event.NotOwner);
 
-        // Get orders
-        var orders = await _orderRepository.GetAllByEventIdAsync(query.EventId, cancellationToken);
+        var orders = await orderRepository.GetAllByEventIdAsync(query.EventId, cancellationToken);
 
-        // 2. Get user info
         var userIds = orders.Select(o => o.UserId).Distinct().ToList();
-        var userMap = await _userPublicApi.GetUserMapByIdsAsync(userIds, cancellationToken);
+        var userMap = await userPublicApi.GetUserMapByIdsAsync(userIds, cancellationToken);
 
-        // 3. get voucher info
         var voucherIds = orders
             .SelectMany(o => o.OrderVouchers.Select(v => v.VoucherId))
             .Distinct()
             .ToList();
-        var voucherMap = await _voucherRepository.GetVoucherMapByIdsAsync(voucherIds, cancellationToken);
 
-        // 4. Mapping data to export DTO
-        var exportDtos = orders.Select((order, idx) =>
+        var voucherMap = await voucherRepository.GetVoucherMapByIdsAsync(voucherIds, cancellationToken);
+
+        var ticketDetailRequests = orders
+            .SelectMany(o => o.Tickets.Select(t => (t.TicketTypeId, t.EventSessionId, t.SeatId)))
+            .Distinct()
+            .ToList();
+
+        var ticketDetailsMap = await eventTicketingPublicApi.GetOrderTicketDetailsAsync(
+            ticketDetailRequests,
+            cancellationToken);
+
+        var exportDtos = new List<OrderExportDto>();
+        var index = 1;
+
+        foreach (var order in orders)
         {
-            var user = userMap.TryGetValue(order.UserId, out var u) ? u : null;
+            var buyer = userMap.TryGetValue(order.UserId, out var buyerInfo) ? buyerInfo : null;
+
             var orderVoucher = order.OrderVouchers.FirstOrDefault();
             Voucher? voucher = null;
-            if (orderVoucher != null)
+            if (orderVoucher is not null)
+            {
                 voucherMap.TryGetValue(orderVoucher.VoucherId, out voucher);
+            }
 
-            // calculate discount amount
             decimal? discountAmount = null;
-            if (voucher != null)
+            if (voucher is not null)
             {
                 if (voucher.Type == VoucherType.Percentage)
+                {
                     discountAmount = Math.Round(order.OriginalTotalPrice * voucher.Value / 100, 2);
+                }
                 else if (voucher.Type == VoucherType.Fixed)
+                {
                     discountAmount = Math.Min(voucher.Value, order.OriginalTotalPrice);
+                }
             }
-            Guid createdById;
-            var createdByName = (order.CreatedBy != null
-                && Guid.TryParse(order.CreatedBy, out createdById)
-                && userMap.TryGetValue(createdById, out var creatorUser))
-                ? creatorUser.FullName
-                : "";
 
-            return new OrderExportDto
+            if (order.Tickets.Count == 0)
             {
-                Index = idx + 1,
-                OrderId = order.Id,
-                BuyerName = user?.FullName ?? "",
-                BuyerEmail = user?.Email ?? "",
-                TotalPrice = order.OriginalTotalPrice,
-                CouponCode = voucher?.CouponCode,
-                VoucherType = voucher?.Type.ToString(),
-                DiscountAmount = discountAmount,
-                FinalPrice = order.TotalPrice,
-                Status = order.Status.ToString(),
-                CreatedAt = order.CreatedAt ?? DateTime.MinValue,
-                CreatedBy = createdByName
-            };
-        }).ToList();
+                exportDtos.Add(new OrderExportDto
+                {
+                    Index = index++,
+                    OrderId = order.Id,
+                    CreatedAt = order.CreatedAt ?? DateTime.MinValue,
+                    Status = order.Status.ToString(),
+                    BuyerName = buyer?.FullName ?? string.Empty,
+                    BuyerEmail = buyer?.Email ?? string.Empty,
+                    OriginalPrice = order.OriginalTotalPrice,
+                    DiscountAmount = discountAmount,
+                    FinalPrice = order.TotalPrice,
+                    CouponCode = voucher?.CouponCode,
+                    EventName = eventSummary.EventTitle,
+                    Location = eventSummary.Location ?? string.Empty,
+                    EventStartAt = eventSummary.EventStartAt ?? DateTime.MinValue
+                });
 
-        // 5. Export Excel
-        var fileBytes = await _excelService.ExportAsync(exportDtos, cancellationToken);
+                continue;
+            }
 
+            foreach (var ticket in order.Tickets)
+            {
+                var key = (ticket.TicketTypeId, ticket.EventSessionId);
+                var hasDetail = ticketDetailsMap.TryGetValue(key, out var detail);
+
+                exportDtos.Add(new OrderExportDto
+                {
+                    Index = index++,
+                    OrderId = order.Id,
+                    CreatedAt = order.CreatedAt ?? DateTime.MinValue,
+                    Status = order.Status.ToString(),
+                    BuyerName = buyer?.FullName ?? string.Empty,
+                    BuyerEmail = buyer?.Email ?? string.Empty,
+                    OriginalPrice = order.OriginalTotalPrice,
+                    DiscountAmount = discountAmount,
+                    FinalPrice = order.TotalPrice,
+                    CouponCode = voucher?.CouponCode,
+                    EventName = eventSummary.EventTitle,
+                    Location = eventSummary.Location ?? string.Empty,
+                    EventStartAt = eventSummary.EventStartAt ?? DateTime.MinValue,
+                    TicketId = ticket.Id,
+                    TicketType = hasDetail ? detail!.TicketTypeName : null,
+                    TicketPrice = hasDetail ? detail!.Price : ticket.Price,
+                    TicketStatus = ticket.Status.ToString(),
+                    SessionTitle = hasDetail ? detail!.SessionTitle : null,
+                    SessionStartTime = hasDetail ? detail!.SessionStartTime : null,
+                    SeatCode = hasDetail ? detail!.SeatCode : null
+                });
+            }
+        }
+
+        var fileBytes = await excelService.ExportAsync(exportDtos, cancellationToken);
         return Result.Success(fileBytes);
     }
 }
