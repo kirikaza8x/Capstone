@@ -18,30 +18,44 @@ internal sealed class GetOrderByIdQueryHandler(
         CancellationToken cancellationToken)
     {
         var userId = currentUserService.UserId;
-        if (userId == Guid.Empty)
-            return Result.Failure<OrderDetailResponse>(Error.Unauthorized(
-                "GetOrderById.Unauthorized",
-                "Current user is not authenticated."));
-
         var order = await orderRepository.GetByIdWithOrderTicketAsync(
             query.OrderId,
             cancellationToken);
 
         if (order is null)
+        {
             return Result.Failure<OrderDetailResponse>(
                 TicketingErrors.Order.NotFound(query.OrderId));
+        }
 
-        if (order.UserId != userId)
+        var eventSummaryMap = await eventTicketingPublicApi.GetEventSummaryByEventIdsAsync(
+            new[] { order.EventId },
+            cancellationToken);
+
+        if (!eventSummaryMap.TryGetValue(order.EventId, out var eventSummary) || eventSummary is null)
+        {
+            return Result.Failure<OrderDetailResponse>(Error.NotFound(
+                "GetOrderById.EventNotFound",
+                "Event not found."));
+        }
+
+        var isOrderOwner = order.UserId == userId;
+        var isEventOwner = eventSummary.OrganizerId == userId;
+
+        if (!isOrderOwner && !isEventOwner)
+        {
             return Result.Failure<OrderDetailResponse>(Error.Forbidden(
                 "GetOrderById.Forbidden",
                 "You are not allowed to view this order."));
+        }
 
         var ticketItems = order.Tickets
             .Select(t => (t.TicketTypeId, t.EventSessionId, t.SeatId))
             .ToList();
 
-        var ticketDetailMap = await eventTicketingPublicApi
-            .GetOrderTicketDetailsAsync(ticketItems, cancellationToken);
+        var ticketDetailMap = await eventTicketingPublicApi.GetOrderTicketDetailsAsync(
+            ticketItems,
+            cancellationToken);
 
         var ticketResponses = order.Tickets.Select(t =>
         {
@@ -58,17 +72,6 @@ internal sealed class GetOrderByIdQueryHandler(
                 detail?.SeatCode);
         }).ToList();
 
-        // get event summary for event info
-        var eventSummaryMap = await eventTicketingPublicApi.GetEventSummaryByEventIdsAsync(
-            new[] { order.EventId }, cancellationToken);
-
-        var eventSummary = eventSummaryMap.TryGetValue(order.EventId, out var summary) ? summary : null;
-        var eventId = eventSummary?.EventId ?? Guid.Empty;
-        var eventTitle = eventSummary?.EventTitle ?? string.Empty;
-        var bannerUrl = eventSummary?.BannerUrl;
-        var location = eventSummary?.Location;
-        var eventStartAt = eventSummary?.EventStartAt;
-
         var subTotal = ticketResponses.Sum(t => t.Price);
         var discountAmount = order.OrderVouchers.FirstOrDefault()?.DiscountAmount ?? 0m;
         var totalPrice = subTotal - discountAmount;
@@ -80,11 +83,11 @@ internal sealed class GetOrderByIdQueryHandler(
             totalPrice,
             discountAmount,
             order.CreatedAt,
-            eventId,
-            eventTitle,
-            bannerUrl,
-            location,
-            eventStartAt,
+            eventSummary.EventId,
+            eventSummary.EventTitle,
+            eventSummary.BannerUrl,
+            eventSummary.Location,
+            eventSummary.EventStartAt,
             ticketResponses);
 
         return Result.Success(response);

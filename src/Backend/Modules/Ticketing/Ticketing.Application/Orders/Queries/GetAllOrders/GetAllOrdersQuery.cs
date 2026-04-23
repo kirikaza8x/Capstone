@@ -20,15 +20,3 @@ public sealed record OrderListItemResponse(
     decimal? DiscountAmount,
     string Status
 );
-
-public sealed record OrderListMeta(
-    int TotalOrders,
-    decimal TotalRevenue,
-    decimal TotalDiscount,
-    int CancelledOrders
-);
-
-public sealed record GetAllOrdersMetaResponse(
-    OrderListMeta Meta,
-    IReadOnlyList<OrderListItemResponse> Data
-);
