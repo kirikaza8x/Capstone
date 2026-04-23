@@ -45,4 +45,5 @@ public interface IEventTicketingPublicApi
     Task<IReadOnlyDictionary<Guid, OrganizerEventOverviewDto>> GetOrganizerEventOverviewByEventIdsAsync(
         IReadOnlyCollection<Guid> eventIds,
         CancellationToken cancellationToken = default);
+
 }
