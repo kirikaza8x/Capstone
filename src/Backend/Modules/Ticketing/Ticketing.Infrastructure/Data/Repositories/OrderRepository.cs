@@ -123,9 +123,11 @@ internal sealed class OrderRepository(TicketingDbContext context)
     {
         return await context.Orders
             .AsNoTracking()
+            .Include(o => o.Tickets)
             .Include(o => o.OrderVouchers)
             .Where(o => o.EventId == eventId)
             .OrderByDescending(o => o.CreatedAt)
+            .AsSplitQuery()
             .ToListAsync(cancellationToken);
     }
 
