@@ -10,26 +10,34 @@ public sealed record InstagramMetricsDto
     public int Comments { get; init; }
     public long Reach { get; init; }      // post_impressions_unique
     public long Saves { get; init; }      // post_saves (Instagram-specific)
+    
+    public long Shares { get; init; } 
     public DateTime FetchedAt { get; init; }
 }
 
-public sealed class InstagramPageMetricsDto
+public class InstagramPageMetricsDto
 {
     public string AccountId { get; set; } = string.Empty;
     public string AccountUrl { get; set; } = string.Empty;
     public InstagramPeriod Period { get; set; }
 
-    // Audience Growth (28 Days)
-    public long FollowersCount { get; set; }           // follower_count
-    // public long DailyFollows { get; set; }             // online_followers (approximation)
+    // Community
+    public long FollowersCount { get; set; }
+    public long Follows { get; set; }       // gained in period
+    public long Unfollows { get; set; }     // lost in period
 
-    // Reach & Impressions (28 Days)
-    // public long Impressions { get; set; }              // impressions
-    public long Reach { get; set; }                    // reach
+    // Reach & Visibility
+    public long Reach { get; set; }         // unique accounts that saw content
+    public long Views { get; set; }         // total content plays/displays (replaces Impressions)
 
-    // Engagement (28 Days)
-    public long ProfileViews { get; set; }             // profile_views
-    public long Engagement { get; set; }               // engagement (likes + comments + saves)
+    // Engagement
+    public long Likes { get; set; }
+    public long Comments { get; set; }
+    public long Shares { get; set; }
+    public long Saves { get; set; }
+    public long Reposts { get; set; }
+    public long TotalInteractions { get; set; }
+    public long AccountsEngaged { get; set; }
 
     public DateTime FetchedAt { get; set; }
 }
