@@ -1,4 +1,4 @@
-﻿using Events.Domain.Entities;
+using Events.Domain.Entities;
 using Events.Domain.Enums;
 using Events.Infrastructure.Data;
 using Events.PublicApi.PublicApi;
@@ -267,7 +267,8 @@ internal sealed class EventTicketingPublicApi(EventsDbContext dbContext) : IEven
     {
         var eventIds = await dbContext.Events
             .AsNoTracking()
-            .Where(e => e.OrganizerId == organizerId && e.Status == EventStatus.Published)
+            .Where(e => e.OrganizerId == organizerId &&
+                        (e.Status == EventStatus.Published || e.Status == EventStatus.Completed))
             .Select(e => e.Id)
             .ToListAsync(cancellationToken);
 
