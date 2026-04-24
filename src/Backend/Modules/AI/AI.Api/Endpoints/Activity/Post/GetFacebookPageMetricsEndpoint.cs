@@ -25,7 +25,7 @@ public class GetFacebookPageMetricsEndpoint : ICarterModule
             return result.ToOk();
         })
         // .RequireAuthorization()
-        .WithTags("Facebook")
+        .WithTags("Posts")
         .WithName("GetFacebookPageMetrics")
         .WithSummary("Fetch live Facebook metrics for a page");
     }
