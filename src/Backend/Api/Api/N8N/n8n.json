@@ -1,0 +1,843 @@
+{
+  "name": "Post to Facebook - AIPromo",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "post-distribute",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "1ab1270e-868a-4e94-995c-b774d5a7bb88",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        1600,
+        1248
+      ],
+      "webhookId": "post-distribute",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "check-platform",
+              "leftValue": "={{ $json.body.platform }}",
+              "rightValue": "Instagram",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b3b4106f-89a6-4dea-bdd8-0bddfafba563",
+      "name": "Is Instagram?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1824,
+        1248
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "check-image-url",
+              "leftValue": "={{ $json.body.image_url }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "6423f8f0-eac8-4686-9cb8-ef977ad516c3",
+      "name": "Has Image?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2048,
+        1120
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v23.0/1120894677764816/photos",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "message",
+              "value": "={{ $node[\"Webhook\"].json.body.title + \"\\n\\n\" + $node[\"Webhook\"].json.body.body + \"\\n\\n\" + ($node[\"Webhook\"].json.body.summary ?? \"\") }}"
+            },
+            {
+              "name": "access_token",
+              "value": "EAAY8bNzMbbgBRJ8Rat3FC4ZAIoZA2nuy5eRiMNQK5ZAgOKFcy6quLIUZCWGwIaRw8fCRqd1VtAAlNzosTiUtp9CcbZBZAVZBVaGu7rvUcxMRTWdZBgk7lFZAUZBVX49M1KHZArAHoag44vS1IN8d23gvYgy8nlnCwZCFAhFZAgz3BkcUkOBBNoRKDJBF99di8g19juQtu42Jb"
+            },
+            {
+              "name": "url",
+              "value": "={{ $node[\"Webhook\"].json.body.image_url }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "63e0be28-1318-4fbd-851f-f48c5a5af793",
+      "name": "Post with Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2240,
+        1008
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v23.0/1120894677764816/feed",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "message",
+              "value": "={{ $node[\"Webhook\"].json.body.title + \"\\n\\n\" + $node[\"Webhook\"].json.body.body + \"\\n\\n\" + ($node[\"Webhook\"].json.body.summary ?? \"\") }}"
+            },
+            {
+              "name": "access_token",
+              "value": "EAAY8bNzMbbgBRJ8Rat3FC4ZAIoZA2nuy5eRiMNQK5ZAgOKFcy6quLIUZCWGwIaRw8fCRqd1VtAAlNzosTiUtp9CcbZBZAVZBVaGu7rvUcxMRTWdZBgk7lFZAUZBVX49M1KHZArAHoag44vS1IN8d23gvYgy8nlnCwZCFAhFZAgz3BkcUkOBBNoRKDJBF99di8g19juQtu42Jb"
+            },
+            {
+              "name": "link",
+              "value": "={{ $node[\"Webhook\"].json.body.public_url ?? \"\" }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a574345d-bb97-4dff-94c2-b406221c62ad",
+      "name": "Post without Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2240,
+        1216
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-post-id",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "7582e701-5acf-4d32-9211-00b92e5367cd",
+      "name": "Post Success?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2464,
+        1120
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://172.18.0.1:5000/api/webhooks/n8n/distribution-success",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "aipromo-webhook-key-2026"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "post_id",
+              "value": "={{ $node[\"Webhook\"].json.body.post_id }}"
+            },
+            {
+              "name": "platform",
+              "value": "Facebook"
+            },
+            {
+              "name": "external_url",
+              "value": "=https://www.facebook.com/{{ $json.id }}"
+            },
+            {
+              "name": "external_post_id",
+              "value": "={{ $json.id }}"
+            },
+            {
+              "name": "platform_metadata",
+              "value": "={{ JSON.stringify({ facebook_post_id: $json.id, app_id: \"1755288118783416\", page_id: \"1120894677764816\" }) }}"
+            }
+          ]
+        },
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "id": "ba6db8d5-11c6-415a-bf0e-cff19b4022ef",
+      "name": "Callback Success",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2688,
+        1008
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://172.18.0.1:5000/api/webhooks/n8n/distribution-failed",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "aipromo-webhook-key-2026"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "post_id",
+              "value": "={{ $node[\"Webhook\"].json.body.post_id }}"
+            },
+            {
+              "name": "platform",
+              "value": "Facebook"
+            },
+            {
+              "name": "error_message",
+              "value": "={{ $json.error?.message || $json.message || 'Unknown Facebook API Error' }}"
+            },
+            {
+              "name": "can_retry",
+              "value": "true"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "6afde5aa-27b9-4bcb-ad59-e915d6a4918f",
+      "name": "Callback Failed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2688,
+        1216
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, message: 'Post distributed to Facebook', facebook_post_id: $json.id }) }}",
+        "options": {}
+      },
+      "id": "bf39bc84-f73a-445f-bff4-bcc3f3b5676b",
+      "name": "Respond Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2912,
+        1008
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: false, message: 'Facebook distribution failed', error: $json.error?.message || $json.message }) }}",
+        "options": {
+          "responseCode": 500
+        }
+      },
+      "id": "468b4fe8-8042-4322-b970-1eacddebe3a6",
+      "name": "Respond Failed",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2912,
+        1216
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v23.0/17841462523395486/media",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "image_url",
+              "value": "={{ $node[\"Webhook\"].json.body.image_url }}"
+            },
+            {
+              "name": "caption",
+              "value": "={{ $node[\"Webhook\"].json.body.title + \"\\n\\n\" + $node[\"Webhook\"].json.body.body + \"\\n\\n\" + ($node[\"Webhook\"].json.body.summary ?? \"\") }}"
+            },
+            {
+              "name": "access_token",
+              "value": "EAAY8bNzMbbgBRQXuAXCUefRip9IUFZCLuIZA9Ui4TmkOKomXGLdZC1j3O93VUFDZCZCcq8ZBqzkQv9qEd1elzrZC1UWaznZAIqbLDN7oLVj0OhxZBBhecjkwfWY4TKFIjWBJ77EWZBpY2uhKtOv31Y2wY4MemHkcPFzQ4iGBcQjY7tyurZCPl24rnDFYKte3O2uJQZDZD"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "85ea0a35-cbbc-4a66-8606-34188c4ec1f8",
+      "name": "IG Create Container",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2048,
+        1392
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "check-container-id",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "418315cb-64ea-4f19-87ab-07059dc2f582",
+      "name": "IG Container OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2272,
+        1392
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v23.0/17841462523395486/media_publish",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "creation_id",
+              "value": "={{ $json.id }}"
+            },
+            {
+              "name": "access_token",
+              "value": "EAAY8bNzMbbgBRQXuAXCUefRip9IUFZCLuIZA9Ui4TmkOKomXGLdZC1j3O93VUFDZCZCcq8ZBqzkQv9qEd1elzrZC1UWaznZAIqbLDN7oLVj0OhxZBBhecjkwfWY4TKFIjWBJ77EWZBpY2uhKtOv31Y2wY4MemHkcPFzQ4iGBcQjY7tyurZCPl24rnDFYKte3O2uJQZDZD"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "538e56c2-5393-4087-8838-41c0aa4410e1",
+      "name": "IG Publish",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2480,
+        1328
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.facebook.com/v23.0/{{ $json.id }}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "access_token",
+              "value": "=EAAY8bNzMbbgBRQXuAXCUefRip9IUFZCLuIZA9Ui4TmkOKomXGLdZC1j3O93VUFDZCZCcq8ZBqzkQv9qEd1elzrZC1UWaznZAIqbLDN7oLVj0OhxZBBhecjkwfWY4TKFIjWBJ77EWZBpY2uhKtOv31Y2wY4MemHkcPFzQ4iGBcQjY7tyurZCPl24rnDFYKte3O2uJQZDZD"
+            },
+            {
+              "name": "fields",
+              "value": "permalink"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4388827a-15dc-45ee-8951-922d6aab73a8",
+      "name": "IG Get Permalink",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2688,
+        1328
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-ig-post-id",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "4a32bf59-9d32-49de-92a3-aa4dc205f19c",
+      "name": "IG Post Success?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2912,
+        1328
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:5197/api/webhooks/n8n/distribution-success",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "aipromo-webhook-key-2026"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "post_id",
+              "value": "={{ $node[\"Webhook\"].json.body.post_id }}"
+            },
+            {
+              "name": "platform",
+              "value": "Instagram"
+            },
+            {
+              "name": "external_url",
+              "value": "={{ $json.permalink }}"
+            },
+            {
+              "name": "external_post_id",
+              "value": "={{ $json.id }}"
+            },
+            {
+              "name": "platform_metadata",
+              "value": "={{ JSON.stringify({ instagram_post_id: $json.id, instagram_account_id: \"17841462523395486\", permalink: $json.permalink }) }}"
+            }
+          ]
+        },
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "id": "44f798da-0cb5-4a53-af9e-0e319459f7ee",
+      "name": "IG Callback Success",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3120,
+        1280
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://172.18.0.1:5000/api/webhooks/n8n/distribution-failed",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "aipromo-webhook-key-2026"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "post_id",
+              "value": "={{ $node[\"Webhook\"].json.body.post_id }}"
+            },
+            {
+              "name": "platform",
+              "value": "Instagram"
+            },
+            {
+              "name": "error_message",
+              "value": "={{ $json.error?.message || $json.message || 'Unknown Instagram API Error' }}"
+            },
+            {
+              "name": "can_retry",
+              "value": "true"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "83840953-707b-45dc-8be6-0aa72716240d",
+      "name": "IG Callback Failed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3120,
+        1456
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, message: 'Post distributed to Instagram', instagram_post_id: $json.id, permalink: $json.permalink }) }}",
+        "options": {}
+      },
+      "id": "d222ef1f-dd32-4e2d-9dd3-1cc061d05f5b",
+      "name": "IG Respond Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        3344,
+        1280
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: false, message: 'Instagram distribution failed' }) }}",
+        "options": {
+          "responseCode": 500
+        }
+      },
+      "id": "26774f9e-be44-4e7a-96bb-617b89b792a7",
+      "name": "IG Respond Failed",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        3344,
+        1456
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Is Instagram?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Instagram?": {
+      "main": [
+        [
+          {
+            "node": "IG Create Container",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Has Image?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Image?": {
+      "main": [
+        [
+          {
+            "node": "Post with Image",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Post without Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post with Image": {
+      "main": [
+        [
+          {
+            "node": "Post Success?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post without Image": {
+      "main": [
+        [
+          {
+            "node": "Post Success?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Success?": {
+      "main": [
+        [
+          {
+            "node": "Callback Success",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Callback Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Callback Success": {
+      "main": [
+        [
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Callback Failed": {
+      "main": [
+        [
+          {
+            "node": "Respond Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IG Create Container": {
+      "main": [
+        [
+          {
+            "node": "IG Container OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IG Container OK?": {
+      "main": [
+        [
+          {
+            "node": "IG Publish",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IG Callback Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IG Publish": {
+      "main": [
+        [
+          {
+            "node": "IG Get Permalink",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IG Get Permalink": {
+      "main": [
+        [
+          {
+            "node": "IG Post Success?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IG Post Success?": {
+      "main": [
+        [
+          {
+            "node": "IG Callback Success",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IG Callback Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IG Callback Success": {
+      "main": [
+        [
+          {
+            "node": "IG Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IG Callback Failed": {
+      "main": [
+        [
+          {
+            "node": "IG Respond Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "2048f22f-7e39-4d77-a8a3-03578f2c5b5b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5229ad676c3a8d293c6db345f673ae85f2faeec97332d940e6b8ecea4c050d50"
+  },
+  "id": "0Q6s9e4BPLGcM7mD",
+  "tags": []
+}
