@@ -1,6 +1,5 @@
 using Events.PublicApi.PublicApi;
 using Shared.Application.Abstractions.Messaging;
-using Shared.Application.Abstractions.Time;
 using Shared.Domain.Abstractions;
 using Ticketing.PublicApi;
 
@@ -9,8 +8,7 @@ namespace Reports.Application.Admin.Queries.GetEventRevenueDetails;
 internal sealed class GetEventRevenueDetailsQueryHandler(
     IEventPublicApi eventPublicApi,
     IEventTicketingPublicApi eventTicketingPublicApi,
-    ITicketingPublicApi ticketingPublicApi,
-    IDateTimeProvider dateTimeProvider)
+    ITicketingPublicApi ticketingPublicApi)
     : IQueryHandler<GetEventRevenueDetailsQuery, EventRevenueDetailsResponse>
 {
     public async Task<Result<EventRevenueDetailsResponse>> Handle(
@@ -23,9 +21,6 @@ internal sealed class GetEventRevenueDetailsQueryHandler(
             return Result.Failure<EventRevenueDetailsResponse>(
                 Error.NotFound("Event.NotFound", $"Event '{query.EventId}' was not found."));
         }
-
-        var now = dateTimeProvider.UtcNow;
-        var (periodStartUtc, periodEndUtc) = GetCurrentPeriodRange(query.Period, now);
 
         var eventMetrics = await ticketingPublicApi.GetTopEventsMetricsAsync(
             top: 1,
@@ -71,7 +66,7 @@ internal sealed class GetEventRevenueDetailsQueryHandler(
         var byTime = new List<RevenueByTimeDto>
         {
             new(
-                TimeLabel: BuildPeriodLabel(query.Period, periodStartUtc, periodEndUtc),
+                TimeLabel: "All time",
                 TicketsSoldInPeriod: totalTicketsSold,
                 RevenueInPeriod: totalRevenueBeforeRefund)
         };
@@ -103,55 +98,5 @@ internal sealed class GetEventRevenueDetailsQueryHandler(
             DiscountCodes: []);
 
         return Result.Success(response);
-    }
-
-    private static (DateTime StartUtc, DateTime EndUtc) GetCurrentPeriodRange(RevenueTimePeriod period, DateTime nowUtc)
-    {
-        var date = nowUtc.Date;
-
-        return period switch
-        {
-            RevenueTimePeriod.Day =>
-                (date, date.AddDays(1)),
-
-            RevenueTimePeriod.Week =>
-                GetWeekRange(date),
-
-            RevenueTimePeriod.Month =>
-                (new DateTime(date.Year, date.Month, 1, 0, 0, 0, DateTimeKind.Utc),
-                 new DateTime(date.Year, date.Month, 1, 0, 0, 0, DateTimeKind.Utc).AddMonths(1)),
-
-            RevenueTimePeriod.Quarter =>
-                GetQuarterRange(date),
-
-            _ =>
-                (date, date.AddDays(1))
-        };
-    }
-
-    private static (DateTime StartUtc, DateTime EndUtc) GetWeekRange(DateTime dateUtc)
-    {
-        var diff = ((int)dateUtc.DayOfWeek + 6) % 7;
-        var start = dateUtc.AddDays(-diff);
-        return (start, start.AddDays(7));
-    }
-
-    private static (DateTime StartUtc, DateTime EndUtc) GetQuarterRange(DateTime dateUtc)
-    {
-        var quarterStartMonth = ((dateUtc.Month - 1) / 3) * 3 + 1;
-        var start = new DateTime(dateUtc.Year, quarterStartMonth, 1, 0, 0, 0, DateTimeKind.Utc);
-        return (start, start.AddMonths(3));
-    }
-
-    private static string BuildPeriodLabel(RevenueTimePeriod period, DateTime startUtc, DateTime endUtc)
-    {
-        return period switch
-        {
-            RevenueTimePeriod.Day => startUtc.ToString("yyyy-MM-dd"),
-            RevenueTimePeriod.Week => $"{startUtc:yyyy-MM-dd} to {endUtc.AddDays(-1):yyyy-MM-dd}",
-            RevenueTimePeriod.Month => startUtc.ToString("yyyy-MM"),
-            RevenueTimePeriod.Quarter => $"Q{((startUtc.Month - 1) / 3) + 1}-{startUtc:yyyy}",
-            _ => startUtc.ToString("yyyy-MM-dd")
-        };
     }
 }

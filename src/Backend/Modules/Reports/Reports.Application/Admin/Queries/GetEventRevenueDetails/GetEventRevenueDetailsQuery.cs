@@ -2,17 +2,8 @@ using Shared.Application.Abstractions.Messaging;
 
 namespace Reports.Application.Admin.Queries.GetEventRevenueDetails;
 
-public enum RevenueTimePeriod
-{
-    Day,
-    Week,
-    Month,
-    Quarter
-}
-
 public sealed record GetEventRevenueDetailsQuery(
-    Guid EventId,
-    RevenueTimePeriod Period = RevenueTimePeriod.Week)
+    Guid EventId)
     : IQuery<EventRevenueDetailsResponse>;
 
 public sealed record EventRevenueDetailsResponse(

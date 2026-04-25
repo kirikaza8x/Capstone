@@ -16,13 +16,10 @@ public sealed class GetEventRevenueDetailsEndpoint : ICarterModule
     {
         app.MapGet(Reports.Api.Constants.Routes.AdminEventRevenueDetails, async (
             Guid eventId,
-            RevenueTimePeriod? period,
             ISender sender,
             CancellationToken cancellationToken) =>
         {
-            var query = new GetEventRevenueDetailsQuery(
-                EventId: eventId,
-                Period: period ?? RevenueTimePeriod.Week);
+            var query = new GetEventRevenueDetailsQuery(EventId: eventId);
 
             var result = await sender.Send(query, cancellationToken);
             return result.IsFailure ? result.ToProblem() : result.ToOk();
