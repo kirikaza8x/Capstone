@@ -1,4 +1,4 @@
-﻿using Events.PublicApi.PublicApi;
+using Events.PublicApi.PublicApi;
 using Shared.Application.Abstractions.Authentication;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
@@ -78,10 +78,10 @@ internal sealed class GetSalesTrendForAllEventQueryHandler(
                 .Select(o => new
                 {
                     Date = o.CreatedAt!.Value.Date,
-                    GrossRevenue = o.TotalPrice,
-                    NetRevenue = o.Tickets
+                    GrossRevenue = o.Tickets
                         .Where(t => t.Status != OrderTicketStatus.Cancelled)
                         .Sum(t => t.Price),
+                    NetRevenue = o.TotalPrice,
                     TicketsSold = o.Tickets.Count(t => t.Status != OrderTicketStatus.Cancelled)
                 })
                 .Where(x => x.Date >= startDate && x.Date <= endDate)

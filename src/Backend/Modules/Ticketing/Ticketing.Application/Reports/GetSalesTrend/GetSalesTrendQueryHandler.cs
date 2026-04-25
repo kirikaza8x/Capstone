@@ -1,4 +1,4 @@
-﻿using Events.PublicApi.PublicApi;
+using Events.PublicApi.PublicApi;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
 using Ticketing.Domain.Enums;
@@ -37,7 +37,9 @@ internal sealed class GetSalesTrendQueryHandler(
             .Select(o => new
             {
                 CreatedAt = o.CreatedAt.GetValueOrDefault(),
-                Revenue = o.TotalPrice,
+                Revenue = o.Tickets
+                    .Where(t => t.Status != OrderTicketStatus.Cancelled)
+                    .Sum(t => t.Price),
                 TicketsSold = o.Tickets.Count(t => t.Status != OrderTicketStatus.Cancelled)
             })
             .Where(o => o.TicketsSold > 0)
