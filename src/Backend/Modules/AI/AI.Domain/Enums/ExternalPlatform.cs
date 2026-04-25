@@ -41,9 +41,14 @@ public enum ExternalPlatform
     /// YouTube Channel
     /// </summary>
     YouTube = 6,
-    
+
+    /// <summary>
+    /// Threads (Meta's text-based social platform)
+    /// </summary>
+    Threads = 7,
+
     // ==================== Publishing Platforms ====================
-    
+
     /// <summary>
     /// Medium publication
     /// </summary>
