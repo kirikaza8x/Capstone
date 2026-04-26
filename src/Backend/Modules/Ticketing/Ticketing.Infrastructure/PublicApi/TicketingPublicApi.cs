@@ -162,6 +162,34 @@ internal sealed class TicketingPublicApi(
         return result;
     }
 
+    public async Task<IReadOnlyDictionary<Guid, int>> GetSoldCountsByEventIdAsync(
+        Guid eventId,
+        IEnumerable<Guid> ticketTypeIds,
+        CancellationToken cancellationToken)
+    {
+        var ticketTypeIdList = ticketTypeIds.ToList();
+
+        if (ticketTypeIdList.Count == 0)
+        {
+            return new Dictionary<Guid, int>();
+        }
+
+        var counts = await dbContext.Set<OrderTicket>()
+            .Where(t => t.Order.EventId == eventId
+                     && t.Order.Status == OrderStatus.Paid
+                     && ticketTypeIdList.Contains(t.TicketTypeId)
+                     && (t.Status == OrderTicketStatus.Valid || t.Status == OrderTicketStatus.Used))
+            .GroupBy(t => t.TicketTypeId)
+            .Select(g => new
+            {
+                TicketTypeId = g.Key,
+                Count = g.Count()
+            })
+            .ToListAsync(cancellationToken);
+
+        return counts.ToDictionary(x => x.TicketTypeId, x => x.Count);
+    }
+
     public async Task<IReadOnlyCollection<Guid>> GetOrdersByEventIdAsync(Guid eventId, CancellationToken cancellationToken)
     {
         var orderIds = await dbContext.Orders

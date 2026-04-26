@@ -197,6 +197,9 @@ public static class DependencyInjection
         services.AddHttpClient("Facebook");
         services.AddScoped<IFacebookMetricsService, FacebookMetricsService>();
         services.AddScoped<IInstagramMetricsService, InstagramMetricsService>();
+        services.Configure<ThreadsConfig>(configuration.GetSection("Threads"));
+        services.AddHttpClient("Threads");
+        services.AddScoped<IThreadsMetricsService, ThreadsMetricsService>();
         services.AddScoped<IAiTokenQuotaService, AiTokenQuotaService>();
 
         return services;

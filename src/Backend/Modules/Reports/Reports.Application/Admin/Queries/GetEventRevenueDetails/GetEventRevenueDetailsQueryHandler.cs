@@ -40,6 +40,11 @@ internal sealed class GetEventRevenueDetailsQueryHandler(
             query.EventId,
             cancellationToken);
 
+        var soldCountsByTicketType = await ticketingPublicApi.GetSoldCountsByEventIdAsync(
+            query.EventId,
+            ticketTypes.Select(t => t.Id),
+            cancellationToken);
+
         var totalIssuedTickets = ticketTypes.Sum(x => x.Quantity);
 
         var occupancyRate = totalIssuedTickets > 0
@@ -51,16 +56,25 @@ internal sealed class GetEventRevenueDetailsQueryHandler(
             : 0m;
 
         var byTicketType = ticketTypes
-            .Select(x => new TicketTypeRevenueDto(
-                TicketTypeName: x.Name,
-                ListedPrice: x.Price,
-                DiscountedPrice: x.Price,
-                IssuedQuantity: x.Quantity,
-                SoldQuantity: 0,
-                CancelledOrRefundedQuantity: 0,
-                Revenue: 0m,
-                ContributionRate: 0d,
-                Status: "selling"))
+            .Select(x =>
+            {
+                var soldQty = soldCountsByTicketType.TryGetValue(x.Id, out var count) ? count : 0;
+                var revenue = x.Price * soldQty;
+                var contributionRate = totalRevenueBeforeRefund > 0m
+                    ? Math.Round((double)(revenue / totalRevenueBeforeRefund * 100m), 2)
+                    : 0d;
+
+                return new TicketTypeRevenueDto(
+                    TicketTypeName: x.Name,
+                    ListedPrice: x.Price,
+                    DiscountedPrice: x.Price,
+                    IssuedQuantity: x.Quantity,
+                    SoldQuantity: soldQty,
+                    CancelledOrRefundedQuantity: 0,
+                    Revenue: revenue,
+                    ContributionRate: contributionRate,
+                    Status: "selling");
+            })
             .ToList();
 
         var byTime = new List<RevenueByTimeDto>

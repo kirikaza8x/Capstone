@@ -95,6 +95,7 @@ public sealed class GeminiService : IGeminiService
             - { "type": "heading", "level": 1|2|3, "text": "..." }
             - { "type": "paragraph", "text": "..." }
             - { "type": "image", "src": "<url>", "alt": "..." }   ← only if image provided
+            - { "type": "button", label: "...", "href": "..." }
             - { "type": "list", "ordered": false, "items": ["...", "..."] }
             - { "type": "divider" }
             - { "type": "highlight", "content": "..." }
@@ -178,6 +179,7 @@ public sealed class GeminiService : IGeminiService
             - { "type": "heading", "level": 1|2|3, "text": "..." }
             - { "type": "paragraph", "text": "..." }
             - { "type": "image", "src": "<url>", "alt": "..." }   ← only if image provided
+            - { "type": "button", label: "...", "href": "..." }
             - { "type": "list", "ordered": false, "items": ["...", "..."] }
             - { "type": "divider" }
             - { "type": "highlight", "content": "..." }
