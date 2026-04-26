@@ -14,6 +14,14 @@ public interface IPaymentPublicApi
         DateTime? startDateUtc = null,
         DateTime? endDateUtc = null,
         CancellationToken cancellationToken = default);
+
+    Task<decimal> GetTotalRefundsByEventIdsAsync(
+        IReadOnlyCollection<Guid> eventIds,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyDictionary<Guid, decimal>> GetRefundsByEventIdsAsync(
+        IReadOnlyCollection<Guid> eventIds,
+        CancellationToken cancellationToken = default);
 }
 
 public sealed record GlobalRevenueOverviewDto(

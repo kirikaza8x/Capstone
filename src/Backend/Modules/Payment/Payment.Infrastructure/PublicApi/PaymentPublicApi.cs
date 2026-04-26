@@ -163,4 +163,60 @@ internal sealed class PaymentPublicApi(PaymentModuleDbContext dbContext) : IPaym
             RefundAmount: refundAmount,
             WithdrawalAmount: withdrawalAmount);
     }
+
+    public async Task<decimal> GetTotalRefundsByEventIdsAsync(
+        IReadOnlyCollection<Guid> eventIds,
+        CancellationToken cancellationToken = default)
+    {
+        if (eventIds.Count == 0)
+        {
+            return 0m;
+        }
+
+        var totalRefunds = await dbContext.PaymentTransactions
+            .AsNoTracking()
+            .Where(x =>
+                x.EventId.HasValue &&
+                eventIds.Contains(x.EventId.Value) &&
+                x.InternalStatus == PaymentInternalStatus.Completed)
+            .SelectMany(x => x.Items)
+            .Where(i => i.InternalStatus == PaymentInternalStatus.Refunded)
+            .SumAsync(i => (decimal?)i.Amount, cancellationToken);
+
+        return totalRefunds ?? 0m;
+    }
+
+    public async Task<IReadOnlyDictionary<Guid, decimal>> GetRefundsByEventIdsAsync(
+        IReadOnlyCollection<Guid> eventIds,
+        CancellationToken cancellationToken = default)
+    {
+        if (eventIds.Count == 0)
+        {
+            return new Dictionary<Guid, decimal>();
+        }
+
+        var refundsByEvent = await dbContext.PaymentTransactions
+            .AsNoTracking()
+            .Where(x =>
+                x.EventId.HasValue &&
+                eventIds.Contains(x.EventId.Value) &&
+                x.InternalStatus == PaymentInternalStatus.Completed)
+            .SelectMany(
+                x => x.Items
+                    .Where(i => i.InternalStatus == PaymentInternalStatus.Refunded)
+                    .Select(i => new
+                    {
+                        EventId = x.EventId!.Value,
+                        RefundAmount = i.Amount
+                    }))
+            .GroupBy(x => x.EventId)
+            .Select(g => new
+            {
+                g.Key,
+                TotalRefund = g.Sum(x => x.RefundAmount)
+            })
+            .ToDictionaryAsync(x => x.Key, x => x.TotalRefund, cancellationToken);
+
+        return refundsByEvent;
+    }
 }
