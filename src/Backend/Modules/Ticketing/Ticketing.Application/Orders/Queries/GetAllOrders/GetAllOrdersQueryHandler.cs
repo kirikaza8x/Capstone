@@ -16,9 +16,9 @@ internal sealed class GetAllOrdersQueryHandler(
     IEventTicketingPublicApi eventTicketingPublicApi,
     IUserPublicApi userPublicApi,
     ICurrentUserService currentUserService
-) : IQueryHandler<GetAllOrdersQuery, PagedResult<OrderListItemResponse>>
+) : IQueryHandler<GetAllOrdersQuery, GetAllOrdersResponse>
 {
-    public async Task<Result<PagedResult<OrderListItemResponse>>> Handle(
+    public async Task<Result<GetAllOrdersResponse>> Handle(
         GetAllOrdersQuery query,
         CancellationToken cancellationToken)
     {
@@ -29,25 +29,31 @@ internal sealed class GetAllOrdersQueryHandler(
 
         var eventSummary = eventSummaryMap.TryGetValue(query.EventId, out var summary) ? summary : null;
         if (eventSummary == null)
-            return Result.Failure<PagedResult<OrderListItemResponse>>(Error.NotFound(
+            return Result.Failure<GetAllOrdersResponse>(Error.NotFound(
                 "GetAllOrders.EventNotFound",
                 "Event not found."));
 
         if (eventSummary.OrganizerId != userId)
-            return Result.Failure<PagedResult<OrderListItemResponse>>(Error.Forbidden(
+            return Result.Failure<GetAllOrdersResponse>(Error.Forbidden(
                 "GetAllOrders.Forbidden",
                 "You are not the organizer of this event."));
+
+        var allOrders = await orderRepository.GetAllByEventIdAsync(query.EventId, cancellationToken);
+        var paidOrders = allOrders.Where(o => o.Status == OrderStatus.Paid).ToList();
+        var totalDiscount = paidOrders.SelectMany(o => o.OrderVouchers).Sum(v => v.DiscountAmount);
+        var netRevenue = paidOrders.Sum(o => o.TotalPrice);
+        var grossRevenue = netRevenue + totalDiscount;
+
+        var summaryResponse = new OrderOverviewResponse(
+            TotalOrders: allOrders.Count,
+            GrossRevenue: grossRevenue,
+            NetRevenue: netRevenue,
+            TotalDiscount: totalDiscount,
+            CancelledOrders: allOrders.Count(o => o.Status == OrderStatus.Cancelled));
 
         // get paged orders for the event
         var pagedOrders = await orderRepository.GetPagedByEventIdAsync(
             query.EventId, query.Status, query, cancellationToken);
-
-        if (pagedOrders.Items.Count == 0)
-            return Result.Success(PagedResult<OrderListItemResponse>.Create(
-                [],
-                pagedOrders.PageNumber,
-                pagedOrders.PageSize,
-                pagedOrders.TotalCount));
 
         // get user info for buyers
         var userIds = pagedOrders.Items.Select(o => o.UserId).Distinct().ToList();
@@ -70,14 +76,9 @@ internal sealed class GetAllOrdersQueryHandler(
                 voucherMap.TryGetValue(orderVoucher.VoucherId, out voucher);
 
             var originalTotalPrice = order.OriginalTotalPrice;
-            decimal? discountAmount = null;
-            if (voucher != null)
-            {
-                if (voucher.Type == VoucherType.Percentage)
-                    discountAmount = Math.Round(originalTotalPrice * voucher.Value / 100, 0, MidpointRounding.AwayFromZero);
-                else if (voucher.Type == VoucherType.Fixed)
-                    discountAmount = Math.Min(voucher.Value, originalTotalPrice);
-            }
+            decimal? discountAmount = order.OrderVouchers.Count > 0
+                ? order.OrderVouchers.Sum(v => v.DiscountAmount)
+                : null;
 
             return new OrderListItemResponse(
                 OrderId: order.Id,
@@ -92,10 +93,14 @@ internal sealed class GetAllOrdersQueryHandler(
             );
         }).ToList();
 
-        return Result.Success(PagedResult<OrderListItemResponse>.Create(
+        var pagedResult = PagedResult<OrderListItemResponse>.Create(
             responses,
             pagedOrders.PageNumber,
             pagedOrders.PageSize,
-            pagedOrders.TotalCount));
+            pagedOrders.TotalCount);
+
+        return Result.Success(new GetAllOrdersResponse(
+            Orders: pagedResult,
+            Summary: summaryResponse));
     }
 }
