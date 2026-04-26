@@ -8,13 +8,16 @@ public sealed record InstagramMetricsDto
     public string ExternalUrl { get; init; } = string.Empty;
     public int Likes { get; init; }
     public int Comments { get; init; }
-    public long Reach { get; init; }      // post_impressions_unique
-    public long Saves { get; init; }      // post_saves (Instagram-specific)
-    
-    public long Shares { get; init; } 
+    public long Reach { get; init; }
+    public long Saves { get; init; }
+    public long Shares { get; init; }
+    public int TicketsSold { get; init; }
+    public double ConversionRate { get; init; }
+    public string ConversionRateFormatted { get; init; } = string.Empty;
+    public double EngagementRate { get; init; }
+    public string EngagementRateFormatted { get; init; } = string.Empty;
     public DateTime FetchedAt { get; init; }
 }
-
 public class InstagramPageMetricsDto
 {
     public string AccountId { get; set; } = string.Empty;

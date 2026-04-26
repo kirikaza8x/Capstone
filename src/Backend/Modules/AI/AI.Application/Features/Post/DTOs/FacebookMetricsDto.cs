@@ -9,11 +9,16 @@ public sealed record FacebookMetricsDto
     public string ExternalUrl { get; init; } = string.Empty;
     public int Likes { get; init; }
     public int Comments { get; init; }
+    public int Shares { get; init; }
     public long Reach { get; init; }
     public long Clicks { get; init; }
+    public int TicketsSold { get; init; }
+    public double ConversionRate { get; init; }
+    public string ConversionRateFormatted { get; init; } = string.Empty;
+    public double EngagementRate { get; init; }
+    public string EngagementRateFormatted { get; init; } = string.Empty;
     public DateTime FetchedAt { get; init; }
 }
-
 
 public class FacebookPageMetricsDto
 {
