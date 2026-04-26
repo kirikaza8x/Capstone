@@ -5,7 +5,7 @@ using Ticketing.IntegrationEvents;
 
 namespace Ticketing.Application.Orders.EventHandlers;
 
-internal sealed class OrderPaidDomainEventHandler(
+public sealed class OrderPaidDomainEventHandler(
     IEventBus eventBus) : INotificationHandler<OrderPaidDomainEvent>
 {
     public async Task Handle(

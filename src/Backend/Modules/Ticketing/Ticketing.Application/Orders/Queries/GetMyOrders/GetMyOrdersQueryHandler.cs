@@ -57,7 +57,8 @@ internal sealed class GetMyOrdersQueryHandler(
                 return new MyOrderResponse(
                     o.Id,                   
                     o.EventId,              
-                    eventSummary?.EventTitle ?? string.Empty,  
+                    eventSummary?.EventTitle ?? string.Empty,
+                    eventSummary?.EventStatus.ToString() ?? "Unknown",
                     eventSummary?.BannerUrl,                   
                     o.Status.ToString(),    
                     o.TotalPrice,           
