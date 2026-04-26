@@ -31,7 +31,7 @@ public class GetAllOrdersForEventEndpoint : ICarterModule
         .WithName("GetAllOrdersForEvent")
         .WithSummary("Get all orders for an event (organizer only)")
         .WithDescription("Retrieve paginated orders for a specific event, only accessible by the event organizer.")
-        .Produces<ApiResult<PagedResult<OrderListItemResponse>>>(StatusCodes.Status200OK)
+        .Produces<ApiResult<GetAllOrdersResponse>>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status401Unauthorized)
         .RequireRoles(Roles.Organizer);
     }
