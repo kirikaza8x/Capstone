@@ -30,6 +30,15 @@ public class ConfirmExternalDistributionCommandHandler
         ConfirmExternalDistributionCommand command,
         CancellationToken cancellationToken)
     {
+        if (command.Platform == Marketing.Domain.Enums.ExternalPlatform.Threads &&
+            !string.IsNullOrWhiteSpace(command.ExternalPostId) &&
+            command.ExternalPostId.Contains("REAL_THREADS_MEDIA_ID", StringComparison.OrdinalIgnoreCase))
+        {
+            return Result.Failure(Error.Validation(
+                "Distribution.InvalidExternalPostId",
+                "Webhook payload contains placeholder Threads media id. Provide the real media id from Threads API response."));
+        }
+
         const int maxRetries = 5;
         const int delayMs = 500;
 

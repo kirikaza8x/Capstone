@@ -17,6 +17,9 @@ public class MarketingProfile : Profile
             .ForMember(dest => dest.Platform, opt => opt.MapFrom(src => src.Platform.ToString()))
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()));
 
+        CreateMap<ExternalDistribution, ExternalDistributionDto>();
+        CreateMap<ExternalDistribution, ExternalDistributionDetailDto>();
+
         // ========================
         // BASE DTO (Generic list views)
         // ========================

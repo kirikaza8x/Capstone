@@ -113,7 +113,7 @@ public static class GeminiTextStripper
                     break;
 
                 case "divider":
-                    sb.AppendLine("────────────────────────────────");
+                    sb.AppendLine("────────────");
                     break;
 
                 default:
