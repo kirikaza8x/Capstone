@@ -56,6 +56,8 @@ public sealed class ThreadsMetricsService : IThreadsMetricsService
             var shares = ExtractMetric(json, "shares");
             var views = ExtractMetric(json, "views");
 
+            var resolvedExternalUrl = await ResolvePermalinkAsync(client, mediaId, ct) ?? externalUrl ?? string.Empty;
+
             var engagementTotal = likes + replies + reposts + quotes + shares;
             var engagementRate = views > 0
                 ? Math.Round((double)engagementTotal / views * 100, 2)
@@ -64,7 +66,7 @@ public sealed class ThreadsMetricsService : IThreadsMetricsService
             return new ThreadsMetricsDto
             {
                 ExternalPostId = mediaId,
-                ExternalUrl = externalUrl ?? string.Empty,
+                ExternalUrl = resolvedExternalUrl,
                 Likes = (int)likes,
                 Replies = (int)replies,
                 Reposts = (int)reposts,
@@ -199,5 +201,35 @@ public sealed class ThreadsMetricsService : IThreadsMetricsService
         }
 
         return 0;
+    }
+
+    private async Task<string?> ResolvePermalinkAsync(HttpClient client, string mediaId, CancellationToken ct)
+    {
+        try
+        {
+            var permalinkUrl = $"{_config.GraphApiBaseUrl}/{_config.GraphApiVersion}/{mediaId}" +
+                               $"?fields=permalink&access_token={_config.AccessToken}";
+
+            var response = await client.GetAsync(permalinkUrl, ct);
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            var raw = await response.Content.ReadAsStringAsync(ct);
+            using var document = JsonDocument.Parse(raw);
+
+            if (!document.RootElement.TryGetProperty("permalink", out var permalinkElement))
+                return null;
+
+            var permalink = permalinkElement.GetString();
+            if (string.IsNullOrWhiteSpace(permalink))
+                return null;
+
+            return permalink.Trim();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Failed to resolve Threads permalink for media {MediaId}", mediaId);
+            return null;
+        }
     }
 }
