@@ -9,7 +9,8 @@ public sealed record GetMyOrdersQuery : PagedQuery, IQuery<PagedResult<MyOrderRe
 public sealed record MyOrderResponse(
     Guid OrderId,           
     Guid EventId,           
-    string EventTitle,      
+    string EventTitle,
+    string EventStatus,
     string? BannerUrl,      
     string Status,          
     decimal TotalPrice,     

@@ -8,16 +8,19 @@
 
   <ItemGroup>
     <Compile Remove="Areas\**" />
+    <Compile Remove="Events\Queries\NewFolder\**" />
     <Compile Remove="Search\**" />
     <Compile Remove="Seats\**" />
     <Compile Remove="Staff\**" />
     <Compile Remove="TicketTypes\**" />
     <EmbeddedResource Remove="Areas\**" />
+    <EmbeddedResource Remove="Events\Queries\NewFolder\**" />
     <EmbeddedResource Remove="Search\**" />
     <EmbeddedResource Remove="Seats\**" />
     <EmbeddedResource Remove="Staff\**" />
     <EmbeddedResource Remove="TicketTypes\**" />
     <None Remove="Areas\**" />
+    <None Remove="Events\Queries\NewFolder\**" />
     <None Remove="Search\**" />
     <None Remove="Seats\**" />
     <None Remove="Staff\**" />
@@ -35,10 +38,6 @@
     <ProjectReference Include="..\Events.IntegrationEvents\Events.IntegrationEvents.csproj" />
     <ProjectReference Include="..\Events.PublicApi\Events.PublicApi.csproj" />
 	<PackageReference Include="Microsoft.AspNetCore.Http" Version="2.3.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Events\Queries\NewFolder\" />
   </ItemGroup>
 
 </Project>

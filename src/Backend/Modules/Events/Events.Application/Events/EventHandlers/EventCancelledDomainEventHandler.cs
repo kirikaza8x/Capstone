@@ -5,7 +5,7 @@ using Shared.Application.Abstractions.Messaging;
 
 namespace Events.Application.Events.EventHandlers;
 
-internal sealed class EventCancelledDomainEventHandler(
+public sealed class EventCancelledDomainEventHandler(
     IEventBus eventBus) : IDomainEventHandler<EventCancelledDomainEvent>
 {
     public async Task Handle(EventCancelledDomainEvent domainEvent, CancellationToken cancellationToken)
