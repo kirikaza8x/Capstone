@@ -5,6 +5,7 @@ using Marketing.Domain.Errors;
 using Marketing.Domain.Repositories;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
+using Ticketing.PublicApi;
 
 namespace AI.Application.Features.Post.Queries.GetThreadsMetrics;
 
@@ -13,13 +14,16 @@ public sealed class GetThreadsMetricsByDistributionQueryHandler
 {
     private readonly IPostRepository _postRepository;
     private readonly IThreadsMetricsService _threadsMetricsService;
+    private readonly ITicketingPublicApi _ticketingPublicApi;
 
     public GetThreadsMetricsByDistributionQueryHandler(
         IPostRepository postRepository,
-        IThreadsMetricsService threadsMetricsService)
+        IThreadsMetricsService threadsMetricsService,
+        ITicketingPublicApi ticketingPublicApi)
     {
         _postRepository = postRepository;
         _threadsMetricsService = threadsMetricsService;
+        _ticketingPublicApi = ticketingPublicApi;
     }
 
     public async Task<Result<ThreadsMetricsDto>> Handle(
@@ -52,15 +56,33 @@ public sealed class GetThreadsMetricsByDistributionQueryHandler
                 "Distribution.InvalidExternalPostId",
                 "Stored Threads ExternalPostId is a placeholder. Update webhook payload with the real Threads media id."));
 
-        var metrics = await _threadsMetricsService.GetMetricsAsync(
+        var metricsTask = _threadsMetricsService.GetMetricsAsync(
             distribution.ExternalPostId,
             distribution.ExternalUrl,
             cancellationToken);
+
+        var ordersTask = _ticketingPublicApi.GetOrdersByEventIdAsync(
+            post.EventId,
+            cancellationToken);
+
+        await Task.WhenAll(metricsTask, ordersTask);
+
+        var metrics = await metricsTask;
+        var orders = await ordersTask;
 
         if (metrics is null)
             return Result.Failure<ThreadsMetricsDto>(
                 MarketingErrors.Distribution.MetricsFetchFailed);
 
-        return Result.Success(metrics);
+        var ticketsSold = orders.Count;
+        var conversionRate = metrics.Views > 0
+            ? Math.Round((double)ticketsSold / metrics.Views * 100, 2)
+            : 0;
+
+        return Result.Success(metrics with
+        {
+            ConversionRate = conversionRate,
+            ConversionRateFormatted = $"{conversionRate}%"
+        });
     }
 }

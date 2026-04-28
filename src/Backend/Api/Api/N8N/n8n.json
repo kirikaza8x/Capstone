@@ -58,6 +58,39 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "check-threads-platform",
+              "leftValue": "={{ $json.body.platform }}",
+              "rightValue": "Threads",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "Is Threads?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2048,
+        1248
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
             "typeValidation": "loose"
           },
           "conditions": [
@@ -106,7 +139,7 @@
             },
             {
               "name": "access_token",
-              "value": "EAAY8bNzMbbgBRJ8Rat3FC4ZAIoZA2nuy5eRiMNQK5ZAgOKFcy6quLIUZCWGwIaRw8fCRqd1VtAAlNzosTiUtp9CcbZBZAVZBVaGu7rvUcxMRTWdZBgk7lFZAUZBVX49M1KHZArAHoag44vS1IN8d23gvYgy8nlnCwZCFAhFZAgz3BkcUkOBBNoRKDJBF99di8g19juQtu42Jb"
+              "value": "EAAY8bNzMbbgBRQXuAXCUefRip9IUFZCLuIZA9Ui4TmkOKomXGLdZC1j3O93VUFDZCZCcq8ZBqzkQv9qEd1elzrZC1UWaznZAIqbLDN7oLVj0OhxZBBhecjkwfWY4TKFIjWBJ77EWZBpY2uhKtOv31Y2wY4MemHkcPFzQ4iGBcQjY7tyurZCPl24rnDFYKte3O2uJQZDZD"
             },
             {
               "name": "url",
@@ -147,7 +180,7 @@
             },
             {
               "name": "access_token",
-              "value": "EAAY8bNzMbbgBRJ8Rat3FC4ZAIoZA2nuy5eRiMNQK5ZAgOKFcy6quLIUZCWGwIaRw8fCRqd1VtAAlNzosTiUtp9CcbZBZAVZBVaGu7rvUcxMRTWdZBgk7lFZAUZBVX49M1KHZArAHoag44vS1IN8d23gvYgy8nlnCwZCFAhFZAgz3BkcUkOBBNoRKDJBF99di8g19juQtu42Jb"
+              "value": "EAAY8bNzMbbgBRQXuAXCUefRip9IUFZCLuIZA9Ui4TmkOKomXGLdZC1j3O93VUFDZCZCcq8ZBqzkQv9qEd1elzrZC1UWaznZAIqbLDN7oLVj0OhxZBBhecjkwfWY4TKFIjWBJ77EWZBpY2uhKtOv31Y2wY4MemHkcPFzQ4iGBcQjY7tyurZCPl24rnDFYKte3O2uJQZDZD"
             },
             {
               "name": "link",
@@ -343,10 +376,6 @@
         "bodyParameters": {
           "parameters": [
             {
-              "name": "media_type",
-              "value": "IMAGE"
-            },
-            {
               "name": "image_url",
               "value": "={{ $node[\"Webhook\"].json.body.image_url }}"
             },
@@ -363,12 +392,12 @@
         "options": {}
       },
       "id": "85ea0a35-cbbc-4a66-8606-34188c4ec1f8",
-      "name": "IG Create Container (Image)",
+      "name": "IG Create Container",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2320,
-        1300
+        2048,
+        1392
       ]
     },
     {
@@ -406,6 +435,81 @@
     },
     {
       "parameters": {
+        "method": "GET",
+        "url": "=https://graph.facebook.com/v23.0/{{ $node[\"IG Container OK?\"].json.id }}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "status_code"
+            },
+            {
+              "name": "access_token",
+              "value": "EAAY8bNzMbbgBRQXuAXCUefRip9IUFZCLuIZA9Ui4TmkOKomXGLdZC1j3O93VUFDZCZCcq8ZBqzkQv9qEd1elzrZC1UWaznZAIqbLDN7oLVj0OhxZBBhecjkwfWY4TKFIjWBJ77EWZBpY2uhKtOv31Y2wY4MemHkcPFzQ4iGBcQjY7tyurZCPl24rnDFYKte3O2uJQZDZD"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d0feffaf-1e7f-40cf-99cd-978181289fcd",
+      "name": "IG Check Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2480,
+        1392
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-status",
+              "leftValue": "={{ $json.status_code }}",
+              "rightValue": "FINISHED",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "6c525368-c37b-4216-b3e5-59efabafadd2",
+      "name": "IG Status FINISHED?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2688,
+        1392
+      ]
+    },
+    {
+      "parameters": {
+        "unit": "seconds",
+        "amount": 3
+      },
+      "id": "374455a9-914d-4258-8ef2-34ed3537218d",
+      "name": "IG Wait 3s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2880,
+        1500
+      ],
+      "webhookId": "0bdff43c-7bbc-4550-bfa3-7d41220152d1"
+    },
+    {
+      "parameters": {
         "method": "POST",
         "url": "https://graph.facebook.com/v23.0/17841462523395486/media_publish",
         "sendHeaders": true,
@@ -422,7 +526,7 @@
           "parameters": [
             {
               "name": "creation_id",
-              "value": "={{ $json.id }}"
+              "value": "={{ $node[\"IG Container OK?\"].json.id }}"
             },
             {
               "name": "access_token",
@@ -437,19 +541,19 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2480,
-        1328
+        2880,
+        1392
       ]
     },
     {
       "parameters": {
-        "url": "={{ 'https://graph.facebook.com/v23.0/' + $json.id }}",
+        "url": "=https://graph.facebook.com/v23.0/{{ $json.id }}",
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
             {
               "name": "access_token",
-              "value": ""
+              "value": "EAAY8bNzMbbgBRQXuAXCUefRip9IUFZCLuIZA9Ui4TmkOKomXGLdZC1j3O93VUFDZCZCcq8ZBqzkQv9qEd1elzrZC1UWaznZAIqbLDN7oLVj0OhxZBBhecjkwfWY4TKFIjWBJ77EWZBpY2uhKtOv31Y2wY4MemHkcPFzQ4iGBcQjY7tyurZCPl24rnDFYKte3O2uJQZDZD"
             },
             {
               "name": "fields",
@@ -464,8 +568,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2688,
-        1328
+        3088,
+        1392
       ]
     },
     {
@@ -496,8 +600,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        2912,
-        1328
+        3280,
+        1392
       ]
     },
     {
@@ -547,8 +651,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        3120,
-        1280
+        3488,
+        1328
       ]
     },
     {
@@ -592,8 +696,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        3120,
-        1456
+        3488,
+        1500
       ]
     },
     {
@@ -607,8 +711,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        3344,
-        1280
+        3680,
+        1328
       ]
     },
     {
@@ -624,41 +728,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        3344,
-        1456
-      ]
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 1
-          },
-          "conditions": [
-            {
-              "id": "check-threads-platform",
-              "leftValue": "={{ $json.body.platform }}",
-              "rightValue": "Threads",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-      "name": "Is Threads?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        2048,
-        1248
+        3680,
+        1500
       ]
     },
     {
@@ -980,78 +1051,6 @@
         3616,
         1680
       ]
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "loose"
-          },
-          "conditions": [
-            {
-              "id": "check-ig-image-url",
-              "leftValue": "={{ $node[\"Webhook\"].json.body.image_url }}",
-              "rightValue": "",
-              "operator": {
-                "type": "string",
-                "operation": "exists"
-              }
-            }
-          ],
-          "combinator": "and"
-        }
-      },
-      "id": "0626be29-0b55-49c8-a8a3-86ada25b20b1",
-      "name": "IG Has Image?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        2048,
-        1300
-      ]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://graph.facebook.com/v23.0/17841462523395486/media",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
-        },
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "media_type",
-              "value": "TEXT"
-            },
-            {
-              "name": "text",
-              "value": "={{ $node[\"Webhook\"].json.body.title + \"\\n\\n\" + $node[\"Webhook\"].json.body.body + \"\\n\\n\" + ($node[\"Webhook\"].json.body.summary ?? \"\") }}"
-            },
-            {
-              "name": "access_token",
-              "value": "EAAY8bNzMbbgBRQXuAXCUefRip9IUFZCLuIZA9Ui4TmkOKomXGLdZC1j3O93VUFDZCZCcq8ZBqzkQv9qEd1elzrZC1UWaznZAIqbLDN7oLVj0OhxZBBhecjkwfWY4TKFIjWBJ77EWZBpY2uhKtOv31Y2wY4MemHkcPFzQ4iGBcQjY7tyurZCPl24rnDFYKte3O2uJQZDZD"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "ad3c147b-b2bd-4e21-969d-2bd19142a461",
-      "name": "IG Create Container (Text)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        2320,
-        1450
-      ]
     }
   ],
   "pinData": {},
@@ -1071,7 +1070,7 @@
       "main": [
         [
           {
-            "node": "IG Has Image?",
+            "node": "IG Create Container",
             "type": "main",
             "index": 0
           }
@@ -1079,6 +1078,24 @@
         [
           {
             "node": "Is Threads?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Threads?": {
+      "main": [
+        [
+          {
+            "node": "Threads Has Image?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Has Image?",
             "type": "main",
             "index": 0
           }
@@ -1165,7 +1182,47 @@
         ]
       ]
     },
+    "IG Create Container": {
+      "main": [
+        [
+          {
+            "node": "IG Container OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "IG Container OK?": {
+      "main": [
+        [
+          {
+            "node": "IG Check Status",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IG Callback Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IG Check Status": {
+      "main": [
+        [
+          {
+            "node": "IG Status FINISHED?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IG Status FINISHED?": {
       "main": [
         [
           {
@@ -1176,7 +1233,18 @@
         ],
         [
           {
-            "node": "IG Callback Failed",
+            "node": "IG Wait 3s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IG Wait 3s": {
+      "main": [
+        [
+          {
+            "node": "IG Check Status",
             "type": "main",
             "index": 0
           }
@@ -1239,24 +1307,6 @@
         [
           {
             "node": "IG Respond Failed",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Is Threads?": {
-      "main": [
-        [
-          {
-            "node": "Threads Has Image?",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Has Image?",
             "type": "main",
             "index": 0
           }
@@ -1371,46 +1421,6 @@
           }
         ]
       ]
-    },
-    "IG Has Image?": {
-      "main": [
-        [
-          {
-            "node": "IG Create Container (Image)",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "IG Create Container (Text)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "IG Create Container (Image)": {
-      "main": [
-        [
-          {
-            "node": "IG Container OK?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "IG Create Container (Text)": {
-      "main": [
-        [
-          {
-            "node": "IG Container OK?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
     }
   },
   "active": false,
@@ -1418,7 +1428,7 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "2048f22f-7e39-4d77-a8a3-03578f2c5b5b",
+  "versionId": "db12922c-b6d1-48fa-85ee-469f4cb24000",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "5229ad676c3a8d293c6db345f673ae85f2faeec97332d940e6b8ecea4c050d50"
