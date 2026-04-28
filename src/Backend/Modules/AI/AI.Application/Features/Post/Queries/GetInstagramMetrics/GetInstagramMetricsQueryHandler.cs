@@ -7,19 +7,7 @@ using Marketing.Domain.Repositories;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
 using Ticketing.PublicApi;
-///
-/// update end point to include conversion rate
-/////////////////
-///
-/// update end point to include conversion rate
-////////////////////
-/// update end point to include conversion rate
-////////////////////
-/// update end point to include conversion rate
-/////////////////
-/// ///
-/// update end point to include conversion rate
-/////////////////
+
 namespace Marketing.Application.Posts.Handlers;
 
 public sealed class GetInstagramMetricsQueryHandler
@@ -89,12 +77,17 @@ public sealed class GetInstagramMetricsQueryHandler
             ? Math.Round((double)totalEngagement / metrics.Reach * 100, 2)
             : 0;
 
-        var conversionRate = metrics.Reach > 0
-            ? Math.Round((double)ticketsSold / metrics.Reach * 100, 2)
+        int buyCount = distribution.BuyCount;
+        int clickCount = distribution.ClickCount;
+
+        var conversionRate = clickCount > 0
+            ? Math.Round((double)buyCount / clickCount * 100, 2)
             : 0;
 
         return Result.Success(metrics with
         {
+            BuyCount = buyCount,
+            ClickCount = clickCount,
             TicketsSold = ticketsSold,
             ConversionRate = conversionRate,
             ConversionRateFormatted = $"{conversionRate}%",
