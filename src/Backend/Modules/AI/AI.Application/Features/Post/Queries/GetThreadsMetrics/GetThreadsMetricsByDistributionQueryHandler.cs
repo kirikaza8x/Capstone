@@ -5,7 +5,6 @@ using Marketing.Domain.Errors;
 using Marketing.Domain.Repositories;
 using Shared.Application.Abstractions.Messaging;
 using Shared.Domain.Abstractions;
-using Ticketing.PublicApi;
 
 namespace AI.Application.Features.Post.Queries.GetThreadsMetrics;
 
@@ -14,16 +13,13 @@ public sealed class GetThreadsMetricsByDistributionQueryHandler
 {
     private readonly IPostRepository _postRepository;
     private readonly IThreadsMetricsService _threadsMetricsService;
-    private readonly ITicketingPublicApi _ticketingPublicApi;
 
     public GetThreadsMetricsByDistributionQueryHandler(
         IPostRepository postRepository,
-        IThreadsMetricsService threadsMetricsService,
-        ITicketingPublicApi ticketingPublicApi)
+        IThreadsMetricsService threadsMetricsService)
     {
         _postRepository = postRepository;
         _threadsMetricsService = threadsMetricsService;
-        _ticketingPublicApi = ticketingPublicApi;
     }
 
     public async Task<Result<ThreadsMetricsDto>> Handle(
@@ -61,26 +57,25 @@ public sealed class GetThreadsMetricsByDistributionQueryHandler
             distribution.ExternalUrl,
             cancellationToken);
 
-        var ordersTask = _ticketingPublicApi.GetOrdersByEventIdAsync(
-            post.EventId,
-            cancellationToken);
-
-        await Task.WhenAll(metricsTask, ordersTask);
+        await metricsTask;
 
         var metrics = await metricsTask;
-        var orders = await ordersTask;
 
         if (metrics is null)
             return Result.Failure<ThreadsMetricsDto>(
                 MarketingErrors.Distribution.MetricsFetchFailed);
 
-        var ticketsSold = orders.Count;
-        var conversionRate = metrics.Views > 0
-            ? Math.Round((double)ticketsSold / metrics.Views * 100, 2)
+        var buyCount = distribution.BuyCount;
+        var clickCount = distribution.ClickCount;
+
+        var conversionRate = clickCount > 0
+            ? Math.Round((double)buyCount / clickCount * 100, 2)
             : 0;
 
         return Result.Success(metrics with
         {
+            BuyCount = buyCount,
+            ClickCount = clickCount,
             ConversionRate = conversionRate,
             ConversionRateFormatted = $"{conversionRate}%"
         });
