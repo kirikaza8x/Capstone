@@ -216,9 +216,6 @@ public sealed class Event : AggregateRoot<Guid>
         if (_ticketTypes.Count == 0)
             return Result.Failure(EventErrors.Event.NoTicketTypes);
 
-        if (_ticketTypes.Any(t => t.AreaId is null))
-            return Result.Failure(EventErrors.Event.TicketTypeNotAssignedToArea);
-
         Status = EventStatus.Published;
         ModifiedAt = DateTime.UtcNow;
 
