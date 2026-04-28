@@ -28,6 +28,8 @@ public class ExternalDistributionConfiguration : IEntityTypeConfiguration<Extern
         builder.Property(d => d.PlatformMetadata).HasColumnName("platform_metadata").HasColumnType("jsonb");
         builder.Property(d => d.ErrorMessage).HasColumnName("error_message").HasMaxLength(500);
         builder.Property(d => d.SentAt).HasColumnName("sent_at").HasColumnType("timestamp with time zone");
+        builder.Property(d => d.BuyCount).HasColumnName("buy_count").HasColumnType("integer").HasDefaultValue(0);
+        builder.Property(d => d.ClickCount).HasColumnName("click_count").HasColumnType("integer").HasDefaultValue(0);
 
         builder.ConfigureAudit<ExternalDistribution,Guid>();
 

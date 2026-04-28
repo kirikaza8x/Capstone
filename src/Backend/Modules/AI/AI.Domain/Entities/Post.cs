@@ -442,6 +442,47 @@ public sealed class PostMarketing : AggregateRoot<Guid>
         return Result.Success();
     }
 
+    public Result IncrementDistributionAnalytics(
+        ExternalPlatform platform,
+        Guid? distributionId = null,
+        int buyIncrement = 0,
+        int clickIncrement = 0)
+    {
+        if (buyIncrement < 0 || clickIncrement < 0)
+            return Result.Failure(MarketingErrors.Distribution.InvalidCount);
+
+        ExternalDistribution? distribution;
+
+        if (distributionId.HasValue)
+        {
+            if (distributionId.Value == Guid.Empty)
+                return Result.Failure(MarketingErrors.Distribution.InvalidId);
+
+            distribution = _externalDistributions.FirstOrDefault(d => d.Id == distributionId.Value);
+            if (distribution is null)
+                return Result.Failure(MarketingErrors.Distribution.NotFoundById(distributionId.Value));
+        }
+        else
+        {
+            distribution = _externalDistributions
+                .Where(d => d.Platform == platform)
+                .OrderByDescending(d => d.IsSent())
+                .FirstOrDefault();
+
+            if (distribution is null)
+                return Result.Failure(MarketingErrors.Distribution.NotFound(platform));
+        }
+
+        if (!distribution.IsSent())
+            return Result.Failure(MarketingErrors.Distribution.CannotTrackBeforeSent);
+
+        distribution.IncrementAnalytics(buyIncrement, clickIncrement);
+        ModifiedAt = DateTime.UtcNow;
+        Version++;
+
+        return Result.Success();
+    }
+
     // =========================================================
     // Query Methods
     // =========================================================
@@ -458,6 +499,9 @@ public sealed class PostMarketing : AggregateRoot<Guid>
         => _externalDistributions.Where(d => d.IsSent()).ToList().AsReadOnly();
     public IReadOnlyList<ExternalDistribution> GetFailedDistributions()
         => _externalDistributions.Where(d => d.IsFailed()).ToList().AsReadOnly();
+
+    public ExternalDistribution? GetDistributionById(Guid distributionId)
+        => _externalDistributions.FirstOrDefault(d => d.Id == distributionId);
 
     // =========================================================
     // Helpers

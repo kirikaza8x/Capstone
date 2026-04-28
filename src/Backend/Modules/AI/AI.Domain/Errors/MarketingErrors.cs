@@ -150,6 +150,7 @@ public static class MarketingErrors
             "ExternalDistribution.MetricsFetchFailed",
             "Failed to fetch metrics from external platform.");
     }
+
     public static class Distribution
     {
         public static Error PlatformRequired => Error.Validation(
@@ -164,6 +165,10 @@ public static class MarketingErrors
             "Distribution.NotFound",
             $"No pending distribution record found for platform '{platform}'.");
 
+        public static Error NotFoundById(Guid id) => Error.NotFound(
+            "Distribution.NotFoundById",
+            $"Distribution with ID '{id}' was not found.");
+
         public static Error AlreadyQueued(ExternalPlatform platform) => Error.Conflict(
             "Distribution.AlreadyQueued",
             $"A distribution to {platform} is already pending. Wait for completion or remove it first.");
@@ -175,6 +180,19 @@ public static class MarketingErrors
         public static Error MetricsFetchFailed => Error.Failure(
             "Distribution.MetricsFetchFailed",
             "Failed to fetch metrics from Facebook API.");
+
+        // ── NEW: Analytics tracking errors ──
+        public static readonly Error InvalidId = Error.Validation(
+            "Distribution.InvalidId",
+            "Distribution ID is required.");
+
+        public static readonly Error InvalidCount = Error.Validation(
+            "Distribution.InvalidCount",
+            "Count values must be non-negative.");
+
+        public static readonly Error CannotTrackBeforeSent = Error.Validation(
+            "Distribution.CannotTrackBeforeSent",
+            "Analytics cannot be tracked until distribution is sent.");
     }
 }
 
