@@ -10,6 +10,8 @@ public sealed record ThreadsMetricsDto
     public int Reposts { get; init; }
     public int Quotes { get; init; }
     public int Shares { get; init; }
+    public double ConversionRate { get; init; }
+    public string ConversionRateFormatted { get; init; } = string.Empty;
     public double EngagementRate { get; init; }
     public string EngagementRateFormatted { get; init; } = string.Empty;
     public DateTime FetchedAt { get; init; }
