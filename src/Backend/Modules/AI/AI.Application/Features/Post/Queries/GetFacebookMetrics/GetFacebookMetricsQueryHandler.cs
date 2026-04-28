@@ -71,17 +71,21 @@ public sealed class GetFacebookMetricsQueryHandler
         var ticketsSold = orders.Count;
 
         var totalEngagement = metrics.Likes + metrics.Comments + metrics.Shares + (int)metrics.Clicks;
-
         var engagementRate = metrics.Reach > 0
             ? Math.Round((double)totalEngagement / metrics.Reach * 100, 2)
             : 0;
 
-        var conversionRate = metrics.Reach > 0
-            ? Math.Round((double)ticketsSold / metrics.Reach * 100, 2)
+        int buyCount = distribution.BuyCount;
+        int clickCount = distribution.ClickCount;
+
+        var conversionRate = clickCount > 0
+            ? Math.Round((double)buyCount / clickCount * 100, 2)
             : 0;
 
         return Result.Success(metrics with
         {
+            BuyCount = buyCount,
+            ClickCount = clickCount,
             TicketsSold = ticketsSold,
             ConversionRate = conversionRate,
             ConversionRateFormatted = $"{conversionRate}%",

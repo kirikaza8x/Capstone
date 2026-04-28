@@ -11,6 +11,8 @@ public sealed record InstagramMetricsDto
     public long Reach { get; init; }
     public long Saves { get; init; }
     public long Shares { get; init; }
+    public int BuyCount { get; init; }
+    public int ClickCount { get; init; }
     public int TicketsSold { get; init; }
     public double ConversionRate { get; init; }
     public string ConversionRateFormatted { get; init; } = string.Empty;

@@ -16,6 +16,8 @@ public sealed class ExternalDistribution : Entity<Guid>
     public string? ExternalPostId { get; private set; }
     public string? PlatformMetadata { get; private set; }
     public DistributionStatus Status { get; private set; } = DistributionStatus.Pending;
+    public int BuyCount { get; private set; } = 0;
+    public int ClickCount { get; private set; } = 0;
     public DateTime? SentAt { get; private set; }
     public string? ErrorMessage { get; private set; }
     public Guid PostMarketingId { get; private set; }
@@ -91,6 +93,28 @@ public sealed class ExternalDistribution : Entity<Guid>
             throw new ArgumentException("External URL cannot be empty", nameof(newUrl));
 
         ExternalUrl = newUrl.Trim();
+    }
+
+    internal void IncrementAnalytics(int buyIncrement = 0, int clickIncrement = 0)
+    {
+        if (buyIncrement < 0)
+            throw new ArgumentException("Buy increment cannot be negative", nameof(buyIncrement));
+        if (clickIncrement < 0)
+            throw new ArgumentException("Click increment cannot be negative", nameof(clickIncrement));
+
+        BuyCount += buyIncrement;
+        ClickCount += clickIncrement;
+    }
+
+    internal void SetAnalytics(int buyCount, int clickCount)
+    {
+        if (buyCount < 0)
+            throw new ArgumentException("BuyCount cannot be negative", nameof(buyCount));
+        if (clickCount < 0)
+            throw new ArgumentException("ClickCount cannot be negative", nameof(clickCount));
+
+        BuyCount = buyCount;
+        ClickCount = clickCount;
     }
 
     internal void UpdateMetadata(string? externalPostId, string? platformMetadata)

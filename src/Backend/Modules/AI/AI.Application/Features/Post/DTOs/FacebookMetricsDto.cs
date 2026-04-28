@@ -12,6 +12,8 @@ public sealed record FacebookMetricsDto
     public int Shares { get; init; }
     public long Reach { get; init; }
     public long Clicks { get; init; }
+    public int BuyCount { get; init; }
+    public int ClickCount { get; init; }
     public int TicketsSold { get; init; }
     public double ConversionRate { get; init; }
     public string ConversionRateFormatted { get; init; } = string.Empty;
