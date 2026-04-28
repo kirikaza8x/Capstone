@@ -4,6 +4,7 @@ using Shared.Domain.Abstractions;
 using Marketing.Domain.Repositories;
 using Marketing.Domain.Errors;
 using AI.Domain.Interfaces.UOW;
+using Marketing.Application.Services;
 using Marketing.Application.Posts.Commands;
 using Microsoft.Extensions.Logging;
 
@@ -14,15 +15,18 @@ public class ConfirmExternalDistributionCommandHandler
 {
     private readonly IPostRepository _postRepository;
     private readonly IAiUnitOfWork _unitOfWork;
+    private readonly IThreadsMetricsService _threadsMetricsService;
     private readonly ILogger<ConfirmExternalDistributionCommandHandler> _logger;
 
     public ConfirmExternalDistributionCommandHandler(
         IPostRepository postRepository,
         IAiUnitOfWork unitOfWork,
+        IThreadsMetricsService threadsMetricsService,
         ILogger<ConfirmExternalDistributionCommandHandler> logger)
     {
         _postRepository = postRepository;
         _unitOfWork = unitOfWork;
+        _threadsMetricsService = threadsMetricsService;
         _logger = logger;
     }
 
@@ -58,9 +62,23 @@ public class ConfirmExternalDistributionCommandHandler
                 return Result.Failure(MarketingErrors.Post.NotFound(command.PostId));
             }
 
+            var externalUrl = command.ExternalUrl;
+
+            if (command.Platform == Marketing.Domain.Enums.ExternalPlatform.Threads &&
+                !string.IsNullOrWhiteSpace(command.ExternalPostId))
+            {
+                var threadsMetrics = await _threadsMetricsService.GetMetricsAsync(
+                    command.ExternalPostId,
+                    command.ExternalUrl,
+                    cancellationToken);
+
+                if (!string.IsNullOrWhiteSpace(threadsMetrics?.ExternalUrl))
+                    externalUrl = threadsMetrics.ExternalUrl;
+            }
+
             var result = post.ConfirmExternalDistribution(
                 command.Platform,
-                command.ExternalUrl,
+                externalUrl,
                 command.ExternalPostId,
                 command.PlatformMetadata);
 
