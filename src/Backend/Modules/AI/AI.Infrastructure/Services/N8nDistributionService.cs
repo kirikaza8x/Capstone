@@ -31,7 +31,7 @@ public class N8nDistributionService : IN8nDistributionService
     {
         var cleanTitle = GeminiTextStripper.StripHtml(post.Title);
         var cleanSummary = GeminiTextStripper.StripHtml(post.Summary);
-        var cleanBody = GeminiTextStripper.BodyBlocksToPlainText(post.Body);
+        var cleanBody = GeminiTextStripper.BodyBlocksToPlainText(post.Body, platform, post.Id);
 
         var publicUrl = $"{_config.AppBaseUrl}/posts/{post.Slug}";
 
