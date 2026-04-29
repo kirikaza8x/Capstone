@@ -31,7 +31,7 @@ public static class GeminiTextStripper
         return result.Trim();
     }
 
-    public static string BodyBlocksToPlainText(string? bodyJson)
+    public static string BodyBlocksToPlainText(string? bodyJson, ExternalPlatform platform, Guid id)
     {
         if (string.IsNullOrWhiteSpace(bodyJson)) return string.Empty;
 
@@ -72,8 +72,8 @@ public static class GeminiTextStripper
             switch (type)
             {
                 case "heading":
-                    var level   = block.TryGetProperty("level", out var l) ? l.GetInt32() : 1;
-                    var headTxt = block.TryGetProperty("text",  out var ht) ? ht.GetString() : "";
+                    var level = block.TryGetProperty("level", out var l) ? l.GetInt32() : 1;
+                    var headTxt = block.TryGetProperty("text", out var ht) ? ht.GetString() : "";
                     sb.AppendLine($"{new string('#', level)} {StripHtml(headTxt)}");
                     break;
 
@@ -102,7 +102,19 @@ public static class GeminiTextStripper
 
                 case "button":
                     var label = block.TryGetProperty("label", out var lb) ? lb.GetString() : "";
-                    var href  = block.TryGetProperty("href",  out var hr) ? hr.GetString() : "";
+                    var href = block.TryGetProperty("href", out var hr) ? hr.GetString() : "";
+
+                    if (!string.IsNullOrEmpty(href))
+                    {
+                        var platformCode = platform switch
+                        {
+                            ExternalPlatform.Facebook => "fb",
+                            ExternalPlatform.Instagram => "ig",
+                            ExternalPlatform.Threads => "th",
+                            _ => platform.ToString().ToLower()
+                        };
+                        href = $"{href}?ref={id.ToString()}&p={platformCode}";
+                    }
                     sb.AppendLine($"[{StripHtml(label)}] → {href}");
                     break;
 
