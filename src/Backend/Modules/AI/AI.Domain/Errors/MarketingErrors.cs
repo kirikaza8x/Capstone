@@ -149,6 +149,10 @@ public static class MarketingErrors
         public static Error MetricsFetchFailed => Error.Failure(
             "ExternalDistribution.MetricsFetchFailed",
             "Failed to fetch metrics from external platform.");
+
+        public static Error NotFoundByPostAndPlatform(Guid postId, ExternalPlatform platform) => Error.NotFound(
+            "ExternalDistribution.NotFoundByPostAndPlatform",
+            $"External distribution for Post '{postId}' on platform '{platform}' was not found.");
     }
 
     public static class Distribution
