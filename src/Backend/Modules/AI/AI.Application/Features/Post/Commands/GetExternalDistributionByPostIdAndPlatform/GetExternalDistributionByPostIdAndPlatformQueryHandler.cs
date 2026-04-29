@@ -33,7 +33,7 @@ public class GetExternalDistributionByPostIdAndPlatformQueryHandler
         if (distribution == null)
         {
             return Result.Failure<ExternalDistributionDetailDto>(
-                MarketingErrors.ExternalDistribution.NotFoundByPostAndPlatform(query.PostId, query.platForm.ToString()));
+                MarketingErrors.ExternalDistribution.NotFoundByPostAndPlatform(query.PostId, query.platForm));
         }
 
         // ─────────────────────────────────────────────────────────────
