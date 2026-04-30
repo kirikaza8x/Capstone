@@ -34,6 +34,7 @@ public class N8nDistributionService : IN8nDistributionService
         var cleanBody = GeminiTextStripper.BodyBlocksToPlainText(post.Body, platform, post.Id);
 
         var publicUrl = $"{_config.AppBaseUrl}/posts/{post.Slug}";
+        var publicImageUrl = $"{_config.AppBaseUrl.TrimEnd('/')}/api/public/media?url={Uri.EscapeDataString(post.ImageUrl ?? string.Empty)}";
 
         var payload = new
         {
@@ -43,6 +44,7 @@ public class N8nDistributionService : IN8nDistributionService
             summary = cleanSummary,
             body = cleanBody,
             image_url = post.ImageUrl,
+            public_image_url = publicImageUrl,
             platform = platform.ToString(),
             public_url = publicUrl,
             queued_at = DateTime.UtcNow
