@@ -776,12 +776,12 @@
               "value": "IMAGE"
             },
             {
-              "name": "text",
-              "value": "={{ $node[\"Webhook\"].json.body.title + \"\\n\\n\" + $node[\"Webhook\"].json.body.body + \"\\n\\n\" + ($node[\"Webhook\"].json.body.summary ?? \"\") }}"
-            },
-            {
               "name": "image_url",
               "value": "={{ $node[\"Webhook\"].json.body.image_url }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $node[\"Webhook\"].json.body.title + \"\\n\\n\" + $node[\"Webhook\"].json.body.body + \"\\n\\n\" + ($node[\"Webhook\"].json.body.summary ?? \"\") }}"
             },
             {
               "name": "access_token",
