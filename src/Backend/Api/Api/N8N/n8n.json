@@ -777,7 +777,7 @@
             },
             {
               "name": "image_url",
-              "value": "={{ $node[\"Webhook\"].json.body.image_url }}"
+              "value": "={{ $node[\"Webhook\"].json.body.public_image_url ?? $node[\"Webhook\"].json.body.image_url }}"
             },
             {
               "name": "text",
