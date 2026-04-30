@@ -161,29 +161,10 @@ public sealed class MinioStorageService : IStorageService
                     UseClientRegion = true
                 }, cancellationToken);
 
-                // Set bucket policy for public read (optional)
-                var policy = $$"""
-                {
-                    "Version": "2012-10-17",
-                    "Statement": [
-                        {
-                            "Effect": "Allow",
-                            "Principal": "*",
-                            "Action": ["s3:GetObject"],
-                            "Resource": ["arn:aws:s3:::{{_config.BucketName}}/*"]
-                        }
-                    ]
-                }
-                """;
-
-                await _s3Client.PutBucketPolicyAsync(new PutBucketPolicyRequest
-                {
-                    BucketName = _config.BucketName,
-                    Policy = policy
-                }, cancellationToken);
-
                 _logger.LogInformation("Bucket created successfully: {BucketName}", _config.BucketName);
             }
+
+            await EnsurePublicReadPolicyAsync(cancellationToken);
 
             _bucketChecked = true;
         }
@@ -192,6 +173,31 @@ public sealed class MinioStorageService : IStorageService
             _logger.LogError(ex, "Failed to ensure bucket exists: {BucketName}", _config.BucketName);
             throw;
         }
+    }
+
+    private async Task EnsurePublicReadPolicyAsync(CancellationToken cancellationToken)
+    {
+        var policy = $$"""
+        {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": "*",
+                    "Action": ["s3:GetObject"],
+                    "Resource": ["arn:aws:s3:::{{_config.BucketName}}/*"]
+                }
+            ]
+        }
+        """;
+
+        await _s3Client.PutBucketPolicyAsync(new PutBucketPolicyRequest
+        {
+            BucketName = _config.BucketName,
+            Policy = policy
+        }, cancellationToken);
+
+        _logger.LogInformation("Bucket policy updated for public read: {BucketName}", _config.BucketName);
     }
 
     private static string GenerateObjectKey(string fileName, string? folder)
