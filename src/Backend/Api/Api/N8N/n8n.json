@@ -234,7 +234,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://172.18.0.1:5000/api/webhooks/n8n/distribution-success",
+        "url": "http://host.docker.internal:5197/api/webhooks/n8n/distribution-success",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -285,7 +285,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://172.18.0.1:5000/api/webhooks/n8n/distribution-failed",
+        "url": "http://host.docker.internal:5197/api/webhooks/n8n/distribution-failed",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -607,7 +607,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://172.18.0.1:5000/api/webhooks/n8n/distribution-success",
+        "url": "http://host.docker.internal:5197/api/webhooks/n8n/distribution-success",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -658,7 +658,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://172.18.0.1:5000/api/webhooks/n8n/distribution-failed",
+        "url": "http://host.docker.internal:5197/api/webhooks/n8n/distribution-failed",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -768,6 +768,15 @@
       "parameters": {
         "method": "POST",
         "url": "https://graph.threads.net/v1.0/26575647895449405/threads",
+        "sendHeaders": true,
+        "headerParameters": {
+            "parameters": [
+                {
+                    "name": "Content-Type",
+                    "value": "application/json"
+                }
+            ]
+        },
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
@@ -927,7 +936,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://172.18.0.1:5000/api/webhooks/n8n/distribution-success",
+        "url": "http://host.docker.internal:5197/api/webhooks/n8n/distribution-success",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -978,7 +987,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://172.18.0.1:5000/api/webhooks/n8n/distribution-failed",
+        "url": "http://host.docker.internal:5197/api/webhooks/n8n/distribution-failed",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
