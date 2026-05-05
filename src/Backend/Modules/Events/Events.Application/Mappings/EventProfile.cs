@@ -47,7 +47,9 @@ public sealed class EventProfile : Profile
         CreateMap<Event, EventsForAdminResponse>()
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString())); ;
         CreateMap<Event, EventsForStaffResponse>()
-             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString())); ;
+           .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
+           .ForMember(dest => dest.Categories, opt => opt.MapFrom(src => src.EventCategories));
+
 
         CreateMap<EventImage, EventImageDto>();
         CreateMap<EventActorImage, EventActorImageDto>();

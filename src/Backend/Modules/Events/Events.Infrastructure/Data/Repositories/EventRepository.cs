@@ -147,6 +147,36 @@ internal sealed class EventRepository(EventsDbContext context)
         return await query.ToPagedResultAsync(pagedQuery, cancellationToken);
     }
 
+    public async Task<PagedResult<Event>> GetEventsForStaffPagedAsync(
+        IReadOnlyList<EventStatus> statuses,
+        string? titleKeyword,
+        PagedQuery pagedQuery,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _context.Events
+            .AsNoTracking()
+            .Where(e => statuses.Contains(e.Status));
+
+        if (!string.IsNullOrWhiteSpace(titleKeyword))
+        {
+            query = query.Where(e => e.Title.Contains(titleKeyword));
+        }
+
+        query = query.Include(e => e.EventCategories)
+            .ThenInclude(ec => ec.Category)
+            .AsSplitQuery();
+
+        if (!string.IsNullOrWhiteSpace(pagedQuery.SortColumn))
+        {
+            var sortDir = pagedQuery.SortOrder == SortOrder.Descending ? "desc" : "asc";
+            query = System.Linq.Dynamic.Core.DynamicQueryableExtensions.OrderBy(
+                    query,
+                    $"{pagedQuery.SortColumn} {sortDir}");
+        }
+
+        return await query.ToPagedResultAsync(pagedQuery, cancellationToken);
+    }
+
     public async Task<Event?> GetByIdWithTicketTypesAndAreasAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await _context.Events

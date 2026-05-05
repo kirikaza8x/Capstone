@@ -28,6 +28,12 @@ public interface IEventRepository : IRepository<Event, Guid>
         CancellationToken cancellationToken = default);
     Task<PagedResult<Event>> GetByOrganizerPagedAsync(Guid organizerId, EventStatus? status, PagedQuery pagedQuery, CancellationToken cancellationToken = default);
 
+    Task<PagedResult<Event>> GetEventsForStaffPagedAsync(
+        IReadOnlyList<EventStatus> statuses,
+        string? titleKeyword,
+        PagedQuery pagedQuery,
+        CancellationToken cancellationToken = default);
+
     Task<Event?> GetByIdWithMembersAsync(Guid id, CancellationToken cancellationToken = default);
 
     Task<bool> HasPermissionAsync(Guid eventId, Guid userId, string permission, CancellationToken cancellationToken = default);

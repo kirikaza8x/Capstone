@@ -33,12 +33,11 @@ internal sealed class GetEventsForStaffQueryHandler(
             ? query with { SortColumn = "CreatedAt", SortOrder = SortOrder.Descending }
             : query;
 
-        var pagedEvents = await eventRepository.GetAllWithPagingAsync(
+        var pagedEvents = await eventRepository.GetEventsForStaffPagedAsync(
+            statuses,
+            query.Title,
             pagedQuery,
-            e => statuses.Contains(e.Status) &&
-                 (string.IsNullOrWhiteSpace(query.Title) || e.Title.Contains(query.Title)),
-            includes: [],
-            cancellationToken: cancellationToken);
+            cancellationToken);
 
         var responseItems = mapper.Map<IReadOnlyList<EventsForStaffResponse>>(pagedEvents.Items);
 
