@@ -22,8 +22,11 @@ public sealed record EventsForStaffResponse
     public string Location { get; init; } = string.Empty;
     public DateTime? EventStartAt { get; init; }
     public DateTime? EventEndAt { get; init; }
+    public string? CancellationReason { get; init; }
+    public string? PublishRejectionReason { get; init; }
+    public string? CancellationRejectionReason { get; init; }
+    public string? SuspensionReason { get; init; }
     public DateTime CreatedAt { get; init; }
-
 
     public IReadOnlyList<EventCategoryDto> Categories { get; init; } = [];
 }
