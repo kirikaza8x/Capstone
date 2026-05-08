@@ -23,5 +23,9 @@ namespace AI.Domain.Gemini
         public static Error Unexpected(string message) => Error.Validation(
             "Gemini.Unexpected",
             $"An unexpected error occurred while calling Gemini: {message}");
+
+        public static Error ServiceUnavailable => Error.Failure(
+            "Gemini.ServiceUnavailable",
+            "Gemini service is temporarily unavailable. Please try again in a moment.");
     }
-}
+}   

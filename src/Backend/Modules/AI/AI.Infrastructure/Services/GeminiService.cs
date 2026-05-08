@@ -3,6 +3,7 @@ using System.Text.Json;
 using AI.Application.Abstractions;
 using AI.Infrastructure.Configs;
 using GenerativeAI;
+using GenerativeAI.Exceptions;
 using GenerativeAI.Types;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -47,19 +48,21 @@ public sealed class GeminiService : IGeminiService
                 : systemPromptOverride;
 
             var model = CreateModelWithSystemInstruction(effectiveSystemInstruction);
-
             var response = await model.GenerateContentAsync(userPrompt, cancellationToken: cancellationToken);
-
             var result = response.Text ?? string.Empty;
 
             _logger.LogDebug("GenerateTextAsync completed. Length: {Length}", result.Length);
-
             return result;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
             _logger.LogDebug("GenerateTextAsync cancelled");
             throw;
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "Gemini API error occurred");
+            throw new InvalidOperationException("Gemini service failed or is currently unavailable.", ex);
         }
         catch (Exception ex) when (ex is not InvalidOperationException)
         {
@@ -112,7 +115,6 @@ public sealed class GeminiService : IGeminiService
             """;
 
             var model = CreateModelWithSystemInstruction(effectiveSystemInstruction);
-
             var response = await model.GenerateContentAsync(structuredPrompt, cancellationToken: cancellationToken);
             var rawText = response.Text;
 
@@ -123,7 +125,6 @@ public sealed class GeminiService : IGeminiService
             }
 
             var cleanJson = CleanJsonString(rawText);
-
             var result = JsonSerializer.Deserialize<TResponse>(cleanJson, _jsonOptions);
 
             if (result is null)
@@ -134,6 +135,11 @@ public sealed class GeminiService : IGeminiService
             }
 
             return result;
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "Gemini API error occurred during structured generation");
+            throw new InvalidOperationException("Gemini service failed or is currently unavailable.", ex);
         }
         catch (JsonException ex)
         {
@@ -152,13 +158,12 @@ public sealed class GeminiService : IGeminiService
         }
     }
 
-
     /// <inheritdoc />
     public async Task<GeminiStructuredResult<TResponse>> GenerateStructuredV2Async<TResponse>(
-    string userPrompt,
-    string? systemPromptOverride = null,
-    CancellationToken cancellationToken = default)
-    where TResponse : class
+        string userPrompt,
+        string? systemPromptOverride = null,
+        CancellationToken cancellationToken = default)
+        where TResponse : class
     {
         try
         {
@@ -196,14 +201,9 @@ public sealed class GeminiService : IGeminiService
             """;
 
             var model = CreateModelWithSystemInstruction(effectiveSystemInstruction);
-
-            // API Call
             var response = await model.GenerateContentAsync(structuredPrompt, cancellationToken: cancellationToken);
-
-            // Extract raw text
             var rawText = response.Text;
 
-            // Capture token usage from SDK 3.6.3 UsageMetadata
             var usage = response.UsageMetadata;
             int promptTokens = usage?.PromptTokenCount ?? 0;
             int candidateTokens = usage?.CandidatesTokenCount ?? 0;
@@ -216,8 +216,6 @@ public sealed class GeminiService : IGeminiService
             }
 
             var cleanJson = CleanJsonString(rawText);
-
-            // Deserialization
             var result = JsonSerializer.Deserialize<TResponse>(cleanJson, _jsonOptions);
 
             if (result is null)
@@ -227,8 +225,12 @@ public sealed class GeminiService : IGeminiService
                 throw new InvalidOperationException("Deserialized null result.");
             }
 
-            // Return the full record
             return new GeminiStructuredResult<TResponse>(result, promptTokens, candidateTokens, totalTokens);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "Gemini API error occurred during structured generation");
+            throw new InvalidOperationException("Gemini service failed or is currently unavailable.", ex);
         }
         catch (JsonException ex)
         {
@@ -241,10 +243,7 @@ public sealed class GeminiService : IGeminiService
         }
         catch (Exception ex)
         {
-            // LOG THE ACTUAL ERROR so you can see it in the console/debug
-            _logger.LogError(ex, "GenerateStructuredAsync failed: {Message}", ex.Message);
-
-            // Re-throw so the handler knows something went wrong
+            _logger.LogError(ex, "GenerateStructuredV2Async failed: {Message}", ex.Message);
             throw;
         }
     }
@@ -262,7 +261,6 @@ public sealed class GeminiService : IGeminiService
             : systemPromptOverride;
 
         var model = CreateModelWithSystemInstruction(effectiveSystemInstruction);
-
         var stream = model.StreamContentAsync(userMessage, cancellationToken: cancellationToken);
 
         await foreach (var chunk in stream.ConfigureAwait(false))
@@ -283,16 +281,10 @@ public sealed class GeminiService : IGeminiService
     private GenerativeModel CreateModelWithSystemInstruction(string? systemInstruction)
     {
         var config = new GenerationConfig();
-
-        // Only set values if they exist in your GeminiConfig (avoid CS1061)
-        // If your config doesn't have these, just use defaults:
-        // config.Temperature = 0.1f; // Uncomment if property exists
-
         return new GenerativeModel(
             apiKey: _config.ApiKey,
             model: _config.Model ?? "gemini-1.5-flash",
             systemInstruction: string.IsNullOrWhiteSpace(systemInstruction) ? null : systemInstruction
-
         );
     }
 

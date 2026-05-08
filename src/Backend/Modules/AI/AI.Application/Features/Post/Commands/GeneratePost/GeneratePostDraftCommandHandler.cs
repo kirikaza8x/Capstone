@@ -38,9 +38,7 @@ public class GeneratePostDraftCommandHandler
         // 1. Fetch Event Details
         var ev = await _eventApi.GetEventDetailAsync(command.EventId, cancellationToken);
         if (ev is null)
-        {
             return Result.Failure<GeneratedPostDto>(MarketingErrors.Post.EventIdRequired);
-        }
 
         // 2. Prepare Data for Prompt
         var hashtags = string.Join(" ", ev.Hashtags ?? []);
@@ -59,10 +57,9 @@ public class GeneratePostDraftCommandHandler
 
         try
         {
-            // 3. Call AI Service (Now using the version that returns tokens)
+            // 3. Call AI Service
             var geminiResult = await _geminiService.GenerateStructuredV2Async<GeneratedPostRequestDto>(
-                prompt,
-                cancellationToken: cancellationToken);
+                prompt, cancellationToken: cancellationToken);
 
             var requestDto = geminiResult.Data;
             var actualTokens = geminiResult.TotalTokens;
@@ -71,20 +68,15 @@ public class GeneratePostDraftCommandHandler
             if (actualTokens > 0)
             {
                 var consumeResult = await _aiTokenQuotaService.ConsumeAsync(
-                    command.OrganizerId,
-                    actualTokens,
-                    null,
-                    cancellationToken);
+                    command.OrganizerId, actualTokens, null, cancellationToken);
 
-                // Handle potential failure of the token consumption gracefully
                 if (consumeResult.IsFailure)
                     return Result.Failure<GeneratedPostDto>(consumeResult.Error);
 
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
             }
 
-            // 5. Accurate Pricing (Gemini 1.5 Flash approx $0.00001875 per 1k tokens)
-            // Using your specific multiplier:
+            // 5. Pricing
             decimal estimatedCost = (actualTokens / 1000m) * 0.002m; 
 
             // 6. Map to Response DTO
@@ -101,12 +93,15 @@ public class GeneratePostDraftCommandHandler
 
             return Result.Success(result);
         }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "AI service failed for Event {EventId}", command.EventId);
+            return Result.Failure<GeneratedPostDto>(
+                Error.Failure("AI.ServiceError", "The AI service is currently unavailable. Please try again later."));
+        }
         catch (Exception ex)
         {
-            // Log the error locally in the Marketing module
-            _logger.LogError(ex, "Failed to generate post draft for Event {EventId}", command.EventId);
-
-            // Return a Result.Failure instead of letting the middleware throw a 500
+            _logger.LogError(ex, "Unexpected error generating post draft for Event {EventId}", command.EventId);
             return Result.Failure<GeneratedPostDto>(
                 Error.Failure("AI.GenerationError", "The AI service failed to generate a post draft. Please try again."));
         }
