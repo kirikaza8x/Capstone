@@ -40,10 +40,10 @@ public class InitiatePaymentCommandHandler(
                 Error.Validation("Payment.EmptyOrder",
                     "Order has no tickets."));
 
-        if (order.Tickets.Any(t => t.Amount <= 0))
-            return Result.Failure<InitiatePaymentResult>(
-                Error.Validation("Payment.InvalidAmount",
-                    "All ticket amounts must be greater than zero."));
+        // if (order.Tickets.Any(t => t.Amount <= 0))
+        //     return Result.Failure<InitiatePaymentResult>(
+        //         Error.Validation("Payment.InvalidAmount",
+        //             "All ticket amounts must be greater than zero."));
 
         var voucherValidation = await ticketingApi
             .ValidateOrderVoucherAsync(command.OrderId, cancellationToken);
