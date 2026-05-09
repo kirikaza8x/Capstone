@@ -10,6 +10,7 @@
     <ProjectReference Include="..\..\..\Shared\Shared.Application\Shared.Application.csproj" />
     <ProjectReference Include="..\..\Events\Events.IntegrationEvents\Events.IntegrationEvents.csproj" />
     <ProjectReference Include="..\..\Ticketing\Ticketing.IntegrationEvents\Ticketing.IntegrationEvents.csproj" />
+    <ProjectReference Include="..\..\Ticketing\Ticketing.PublicApi\Ticketing.PublicApi.csproj" />
     <ProjectReference Include="..\..\Users\Users.PublicApi\Users.PublicApi.csproj" />
     <ProjectReference Include="..\Notifications.Domain\Notifications.Domain.csproj" />
   </ItemGroup>

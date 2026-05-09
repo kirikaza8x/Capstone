@@ -53,5 +53,6 @@ public interface ITicketingPublicApi
         IReadOnlyList<Guid>? allowedEventIds = null,
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<Guid>> GetTicketBuyerIdsByEventIdAsync(Guid eventId, CancellationToken cancellationToken = default);
 }
 

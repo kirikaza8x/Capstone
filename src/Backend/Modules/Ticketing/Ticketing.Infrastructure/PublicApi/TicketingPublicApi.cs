@@ -334,4 +334,16 @@ internal sealed class TicketingPublicApi(
 
         return result;
     }
+
+    public async Task<IReadOnlyList<Guid>> GetTicketBuyerIdsByEventIdAsync(Guid eventId, CancellationToken cancellationToken = default)
+    {
+        var buyerIds = await dbContext.Orders
+            .AsNoTracking()
+            .Where(o => o.EventId == eventId && o.Status == OrderStatus.Paid)
+            .Select(o => o.UserId)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        return buyerIds;
+    }
 }
