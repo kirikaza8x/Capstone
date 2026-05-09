@@ -106,6 +106,8 @@ public sealed class GeminiService : IGeminiService
             - button href must be the real CTA link, never a placeholder.
             - Produce a complete, well-structured marketing post (heading → content → CTA).
             - "body" must be a valid JSON string (escaped), not a nested object.
+            - Do NOT insert any text, characters, or words outside of JSON string values.
+            - Every string value must be properly closed with a double-quote before any comma or closing brace.
 
             Request:
             {{userPrompt}}
@@ -160,93 +162,104 @@ public sealed class GeminiService : IGeminiService
     CancellationToken cancellationToken = default)
     where TResponse : class
     {
-        try
+        var effectiveSystemInstruction = string.IsNullOrWhiteSpace(systemPromptOverride)
+            ? _config.SystemInstruction
+            : systemPromptOverride;
+
+        var structuredPrompt = $$"""
+        Return ONLY a valid JSON object with exactly this shape. No explanation, no markdown, no code fences.
+
         {
-            var effectiveSystemInstruction = string.IsNullOrWhiteSpace(systemPromptOverride)
-                ? _config.SystemInstruction
-                : systemPromptOverride;
+        "title": "Tiêu đề bài viết",
+        "summary": "Tóm tắt ngắn 1-2 câu",
+        "body": "<JSON array of content blocks as a STRING>"
+        }
 
-            var structuredPrompt = $$"""
-            Return ONLY a valid JSON object with exactly this shape. No explanation, no markdown, no code fences.
+        The "body" field must be a JSON-serialized STRING containing an array of content blocks:
+        - { "type": "heading", "level": 1|2|3, "text": "..." }
+        - { "type": "paragraph", "text": "..." }
+        - { "type": "image", "src": "<url>", "alt": "..." }   ← only if image provided
+        - { "type": "button", "label": "...", "href": "..." }
+        - { "type": "list", "ordered": false, "items": ["...", "..."] }
+        - { "type": "divider" }
+        - { "type": "highlight", "content": "..." }
 
+        Rules:
+        - All text content must be in Vietnamese.
+        - image block src must be exactly the URL provided, never fabricate image URLs.
+        - button href must be the real CTA link, never a placeholder.
+        - Produce a complete, well-structured marketing post (heading → content → CTA).
+        - "body" must be a valid JSON string (escaped), not a nested object.
+        - Do NOT insert any characters, words, or text outside of JSON string values.
+        - Every string value must be properly closed with a double-quote before any comma or closing brace.
+        - Never insert Vietnamese words or any freeform text between JSON tokens.
+
+        Request:
+        {{userPrompt}}
+        """;
+
+        var model = CreateModelWithSystemInstruction(effectiveSystemInstruction);
+
+        int promptTokens = 0, candidateTokens = 0, totalTokens = 0;
+
+        for (int attempt = 0; attempt < 3; attempt++)
+        {
+            try
             {
-            "title": "Tiêu đề bài viết",
-            "summary": "Tóm tắt ngắn 1-2 câu",
-            "body": "<JSON array of content blocks as a STRING>"
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var response = await model.GenerateContentAsync(structuredPrompt, cancellationToken: cancellationToken);
+                var rawText = response.Text;
+
+                var usage = response.UsageMetadata;
+                promptTokens = usage?.PromptTokenCount ?? 0;
+                candidateTokens = usage?.CandidatesTokenCount ?? 0;
+                totalTokens = usage?.TotalTokenCount ?? 0;
+
+                if (string.IsNullOrWhiteSpace(rawText))
+                {
+                    _logger.LogWarning("Attempt {Attempt}: Gemini returned empty response.", attempt + 1);
+                    if (attempt == 2)
+                        throw new InvalidOperationException("Gemini returned empty response after 3 attempts.");
+                    continue;
+                }
+
+                var cleanJson = CleanJsonString(rawText);
+
+                var result = JsonSerializer.Deserialize<TResponse>(cleanJson, _jsonOptions);
+
+                if (result is not null)
+                {
+                    _logger.LogDebug("GenerateStructuredV2Async succeeded on attempt {Attempt}. Tokens: {Total}", attempt + 1, totalTokens);
+                    return new GeminiStructuredResult<TResponse>(result, promptTokens, candidateTokens, totalTokens);
+                }
+
+                _logger.LogWarning("Attempt {Attempt}: Deserialization returned null.", attempt + 1);
             }
-
-            The "body" field must be a JSON-serialized STRING containing an array of content blocks:
-            - { "type": "heading", "level": 1|2|3, "text": "..." }
-            - { "type": "paragraph", "text": "..." }
-            - { "type": "image", "src": "<url>", "alt": "..." }   ← only if image provided
-            - { "type": "button", "label": "...", "href": "..." }
-            - { "type": "list", "ordered": false, "items": ["...", "..."] }
-            - { "type": "divider" }
-            - { "type": "highlight", "content": "..." }
-
-            Rules:
-            - All text content must be in Vietnamese.
-            - image block src must be exactly the URL provided, never fabricate image URLs.
-            - button href must be the real CTA link, never a placeholder.
-            - Produce a complete, well-structured marketing post (heading → content → CTA).
-            - "body" must be a valid JSON string (escaped), not a nested object.
-
-            Request:
-            {{userPrompt}}
-            """;
-
-            var model = CreateModelWithSystemInstruction(effectiveSystemInstruction);
-
-            // API Call
-            var response = await model.GenerateContentAsync(structuredPrompt, cancellationToken: cancellationToken);
-
-            // Extract raw text
-            var rawText = response.Text;
-
-            // Capture token usage from SDK 3.6.3 UsageMetadata
-            var usage = response.UsageMetadata;
-            int promptTokens = usage?.PromptTokenCount ?? 0;
-            int candidateTokens = usage?.CandidatesTokenCount ?? 0;
-            int totalTokens = usage?.TotalTokenCount ?? 0;
-
-            if (string.IsNullOrWhiteSpace(rawText))
+            catch (OperationCanceledException)
             {
-                _logger.LogError("Gemini returned empty response.");
-                throw new InvalidOperationException("Gemini returned empty response.");
+                _logger.LogDebug("GenerateStructuredV2Async cancelled.");
+                throw;
             }
-
-            var cleanJson = CleanJsonString(rawText);
-
-            // Deserialization
-            var result = JsonSerializer.Deserialize<TResponse>(cleanJson, _jsonOptions);
-
-            if (result is null)
+            catch (JsonException ex)
             {
-                _logger.LogError("Deserialization returned null. JSON: {Preview}",
-                    cleanJson.Length > 100 ? cleanJson[..100] : cleanJson);
-                throw new InvalidOperationException("Deserialized null result.");
+                _logger.LogWarning(ex, "Attempt {Attempt}: JSON parse failed.", attempt + 1);
+                if (attempt == 2)
+                    throw new InvalidOperationException("Gemini returned invalid JSON after 3 attempts.", ex);
             }
+            catch (InvalidOperationException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Attempt {Attempt}: Unexpected error. Message: {Message}", attempt + 1, ex.Message);
+                if (attempt == 2)
+                    throw;
+            }
+        }
 
-            // Return the full record
-            return new GeminiStructuredResult<TResponse>(result, promptTokens, candidateTokens, totalTokens);
-        }
-        catch (JsonException ex)
-        {
-            _logger.LogError(ex, "JSON parsing failed for structured generation.");
-            throw new InvalidOperationException("Gemini returned invalid JSON.", ex);
-        }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
-        {
-            // LOG THE ACTUAL ERROR so you can see it in the console/debug
-            _logger.LogError(ex, "GenerateStructuredAsync failed: {Message}", ex.Message);
-
-            // Re-throw so the handler knows something went wrong
-            throw;
-        }
+        throw new InvalidOperationException("Structured generation failed after all attempts.");
     }
 
     /// <inheritdoc />
@@ -314,7 +327,13 @@ public sealed class GeminiService : IGeminiService
         if (text.EndsWith("```"))
             text = text[..^3];
 
-        return text.Trim();
+        text = text.Trim();
+
+        var lastBrace = text.LastIndexOf('}');
+        if (lastBrace >= 0 && lastBrace < text.Length - 1)
+            text = text[..(lastBrace + 1)];
+
+        return text;
     }
 
     public string GetModelInfo()
