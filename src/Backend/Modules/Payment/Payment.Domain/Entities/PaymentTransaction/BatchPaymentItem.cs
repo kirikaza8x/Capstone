@@ -20,7 +20,7 @@ public class BatchPaymentItem : Entity<Guid>
         Guid eventSessionId,
         decimal amount)
     {
-        if (amount <= 0)
+        if (amount < 0)
             throw new ArgumentException(
                 "Item amount must be greater than zero.", nameof(amount));
 

@@ -53,7 +53,7 @@ public class Wallet : AggregateRoot<Guid>
 
     public WalletTransaction Debit(decimal amount, string? note = null)
     {
-        if (amount <= 0)
+        if (amount < 0)
             throw new ArgumentException("Debit amount must be positive.", nameof(amount));
 
         if (Balance < amount)

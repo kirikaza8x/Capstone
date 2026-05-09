@@ -46,12 +46,19 @@ public static class QueryableExtensions
     /// <summary>
     /// Helper for PagedQuery objects (Safely handles null values).
     /// </summary>
-    public static Task<Domain.Pagination.PagedResult<T>> ToPagedResultAsync<T>(
+    public static async Task<Domain.Pagination.PagedResult<T>> ToPagedResultAsync<T>(
         this IQueryable<T> query,
         PagedQuery pagedQuery,
         CancellationToken cancellationToken = default)
     {
-        return query.ToPagedResultAsync(
+        // Apply sorting if SortColumn is provided
+        if (!string.IsNullOrWhiteSpace(pagedQuery.SortColumn))
+        {
+            var sortDir = pagedQuery.SortOrder == SortOrder.Descending ? "desc" : "asc";
+            query = query.OrderBy($"{pagedQuery.SortColumn} {sortDir}");
+        }
+
+        return await query.ToPagedResultAsync(
             pagedQuery.PageNumber ?? 1,
             pagedQuery.PageSize ?? 10,
             cancellationToken);
