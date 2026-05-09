@@ -1,13 +1,7 @@
-using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using Marketing.Application.Services;
-using Marketing.Domain.Entities;
 using Marketing.Domain.Enums;
-using Marketing.Infrastructure.Configs;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace Marketing.Infrastructure.Services;
 
@@ -25,7 +19,7 @@ public static class GeminiTextStripper
         // Strip markdown bold/italic (**text** or *text*)
         result = Regex.Replace(result, @"\*{1,2}(.*?)\*{1,2}", "$1");
 
-        // Strip markdown links [text](url) → text
+        // Strip markdown links [text](url) → text (e.g. Instagram hashtag links)
         result = Regex.Replace(result, @"\[([^\]]+)\]\([^\)]+\)", "$1");
 
         return result.Trim();
@@ -38,30 +32,35 @@ public static class GeminiTextStripper
         var trimmed = bodyJson.Trim();
 
         // Case 1: double-serialized quoted string → unwrap outer quotes first
+        // e.g. body stored as "\"[{...}]\"" instead of "[{...}]"
         if (trimmed.StartsWith('"'))
         {
             try { trimmed = JsonSerializer.Deserialize<string>(trimmed) ?? trimmed; }
             catch { /* use as-is */ }
         }
 
-        // Case 2: stored with escaped quotes (\" instead of ") → unescape
-        if (trimmed.Contains("\\\""))
+        // Case 3: body is a raw JSON object instead of array (LLM bug) → wrap it
+        if (trimmed.StartsWith('{'))
+            trimmed = $"[{trimmed}]";
+
+        // Try parsing as-is first (handles normal JSON with escaped quotes inside string values)
+        JsonElement[]? blocks = TryParseBlocks(trimmed);
+
+        // Case 2: only unescape \" if the normal parse failed.
+        // Do NOT blindly replace \" → " on the raw string, because \" is valid JSON
+        // inside string values (e.g. "text": "He said \"hello\"") — replacing it breaks
+        // the JSON structure and causes Deserialize to throw, falling back to plain StripHtml.
+        if (blocks is null && trimmed.Contains("\\\""))
         {
-            trimmed = trimmed.Replace("\\\"", "\"");
+            var unescaped = trimmed.Replace("\\\"", "\"");
+            blocks = TryParseBlocks(unescaped);
         }
 
-        JsonElement[]? blocks;
-        try
+        if (blocks is null)
         {
-            blocks = JsonSerializer.Deserialize<JsonElement[]>(trimmed);
-        }
-        catch (JsonException)
-        {
-            // Not a block array at all — fall back to plain HTML strip
+            // Not a block array at all — fall back to plain HTML/markdown strip
             return StripHtml(bodyJson);
         }
-
-        if (blocks is null) return string.Empty;
 
         var sb = new StringBuilder();
 
@@ -103,7 +102,6 @@ public static class GeminiTextStripper
                 case "button":
                     var label = block.TryGetProperty("label", out var lb) ? lb.GetString() : "";
                     var href = block.TryGetProperty("href", out var hr) ? hr.GetString() : "";
-
                     if (!string.IsNullOrEmpty(href))
                     {
                         var platformCode = platform switch
@@ -113,7 +111,7 @@ public static class GeminiTextStripper
                             ExternalPlatform.Threads => "th",
                             _ => platform.ToString().ToLower()
                         };
-                        href = $"{href}?ref={id.ToString()}&p={platformCode}";
+                        href = $"{href}?ref={id}&p={platformCode}";
                     }
                     sb.AppendLine($"[{StripHtml(label)}] → {href}");
                     break;
@@ -131,6 +129,8 @@ public static class GeminiTextStripper
                 default:
                     if (block.TryGetProperty("text", out var fallback))
                         sb.AppendLine(StripHtml(fallback.GetString()));
+                    else if (block.TryGetProperty("content", out var fallback2))
+                        sb.AppendLine(StripHtml(fallback2.GetString()));
                     break;
             }
 
@@ -138,5 +138,21 @@ public static class GeminiTextStripper
         }
 
         return sb.ToString().Trim();
+    }
+
+    /// <summary>
+    /// Attempts to deserialize a JSON string as a block array.
+    /// Returns null (instead of throwing) on any parse failure.
+    /// </summary>
+    private static JsonElement[]? TryParseBlocks(string json)
+    {
+        try
+        {
+            return JsonSerializer.Deserialize<JsonElement[]>(json);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
     }
 }

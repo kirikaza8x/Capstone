@@ -236,7 +236,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://host.docker.internal:5197/api/webhooks/n8n/distribution-success",
+        "url": "http://172.18.0.1:5000/api/webhooks/n8n/distribution-success",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -287,7 +287,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://host.docker.internal:5197/api/webhooks/n8n/distribution-failed",
+        "url": "http://172.18.0.1:5000/api/webhooks/n8n/distribution-failed",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -609,7 +609,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://host.docker.internal:5197/api/webhooks/n8n/distribution-success",
+        "url": "http://172.18.0.1:5000/api/webhooks/n8n/distribution-success",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -660,7 +660,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://host.docker.internal:5197/api/webhooks/n8n/distribution-failed",
+        "url": "http://172.18.0.1:5000/api/webhooks/n8n/distribution-failed",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -789,7 +789,7 @@
             },
             {
               "name": "text",
-              "value": "={{ $node[\"Webhook\"].json.body.title + \"\\n\\n\" + $node[\"Webhook\"].json.body.body + \"\\n\\n\" + ($node[\"Webhook\"].json.body.summary ?? \"\") }}"
+              "value": "={{ (() => { const full = $node[\"Webhook\"].json.body.title + \"\\n\\n\" + $node[\"Webhook\"].json.body.body + \"\\n\\n\" + ($node[\"Webhook\"].json.body.summary ?? \"\"); const limit = 500 - (\"\\n\\n(Xem tiếp: \" + ($node[\"Webhook\"].json.body.public_url ?? \"\") + \")\").length; return full.length > 500 ? full.substring(0, limit) + \"\\n\\n(Xem tiếp: \" + $node[\"Webhook\"].json.body.public_url + \")\" : full; })() }}"
             },
             {
               "name": "image_url",
@@ -825,7 +825,7 @@
             },
             {
               "name": "text",
-              "value": "={{ $node[\"Webhook\"].json.body.title + \"\\n\\n\" + $node[\"Webhook\"].json.body.body + \"\\n\\n\" + ($node[\"Webhook\"].json.body.summary ?? \"\") }}"
+              "value": "={{ (() => { const full = $node[\"Webhook\"].json.body.title + \"\\n\\n\" + $node[\"Webhook\"].json.body.body + \"\\n\\n\" + ($node[\"Webhook\"].json.body.summary ?? \"\"); const limit = 500 - (\"\\n\\n(Xem tiếp: \" + ($node[\"Webhook\"].json.body.public_url ?? \"\") + \")\").length; return full.length > 500 ? full.substring(0, limit) + \"\\n\\n(Xem tiếp: \" + $node[\"Webhook\"].json.body.public_url + \")\" : full; })() }}"
             },
             {
               "name": "access_token",
@@ -941,7 +941,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://host.docker.internal:5197/api/webhooks/n8n/distribution-success",
+        "url": "http://172.18.0.1:5000/api/webhooks/n8n/distribution-success",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -992,7 +992,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://host.docker.internal:5197/api/webhooks/n8n/distribution-failed",
+        "url": "http://172.18.0.1:5000/api/webhooks/n8n/distribution-failed",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
