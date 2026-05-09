@@ -8,13 +8,13 @@
         "responseMode": "responseNode",
         "options": {}
       },
-      "id": "1ab1270e-868a-4e94-995c-b774d5a7bb88",
+      "id": "93b1dd1a-95c1-400c-b9bc-385ed49f3f9f",
       "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [
-        1600,
-        1248
+        11488,
+        2736
       ],
       "webhookId": "post-distribute",
       "alwaysOutputData": false
@@ -43,13 +43,13 @@
         },
         "options": {}
       },
-      "id": "b3b4106f-89a6-4dea-bdd8-0bddfafba563",
+      "id": "bd6b6451-ea2f-4b89-9221-064e6cbd5b55",
       "name": "Is Instagram?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        1824,
-        1248
+        11712,
+        2736
       ]
     },
     {
@@ -76,13 +76,13 @@
         },
         "options": {}
       },
-      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "id": "ed070d94-6a72-43f5-963d-eccb3e18225d",
       "name": "Is Threads?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        2048,
-        1248
+        11904,
+        2992
       ]
     },
     {
@@ -91,7 +91,8 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "loose"
+            "typeValidation": "loose",
+            "version": 1
           },
           "conditions": [
             {
@@ -108,13 +109,13 @@
         },
         "options": {}
       },
-      "id": "6423f8f0-eac8-4686-9cb8-ef977ad516c3",
+      "id": "bc893b48-8bb2-44bd-be96-eeb0252e4f5e",
       "name": "Has Image?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        2048,
-        1120
+        12192,
+        3280
       ]
     },
     {
@@ -149,13 +150,13 @@
         },
         "options": {}
       },
-      "id": "63e0be28-1318-4fbd-851f-f48c5a5af793",
+      "id": "08c2a848-30db-4774-9200-bb77a3d98c79",
       "name": "Post with Image",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2240,
-        1008
+        12384,
+        3168
       ]
     },
     {
@@ -190,13 +191,13 @@
         },
         "options": {}
       },
-      "id": "a574345d-bb97-4dff-94c2-b406221c62ad",
+      "id": "1c6a470a-20f6-4a49-878e-e5dbe0337840",
       "name": "Post without Image",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2240,
-        1216
+        12384,
+        3376
       ]
     },
     {
@@ -205,7 +206,8 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "strict",
+            "version": 1
           },
           "conditions": [
             {
@@ -222,13 +224,13 @@
         },
         "options": {}
       },
-      "id": "7582e701-5acf-4d32-9211-00b92e5367cd",
+      "id": "edd21a2e-516d-43ff-8886-6f54f88ce07c",
       "name": "Post Success?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        2464,
-        1120
+        12640,
+        3280
       ]
     },
     {
@@ -273,13 +275,13 @@
           "allowUnauthorizedCerts": true
         }
       },
-      "id": "ba6db8d5-11c6-415a-bf0e-cff19b4022ef",
+      "id": "97834d79-2ee2-4731-a8c0-1119315d4fd7",
       "name": "Callback Success",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2688,
-        1008
+        12896,
+        3168
       ]
     },
     {
@@ -318,13 +320,13 @@
         },
         "options": {}
       },
-      "id": "6afde5aa-27b9-4bcb-ad59-e915d6a4918f",
+      "id": "8a439046-a636-4e5d-9554-3fe3ff32a8cc",
       "name": "Callback Failed",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2688,
-        1216
+        12896,
+        3376
       ]
     },
     {
@@ -333,13 +335,13 @@
         "responseBody": "={{ JSON.stringify({ success: true, message: 'Post distributed to Facebook', facebook_post_id: $json.id }) }}",
         "options": {}
       },
-      "id": "bf39bc84-f73a-445f-bff4-bcc3f3b5676b",
+      "id": "69e61aa0-f6a6-4ccd-a560-9d6c88af101d",
       "name": "Respond Success",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        2912,
-        1008
+        13120,
+        3168
       ]
     },
     {
@@ -350,13 +352,13 @@
           "responseCode": 500
         }
       },
-      "id": "468b4fe8-8042-4322-b970-1eacddebe3a6",
+      "id": "cd9c8d39-f661-47f5-bd40-e6940bf34717",
       "name": "Respond Failed",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        2912,
-        1216
+        13136,
+        3376
       ]
     },
     {
@@ -391,13 +393,13 @@
         },
         "options": {}
       },
-      "id": "85ea0a35-cbbc-4a66-8606-34188c4ec1f8",
+      "id": "61269caf-4772-467a-ba2b-f868b185683b",
       "name": "IG Create Container",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2048,
-        1392
+        12032,
+        2384
       ]
     },
     {
@@ -424,18 +426,17 @@
         },
         "options": {}
       },
-      "id": "418315cb-64ea-4f19-87ab-07059dc2f582",
+      "id": "df3246b2-d90e-4b1c-a38a-b13879f7fd5c",
       "name": "IG Container OK?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        2272,
-        1392
+        12256,
+        2384
       ]
     },
     {
       "parameters": {
-        "method": "GET",
         "url": "=https://graph.facebook.com/v23.0/{{ $node[\"IG Container OK?\"].json.id }}",
         "sendQuery": true,
         "queryParameters": {
@@ -452,13 +453,13 @@
         },
         "options": {}
       },
-      "id": "d0feffaf-1e7f-40cf-99cd-978181289fcd",
+      "id": "1d0b0252-5342-4ab5-93c4-9e74825c4f4c",
       "name": "IG Check Status",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2480,
-        1392
+        12464,
+        2368
       ]
     },
     {
@@ -467,7 +468,8 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "strict",
+            "version": 1
           },
           "conditions": [
             {
@@ -484,27 +486,26 @@
         },
         "options": {}
       },
-      "id": "6c525368-c37b-4216-b3e5-59efabafadd2",
+      "id": "74fa2eb5-97f5-4949-bc43-197c29bb7ee6",
       "name": "IG Status FINISHED?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        2688,
-        1392
+        12672,
+        2368
       ]
     },
     {
       "parameters": {
-        "unit": "seconds",
         "amount": 3
       },
-      "id": "374455a9-914d-4258-8ef2-34ed3537218d",
+      "id": "873307bd-a753-48bc-ae86-e9753099291b",
       "name": "IG Wait 3s",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        2880,
-        1500
+        12864,
+        2544
       ],
       "webhookId": "0bdff43c-7bbc-4550-bfa3-7d41220152d1"
     },
@@ -536,13 +537,13 @@
         },
         "options": {}
       },
-      "id": "538e56c2-5393-4087-8838-41c0aa4410e1",
+      "id": "cf8fe9d9-2cf9-4cdf-822f-85fb27c044c4",
       "name": "IG Publish",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2880,
-        1392
+        12864,
+        2352
       ]
     },
     {
@@ -563,13 +564,13 @@
         },
         "options": {}
       },
-      "id": "4388827a-15dc-45ee-8951-922d6aab73a8",
+      "id": "31d53adb-63fc-4a61-846e-4463075d67f8",
       "name": "IG Get Permalink",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        3088,
-        1392
+        13072,
+        2352
       ]
     },
     {
@@ -578,7 +579,8 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "strict",
+            "version": 1
           },
           "conditions": [
             {
@@ -595,13 +597,13 @@
         },
         "options": {}
       },
-      "id": "4a32bf59-9d32-49de-92a3-aa4dc205f19c",
+      "id": "ac88dc77-dedc-40ea-831c-623d439c6ad6",
       "name": "IG Post Success?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        3280,
-        1392
+        13264,
+        2352
       ]
     },
     {
@@ -646,13 +648,13 @@
           "allowUnauthorizedCerts": true
         }
       },
-      "id": "44f798da-0cb5-4a53-af9e-0e319459f7ee",
+      "id": "8de89ae5-076d-4477-a0ae-61dbfe26e95d",
       "name": "IG Callback Success",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        3488,
-        1328
+        13472,
+        2336
       ]
     },
     {
@@ -691,13 +693,13 @@
         },
         "options": {}
       },
-      "id": "83840953-707b-45dc-8be6-0aa72716240d",
+      "id": "a1847d97-28a4-470d-9e97-016cfbabc7bf",
       "name": "IG Callback Failed",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        3488,
-        1500
+        13472,
+        2496
       ]
     },
     {
@@ -706,13 +708,13 @@
         "responseBody": "={{ JSON.stringify({ success: true, message: 'Post distributed to Instagram', instagram_post_id: $json.id, permalink: $json.permalink }) }}",
         "options": {}
       },
-      "id": "d222ef1f-dd32-4e2d-9dd3-1cc061d05f5b",
+      "id": "c729f7ea-74bf-4a21-a74a-addef7569a74",
       "name": "IG Respond Success",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        3680,
-        1328
+        13664,
+        2336
       ]
     },
     {
@@ -723,13 +725,13 @@
           "responseCode": 500
         }
       },
-      "id": "26774f9e-be44-4e7a-96bb-617b89b792a7",
+      "id": "f1398e08-3ad9-48eb-845c-201d460b7bfa",
       "name": "IG Respond Failed",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        3680,
-        1500
+        13664,
+        2496
       ]
     },
     {
@@ -738,7 +740,8 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "strict",
+            "version": 1
           },
           "conditions": [
             {
@@ -755,27 +758,27 @@
         },
         "options": {}
       },
-      "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+      "id": "2a7db7eb-1bfb-4cdd-aea8-c029dae7225d",
       "name": "Threads Has Image?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        2272,
-        1600
+        12176,
+        2896
       ]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "https://graph.threads.net/v1.0/26575647895449405/threads",
+        "url": "https://graph.threads.net/v1.0/25889672980705604/threads",
         "sendHeaders": true,
         "headerParameters": {
-            "parameters": [
-                {
-                    "name": "Content-Type",
-                    "value": "application/json"
-                }
-            ]
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
         },
         "sendBody": true,
         "bodyParameters": {
@@ -794,25 +797,25 @@
             },
             {
               "name": "access_token",
-              "value": "THAAM8FAGuNfRBYll5ZAHBnb1JKdVc5dzNRbml3MXdWdzhMcERxeVNHbVJUUUNFMlpnRVgzOG10bjN4NFp3UW5QWXdWVWV5NUo1ZAU4zQXR2UE12Q2hXRFJ3UlJBOFpMVEFFbkJobkVvVVZAJRkRkOExKc05yY194a3ZAlb1BXajYtbDlWYTFIX0ZA0SmhEUDFRVXMZD"
+              "value": "THAAY5ZBEgt5rVBYllaeGRjV0NkODNOa1ZA5cnAxaE54b2dSNkJCN210V2xOQ2phYmQ4T1l1VjQyc29keFR6M21NTThSMldDWFRjbTh0SWI1eVoyYVYyTXROeTJrMXJvczVVOTRGZAnc4a1h3bm53VDVkSXNXb1RlbXRxSElyVG9zMlRWdwZDZD"
             }
           ]
         },
         "options": {}
       },
-      "id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+      "id": "6b2ce8b7-f2dd-4ad0-a52d-fe2e76c5bebd",
       "name": "Threads Create Container (Image)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2496,
-        1520
+        12400,
+        2816
       ]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "https://graph.threads.net/v1.0/26575647895449405/threads",
+        "url": "https://graph.threads.net/v1.0/25889672980705604/threads",
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
@@ -826,19 +829,19 @@
             },
             {
               "name": "access_token",
-              "value": "THAAM8FAGuNfRBYll5ZAHBnb1JKdVc5dzNRbml3MXdWdzhMcERxeVNHbVJUUUNFMlpnRVgzOG10bjN4NFp3UW5QWXdWVWV5NUo1ZAU4zQXR2UE12Q2hXRFJ3UlJBOFpMVEFFbkJobkVvVVZAJRkRkOExKc05yY194a3ZAlb1BXajYtbDlWYTFIX0ZA0SmhEUDFRVXMZD"
+              "value": "THAAY5ZBEgt5rVBYllaeGRjV0NkODNOa1ZA5cnAxaE54b2dSNkJCN210V2xOQ2phYmQ4T1l1VjQyc29keFR6M21NTThSMldDWFRjbTh0SWI1eVoyYVYyTXROeTJrMXJvczVVOTRGZAnc4a1h3bm53VDVkSXNXb1RlbXRxSElyVG9zMlRWdwZDZD"
             }
           ]
         },
         "options": {}
       },
-      "id": "d4e5f6a7-b8c9-0123-defa-234567890123",
+      "id": "219cd5f2-3fba-4ad3-921a-de5df279304f",
       "name": "Threads Create Container (Text)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2496,
-        1680
+        12400,
+        2976
       ]
     },
     {
@@ -847,7 +850,8 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "strict",
+            "version": 1
           },
           "conditions": [
             {
@@ -864,19 +868,19 @@
         },
         "options": {}
       },
-      "id": "e5f6a7b8-c9d0-1234-efab-345678901234",
+      "id": "77e20723-4d17-4121-a9c4-d20e1be7ff7f",
       "name": "Threads Container OK?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        2720,
-        1600
+        12624,
+        2896
       ]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "https://graph.threads.net/v1.0/26575647895449405/threads_publish",
+        "url": "https://graph.threads.net/v1.0/25889672980705604/threads_publish",
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
@@ -886,19 +890,19 @@
             },
             {
               "name": "access_token",
-              "value": "THAAM8FAGuNfRBYll5ZAHBnb1JKdVc5dzNRbml3MXdWdzhMcERxeVNHbVJUUUNFMlpnRVgzOG10bjN4NFp3UW5QWXdWVWV5NUo1ZAU4zQXR2UE12Q2hXRFJ3UlJBOFpMVEFFbkJobkVvVVZAJRkRkOExKc05yY194a3ZAlb1BXajYtbDlWYTFIX0ZA0SmhEUDFRVXMZD"
+              "value": "THAAY5ZBEgt5rVBYllaeGRjV0NkODNOa1ZA5cnAxaE54b2dSNkJCN210V2xOQ2phYmQ4T1l1VjQyc29keFR6M21NTThSMldDWFRjbTh0SWI1eVoyYVYyTXROeTJrMXJvczVVOTRGZAnc4a1h3bm53VDVkSXNXb1RlbXRxSElyVG9zMlRWdwZDZD"
             }
           ]
         },
         "options": {}
       },
-      "id": "f6a7b8c9-d0e1-2345-fabc-456789012345",
+      "id": "f712b3b8-bf78-47aa-a929-07bdb00b8cfb",
       "name": "Threads Publish",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2944,
-        1600
+        12848,
+        2880
       ]
     },
     {
@@ -907,7 +911,8 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "strict",
+            "version": 1
           },
           "conditions": [
             {
@@ -924,13 +929,13 @@
         },
         "options": {}
       },
-      "id": "a7b8c9d0-e1f2-3456-abcd-567890123456",
+      "id": "1963dcd4-0f05-49c7-acd8-8b24e9b8bf07",
       "name": "Threads Post Success?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        3168,
-        1600
+        13072,
+        2880
       ]
     },
     {
@@ -967,7 +972,7 @@
             },
             {
               "name": "platform_metadata",
-              "value": "={{ JSON.stringify({ threads_post_id: $json.id, threads_user_id: \"26575647895449405\" }) }}"
+              "value": "={{ JSON.stringify({ threads_post_id: $json.id, threads_user_id: \"25889672980705604\" }) }}"
             }
           ]
         },
@@ -975,13 +980,13 @@
           "allowUnauthorizedCerts": true
         }
       },
-      "id": "b8c9d0e1-f2a3-4567-bcde-678901234567",
+      "id": "9cd05eee-c2e0-4bff-a09c-4f20a7420df9",
       "name": "Threads Callback Success",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        3392,
-        1520
+        13296,
+        2816
       ]
     },
     {
@@ -1020,13 +1025,13 @@
         },
         "options": {}
       },
-      "id": "c9d0e1f2-a3b4-5678-cdef-789012345678",
+      "id": "bcabb0ba-7c4c-4175-8333-12f6726d0407",
       "name": "Threads Callback Failed",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        3392,
-        1680
+        13296,
+        2976
       ]
     },
     {
@@ -1035,13 +1040,13 @@
         "responseBody": "={{ JSON.stringify({ success: true, message: 'Post distributed to Threads', threads_post_id: $json.id }) }}",
         "options": {}
       },
-      "id": "d0e1f2a3-b4c5-6789-defa-890123456789",
+      "id": "d0b3b90a-d141-481c-a7de-db533320b38b",
       "name": "Threads Respond Success",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        3616,
-        1520
+        13520,
+        2816
       ]
     },
     {
@@ -1052,13 +1057,13 @@
           "responseCode": 500
         }
       },
-      "id": "e1f2a3b4-c5d6-7890-efab-901234567890",
+      "id": "3fc65f93-aba3-4d27-839c-e0b51257e8c5",
       "name": "Threads Respond Failed",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        3616,
-        1680
+        13520,
+        2976
       ]
     }
   ],
@@ -1432,16 +1437,15 @@
       ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "db12922c-b6d1-48fa-85ee-469f4cb24000",
+  "versionId": "931d7100-c476-4b82-9587-36ae965b42dd",
   "meta": {
-    "templateCredsSetupCompleted": true,
     "instanceId": "5229ad676c3a8d293c6db345f673ae85f2faeec97332d940e6b8ecea4c050d50"
   },
-  "id": "0Q6s9e4BPLGcM7mD",
+  "id": "r2k9uJhG5y0XD4KG",
   "tags": []
 }

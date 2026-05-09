@@ -7,13 +7,15 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.Logging;
 using Shared.Api.RateLimiting;
 using Shared.Api.Results;
 
 namespace Marketing.Api.Features.Webhooks.N8n.DistributionSuccess;
 
-public class N8nDistributionSuccessEndpoint : ICarterModule
+public class N8nDistributionSuccessEndpoint(ILogger<N8nDistributionSuccessEndpoint> _logger) : ICarterModule
 {
+    private static int _requestCount = 0;
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         app.MapPost("api/webhooks/n8n/distribution-success", async (
@@ -21,6 +23,11 @@ public class N8nDistributionSuccessEndpoint : ICarterModule
             ISender sender,
             CancellationToken cancellationToken) =>
         {
+            var requestNum = Interlocked.Increment(ref _requestCount);
+            _logger.LogInformation(
+                "=== N8N Callback #{RequestNum} === postId={PostId} platform={Platform} externalPostId={ExternalPostId}",
+                requestNum, request.post_id, request.platform, request.external_post_id);
+
             var command = new ConfirmExternalDistributionCommand(
                 PostId: request.post_id,
                 Platform: request.platform,
@@ -30,6 +37,11 @@ public class N8nDistributionSuccessEndpoint : ICarterModule
             );
 
             var result = await sender.Send(command, cancellationToken);
+
+            _logger.LogInformation(
+                "=== N8N Callback #{RequestNum} completed === success={Success}",
+                requestNum, result.IsSuccess);
+
             return result.ToOk();
         })
         .RequireRateLimiting(RateLimitPolicies.Webhook)
